@@ -1,0 +1,906 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6"></a>
+<span class="sourceLineNo">007</span><a id="line.7">package org.fcrepo.auth.webac;</a>
+<span class="sourceLineNo">008</span><a id="line.8"></a>
+<span class="sourceLineNo">009</span><a id="line.9">import static java.nio.charset.StandardCharsets.UTF_8;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import static java.util.stream.Collectors.toList;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import static javax.servlet.http.HttpServletResponse.SC_CONFLICT;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import static org.apache.jena.riot.WebContent.contentTypeJSONLD;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import static org.apache.jena.riot.WebContent.contentTypeN3;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import static org.apache.jena.riot.WebContent.contentTypeNTriples;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import static org.apache.jena.riot.WebContent.contentTypeRDFXML;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import static org.apache.jena.riot.WebContent.contentTypeTurtle;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_APPEND;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">040</span><a id="line.40"></a>
+<span class="sourceLineNo">041</span><a id="line.41">import java.io.IOException;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import java.net.URI;</a>
+<span class="sourceLineNo">043</span><a id="line.43">import java.security.Principal;</a>
+<span class="sourceLineNo">044</span><a id="line.44">import java.util.Collections;</a>
+<span class="sourceLineNo">045</span><a id="line.45">import java.util.HashSet;</a>
+<span class="sourceLineNo">046</span><a id="line.46">import java.util.List;</a>
+<span class="sourceLineNo">047</span><a id="line.47">import java.util.Set;</a>
+<span class="sourceLineNo">048</span><a id="line.48">import java.util.stream.Collectors;</a>
+<span class="sourceLineNo">049</span><a id="line.49">import java.util.stream.Stream;</a>
+<span class="sourceLineNo">050</span><a id="line.50"></a>
+<span class="sourceLineNo">051</span><a id="line.51">import javax.inject.Inject;</a>
+<span class="sourceLineNo">052</span><a id="line.52">import javax.servlet.FilterChain;</a>
+<span class="sourceLineNo">053</span><a id="line.53">import javax.servlet.ServletException;</a>
+<span class="sourceLineNo">054</span><a id="line.54">import javax.servlet.http.HttpServletRequest;</a>
+<span class="sourceLineNo">055</span><a id="line.55">import javax.servlet.http.HttpServletResponse;</a>
+<span class="sourceLineNo">056</span><a id="line.56">import javax.ws.rs.BadRequestException;</a>
+<span class="sourceLineNo">057</span><a id="line.57">import javax.ws.rs.core.Link;</a>
+<span class="sourceLineNo">058</span><a id="line.58">import javax.ws.rs.core.MediaType;</a>
+<span class="sourceLineNo">059</span><a id="line.59">import javax.ws.rs.core.UriBuilder;</a>
+<span class="sourceLineNo">060</span><a id="line.60"></a>
+<span class="sourceLineNo">061</span><a id="line.61">import org.fcrepo.config.FedoraPropsConfig;</a>
+<span class="sourceLineNo">062</span><a id="line.62">import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;</a>
+<span class="sourceLineNo">063</span><a id="line.63">import org.fcrepo.http.commons.domain.MultiPrefer;</a>
+<span class="sourceLineNo">064</span><a id="line.64">import org.fcrepo.http.commons.domain.SinglePrefer;</a>
+<span class="sourceLineNo">065</span><a id="line.65">import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;</a>
+<span class="sourceLineNo">066</span><a id="line.66">import org.fcrepo.http.commons.session.TransactionProvider;</a>
+<span class="sourceLineNo">067</span><a id="line.67">import org.fcrepo.kernel.api.ReadOnlyTransaction;</a>
+<span class="sourceLineNo">068</span><a id="line.68">import org.fcrepo.kernel.api.Transaction;</a>
+<span class="sourceLineNo">069</span><a id="line.69">import org.fcrepo.kernel.api.TransactionManager;</a>
+<span class="sourceLineNo">070</span><a id="line.70">import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;</a>
+<span class="sourceLineNo">071</span><a id="line.71">import org.fcrepo.kernel.api.exception.MalformedRdfException;</a>
+<span class="sourceLineNo">072</span><a id="line.72">import org.fcrepo.kernel.api.exception.PathNotFoundException;</a>
+<span class="sourceLineNo">073</span><a id="line.73">import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;</a>
+<span class="sourceLineNo">074</span><a id="line.74">import org.fcrepo.kernel.api.exception.TransactionRuntimeException;</a>
+<span class="sourceLineNo">075</span><a id="line.75">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">076</span><a id="line.76">import org.fcrepo.kernel.api.models.FedoraResource;</a>
+<span class="sourceLineNo">077</span><a id="line.77">import org.fcrepo.kernel.api.models.ResourceFactory;</a>
+<span class="sourceLineNo">078</span><a id="line.78"></a>
+<span class="sourceLineNo">079</span><a id="line.79">import org.apache.commons.io.IOUtils;</a>
+<span class="sourceLineNo">080</span><a id="line.80">import org.apache.jena.atlas.RuntimeIOException;</a>
+<span class="sourceLineNo">081</span><a id="line.81">import org.apache.jena.graph.Node;</a>
+<span class="sourceLineNo">082</span><a id="line.82">import org.apache.jena.graph.Triple;</a>
+<span class="sourceLineNo">083</span><a id="line.83">import org.apache.jena.query.QueryParseException;</a>
+<span class="sourceLineNo">084</span><a id="line.84">import org.apache.jena.rdf.model.Model;</a>
+<span class="sourceLineNo">085</span><a id="line.85">import org.apache.jena.rdf.model.RDFReaderI;</a>
+<span class="sourceLineNo">086</span><a id="line.86">import org.apache.jena.rdf.model.Resource;</a>
+<span class="sourceLineNo">087</span><a id="line.87">import org.apache.jena.rdf.model.Statement;</a>
+<span class="sourceLineNo">088</span><a id="line.88">import org.apache.jena.riot.Lang;</a>
+<span class="sourceLineNo">089</span><a id="line.89">import org.apache.jena.riot.RiotException;</a>
+<span class="sourceLineNo">090</span><a id="line.90">import org.apache.jena.sparql.core.Quad;</a>
+<span class="sourceLineNo">091</span><a id="line.91">import org.apache.jena.sparql.modify.request.UpdateData;</a>
+<span class="sourceLineNo">092</span><a id="line.92">import org.apache.jena.sparql.modify.request.UpdateDataDelete;</a>
+<span class="sourceLineNo">093</span><a id="line.93">import org.apache.jena.sparql.modify.request.UpdateModify;</a>
+<span class="sourceLineNo">094</span><a id="line.94">import org.apache.jena.update.UpdateFactory;</a>
+<span class="sourceLineNo">095</span><a id="line.95">import org.apache.jena.update.UpdateRequest;</a>
+<span class="sourceLineNo">096</span><a id="line.96">import org.apache.shiro.SecurityUtils;</a>
+<span class="sourceLineNo">097</span><a id="line.97">import org.apache.shiro.subject.PrincipalCollection;</a>
+<span class="sourceLineNo">098</span><a id="line.98">import org.apache.shiro.subject.SimplePrincipalCollection;</a>
+<span class="sourceLineNo">099</span><a id="line.99">import org.apache.shiro.subject.Subject;</a>
+<span class="sourceLineNo">100</span><a id="line.100">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">101</span><a id="line.101">import org.springframework.web.filter.RequestContextFilter;</a>
+<span class="sourceLineNo">102</span><a id="line.102"></a>
+<span class="sourceLineNo">103</span><a id="line.103">import com.fasterxml.jackson.core.JsonParseException;</a>
+<span class="sourceLineNo">104</span><a id="line.104"></a>
+<span class="sourceLineNo">105</span><a id="line.105">/**</a>
+<span class="sourceLineNo">106</span><a id="line.106"> * @author peichman</a>
+<span class="sourceLineNo">107</span><a id="line.107"> */</a>
+<span class="sourceLineNo">108</span><a id="line.108">public class WebACFilter extends RequestContextFilter {</a>
+<span class="sourceLineNo">109</span><a id="line.109"></a>
+<span class="sourceLineNo">110</span><a id="line.110">    private static final Logger log = getLogger(WebACFilter.class);</a>
+<span class="sourceLineNo">111</span><a id="line.111"></a>
+<span class="sourceLineNo">112</span><a id="line.112">    private static final MediaType sparqlUpdate = MediaType.valueOf(contentTypeSPARQLUpdate);</a>
+<span class="sourceLineNo">113</span><a id="line.113"></a>
+<span class="sourceLineNo">114</span><a id="line.114">    private static final Principal FOAF_AGENT_PRINCIPAL = new Principal() {</a>
+<span class="sourceLineNo">115</span><a id="line.115"></a>
+<span class="sourceLineNo">116</span><a id="line.116">        @Override</a>
+<span class="sourceLineNo">117</span><a id="line.117">        public String getName() {</a>
+<span class="sourceLineNo">118</span><a id="line.118">            return FOAF_AGENT_VALUE;</a>
+<span class="sourceLineNo">119</span><a id="line.119">        }</a>
+<span class="sourceLineNo">120</span><a id="line.120"></a>
+<span class="sourceLineNo">121</span><a id="line.121">        @Override</a>
+<span class="sourceLineNo">122</span><a id="line.122">        public String toString() {</a>
+<span class="sourceLineNo">123</span><a id="line.123">            return getName();</a>
+<span class="sourceLineNo">124</span><a id="line.124">        }</a>
+<span class="sourceLineNo">125</span><a id="line.125"></a>
+<span class="sourceLineNo">126</span><a id="line.126">    };</a>
+<span class="sourceLineNo">127</span><a id="line.127"></a>
+<span class="sourceLineNo">128</span><a id="line.128">    private static final PrincipalCollection FOAF_AGENT_PRINCIPAL_COLLECTION =</a>
+<span class="sourceLineNo">129</span><a id="line.129">            new SimplePrincipalCollection(FOAF_AGENT_PRINCIPAL, WebACAuthorizingRealm.class.getCanonicalName());</a>
+<span class="sourceLineNo">130</span><a id="line.130"></a>
+<span class="sourceLineNo">131</span><a id="line.131">    private static Subject FOAF_AGENT_SUBJECT;</a>
+<span class="sourceLineNo">132</span><a id="line.132"></a>
+<span class="sourceLineNo">133</span><a id="line.133">    @Inject</a>
+<span class="sourceLineNo">134</span><a id="line.134">    private FedoraPropsConfig fedoraPropsConfig;</a>
+<span class="sourceLineNo">135</span><a id="line.135"></a>
+<span class="sourceLineNo">136</span><a id="line.136">    @Inject</a>
+<span class="sourceLineNo">137</span><a id="line.137">    private ResourceFactory resourceFactory;</a>
+<span class="sourceLineNo">138</span><a id="line.138"></a>
+<span class="sourceLineNo">139</span><a id="line.139">    @Inject</a>
+<span class="sourceLineNo">140</span><a id="line.140">    private TransactionManager transactionManager;</a>
+<span class="sourceLineNo">141</span><a id="line.141"></a>
+<span class="sourceLineNo">142</span><a id="line.142">    private static Set&lt;URI&gt; directOrIndirect = Set.of(INDIRECT_CONTAINER, DIRECT_CONTAINER).stream()</a>
+<span class="sourceLineNo">143</span><a id="line.143">            .map(Resource::toString).map(URI::create).collect(Collectors.toSet());</a>
+<span class="sourceLineNo">144</span><a id="line.144"></a>
+<span class="sourceLineNo">145</span><a id="line.145">    private static Set&lt;String&gt; rdfContentTypes = Set.of(contentTypeTurtle, contentTypeJSONLD, contentTypeN3,</a>
+<span class="sourceLineNo">146</span><a id="line.146">            contentTypeRDFXML, contentTypeNTriples);</a>
+<span class="sourceLineNo">147</span><a id="line.147"></a>
+<span class="sourceLineNo">148</span><a id="line.148">    /**</a>
+<span class="sourceLineNo">149</span><a id="line.149">     * Generate a HttpIdentifierConverter from the request URL.</a>
+<span class="sourceLineNo">150</span><a id="line.150">     * @param request the servlet request.</a>
+<span class="sourceLineNo">151</span><a id="line.151">     * @return a converter.</a>
+<span class="sourceLineNo">152</span><a id="line.152">     */</a>
+<span class="sourceLineNo">153</span><a id="line.153">    public static HttpIdentifierConverter identifierConverter(final HttpServletRequest request) {</a>
+<span class="sourceLineNo">154</span><a id="line.154">        final var uriBuild = UriBuilder.fromUri(getBaseUri(request)).path("/{path: .*}");</a>
+<span class="sourceLineNo">155</span><a id="line.155">        return new HttpIdentifierConverter(uriBuild);</a>
+<span class="sourceLineNo">156</span><a id="line.156">    }</a>
+<span class="sourceLineNo">157</span><a id="line.157"></a>
+<span class="sourceLineNo">158</span><a id="line.158">    /**</a>
+<span class="sourceLineNo">159</span><a id="line.159">     * Calculate a base Uri for this request.</a>
+<span class="sourceLineNo">160</span><a id="line.160">     * @param request the incoming request</a>
+<span class="sourceLineNo">161</span><a id="line.161">     * @return the URI</a>
+<span class="sourceLineNo">162</span><a id="line.162">     */</a>
+<span class="sourceLineNo">163</span><a id="line.163">    public static URI getBaseUri(final HttpServletRequest request) {</a>
+<span class="sourceLineNo">164</span><a id="line.164">        final String host = request.getScheme() + "://" + request.getServerName() +</a>
+<span class="sourceLineNo">165</span><a id="line.165">                (request.getServerPort() != 80 ? ":" + request.getServerPort() : "") + "/";</a>
+<span class="sourceLineNo">166</span><a id="line.166">        final String requestUrl = request.getRequestURL().toString();</a>
+<span class="sourceLineNo">167</span><a id="line.167">        final String contextPath = request.getContextPath() + request.getServletPath();</a>
+<span class="sourceLineNo">168</span><a id="line.168">        final String baseUri;</a>
+<span class="sourceLineNo">169</span><a id="line.169">        if (contextPath.length() == 0) {</a>
+<span class="sourceLineNo">170</span><a id="line.170">            baseUri = host;</a>
+<span class="sourceLineNo">171</span><a id="line.171">        } else {</a>
+<span class="sourceLineNo">172</span><a id="line.172">            baseUri = requestUrl.split(contextPath)[0] + contextPath + "/";</a>
+<span class="sourceLineNo">173</span><a id="line.173">        }</a>
+<span class="sourceLineNo">174</span><a id="line.174">        return URI.create(baseUri);</a>
+<span class="sourceLineNo">175</span><a id="line.175">    }</a>
+<span class="sourceLineNo">176</span><a id="line.176"></a>
+<span class="sourceLineNo">177</span><a id="line.177">    /**</a>
+<span class="sourceLineNo">178</span><a id="line.178">     * Add URIs to collect permissions information for.</a>
+<span class="sourceLineNo">179</span><a id="line.179">     *</a>
+<span class="sourceLineNo">180</span><a id="line.180">     * @param httpRequest the request.</a>
+<span class="sourceLineNo">181</span><a id="line.181">     * @param uri the uri to check.</a>
+<span class="sourceLineNo">182</span><a id="line.182">     */</a>
+<span class="sourceLineNo">183</span><a id="line.183">    private void addURIToAuthorize(final HttpServletRequest httpRequest, final URI uri) {</a>
+<span class="sourceLineNo">184</span><a id="line.184">        @SuppressWarnings("unchecked")</a>
+<span class="sourceLineNo">185</span><a id="line.185">        Set&lt;URI&gt; targetURIs = (Set&lt;URI&gt;) httpRequest.getAttribute(URIS_TO_AUTHORIZE);</a>
+<span class="sourceLineNo">186</span><a id="line.186">        if (targetURIs == null) {</a>
+<span class="sourceLineNo">187</span><a id="line.187">            targetURIs = new HashSet&lt;&gt;();</a>
+<span class="sourceLineNo">188</span><a id="line.188">            httpRequest.setAttribute(URIS_TO_AUTHORIZE, targetURIs);</a>
+<span class="sourceLineNo">189</span><a id="line.189">        }</a>
+<span class="sourceLineNo">190</span><a id="line.190">        targetURIs.add(uri);</a>
+<span class="sourceLineNo">191</span><a id="line.191">    }</a>
+<span class="sourceLineNo">192</span><a id="line.192"></a>
+<span class="sourceLineNo">193</span><a id="line.193">    @Override</a>
+<span class="sourceLineNo">194</span><a id="line.194">    protected void doFilterInternal(final HttpServletRequest request, final HttpServletResponse response,</a>
+<span class="sourceLineNo">195</span><a id="line.195">                                    final FilterChain chain) throws ServletException, IOException {</a>
+<span class="sourceLineNo">196</span><a id="line.196"></a>
+<span class="sourceLineNo">197</span><a id="line.197">        // Ensure we are not trying to operate on a closed or invalid transaction.</a>
+<span class="sourceLineNo">198</span><a id="line.198">        try {</a>
+<span class="sourceLineNo">199</span><a id="line.199">            transaction(request);</a>
+<span class="sourceLineNo">200</span><a id="line.200">        } catch (final TransactionRuntimeException e) {</a>
+<span class="sourceLineNo">201</span><a id="line.201">            printException(response, SC_CONFLICT, e);</a>
+<span class="sourceLineNo">202</span><a id="line.202">            return;</a>
+<span class="sourceLineNo">203</span><a id="line.203">        }</a>
+<span class="sourceLineNo">204</span><a id="line.204">        final Subject currentUser = SecurityUtils.getSubject();</a>
+<span class="sourceLineNo">205</span><a id="line.205">        HttpServletRequest httpRequest = request;</a>
+<span class="sourceLineNo">206</span><a id="line.206">        if (isSparqlUpdate(httpRequest) || isRdfRequest(httpRequest)) {</a>
+<span class="sourceLineNo">207</span><a id="line.207">            // If this is a sparql request or contains RDF.</a>
+<span class="sourceLineNo">208</span><a id="line.208">            httpRequest = new CachedHttpRequest(httpRequest);</a>
+<span class="sourceLineNo">209</span><a id="line.209">        }</a>
+<span class="sourceLineNo">210</span><a id="line.210"></a>
+<span class="sourceLineNo">211</span><a id="line.211">        final String requestUrl = httpRequest.getRequestURL().toString();</a>
+<span class="sourceLineNo">212</span><a id="line.212">        try {</a>
+<span class="sourceLineNo">213</span><a id="line.213">            FedoraId.create(identifierConverter(httpRequest).toInternalId(requestUrl));</a>
+<span class="sourceLineNo">214</span><a id="line.214">        } catch (final InvalidResourceIdentifierException e) {</a>
+<span class="sourceLineNo">215</span><a id="line.215">            printException(response, SC_BAD_REQUEST, e);</a>
+<span class="sourceLineNo">216</span><a id="line.216">            return;</a>
+<span class="sourceLineNo">217</span><a id="line.217">        } catch (final IllegalArgumentException e) {</a>
+<span class="sourceLineNo">218</span><a id="line.218">            // No Fedora request path provided, so just continue along.</a>
+<span class="sourceLineNo">219</span><a id="line.219">        }</a>
+<span class="sourceLineNo">220</span><a id="line.220"></a>
+<span class="sourceLineNo">221</span><a id="line.221">        // add the request URI to the list of URIs to retrieve the ACLs for</a>
+<span class="sourceLineNo">222</span><a id="line.222">        addURIToAuthorize(httpRequest, URI.create(requestUrl));</a>
+<span class="sourceLineNo">223</span><a id="line.223"></a>
+<span class="sourceLineNo">224</span><a id="line.224">        if (currentUser.isAuthenticated()) {</a>
+<span class="sourceLineNo">225</span><a id="line.225">            log.debug("User is authenticated");</a>
+<span class="sourceLineNo">226</span><a id="line.226">            if (currentUser.hasRole(FEDORA_ADMIN_ROLE)) {</a>
+<span class="sourceLineNo">227</span><a id="line.227">                log.debug("User has fedoraAdmin role");</a>
+<span class="sourceLineNo">228</span><a id="line.228">            } else if (currentUser.hasRole(FEDORA_USER_ROLE)) {</a>
+<span class="sourceLineNo">229</span><a id="line.229">                log.debug("User has fedoraUser role");</a>
+<span class="sourceLineNo">230</span><a id="line.230">                // non-admins are subject to permission checks</a>
+<span class="sourceLineNo">231</span><a id="line.231">                if (!isAuthorized(currentUser, httpRequest)) {</a>
+<span class="sourceLineNo">232</span><a id="line.232">                    // if the user is not authorized, set response to forbidden</a>
+<span class="sourceLineNo">233</span><a id="line.233">                    response.sendError(SC_FORBIDDEN);</a>
+<span class="sourceLineNo">234</span><a id="line.234">                    return;</a>
+<span class="sourceLineNo">235</span><a id="line.235">                }</a>
+<span class="sourceLineNo">236</span><a id="line.236">            } else {</a>
+<span class="sourceLineNo">237</span><a id="line.237">                log.debug("User has no recognized servlet container role");</a>
+<span class="sourceLineNo">238</span><a id="line.238">                // missing a container role, return forbidden</a>
+<span class="sourceLineNo">239</span><a id="line.239">                response.sendError(SC_FORBIDDEN);</a>
+<span class="sourceLineNo">240</span><a id="line.240">                return;</a>
+<span class="sourceLineNo">241</span><a id="line.241">            }</a>
+<span class="sourceLineNo">242</span><a id="line.242">        } else {</a>
+<span class="sourceLineNo">243</span><a id="line.243">            log.debug("User is NOT authenticated");</a>
+<span class="sourceLineNo">244</span><a id="line.244">            // anonymous users are subject to permission checks</a>
+<span class="sourceLineNo">245</span><a id="line.245">            if (!isAuthorized(getFoafAgentSubject(), httpRequest)) {</a>
+<span class="sourceLineNo">246</span><a id="line.246">                // if anonymous user is not authorized, set response to forbidden</a>
+<span class="sourceLineNo">247</span><a id="line.247">                response.sendError(SC_FORBIDDEN);</a>
+<span class="sourceLineNo">248</span><a id="line.248">                return;</a>
+<span class="sourceLineNo">249</span><a id="line.249">            }</a>
+<span class="sourceLineNo">250</span><a id="line.250">        }</a>
+<span class="sourceLineNo">251</span><a id="line.251"></a>
+<span class="sourceLineNo">252</span><a id="line.252">        // proceed to the next filter</a>
+<span class="sourceLineNo">253</span><a id="line.253">        chain.doFilter(httpRequest, response);</a>
+<span class="sourceLineNo">254</span><a id="line.254">    }</a>
+<span class="sourceLineNo">255</span><a id="line.255"></a>
+<span class="sourceLineNo">256</span><a id="line.256">    /**</a>
+<span class="sourceLineNo">257</span><a id="line.257">     * Displays the message from the exception to the screen.</a>
+<span class="sourceLineNo">258</span><a id="line.258">     * @param response the servlet response</a>
+<span class="sourceLineNo">259</span><a id="line.259">     * @param e the exception being handled</a>
+<span class="sourceLineNo">260</span><a id="line.260">     * @throws IOException if problems opening the output writer.</a>
+<span class="sourceLineNo">261</span><a id="line.261">     */</a>
+<span class="sourceLineNo">262</span><a id="line.262">    private void printException(final HttpServletResponse response, final int responseCode, final Throwable e)</a>
+<span class="sourceLineNo">263</span><a id="line.263">            throws IOException {</a>
+<span class="sourceLineNo">264</span><a id="line.264">        final var message = e.getMessage();</a>
+<span class="sourceLineNo">265</span><a id="line.265">        response.resetBuffer();</a>
+<span class="sourceLineNo">266</span><a id="line.266">        response.setStatus(responseCode);</a>
+<span class="sourceLineNo">267</span><a id="line.267">        response.setContentType(TEXT_PLAIN_WITH_CHARSET);</a>
+<span class="sourceLineNo">268</span><a id="line.268">        response.setContentLength(message.length());</a>
+<span class="sourceLineNo">269</span><a id="line.269">        response.setCharacterEncoding("UTF-8");</a>
+<span class="sourceLineNo">270</span><a id="line.270">        final var write = response.getWriter();</a>
+<span class="sourceLineNo">271</span><a id="line.271">        write.write(message);</a>
+<span class="sourceLineNo">272</span><a id="line.272">        write.flush();</a>
+<span class="sourceLineNo">273</span><a id="line.273">    }</a>
+<span class="sourceLineNo">274</span><a id="line.274"></a>
+<span class="sourceLineNo">275</span><a id="line.275">    private Subject getFoafAgentSubject() {</a>
+<span class="sourceLineNo">276</span><a id="line.276">        if (FOAF_AGENT_SUBJECT == null) {</a>
+<span class="sourceLineNo">277</span><a id="line.277">            FOAF_AGENT_SUBJECT = new Subject.Builder().principals(FOAF_AGENT_PRINCIPAL_COLLECTION).buildSubject();</a>
+<span class="sourceLineNo">278</span><a id="line.278">        }</a>
+<span class="sourceLineNo">279</span><a id="line.279">        return FOAF_AGENT_SUBJECT;</a>
+<span class="sourceLineNo">280</span><a id="line.280">    }</a>
+<span class="sourceLineNo">281</span><a id="line.281"></a>
+<span class="sourceLineNo">282</span><a id="line.282">    private Transaction transaction(final HttpServletRequest request) {</a>
+<span class="sourceLineNo">283</span><a id="line.283">        final String txId = request.getHeader(ATOMIC_ID_HEADER);</a>
+<span class="sourceLineNo">284</span><a id="line.284">        if (txId == null) {</a>
+<span class="sourceLineNo">285</span><a id="line.285">            return ReadOnlyTransaction.INSTANCE;</a>
+<span class="sourceLineNo">286</span><a id="line.286">        }</a>
+<span class="sourceLineNo">287</span><a id="line.287">        final var txProvider = new TransactionProvider(transactionManager, request,</a>
+<span class="sourceLineNo">288</span><a id="line.288">                getBaseUri(request), fedoraPropsConfig.getJmsBaseUrl());</a>
+<span class="sourceLineNo">289</span><a id="line.289">        return txProvider.provide();</a>
+<span class="sourceLineNo">290</span><a id="line.290">    }</a>
+<span class="sourceLineNo">291</span><a id="line.291"></a>
+<span class="sourceLineNo">292</span><a id="line.292">    private String getContainerUrl(final HttpServletRequest servletRequest) {</a>
+<span class="sourceLineNo">293</span><a id="line.293">        final String pathInfo = servletRequest.getPathInfo();</a>
+<span class="sourceLineNo">294</span><a id="line.294">        final String baseUrl = servletRequest.getRequestURL().toString().replace(pathInfo, "");</a>
+<span class="sourceLineNo">295</span><a id="line.295">        final String[] paths = pathInfo.split("/");</a>
+<span class="sourceLineNo">296</span><a id="line.296">        final String[] parentPaths = java.util.Arrays.copyOfRange(paths, 0, paths.length - 1);</a>
+<span class="sourceLineNo">297</span><a id="line.297">        return baseUrl + String.join("/", parentPaths);</a>
+<span class="sourceLineNo">298</span><a id="line.298">    }</a>
+<span class="sourceLineNo">299</span><a id="line.299"></a>
+<span class="sourceLineNo">300</span><a id="line.300">    private FedoraResource getContainer(final HttpServletRequest servletRequest) {</a>
+<span class="sourceLineNo">301</span><a id="line.301">        final FedoraResource resource = resource(servletRequest);</a>
+<span class="sourceLineNo">302</span><a id="line.302">        if (resource != null) {</a>
+<span class="sourceLineNo">303</span><a id="line.303">            return resource(servletRequest).getContainer();</a>
+<span class="sourceLineNo">304</span><a id="line.304">        }</a>
+<span class="sourceLineNo">305</span><a id="line.305">        final String parentURI = getContainerUrl(servletRequest);</a>
+<span class="sourceLineNo">306</span><a id="line.306">        return resource(servletRequest, getIdFromRequest(servletRequest, parentURI));</a>
+<span class="sourceLineNo">307</span><a id="line.307">    }</a>
+<span class="sourceLineNo">308</span><a id="line.308"></a>
+<span class="sourceLineNo">309</span><a id="line.309">    private FedoraResource resource(final HttpServletRequest servletRequest) {</a>
+<span class="sourceLineNo">310</span><a id="line.310">        return resource(servletRequest, getIdFromRequest(servletRequest));</a>
+<span class="sourceLineNo">311</span><a id="line.311">    }</a>
+<span class="sourceLineNo">312</span><a id="line.312"></a>
+<span class="sourceLineNo">313</span><a id="line.313">    private FedoraResource resource(final HttpServletRequest servletRequest, final FedoraId resourceId) {</a>
+<span class="sourceLineNo">314</span><a id="line.314">        try {</a>
+<span class="sourceLineNo">315</span><a id="line.315">            return this.resourceFactory.getResource(transaction(servletRequest), resourceId);</a>
+<span class="sourceLineNo">316</span><a id="line.316">        } catch (final PathNotFoundException e) {</a>
+<span class="sourceLineNo">317</span><a id="line.317">            return null;</a>
+<span class="sourceLineNo">318</span><a id="line.318">        }</a>
+<span class="sourceLineNo">319</span><a id="line.319">    }</a>
+<span class="sourceLineNo">320</span><a id="line.320"></a>
+<span class="sourceLineNo">321</span><a id="line.321">    private FedoraId getIdFromRequest(final HttpServletRequest servletRequest) {</a>
+<span class="sourceLineNo">322</span><a id="line.322">        final String httpURI = servletRequest.getRequestURL().toString();</a>
+<span class="sourceLineNo">323</span><a id="line.323">        return getIdFromRequest(servletRequest, httpURI);</a>
+<span class="sourceLineNo">324</span><a id="line.324">    }</a>
+<span class="sourceLineNo">325</span><a id="line.325"></a>
+<span class="sourceLineNo">326</span><a id="line.326">    private FedoraId getIdFromRequest(final HttpServletRequest request, final String httpURI) {</a>
+<span class="sourceLineNo">327</span><a id="line.327">        return FedoraId.create(identifierConverter(request).toInternalId(httpURI));</a>
+<span class="sourceLineNo">328</span><a id="line.328">    }</a>
+<span class="sourceLineNo">329</span><a id="line.329"></a>
+<span class="sourceLineNo">330</span><a id="line.330">    private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {</a>
+<span class="sourceLineNo">331</span><a id="line.331">        final String requestURL = httpRequest.getRequestURL().toString();</a>
+<span class="sourceLineNo">332</span><a id="line.332">        final boolean isAcl = requestURL.endsWith(FCR_ACL);</a>
+<span class="sourceLineNo">333</span><a id="line.333">        final boolean isTxEndpoint = requestURL.endsWith(FCR_TX) || requestURL.endsWith(FCR_TX + "/");</a>
+<span class="sourceLineNo">334</span><a id="line.334">        final URI requestURI = URI.create(requestURL);</a>
+<span class="sourceLineNo">335</span><a id="line.335">        log.debug("Request URI is {}", requestURI);</a>
+<span class="sourceLineNo">336</span><a id="line.336">        final FedoraResource resource = resource(httpRequest);</a>
+<span class="sourceLineNo">337</span><a id="line.337">        final FedoraResource container = getContainer(httpRequest);</a>
+<span class="sourceLineNo">338</span><a id="line.338"></a>
+<span class="sourceLineNo">339</span><a id="line.339">        // WebAC permissions</a>
+<span class="sourceLineNo">340</span><a id="line.340">        final WebACPermission toRead = new WebACPermission(WEBAC_MODE_READ, requestURI);</a>
+<span class="sourceLineNo">341</span><a id="line.341">        final WebACPermission toWrite = new WebACPermission(WEBAC_MODE_WRITE, requestURI);</a>
+<span class="sourceLineNo">342</span><a id="line.342">        final WebACPermission toAppend = new WebACPermission(WEBAC_MODE_APPEND, requestURI);</a>
+<span class="sourceLineNo">343</span><a id="line.343">        final WebACPermission toControl = new WebACPermission(WEBAC_MODE_CONTROL, requestURI);</a>
+<span class="sourceLineNo">344</span><a id="line.344"></a>
+<span class="sourceLineNo">345</span><a id="line.345">        switch (httpRequest.getMethod()) {</a>
+<span class="sourceLineNo">346</span><a id="line.346">        case "OPTIONS":</a>
+<span class="sourceLineNo">347</span><a id="line.347">        case "HEAD":</a>
+<span class="sourceLineNo">348</span><a id="line.348">        case "GET":</a>
+<span class="sourceLineNo">349</span><a id="line.349">            if (isAcl) {</a>
+<span class="sourceLineNo">350</span><a id="line.350">                if (currentUser.isPermitted(toControl)) {</a>
+<span class="sourceLineNo">351</span><a id="line.351">                    log.debug("GET allowed by {} permission", toControl);</a>
+<span class="sourceLineNo">352</span><a id="line.352">                    return true;</a>
+<span class="sourceLineNo">353</span><a id="line.353">                } else {</a>
+<span class="sourceLineNo">354</span><a id="line.354">                    log.debug("GET prohibited without {} permission", toControl);</a>
+<span class="sourceLineNo">355</span><a id="line.355">                    return false;</a>
+<span class="sourceLineNo">356</span><a id="line.356">                }</a>
+<span class="sourceLineNo">357</span><a id="line.357">            } else {</a>
+<span class="sourceLineNo">358</span><a id="line.358">                if (currentUser.isPermitted(toRead)) {</a>
+<span class="sourceLineNo">359</span><a id="line.359">                    if (!isAuthorizedForEmbeddedRequest(httpRequest, currentUser, resource)) {</a>
+<span class="sourceLineNo">360</span><a id="line.360">                        log.debug("GET/HEAD/OPTIONS request to {} denied, user {} not authorized for an embedded " +</a>
+<span class="sourceLineNo">361</span><a id="line.361">                                "resource", requestURL, currentUser.toString());</a>
+<span class="sourceLineNo">362</span><a id="line.362">                        return false;</a>
+<span class="sourceLineNo">363</span><a id="line.363">                    }</a>
+<span class="sourceLineNo">364</span><a id="line.364">                    return true;</a>
+<span class="sourceLineNo">365</span><a id="line.365">                }</a>
+<span class="sourceLineNo">366</span><a id="line.366">                return false;</a>
+<span class="sourceLineNo">367</span><a id="line.367">            }</a>
+<span class="sourceLineNo">368</span><a id="line.368">        case "PUT":</a>
+<span class="sourceLineNo">369</span><a id="line.369">            if (isAcl) {</a>
+<span class="sourceLineNo">370</span><a id="line.370">                if (currentUser.isPermitted(toControl)) {</a>
+<span class="sourceLineNo">371</span><a id="line.371">                    log.debug("PUT allowed by {} permission", toControl);</a>
+<span class="sourceLineNo">372</span><a id="line.372">                    return true;</a>
+<span class="sourceLineNo">373</span><a id="line.373">                } else {</a>
+<span class="sourceLineNo">374</span><a id="line.374">                    log.debug("PUT prohibited without {} permission", toControl);</a>
+<span class="sourceLineNo">375</span><a id="line.375">                    return false;</a>
+<span class="sourceLineNo">376</span><a id="line.376">                }</a>
+<span class="sourceLineNo">377</span><a id="line.377">            } else if (currentUser.isPermitted(toWrite)) {</a>
+<span class="sourceLineNo">378</span><a id="line.378">                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</a>
+<span class="sourceLineNo">379</span><a id="line.379">                    log.debug("PUT denied, not authorized to write to membershipRelation");</a>
+<span class="sourceLineNo">380</span><a id="line.380">                    return false;</a>
+<span class="sourceLineNo">381</span><a id="line.381">                }</a>
+<span class="sourceLineNo">382</span><a id="line.382">                log.debug("PUT allowed by {} permission", toWrite);</a>
+<span class="sourceLineNo">383</span><a id="line.383">                return true;</a>
+<span class="sourceLineNo">384</span><a id="line.384">            } else {</a>
+<span class="sourceLineNo">385</span><a id="line.385">                if (resource != null) {</a>
+<span class="sourceLineNo">386</span><a id="line.386">                    // can't PUT to an existing resource without acl:Write permission</a>
+<span class="sourceLineNo">387</span><a id="line.387">                    log.debug("PUT prohibited to existing resource without {} permission", toWrite);</a>
+<span class="sourceLineNo">388</span><a id="line.388">                    return false;</a>
+<span class="sourceLineNo">389</span><a id="line.389">                } else {</a>
+<span class="sourceLineNo">390</span><a id="line.390">                    // find nearest parent resource and verify that user has acl:Append on it</a>
+<span class="sourceLineNo">391</span><a id="line.391">                    // this works because when the authorizations are inherited, it is the target request URI that is</a>
+<span class="sourceLineNo">392</span><a id="line.392">                    // added as the resource, not the accessTo or other URI in the original authorization</a>
+<span class="sourceLineNo">393</span><a id="line.393">                    log.debug("Resource doesn't exist; checking parent resources for acl:Append permission");</a>
+<span class="sourceLineNo">394</span><a id="line.394">                    if (currentUser.isPermitted(toAppend)) {</a>
+<span class="sourceLineNo">395</span><a id="line.395">                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</a>
+<span class="sourceLineNo">396</span><a id="line.396">                            log.debug("PUT denied, not authorized to write to membershipRelation");</a>
+<span class="sourceLineNo">397</span><a id="line.397">                            return false;</a>
+<span class="sourceLineNo">398</span><a id="line.398">                        }</a>
+<span class="sourceLineNo">399</span><a id="line.399">                        log.debug("PUT allowed for new resource by inherited {} permission", toAppend);</a>
+<span class="sourceLineNo">400</span><a id="line.400">                        return true;</a>
+<span class="sourceLineNo">401</span><a id="line.401">                    } else {</a>
+<span class="sourceLineNo">402</span><a id="line.402">                        log.debug("PUT prohibited for new resource without inherited {} permission", toAppend);</a>
+<span class="sourceLineNo">403</span><a id="line.403">                        return false;</a>
+<span class="sourceLineNo">404</span><a id="line.404">                    }</a>
+<span class="sourceLineNo">405</span><a id="line.405">                }</a>
+<span class="sourceLineNo">406</span><a id="line.406">            }</a>
+<span class="sourceLineNo">407</span><a id="line.407">        case "POST":</a>
+<span class="sourceLineNo">408</span><a id="line.408">            if (isTxEndpoint &amp;&amp; currentUser.isAuthenticated()) {</a>
+<span class="sourceLineNo">409</span><a id="line.409">                final String currentUsername = ((Principal) currentUser.getPrincipal()).getName();</a>
+<span class="sourceLineNo">410</span><a id="line.410">                log.debug("POST allowed to transaction endpoint for authenticated user {}", currentUsername);</a>
+<span class="sourceLineNo">411</span><a id="line.411">                return true;</a>
+<span class="sourceLineNo">412</span><a id="line.412">            }</a>
+<span class="sourceLineNo">413</span><a id="line.413">            if (currentUser.isPermitted(toWrite)) {</a>
+<span class="sourceLineNo">414</span><a id="line.414">                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</a>
+<span class="sourceLineNo">415</span><a id="line.415">                    log.debug("POST denied, not authorized to write to membershipRelation");</a>
+<span class="sourceLineNo">416</span><a id="line.416">                    return false;</a>
+<span class="sourceLineNo">417</span><a id="line.417">                }</a>
+<span class="sourceLineNo">418</span><a id="line.418">                log.debug("POST allowed by {} permission", toWrite);</a>
+<span class="sourceLineNo">419</span><a id="line.419">                return true;</a>
+<span class="sourceLineNo">420</span><a id="line.420">            }</a>
+<span class="sourceLineNo">421</span><a id="line.421">            if (resource != null) {</a>
+<span class="sourceLineNo">422</span><a id="line.422">                if (isBinaryOrDescription(resource)) {</a>
+<span class="sourceLineNo">423</span><a id="line.423">                    // LDP-NR</a>
+<span class="sourceLineNo">424</span><a id="line.424">                    // user without the acl:Write permission cannot POST to binaries</a>
+<span class="sourceLineNo">425</span><a id="line.425">                    log.debug("POST prohibited to binary resource without {} permission", toWrite);</a>
+<span class="sourceLineNo">426</span><a id="line.426">                    return false;</a>
+<span class="sourceLineNo">427</span><a id="line.427">                } else {</a>
+<span class="sourceLineNo">428</span><a id="line.428">                    // LDP-RS</a>
+<span class="sourceLineNo">429</span><a id="line.429">                    // user with the acl:Append permission may POST to containers</a>
+<span class="sourceLineNo">430</span><a id="line.430">                    if (currentUser.isPermitted(toAppend)) {</a>
+<span class="sourceLineNo">431</span><a id="line.431">                        if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</a>
+<span class="sourceLineNo">432</span><a id="line.432">                            log.debug("POST denied, not authorized to write to membershipRelation");</a>
+<span class="sourceLineNo">433</span><a id="line.433">                            return false;</a>
+<span class="sourceLineNo">434</span><a id="line.434">                        }</a>
+<span class="sourceLineNo">435</span><a id="line.435">                        log.debug("POST allowed to container by {} permission", toAppend);</a>
+<span class="sourceLineNo">436</span><a id="line.436">                        return true;</a>
+<span class="sourceLineNo">437</span><a id="line.437">                    } else {</a>
+<span class="sourceLineNo">438</span><a id="line.438">                        log.debug("POST prohibited to container without {} permission", toAppend);</a>
+<span class="sourceLineNo">439</span><a id="line.439">                        return false;</a>
+<span class="sourceLineNo">440</span><a id="line.440">                    }</a>
+<span class="sourceLineNo">441</span><a id="line.441">                }</a>
+<span class="sourceLineNo">442</span><a id="line.442">            } else {</a>
+<span class="sourceLineNo">443</span><a id="line.443">                // prohibit POST to non-existent resources without the acl:Write permission</a>
+<span class="sourceLineNo">444</span><a id="line.444">                log.debug("POST prohibited to non-existent resource without {} permission", toWrite);</a>
+<span class="sourceLineNo">445</span><a id="line.445">                return false;</a>
+<span class="sourceLineNo">446</span><a id="line.446">            }</a>
+<span class="sourceLineNo">447</span><a id="line.447">        case "DELETE":</a>
+<span class="sourceLineNo">448</span><a id="line.448">            if (isAcl) {</a>
+<span class="sourceLineNo">449</span><a id="line.449">                if (currentUser.isPermitted(toControl)) {</a>
+<span class="sourceLineNo">450</span><a id="line.450">                    log.debug("DELETE allowed by {} permission", toControl);</a>
+<span class="sourceLineNo">451</span><a id="line.451">                    return true;</a>
+<span class="sourceLineNo">452</span><a id="line.452">                } else {</a>
+<span class="sourceLineNo">453</span><a id="line.453">                    log.debug("DELETE prohibited without {} permission", toControl);</a>
+<span class="sourceLineNo">454</span><a id="line.454">                    return false;</a>
+<span class="sourceLineNo">455</span><a id="line.455">                }</a>
+<span class="sourceLineNo">456</span><a id="line.456">            } else {</a>
+<span class="sourceLineNo">457</span><a id="line.457">                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</a>
+<span class="sourceLineNo">458</span><a id="line.458">                    log.debug("DELETE denied, not authorized to write to membershipRelation");</a>
+<span class="sourceLineNo">459</span><a id="line.459">                    return false;</a>
+<span class="sourceLineNo">460</span><a id="line.460">                } else if (currentUser.isPermitted(toWrite)) {</a>
+<span class="sourceLineNo">461</span><a id="line.461">                    if (!isAuthorizedForContainedResources(resource, WEBAC_MODE_WRITE, httpRequest, currentUser,</a>
+<span class="sourceLineNo">462</span><a id="line.462">                            true)) {</a>
+<span class="sourceLineNo">463</span><a id="line.463">                        log.debug("DELETE denied, not authorized to write to a descendant of {}", resource);</a>
+<span class="sourceLineNo">464</span><a id="line.464">                        return false;</a>
+<span class="sourceLineNo">465</span><a id="line.465">                    }</a>
+<span class="sourceLineNo">466</span><a id="line.466">                    return true;</a>
+<span class="sourceLineNo">467</span><a id="line.467">                }</a>
+<span class="sourceLineNo">468</span><a id="line.468">                return false;</a>
+<span class="sourceLineNo">469</span><a id="line.469">            }</a>
+<span class="sourceLineNo">470</span><a id="line.470">        case "PATCH":</a>
+<span class="sourceLineNo">471</span><a id="line.471"></a>
+<span class="sourceLineNo">472</span><a id="line.472">            if (isAcl) {</a>
+<span class="sourceLineNo">473</span><a id="line.473">                if (currentUser.isPermitted(toControl)) {</a>
+<span class="sourceLineNo">474</span><a id="line.474">                    log.debug("PATCH allowed by {} permission", toControl);</a>
+<span class="sourceLineNo">475</span><a id="line.475">                    return true;</a>
+<span class="sourceLineNo">476</span><a id="line.476">                } else {</a>
+<span class="sourceLineNo">477</span><a id="line.477">                    log.debug("PATCH prohibited without {} permission", toControl);</a>
+<span class="sourceLineNo">478</span><a id="line.478">                    return false;</a>
+<span class="sourceLineNo">479</span><a id="line.479">                }</a>
+<span class="sourceLineNo">480</span><a id="line.480">            } else if (currentUser.isPermitted(toWrite)) {</a>
+<span class="sourceLineNo">481</span><a id="line.481">                if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</a>
+<span class="sourceLineNo">482</span><a id="line.482">                    log.debug("PATCH denied, not authorized to write to membershipRelation");</a>
+<span class="sourceLineNo">483</span><a id="line.483">                    return false;</a>
+<span class="sourceLineNo">484</span><a id="line.484">                }</a>
+<span class="sourceLineNo">485</span><a id="line.485">                return true;</a>
+<span class="sourceLineNo">486</span><a id="line.486">            } else {</a>
+<span class="sourceLineNo">487</span><a id="line.487">                if (currentUser.isPermitted(toAppend)) {</a>
+<span class="sourceLineNo">488</span><a id="line.488">                    if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {</a>
+<span class="sourceLineNo">489</span><a id="line.489">                        log.debug("PATCH denied, not authorized to write to membershipRelation");</a>
+<span class="sourceLineNo">490</span><a id="line.490">                        return false;</a>
+<span class="sourceLineNo">491</span><a id="line.491">                    }</a>
+<span class="sourceLineNo">492</span><a id="line.492">                    return isPatchContentPermitted(httpRequest);</a>
+<span class="sourceLineNo">493</span><a id="line.493">                }</a>
+<span class="sourceLineNo">494</span><a id="line.494">            }</a>
+<span class="sourceLineNo">495</span><a id="line.495">            return false;</a>
+<span class="sourceLineNo">496</span><a id="line.496">        default:</a>
+<span class="sourceLineNo">497</span><a id="line.497">            return false;</a>
+<span class="sourceLineNo">498</span><a id="line.498">        }</a>
+<span class="sourceLineNo">499</span><a id="line.499">    }</a>
+<span class="sourceLineNo">500</span><a id="line.500"></a>
+<span class="sourceLineNo">501</span><a id="line.501">    private boolean isPatchContentPermitted(final HttpServletRequest httpRequest) throws IOException {</a>
+<span class="sourceLineNo">502</span><a id="line.502">        if (!isSparqlUpdate(httpRequest)) {</a>
+<span class="sourceLineNo">503</span><a id="line.503">            log.debug("Cannot verify authorization on NON-SPARQL Patch request.");</a>
+<span class="sourceLineNo">504</span><a id="line.504">            return false;</a>
+<span class="sourceLineNo">505</span><a id="line.505">        }</a>
+<span class="sourceLineNo">506</span><a id="line.506">        if (httpRequest.getInputStream() != null) {</a>
+<span class="sourceLineNo">507</span><a id="line.507">            boolean noDeletes = false;</a>
+<span class="sourceLineNo">508</span><a id="line.508">            try {</a>
+<span class="sourceLineNo">509</span><a id="line.509">                noDeletes = !hasDeleteClause(IOUtils.toString(httpRequest.getInputStream(), UTF_8));</a>
+<span class="sourceLineNo">510</span><a id="line.510">            } catch (final QueryParseException ex) {</a>
+<span class="sourceLineNo">511</span><a id="line.511">                log.error("Cannot verify authorization! Exception while inspecting SPARQL query!", ex);</a>
+<span class="sourceLineNo">512</span><a id="line.512">            }</a>
+<span class="sourceLineNo">513</span><a id="line.513">            return noDeletes;</a>
+<span class="sourceLineNo">514</span><a id="line.514">        } else {</a>
+<span class="sourceLineNo">515</span><a id="line.515">            log.debug("Authorizing SPARQL request with no content.");</a>
+<span class="sourceLineNo">516</span><a id="line.516">            return true;</a>
+<span class="sourceLineNo">517</span><a id="line.517">        }</a>
+<span class="sourceLineNo">518</span><a id="line.518">    }</a>
+<span class="sourceLineNo">519</span><a id="line.519"></a>
+<span class="sourceLineNo">520</span><a id="line.520">    private boolean hasDeleteClause(final String sparqlString) {</a>
+<span class="sourceLineNo">521</span><a id="line.521">        final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);</a>
+<span class="sourceLineNo">522</span><a id="line.522">        return sparqlUpdate.getOperations().stream()</a>
+<span class="sourceLineNo">523</span><a id="line.523">                .filter(update -&gt; update instanceof UpdateDataDelete)</a>
+<span class="sourceLineNo">524</span><a id="line.524">                .map(update -&gt; (UpdateDataDelete) update)</a>
+<span class="sourceLineNo">525</span><a id="line.525">                .anyMatch(update -&gt; update.getQuads().size() &gt; 0) ||</a>
+<span class="sourceLineNo">526</span><a id="line.526">                sparqlUpdate.getOperations().stream().filter(update -&gt; (update instanceof UpdateModify))</a>
+<span class="sourceLineNo">527</span><a id="line.527">                .peek(update -&gt; log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))</a>
+<span class="sourceLineNo">528</span><a id="line.528">                .map(update -&gt; (UpdateModify)update)</a>
+<span class="sourceLineNo">529</span><a id="line.529">                .filter(UpdateModify::hasDeleteClause)</a>
+<span class="sourceLineNo">530</span><a id="line.530">                .anyMatch(update -&gt; update.getDeleteQuads().size() &gt; 0);</a>
+<span class="sourceLineNo">531</span><a id="line.531">    }</a>
+<span class="sourceLineNo">532</span><a id="line.532"></a>
+<span class="sourceLineNo">533</span><a id="line.533">    private boolean isSparqlUpdate(final HttpServletRequest request) {</a>
+<span class="sourceLineNo">534</span><a id="line.534">        try {</a>
+<span class="sourceLineNo">535</span><a id="line.535">            return request.getMethod().equals("PATCH") &amp;&amp;</a>
+<span class="sourceLineNo">536</span><a id="line.536">                    sparqlUpdate.isCompatible(MediaType.valueOf(request</a>
+<span class="sourceLineNo">537</span><a id="line.537">                            .getContentType()));</a>
+<span class="sourceLineNo">538</span><a id="line.538">        } catch (final IllegalArgumentException e) {</a>
+<span class="sourceLineNo">539</span><a id="line.539">            return false;</a>
+<span class="sourceLineNo">540</span><a id="line.540">        }</a>
+<span class="sourceLineNo">541</span><a id="line.541">    }</a>
+<span class="sourceLineNo">542</span><a id="line.542"></a>
+<span class="sourceLineNo">543</span><a id="line.543">    /**</a>
+<span class="sourceLineNo">544</span><a id="line.544">     * Does the request's content-type match one of the RDF types.</a>
+<span class="sourceLineNo">545</span><a id="line.545">     *</a>
+<span class="sourceLineNo">546</span><a id="line.546">     * @param request the http servlet request</a>
+<span class="sourceLineNo">547</span><a id="line.547">     * @return whether the content-type matches.</a>
+<span class="sourceLineNo">548</span><a id="line.548">     */</a>
+<span class="sourceLineNo">549</span><a id="line.549">    private boolean isRdfRequest(final HttpServletRequest request) {</a>
+<span class="sourceLineNo">550</span><a id="line.550">        return request.getContentType() != null &amp;&amp; rdfContentTypes.contains(request.getContentType());</a>
+<span class="sourceLineNo">551</span><a id="line.551">    }</a>
+<span class="sourceLineNo">552</span><a id="line.552"></a>
+<span class="sourceLineNo">553</span><a id="line.553">    /**</a>
+<span class="sourceLineNo">554</span><a id="line.554">     * Is the request to create an indirect or direct container.</a>
+<span class="sourceLineNo">555</span><a id="line.555">     *</a>
+<span class="sourceLineNo">556</span><a id="line.556">     * @param request The current request</a>
+<span class="sourceLineNo">557</span><a id="line.557">     * @return whether we are acting on/creating an indirect/direct container.</a>
+<span class="sourceLineNo">558</span><a id="line.558">     */</a>
+<span class="sourceLineNo">559</span><a id="line.559">    private boolean isPayloadIndirectOrDirect(final HttpServletRequest request) {</a>
+<span class="sourceLineNo">560</span><a id="line.560">        return Collections.list(request.getHeaders("Link")).stream().map(Link::valueOf).map(Link::getUri)</a>
+<span class="sourceLineNo">561</span><a id="line.561">                .anyMatch(directOrIndirect::contains);</a>
+<span class="sourceLineNo">562</span><a id="line.562">    }</a>
+<span class="sourceLineNo">563</span><a id="line.563"></a>
+<span class="sourceLineNo">564</span><a id="line.564">    /**</a>
+<span class="sourceLineNo">565</span><a id="line.565">     * Is the current resource a direct or indirect container</a>
+<span class="sourceLineNo">566</span><a id="line.566">     *</a>
+<span class="sourceLineNo">567</span><a id="line.567">     * @param resource the resource to check</a>
+<span class="sourceLineNo">568</span><a id="line.568">     * @return whether it is a direct or indirect container.</a>
+<span class="sourceLineNo">569</span><a id="line.569">     */</a>
+<span class="sourceLineNo">570</span><a id="line.570">    private boolean isResourceIndirectOrDirect(final FedoraResource resource) {</a>
+<span class="sourceLineNo">571</span><a id="line.571">        // Tombstone are the only known resource with a null interaction model.</a>
+<span class="sourceLineNo">572</span><a id="line.572">        return resource != null &amp;&amp; resource.getInteractionModel() != null &amp;&amp;</a>
+<span class="sourceLineNo">573</span><a id="line.573">                Stream.of(resource.getInteractionModel()).map(URI::create)</a>
+<span class="sourceLineNo">574</span><a id="line.574">                .anyMatch(directOrIndirect::contains);</a>
+<span class="sourceLineNo">575</span><a id="line.575">    }</a>
+<span class="sourceLineNo">576</span><a id="line.576"></a>
+<span class="sourceLineNo">577</span><a id="line.577">    /**</a>
+<span class="sourceLineNo">578</span><a id="line.578">     * Check if we are authorized to access the target of membershipRelation if required. Really this is a test for</a>
+<span class="sourceLineNo">579</span><a id="line.579">     * failure. The default is true because we might not be looking at an indirect or direct container.</a>
+<span class="sourceLineNo">580</span><a id="line.580">     *</a>
+<span class="sourceLineNo">581</span><a id="line.581">     * @param request The current request</a>
+<span class="sourceLineNo">582</span><a id="line.582">     * @param currentUser The current principal</a>
+<span class="sourceLineNo">583</span><a id="line.583">     * @param resource The resource</a>
+<span class="sourceLineNo">584</span><a id="line.584">     * @param container The container</a>
+<span class="sourceLineNo">585</span><a id="line.585">     * @return Whether we are creating an indirect/direct container and can write the membershipRelation</a>
+<span class="sourceLineNo">586</span><a id="line.586">     * @throws IOException when getting request's inputstream</a>
+<span class="sourceLineNo">587</span><a id="line.587">     */</a>
+<span class="sourceLineNo">588</span><a id="line.588">    private boolean isAuthorizedForMembershipResource(final HttpServletRequest request, final Subject currentUser,</a>
+<span class="sourceLineNo">589</span><a id="line.589">                                                      final FedoraResource resource, final FedoraResource container)</a>
+<span class="sourceLineNo">590</span><a id="line.590">            throws IOException {</a>
+<span class="sourceLineNo">591</span><a id="line.591">        if (resource != null &amp;&amp; request.getMethod().equalsIgnoreCase("POST")) {</a>
+<span class="sourceLineNo">592</span><a id="line.592">            // Check resource if it exists and we are POSTing to it.</a>
+<span class="sourceLineNo">593</span><a id="line.593">            if (isResourceIndirectOrDirect(resource)) {</a>
+<span class="sourceLineNo">594</span><a id="line.594">                final URI membershipResource = getHasMemberFromResource(request);</a>
+<span class="sourceLineNo">595</span><a id="line.595">                addURIToAuthorize(request, membershipResource);</a>
+<span class="sourceLineNo">596</span><a id="line.596">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</a>
+<span class="sourceLineNo">597</span><a id="line.597">                    return false;</a>
+<span class="sourceLineNo">598</span><a id="line.598">                }</a>
+<span class="sourceLineNo">599</span><a id="line.599">            }</a>
+<span class="sourceLineNo">600</span><a id="line.600">        } else if (request.getMethod().equalsIgnoreCase("PUT")) {</a>
+<span class="sourceLineNo">601</span><a id="line.601">            // PUT to a URI check that the immediate container is not direct or indirect.</a>
+<span class="sourceLineNo">602</span><a id="line.602">            if (isResourceIndirectOrDirect(container)) {</a>
+<span class="sourceLineNo">603</span><a id="line.603">                final URI membershipResource = getHasMemberFromResource(request, container);</a>
+<span class="sourceLineNo">604</span><a id="line.604">                addURIToAuthorize(request, membershipResource);</a>
+<span class="sourceLineNo">605</span><a id="line.605">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</a>
+<span class="sourceLineNo">606</span><a id="line.606">                    return false;</a>
+<span class="sourceLineNo">607</span><a id="line.607">                }</a>
+<span class="sourceLineNo">608</span><a id="line.608">            }</a>
+<span class="sourceLineNo">609</span><a id="line.609">        } else if (isSparqlUpdate(request) &amp;&amp; isResourceIndirectOrDirect(resource)) {</a>
+<span class="sourceLineNo">610</span><a id="line.610">            // PATCH to a direct/indirect might change the ldp:membershipResource</a>
+<span class="sourceLineNo">611</span><a id="line.611">            final URI membershipResource = getHasMemberFromPatch(request);</a>
+<span class="sourceLineNo">612</span><a id="line.612">            if (membershipResource != null) {</a>
+<span class="sourceLineNo">613</span><a id="line.613">                log.debug("Found membership resource: {}", membershipResource);</a>
+<span class="sourceLineNo">614</span><a id="line.614">                // add the membership URI to the list URIs to retrieve ACLs for</a>
+<span class="sourceLineNo">615</span><a id="line.615">                addURIToAuthorize(request, membershipResource);</a>
+<span class="sourceLineNo">616</span><a id="line.616">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</a>
+<span class="sourceLineNo">617</span><a id="line.617">                    return false;</a>
+<span class="sourceLineNo">618</span><a id="line.618">                }</a>
+<span class="sourceLineNo">619</span><a id="line.619">            }</a>
+<span class="sourceLineNo">620</span><a id="line.620">        } else if (request.getMethod().equalsIgnoreCase("DELETE")) {</a>
+<span class="sourceLineNo">621</span><a id="line.621">            if (isResourceIndirectOrDirect(resource)) {</a>
+<span class="sourceLineNo">622</span><a id="line.622">                // If we delete a direct/indirect container we have to have access to the ldp:membershipResource</a>
+<span class="sourceLineNo">623</span><a id="line.623">                final URI membershipResource = getHasMemberFromResource(request);</a>
+<span class="sourceLineNo">624</span><a id="line.624">                addURIToAuthorize(request, membershipResource);</a>
+<span class="sourceLineNo">625</span><a id="line.625">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</a>
+<span class="sourceLineNo">626</span><a id="line.626">                    return false;</a>
+<span class="sourceLineNo">627</span><a id="line.627">                }</a>
+<span class="sourceLineNo">628</span><a id="line.628">            } else if (isResourceIndirectOrDirect(container)) {</a>
+<span class="sourceLineNo">629</span><a id="line.629">                // or if we delete a child of a direct/indirect container we have to have access to the</a>
+<span class="sourceLineNo">630</span><a id="line.630">                // ldp:membershipResource</a>
+<span class="sourceLineNo">631</span><a id="line.631">                final URI membershipResource = getHasMemberFromResource(request, container);</a>
+<span class="sourceLineNo">632</span><a id="line.632">                addURIToAuthorize(request, membershipResource);</a>
+<span class="sourceLineNo">633</span><a id="line.633">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</a>
+<span class="sourceLineNo">634</span><a id="line.634">                    return false;</a>
+<span class="sourceLineNo">635</span><a id="line.635">                }</a>
+<span class="sourceLineNo">636</span><a id="line.636">            }</a>
+<span class="sourceLineNo">637</span><a id="line.637">        }</a>
+<span class="sourceLineNo">638</span><a id="line.638"></a>
+<span class="sourceLineNo">639</span><a id="line.639">        if (isPayloadIndirectOrDirect(request)) {</a>
+<span class="sourceLineNo">640</span><a id="line.640">            // Check if we are creating a direct/indirect container.</a>
+<span class="sourceLineNo">641</span><a id="line.641">            final URI membershipResource = getHasMemberFromRequest(request);</a>
+<span class="sourceLineNo">642</span><a id="line.642">            if (membershipResource != null) {</a>
+<span class="sourceLineNo">643</span><a id="line.643">                log.debug("Found membership resource: {}", membershipResource);</a>
+<span class="sourceLineNo">644</span><a id="line.644">                // add the membership URI to the list URIs to retrieve ACLs for</a>
+<span class="sourceLineNo">645</span><a id="line.645">                addURIToAuthorize(request, membershipResource);</a>
+<span class="sourceLineNo">646</span><a id="line.646">                if (!currentUser.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, membershipResource))) {</a>
+<span class="sourceLineNo">647</span><a id="line.647">                    return false;</a>
+<span class="sourceLineNo">648</span><a id="line.648">                }</a>
+<span class="sourceLineNo">649</span><a id="line.649">            }</a>
+<span class="sourceLineNo">650</span><a id="line.650">        }</a>
+<span class="sourceLineNo">651</span><a id="line.651">        // Not indirect/directs or we are authorized.</a>
+<span class="sourceLineNo">652</span><a id="line.652">        return true;</a>
+<span class="sourceLineNo">653</span><a id="line.653">    }</a>
+<span class="sourceLineNo">654</span><a id="line.654"></a>
+<span class="sourceLineNo">655</span><a id="line.655">    /**</a>
+<span class="sourceLineNo">656</span><a id="line.656">     * Get the memberRelation object from the contents.</a>
+<span class="sourceLineNo">657</span><a id="line.657">     *</a>
+<span class="sourceLineNo">658</span><a id="line.658">     * @param request The request.</a>
+<span class="sourceLineNo">659</span><a id="line.659">     * @return The URI of the memberRelation object</a>
+<span class="sourceLineNo">660</span><a id="line.660">     * @throws IOException when getting request's inputstream</a>
+<span class="sourceLineNo">661</span><a id="line.661">     */</a>
+<span class="sourceLineNo">662</span><a id="line.662">    private URI getHasMemberFromRequest(final HttpServletRequest request) throws IOException {</a>
+<span class="sourceLineNo">663</span><a id="line.663">        final String baseUri = request.getRequestURL().toString();</a>
+<span class="sourceLineNo">664</span><a id="line.664">        final RDFReaderI reader;</a>
+<span class="sourceLineNo">665</span><a id="line.665">        final String contentType = request.getContentType();</a>
+<span class="sourceLineNo">666</span><a id="line.666">        final Lang format = contentTypeToLang(contentType);</a>
+<span class="sourceLineNo">667</span><a id="line.667">        final Model inputModel;</a>
+<span class="sourceLineNo">668</span><a id="line.668">        try {</a>
+<span class="sourceLineNo">669</span><a id="line.669">            inputModel = createDefaultModel();</a>
+<span class="sourceLineNo">670</span><a id="line.670">            reader = inputModel.getReader(format.getName().toUpperCase());</a>
+<span class="sourceLineNo">671</span><a id="line.671">            reader.read(inputModel, request.getInputStream(), baseUri);</a>
+<span class="sourceLineNo">672</span><a id="line.672">            final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);</a>
+<span class="sourceLineNo">673</span><a id="line.673">            return (st != null ? URI.create(st.getObject().toString()) : null);</a>
+<span class="sourceLineNo">674</span><a id="line.674">        } catch (final RiotException e) {</a>
+<span class="sourceLineNo">675</span><a id="line.675">            throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);</a>
+<span class="sourceLineNo">676</span><a id="line.676">        } catch (final RuntimeIOException e) {</a>
+<span class="sourceLineNo">677</span><a id="line.677">            if (e.getCause() instanceof JsonParseException) {</a>
+<span class="sourceLineNo">678</span><a id="line.678">                final var cause = e.getCause();</a>
+<span class="sourceLineNo">679</span><a id="line.679">                throw new MalformedRdfException(cause.getMessage(), cause);</a>
+<span class="sourceLineNo">680</span><a id="line.680">            }</a>
+<span class="sourceLineNo">681</span><a id="line.681">            throw new RepositoryRuntimeException(e.getMessage(), e);</a>
+<span class="sourceLineNo">682</span><a id="line.682">        }</a>
+<span class="sourceLineNo">683</span><a id="line.683">    }</a>
+<span class="sourceLineNo">684</span><a id="line.684"></a>
+<span class="sourceLineNo">685</span><a id="line.685">    /**</a>
+<span class="sourceLineNo">686</span><a id="line.686">     * Get the membershipRelation from a PATCH request</a>
+<span class="sourceLineNo">687</span><a id="line.687">     *</a>
+<span class="sourceLineNo">688</span><a id="line.688">     * @param request the http request</a>
+<span class="sourceLineNo">689</span><a id="line.689">     * @return URI of the first ldp:membershipRelation object.</a>
+<span class="sourceLineNo">690</span><a id="line.690">     * @throws IOException converting the request body to a string.</a>
+<span class="sourceLineNo">691</span><a id="line.691">     */</a>
+<span class="sourceLineNo">692</span><a id="line.692">    private URI getHasMemberFromPatch(final HttpServletRequest request) throws IOException {</a>
+<span class="sourceLineNo">693</span><a id="line.693">        final String sparqlString = IOUtils.toString(request.getInputStream(), UTF_8);</a>
+<span class="sourceLineNo">694</span><a id="line.694">        final String baseURI = request.getRequestURL().toString().replace(request.getContextPath(), "").replaceAll(</a>
+<span class="sourceLineNo">695</span><a id="line.695">                request.getPathInfo(), "").replaceAll("rest$", "");</a>
+<span class="sourceLineNo">696</span><a id="line.696">        final UpdateRequest sparqlUpdate = UpdateFactory.create(sparqlString);</a>
+<span class="sourceLineNo">697</span><a id="line.697">        // The INSERT|DELETE DATA quads</a>
+<span class="sourceLineNo">698</span><a id="line.698">        final Stream&lt;Quad&gt; insertDeleteData = sparqlUpdate.getOperations().stream()</a>
+<span class="sourceLineNo">699</span><a id="line.699">                .filter(update -&gt; update instanceof UpdateData)</a>
+<span class="sourceLineNo">700</span><a id="line.700">                .map(update -&gt; (UpdateData) update)</a>
+<span class="sourceLineNo">701</span><a id="line.701">                .flatMap(update -&gt; update.getQuads().stream());</a>
+<span class="sourceLineNo">702</span><a id="line.702">        // Get the UpdateModify instance to re-use below.</a>
+<span class="sourceLineNo">703</span><a id="line.703">        final List&lt;UpdateModify&gt; updateModifyStream = sparqlUpdate.getOperations().stream()</a>
+<span class="sourceLineNo">704</span><a id="line.704">                .filter(update -&gt; (update instanceof UpdateModify))</a>
+<span class="sourceLineNo">705</span><a id="line.705">                .peek(update -&gt; log.debug("Inspecting update statement for DELETE clause: {}", update.toString()))</a>
+<span class="sourceLineNo">706</span><a id="line.706">                .map(update -&gt; (UpdateModify) update)</a>
+<span class="sourceLineNo">707</span><a id="line.707">                .collect(toList());</a>
+<span class="sourceLineNo">708</span><a id="line.708">        // The INSERT {} WHERE {} quads</a>
+<span class="sourceLineNo">709</span><a id="line.709">        final Stream&lt;Quad&gt; insertQuadData = updateModifyStream.stream()</a>
+<span class="sourceLineNo">710</span><a id="line.710">                .flatMap(update -&gt; update.getInsertQuads().stream());</a>
+<span class="sourceLineNo">711</span><a id="line.711">        // The DELETE {} WHERE {} quads</a>
+<span class="sourceLineNo">712</span><a id="line.712">        final Stream&lt;Quad&gt; deleteQuadData = updateModifyStream.stream()</a>
+<span class="sourceLineNo">713</span><a id="line.713">                .flatMap(update -&gt; update.getDeleteQuads().stream());</a>
+<span class="sourceLineNo">714</span><a id="line.714">        // The ldp:membershipResource triples.</a>
+<span class="sourceLineNo">715</span><a id="line.715">        return Stream.concat(Stream.concat(insertDeleteData, insertQuadData), deleteQuadData)</a>
+<span class="sourceLineNo">716</span><a id="line.716">                .filter(update -&gt; update.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) &amp;&amp; update.getObject()</a>
+<span class="sourceLineNo">717</span><a id="line.717">                        .isURI())</a>
+<span class="sourceLineNo">718</span><a id="line.718">                .map(update -&gt; update.getObject().getURI())</a>
+<span class="sourceLineNo">719</span><a id="line.719">                .map(update -&gt; update.replace("file:///", baseURI))</a>
+<span class="sourceLineNo">720</span><a id="line.720">                .findFirst().map(URI::create).orElse(null);</a>
+<span class="sourceLineNo">721</span><a id="line.721">    }</a>
+<span class="sourceLineNo">722</span><a id="line.722"></a>
+<span class="sourceLineNo">723</span><a id="line.723">    /**</a>
+<span class="sourceLineNo">724</span><a id="line.724">     * Get ldp:membershipResource from an existing resource</a>
+<span class="sourceLineNo">725</span><a id="line.725">     *</a>
+<span class="sourceLineNo">726</span><a id="line.726">     * @param request the request</a>
+<span class="sourceLineNo">727</span><a id="line.727">     * @return URI of the ldp:membershipResource triple or null if not found.</a>
+<span class="sourceLineNo">728</span><a id="line.728">     */</a>
+<span class="sourceLineNo">729</span><a id="line.729">    private URI getHasMemberFromResource(final HttpServletRequest request) {</a>
+<span class="sourceLineNo">730</span><a id="line.730">        final FedoraResource resource = resource(request);</a>
+<span class="sourceLineNo">731</span><a id="line.731">        return getHasMemberFromResource(request, resource);</a>
+<span class="sourceLineNo">732</span><a id="line.732">    }</a>
+<span class="sourceLineNo">733</span><a id="line.733"></a>
+<span class="sourceLineNo">734</span><a id="line.734">    /**</a>
+<span class="sourceLineNo">735</span><a id="line.735">     * Get ldp:membershipResource from an existing resource</a>
+<span class="sourceLineNo">736</span><a id="line.736">     *</a>
+<span class="sourceLineNo">737</span><a id="line.737">     * @param request the request</a>
+<span class="sourceLineNo">738</span><a id="line.738">     * @param resource the FedoraResource</a>
+<span class="sourceLineNo">739</span><a id="line.739">     * @return URI of the ldp:membershipResource triple or null if not found.</a>
+<span class="sourceLineNo">740</span><a id="line.740">     */</a>
+<span class="sourceLineNo">741</span><a id="line.741">    private URI getHasMemberFromResource(final HttpServletRequest request, final FedoraResource resource) {</a>
+<span class="sourceLineNo">742</span><a id="line.742">        return resource.getTriples()</a>
+<span class="sourceLineNo">743</span><a id="line.743">                .filter(triple -&gt; triple.getPredicate().equals(MEMBERSHIP_RESOURCE.asNode()) &amp;&amp; triple.getObject()</a>
+<span class="sourceLineNo">744</span><a id="line.744">                        .isURI())</a>
+<span class="sourceLineNo">745</span><a id="line.745">                .map(Triple::getObject).map(Node::getURI)</a>
+<span class="sourceLineNo">746</span><a id="line.746">                .findFirst().map(URI::create).orElse(null);</a>
+<span class="sourceLineNo">747</span><a id="line.747">    }</a>
+<span class="sourceLineNo">748</span><a id="line.748"></a>
+<span class="sourceLineNo">749</span><a id="line.749">    /**</a>
+<span class="sourceLineNo">750</span><a id="line.750">     * Determine if the resource is a binary or a binary description.</a>
+<span class="sourceLineNo">751</span><a id="line.751">     * @param resource the fedora resource to check</a>
+<span class="sourceLineNo">752</span><a id="line.752">     * @return true if a binary or binary description.</a>
+<span class="sourceLineNo">753</span><a id="line.753">     */</a>
+<span class="sourceLineNo">754</span><a id="line.754">    private static boolean isBinaryOrDescription(final FedoraResource resource) {</a>
+<span class="sourceLineNo">755</span><a id="line.755">        // Tombstone are the only known resource with a null interaction model.</a>
+<span class="sourceLineNo">756</span><a id="line.756">        return resource.getInteractionModel() != null &amp;&amp; (</a>
+<span class="sourceLineNo">757</span><a id="line.757">                resource.getInteractionModel().equals(NON_RDF_SOURCE.toString()) ||</a>
+<span class="sourceLineNo">758</span><a id="line.758">                resource.getInteractionModel().equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));</a>
+<span class="sourceLineNo">759</span><a id="line.759">    }</a>
+<span class="sourceLineNo">760</span><a id="line.760"></a>
+<span class="sourceLineNo">761</span><a id="line.761">    /**</a>
+<span class="sourceLineNo">762</span><a id="line.762">     * Determine if the request is for embedding container resource descriptions.</a>
+<span class="sourceLineNo">763</span><a id="line.763">     * @param request the request</a>
+<span class="sourceLineNo">764</span><a id="line.764">     * @return true if include the Prefer tag for http://www.w3.org/ns/oa#PreferContainedDescriptions</a>
+<span class="sourceLineNo">765</span><a id="line.765">     */</a>
+<span class="sourceLineNo">766</span><a id="line.766">    private static boolean isEmbeddedRequest(final HttpServletRequest request) {</a>
+<span class="sourceLineNo">767</span><a id="line.767">        final var preferTags = request.getHeaders("Prefer");</a>
+<span class="sourceLineNo">768</span><a id="line.768">        final Set&lt;SinglePrefer&gt; preferTagSet = new HashSet&lt;&gt;();</a>
+<span class="sourceLineNo">769</span><a id="line.769">        while (preferTags.hasMoreElements()) {</a>
+<span class="sourceLineNo">770</span><a id="line.770">            preferTagSet.add(new SinglePrefer(preferTags.nextElement()));</a>
+<span class="sourceLineNo">771</span><a id="line.771">        }</a>
+<span class="sourceLineNo">772</span><a id="line.772">        final MultiPrefer multiPrefer = new MultiPrefer(preferTagSet);</a>
+<span class="sourceLineNo">773</span><a id="line.773">        if (multiPrefer.hasReturn()) {</a>
+<span class="sourceLineNo">774</span><a id="line.774">            final LdpPreferTag ldpPreferences = new LdpPreferTag(multiPrefer.getReturn());</a>
+<span class="sourceLineNo">775</span><a id="line.775">            return ldpPreferences.displayEmbed();</a>
+<span class="sourceLineNo">776</span><a id="line.776">        }</a>
+<span class="sourceLineNo">777</span><a id="line.777">        return false;</a>
+<span class="sourceLineNo">778</span><a id="line.778">    }</a>
+<span class="sourceLineNo">779</span><a id="line.779"></a>
+<span class="sourceLineNo">780</span><a id="line.780">    /**</a>
+<span class="sourceLineNo">781</span><a id="line.781">     * Is the user authorized to access the immediately contained resources of the requested resource.</a>
+<span class="sourceLineNo">782</span><a id="line.782">     * @param request the request</a>
+<span class="sourceLineNo">783</span><a id="line.783">     * @param currentUser the current user</a>
+<span class="sourceLineNo">784</span><a id="line.784">     * @param resource the resource being requested.</a>
+<span class="sourceLineNo">785</span><a id="line.785">     * @return true if authorized or not an embedded resource request on a container.</a>
+<span class="sourceLineNo">786</span><a id="line.786">     */</a>
+<span class="sourceLineNo">787</span><a id="line.787">    private boolean isAuthorizedForEmbeddedRequest(final HttpServletRequest request, final Subject currentUser,</a>
+<span class="sourceLineNo">788</span><a id="line.788">                                                      final FedoraResource resource) {</a>
+<span class="sourceLineNo">789</span><a id="line.789">        if (isEmbeddedRequest(request)) {</a>
+<span class="sourceLineNo">790</span><a id="line.790">            return isAuthorizedForContainedResources(resource, WEBAC_MODE_READ, request, currentUser, false);</a>
+<span class="sourceLineNo">791</span><a id="line.791">        }</a>
+<span class="sourceLineNo">792</span><a id="line.792">        // Is not an embedded resource request</a>
+<span class="sourceLineNo">793</span><a id="line.793">        return true;</a>
+<span class="sourceLineNo">794</span><a id="line.794">    }</a>
+<span class="sourceLineNo">795</span><a id="line.795"></a>
+<span class="sourceLineNo">796</span><a id="line.796">    /**</a>
+<span class="sourceLineNo">797</span><a id="line.797">     * Utility to check for a permission on the contained resources of a parent resource.</a>
+<span class="sourceLineNo">798</span><a id="line.798">     * @param resource the parent resource</a>
+<span class="sourceLineNo">799</span><a id="line.799">     * @param permission the permission required</a>
+<span class="sourceLineNo">800</span><a id="line.800">     * @param request the current request</a>
+<span class="sourceLineNo">801</span><a id="line.801">     * @param currentUser the current user</a>
+<span class="sourceLineNo">802</span><a id="line.802">     * @param deepTraversal whether to check children of children.</a>
+<span class="sourceLineNo">803</span><a id="line.803">     * @return true if we are allowed access to all descendants, false otherwise.</a>
+<span class="sourceLineNo">804</span><a id="line.804">     */</a>
+<span class="sourceLineNo">805</span><a id="line.805">    private boolean isAuthorizedForContainedResources(final FedoraResource resource, final URI permission,</a>
+<span class="sourceLineNo">806</span><a id="line.806">                                                      final HttpServletRequest request, final Subject currentUser,</a>
+<span class="sourceLineNo">807</span><a id="line.807">                                                      final boolean deepTraversal) {</a>
+<span class="sourceLineNo">808</span><a id="line.808">        if (!isBinaryOrDescription(resource)) {</a>
+<span class="sourceLineNo">809</span><a id="line.809">            final Transaction transaction = transaction(request);</a>
+<span class="sourceLineNo">810</span><a id="line.810">            final Stream&lt;FedoraResource&gt; children = resourceFactory.getChildren(transaction, resource.getFedoraId());</a>
+<span class="sourceLineNo">811</span><a id="line.811">            return children.noneMatch(resc -&gt; {</a>
+<span class="sourceLineNo">812</span><a id="line.812">                final URI childURI = URI.create(resc.getFedoraId().getFullId());</a>
+<span class="sourceLineNo">813</span><a id="line.813">                log.debug("Found embedded resource: {}", resc);</a>
+<span class="sourceLineNo">814</span><a id="line.814">                // add the contained URI to the list URIs to retrieve ACLs for</a>
+<span class="sourceLineNo">815</span><a id="line.815">                addURIToAuthorize(request, childURI);</a>
+<span class="sourceLineNo">816</span><a id="line.816">                if (!currentUser.isPermitted(new WebACPermission(permission, childURI))) {</a>
+<span class="sourceLineNo">817</span><a id="line.817">                    log.debug("Failed to access embedded resource: {}", childURI);</a>
+<span class="sourceLineNo">818</span><a id="line.818">                    return true;</a>
+<span class="sourceLineNo">819</span><a id="line.819">                }</a>
+<span class="sourceLineNo">820</span><a id="line.820">                if (deepTraversal) {</a>
+<span class="sourceLineNo">821</span><a id="line.821">                    // We invert this because the recursive noneMatch reports opposite what we want in here.</a>
+<span class="sourceLineNo">822</span><a id="line.822">                    // Here we want the true (no children failed) to become a false (no children matched a failure).</a>
+<span class="sourceLineNo">823</span><a id="line.823">                    return !isAuthorizedForContainedResources(resc, permission, request, currentUser, deepTraversal);</a>
+<span class="sourceLineNo">824</span><a id="line.824">                }</a>
+<span class="sourceLineNo">825</span><a id="line.825">                return false;</a>
+<span class="sourceLineNo">826</span><a id="line.826">            });</a>
+<span class="sourceLineNo">827</span><a id="line.827">        }</a>
+<span class="sourceLineNo">828</span><a id="line.828">        // Is a binary or description.</a>
+<span class="sourceLineNo">829</span><a id="line.829">        return true;</a>
+<span class="sourceLineNo">830</span><a id="line.830">    }</a>
+<span class="sourceLineNo">831</span><a id="line.831"></a>
+<span class="sourceLineNo">832</span><a id="line.832">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

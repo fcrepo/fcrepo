@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>Transactions.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">Transactions.java</span></div><h1>Transactions.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.api;
+
+import static java.util.Date.from;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_EXPIRES_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.EXPIRES_RFC_1123_FORMATTER;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_COMMIT_REL;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import io.micrometer.core.annotation.Timed;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionNotFoundException;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+/**
+ * The rest interface for transaction management. The interfaces
+ * allows for creation, commit and rollback of transactions.
+ *
+ * @author awoods
+ * @author gregjan
+ * @author mohideen
+ */
+@Timed
+@Scope(&quot;prototype&quot;)
+@Path(&quot;/fcr:tx&quot;)
+<span class="fc" id="L51">public class Transactions extends FedoraBaseResource {</span>
+
+<span class="fc" id="L53">    private static final Logger LOGGER = getLogger(Transactions.class);</span>
+
+    /**
+     * Get the status of an existing transaction
+     *
+     * @param txId id of the transaction
+     * @return 204 no content if status retrieved, 410 gone if transaction doesn't exist.
+     */
+    @GET
+    @Path(&quot;{transactionId}&quot;)
+    public Response getTransactionStatus(@PathParam(&quot;transactionId&quot;) final String txId) {
+        // Retrieve the tx provided via the path
+        final Transaction tx;
+        try {
+<span class="fc" id="L67">            tx = txManager.get(txId);</span>
+<span class="fc" id="L68">        } catch (final TransactionNotFoundException e) {</span>
+<span class="fc" id="L69">            return Response.status(Status.NOT_FOUND).build();</span>
+<span class="fc" id="L70">        } catch (final TransactionClosedException e) {</span>
+<span class="fc" id="L71">            return Response.status(Status.GONE)</span>
+<span class="fc" id="L72">                    .entity(e.getMessage())</span>
+<span class="fc" id="L73">                    .type(TEXT_PLAIN_WITH_CHARSET)</span>
+<span class="fc" id="L74">                    .build();</span>
+<span class="fc" id="L75">        }</span>
+
+<span class="fc" id="L77">        LOGGER.info(&quot;Checking transaction status'{}'&quot;, tx.getId());</span>
+
+<span class="fc" id="L79">        return Response.status(Status.NO_CONTENT)</span>
+<span class="fc" id="L80">                .header(ATOMIC_EXPIRES_HEADER, EXPIRES_RFC_1123_FORMATTER.format(tx.getExpires()))</span>
+<span class="fc" id="L81">                .build();</span>
+    }
+
+    /**
+     * Refresh an existing transaction
+     *
+     * @param txId id of the transaction
+     * @return 204 no content if successfully refreshed, 410 gone if transaction doesn't exist.
+     */
+    @POST
+    @Path(&quot;{transactionId}&quot;)
+    public Response refreshTransaction(@PathParam(&quot;transactionId&quot;) final String txId) {
+        // Retrieve the tx provided via the path
+        final Transaction tx;
+        try {
+<span class="fc" id="L96">            tx = txManager.get(txId);</span>
+<span class="fc" id="L97">        } catch (final TransactionNotFoundException e) {</span>
+<span class="fc" id="L98">            return Response.status(Status.NOT_FOUND).build();</span>
+<span class="fc" id="L99">        } catch (final TransactionClosedException e) {</span>
+<span class="fc" id="L100">            return Response.status(Status.GONE)</span>
+<span class="fc" id="L101">                    .entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET)</span>
+<span class="fc" id="L102">                    .build();</span>
+<span class="fc" id="L103">        }</span>
+
+<span class="fc" id="L105">        tx.refresh();</span>
+<span class="fc" id="L106">        LOGGER.info(&quot;Refreshed transaction '{}'&quot;, tx.getId());</span>
+
+<span class="fc" id="L108">        return Response.status(Status.NO_CONTENT)</span>
+<span class="fc" id="L109">                .header(ATOMIC_EXPIRES_HEADER, EXPIRES_RFC_1123_FORMATTER.format(tx.getExpires()))</span>
+<span class="fc" id="L110">                .build();</span>
+    }
+
+    /**
+     * Create a new transaction resource and add it to the registry
+     *
+     * @return 201 with the transaction id and expiration date
+     * @throws URISyntaxException if URI syntax exception occurred
+     */
+    @POST
+    public Response createTransaction() throws URISyntaxException {
+<span class="fc" id="L121">        final Transaction tx = transaction();</span>
+<span class="fc" id="L122">        tx.setShortLived(false);</span>
+
+<span class="fc" id="L124">        LOGGER.info(&quot;Created transaction '{}'&quot;, tx.getId());</span>
+<span class="fc" id="L125">        final var externalId = identifierConverter()</span>
+<span class="fc" id="L126">                .toExternalId(FEDORA_ID_PREFIX + &quot;/&quot; + TX_PREFIX + tx.getId());</span>
+<span class="fc" id="L127">        final var res = created(new URI(externalId));</span>
+<span class="fc" id="L128">        res.expires(from(tx.getExpires()));</span>
+
+<span class="fc" id="L130">        final var commitUri = URI.create(externalId);</span>
+<span class="fc" id="L131">        final var commitLink = Link.fromUri(commitUri).rel(TX_COMMIT_REL).build();</span>
+<span class="fc" id="L132">        res.links(commitLink);</span>
+
+<span class="fc" id="L134">        return res.build();</span>
+    }
+
+    /**
+     * Commit a transaction resource
+     *
+     * @param txId the transaction id
+     * @return 204
+     */
+    @PUT
+    @Path(&quot;{transactionId}&quot;)
+    public Response commit(@PathParam(&quot;transactionId&quot;) final String txId) {
+        try {
+<span class="fc" id="L147">            final Transaction transaction = txManager.get(txId);</span>
+<span class="fc" id="L148">            LOGGER.info(&quot;Committing transaction '{}'&quot;, transaction.getId());</span>
+<span class="fc" id="L149">            transaction.commit();</span>
+<span class="fc" id="L150">            return noContent().build();</span>
+<span class="fc" id="L151">        } catch (final TransactionNotFoundException e) {</span>
+<span class="fc" id="L152">            return Response.status(Status.NOT_FOUND).build();</span>
+<span class="fc" id="L153">        } catch (final TransactionClosedException e) {</span>
+<span class="fc" id="L154">            return Response.status(Status.GONE)</span>
+<span class="fc" id="L155">                    .entity(e.getMessage())</span>
+<span class="fc" id="L156">                    .type(TEXT_PLAIN_WITH_CHARSET)</span>
+<span class="fc" id="L157">                    .build();</span>
+<span class="fc" id="L158">        } catch (final RepositoryRuntimeException e) {</span>
+<span class="fc" id="L159">            return Response.status(Status.CONFLICT)</span>
+<span class="fc" id="L160">                    .entity(e.getMessage())</span>
+<span class="fc" id="L161">                    .type(TEXT_PLAIN_WITH_CHARSET)</span>
+<span class="fc" id="L162">                    .build();</span>
+        }
+    }
+
+    /**
+     * Rollback a transaction
+     *
+     * @param txId the transaction id
+     * @return 204
+     */
+    @DELETE
+    @Path(&quot;{transactionId}&quot;)
+    public Response rollback(@PathParam(&quot;transactionId&quot;) final String txId) {
+        try {
+<span class="fc" id="L176">            final Transaction transaction = txManager.get(txId);</span>
+<span class="fc" id="L177">            LOGGER.info(&quot;Rollback transaction '{}'&quot;, transaction.getId());</span>
+<span class="fc" id="L178">            transaction.rollback();</span>
+<span class="fc" id="L179">            return noContent().build();</span>
+<span class="fc" id="L180">        } catch (final TransactionNotFoundException e) {</span>
+<span class="fc" id="L181">            return Response.status(Status.NOT_FOUND).build();</span>
+<span class="fc" id="L182">        } catch (final TransactionClosedException e) {</span>
+<span class="fc" id="L183">            return Response.status(Status.GONE)</span>
+<span class="fc" id="L184">                    .entity(e.getMessage())</span>
+<span class="fc" id="L185">                    .type(TEXT_PLAIN_WITH_CHARSET)</span>
+<span class="fc" id="L186">                    .build();</span>
+<span class="fc" id="L187">        } catch (final RepositoryRuntimeException e) {</span>
+<span class="fc" id="L188">            return Response.status(Status.CONFLICT)</span>
+<span class="fc" id="L189">                    .entity(e.getMessage())</span>
+<span class="fc" id="L190">                    .type(TEXT_PLAIN_WITH_CHARSET)</span>
+<span class="fc" id="L191">                    .build();</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

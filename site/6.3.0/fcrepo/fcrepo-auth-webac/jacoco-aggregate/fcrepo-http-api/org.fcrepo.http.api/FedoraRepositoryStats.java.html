@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraRepositoryStats.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraRepositoryStats.java</span></div><h1>FedoraRepositoryStats.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.api;
+
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static org.apache.commons.lang3.ObjectUtils.isEmpty;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.List;
+
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+
+import io.micrometer.core.annotation.Timed;
+import org.fcrepo.stats.api.AggregatedRepositoryStatsResults;
+import org.fcrepo.stats.api.RepositoryStats;
+import org.fcrepo.stats.api.RepositoryStatsParameters;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Scope;
+
+/**
+ * An HTTP endpoint for retrieving statistics related to the repository.
+ *
+ * @author dbernstein
+ * @since 2022-01-27
+ */
+@Timed
+@Scope(&quot;request&quot;)
+@Path(&quot;/fcr:stats&quot;)
+public class FedoraRepositoryStats extends FedoraBaseResource {
+
+<span class="fc" id="L43">    private static final Logger LOGGER = getLogger(FedoraRepositoryStats.class);</span>
+
+    @Autowired
+    @Qualifier(&quot;stats&quot;)
+    private RepositoryStats repositoryStats;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraRepositoryStats() {
+<span class="fc" id="L53">        super();</span>
+<span class="fc" id="L54">    }</span>
+
+
+    /**
+     * Query summary info
+     *
+     * @return
+     */
+    @GET
+    @Produces({APPLICATION_JSON + &quot;;qs=1.0&quot;,
+            APPLICATION_JSON})
+    public Response getStats() {
+<span class="fc" id="L66">        final var builder = ok();</span>
+<span class="fc" id="L67">        final var statsParams = new RepositoryStatsParameters();</span>
+<span class="fc" id="L68">        final var totalResourceCount = repositoryStats.getResourceCount(statsParams);</span>
+<span class="fc" id="L69">        final var binaryResources = repositoryStats.getByMimeTypes(statsParams);</span>
+<span class="fc" id="L70">        final var rdfTypes = repositoryStats.getByRdfType(statsParams);</span>
+<span class="fc" id="L71">        final var aggregatedStats = new AggregatedRepositoryStatsResults();</span>
+<span class="fc" id="L72">        aggregatedStats.setResourceCount(totalResourceCount.getResourceCount());</span>
+<span class="fc" id="L73">        aggregatedStats.setBinaries(binaryResources);</span>
+<span class="fc" id="L74">        aggregatedStats.setAllResources(rdfTypes);</span>
+<span class="fc" id="L75">        return builder.entity(aggregatedStats).build();</span>
+
+    }
+
+    /**
+     * Method for querying rdf type stats
+     *
+     * @param rdfTypes A list of rdf types by which to limit the results. By default show all rdf types.
+     * @return
+     */
+    @GET
+    @Path(&quot;/rdf-types&quot;)
+    @Produces({APPLICATION_JSON + &quot;;qs=1.0&quot;,
+            APPLICATION_JSON})
+    public Response getStatsByRdfType(@QueryParam(value = &quot;rdf_type&quot;) final List&lt;String&gt; rdfTypes) {
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        if (listHasSingleBlankEntry(rdfTypes)) {</span>
+<span class="fc" id="L91">            return status(BAD_REQUEST).build();</span>
+        }
+<span class="fc" id="L93">        final var builder = ok();</span>
+<span class="fc" id="L94">        final var statsParams = new RepositoryStatsParameters();</span>
+<span class="fc" id="L95">        statsParams.setRdfTypes(rdfTypes);</span>
+<span class="fc" id="L96">        final var results = repositoryStats.getByRdfType(statsParams);</span>
+<span class="fc" id="L97">        return builder.entity(results).build();</span>
+    }
+
+    private boolean listHasSingleBlankEntry(final List&lt;String&gt; list) {
+<span class="fc bfc" id="L101" title="All 6 branches covered.">        return !isEmpty(list) &amp;&amp; list.size() == 1 &amp;&amp; list.get(0).trim().equals(&quot;&quot;);</span>
+    }
+
+    /**
+     * Method for querying binary stats
+     *
+     * @param mimeTypes A list of mime types by which to limit the results. By default show all binary mime types.
+     * @return
+     */
+    @GET
+    @Path(&quot;/binaries&quot;)
+    @Produces({APPLICATION_JSON + &quot;;qs=1.0&quot;,
+            APPLICATION_JSON})
+    public Response getBinaryStats(@QueryParam(value = &quot;mime_type&quot;) final List&lt;String&gt; mimeTypes ) {
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        if (listHasSingleBlankEntry(mimeTypes)) {</span>
+<span class="fc" id="L116">            return status(BAD_REQUEST).build();</span>
+        }
+
+<span class="fc" id="L119">        final var builder = ok();</span>
+<span class="fc" id="L120">        final var statsParams = new RepositoryStatsParameters();</span>
+<span class="fc" id="L121">        statsParams.setMimeTypes(mimeTypes);</span>
+<span class="fc" id="L122">        final var results = repositoryStats.getByMimeTypes(statsParams);</span>
+<span class="fc" id="L123">        return builder.entity(results).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ContainerRolesPrincipalProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-auth-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">ContainerRolesPrincipalProvider.java</span></div><h1>ContainerRolesPrincipalProvider.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.auth.common;
+
+import static java.util.Collections.emptySet;
+
+import javax.servlet.http.HttpServletRequest;
+
+import java.security.Principal;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * Adds principals based on roles that are configured within the container and
+ * through a PrincipalProvider bean in the project.
+ *
+ * @author Kevin S. Clarke
+ * @see PrincipalProvider
+ */
+<span class="fc" id="L27">public class ContainerRolesPrincipalProvider extends AbstractPrincipalProvider {</span>
+
+<span class="fc" id="L29">    private static final Logger LOGGER = LoggerFactory.getLogger(ContainerRolesPrincipalProvider.class);</span>
+
+    /**
+     * @author Kevin S. Clarke
+     */
+    public static class ContainerRolesPrincipal implements Principal {
+
+        private final String name;
+
+        /**
+         * @param name principal name
+         */
+<span class="fc" id="L41">        public ContainerRolesPrincipal(final String name) {</span>
+<span class="fc" id="L42">            this.name = name;</span>
+<span class="fc" id="L43">        }</span>
+
+        @Override
+        public String getName() {
+<span class="fc" id="L47">            return name;</span>
+        }
+
+        @Override
+        public String toString() {
+<span class="nc" id="L52">            return name;</span>
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            if (o instanceof ContainerRolesPrincipal) {</span>
+<span class="fc" id="L58">                return ((ContainerRolesPrincipal) o).getName().equals(this.getName());</span>
+            }
+
+<span class="fc" id="L61">            return false;</span>
+        }
+
+        @Override
+        public int hashCode() {
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">            if (name == null) {</span>
+<span class="nc" id="L67">                return 0;</span>
+            }
+
+<span class="fc" id="L70">            return name.hashCode();</span>
+        }
+
+    }
+
+    private Set&lt;String&gt; roleNames;
+
+    /**
+     * Sets the role names which have been configured in the repo.xml file.
+     *
+     * @param roleNames The names of container roles that should be recognized
+     *        as principals
+     */
+    public void setRoleNames(final Set&lt;String&gt; roleNames) {
+<span class="fc" id="L84">        this.roleNames = roleNames;</span>
+<span class="fc" id="L85">    }</span>
+
+    /*
+     * (non-Javadoc)
+     * @see
+     * org.fcrepo.auth.PrincipalProvider#getPrincipals(javax.servlet.http.HttpServletRequest)
+     */
+    @Override
+    public Set&lt;Principal&gt; getPrincipals(final HttpServletRequest request) {
+<span class="fc" id="L94">        LOGGER.debug(&quot;Checking for principals using {}&quot;, ContainerRolesPrincipalProvider.class.getSimpleName());</span>
+
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (request == null) {</span>
+<span class="fc" id="L97">            LOGGER.debug(&quot;Servlet request was null&quot;);</span>
+
+<span class="fc" id="L99">            return emptySet();</span>
+        }
+
+<span class="fc bfc" id="L102" title="All 2 branches covered.">        if (roleNames == null) {</span>
+<span class="fc" id="L103">            LOGGER.debug(&quot;Role names Set was never initialized&quot;);</span>
+
+<span class="fc" id="L105">            return emptySet();</span>
+        }
+
+<span class="fc" id="L108">        final Iterator&lt;String&gt; iterator = roleNames.iterator();</span>
+<span class="fc" id="L109">        final Set&lt;Principal&gt; principals = new HashSet&lt;&gt;();</span>
+
+<span class="fc bfc" id="L111" title="All 2 branches covered.">        while (iterator.hasNext()) {</span>
+<span class="fc" id="L112">            final String role = iterator.next().trim();</span>
+
+<span class="pc bpc" id="L114" title="1 of 2 branches missed.">            if (request.isUserInRole(role)) {</span>
+<span class="fc" id="L115">                LOGGER.debug(&quot;Adding container role as principal: {}&quot;, role);</span>
+
+<span class="fc" id="L117">                principals.add(new ContainerRolesPrincipal(role));</span>
+            }
+<span class="fc" id="L119">        }</span>
+
+<span class="fc" id="L121">        return principals;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
