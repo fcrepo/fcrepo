@@ -1,0 +1,872 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>DbSearchIndexImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.impl</a> &gt; <span class="el_source">DbSearchIndexImpl.java</span></div><h1>DbSearchIndexImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.search.impl;
+
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.stream.Collectors.toList;
+import static org.fcrepo.common.db.DbPlatform.POSTGRESQL;
+import static org.fcrepo.common.db.DbPlatform.H2;
+import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
+import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
+import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
+import static org.fcrepo.search.api.Condition.Field.RDF_TYPE;
+
+import java.net.URI;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
+import com.google.common.collect.Sets;
+import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.search.api.Condition;
+import org.fcrepo.search.api.InvalidQueryException;
+import org.fcrepo.search.api.PaginationInfo;
+import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.search.api.SearchResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * An implementation of the {@link SearchIndex}
+ *
+ * @author dbernstein
+ * @author whikloj
+ */
+@Component(&quot;searchIndexImpl&quot;)
+public class DbSearchIndexImpl implements SearchIndex {
+<span class="fc" id="L69">    private static final Logger LOGGER = LoggerFactory.getLogger(DbSearchIndexImpl.class);</span>
+
+    private static final String TRANSACTION_ID_COLUMN = &quot;transaction_id&quot;;
+    private static final String SIMPLE_SEARCH_TABLE = &quot;simple_search&quot;;
+    private static final String SIMPLE_SEARCH_TRANSACTIONS_TABLE = &quot;simple_search_transactions&quot;;
+    private static final String SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE = &quot;search_resource_rdf_type_transactions&quot;;
+    public static final String SEARCH_RESOURCE_RDF_TYPE_TABLE = &quot;search_resource_rdf_type&quot;;
+    public static final String SEARCH_RDF_TYPE_TABLE = &quot;search_rdf_type&quot;;
+
+    private static final String FEDORA_ID_COLUMN = &quot;fedora_id&quot;;
+    private static final String MODIFIED_COLUMN = &quot;modified&quot;;
+    private static final String CREATED_COLUMN = &quot;created&quot;;
+    private static final String CONTENT_SIZE_COLUMN = &quot;content_size&quot;;
+    private static final String MIME_TYPE_COLUMN = &quot;mime_type&quot;;
+    private static final String RESOURCE_ID_COLUMN = &quot;resource_id&quot;;
+    public static final String RDF_TYPE_ID_COLUMN = &quot;rdf_type_id&quot;;
+    public static final String ID_COLUMN = &quot;id&quot;;
+    private static final String OPERATION_COLUMN = &quot;operation&quot;;
+    private static final String RDF_TYPE_URI_COLUMN = &quot;rdf_type_uri&quot;;
+
+    private static final String FEDORA_ID_PARAM = &quot;fedora_id&quot;;
+    private static final String RESOURCE_ID_PARAM = &quot;resource_id&quot;;
+    private static final String RDF_TYPE_ID_PARAM = &quot;rdf_type_id&quot;;
+    private static final String MODIFIED_PARAM = &quot;modified&quot;;
+    private static final String CONTENT_SIZE_PARAM = &quot;content_size&quot;;
+    private static final String MIME_TYPE_PARAM = &quot;mime_type&quot;;
+    private static final String CREATED_PARAM = &quot;created&quot;;
+    public static final String RDF_TYPE_URI_PARAM = &quot;rdf_type_uri&quot;;
+    public static final String RESOURCE_SEARCH_ID_PARAM = &quot;resource_search_id&quot;;
+
+    public static final String TRANSACTION_ID_PARAM = &quot;transaction_id&quot;;
+    private static final String OPERATION_PARAM = &quot;operation&quot;;
+
+    private static final String RDF_TYPE_FILTER_SUB_TABLE = &quot;, (SELECT rrt.&quot; + RESOURCE_ID_COLUMN + &quot; from &quot; +
+            SEARCH_RESOURCE_RDF_TYPE_TABLE + &quot; rrt, &quot; +
+            SEARCH_RDF_TYPE_TABLE + &quot; rt, &quot; + SIMPLE_SEARCH_TABLE + &quot; s WHERE rrt.rdf_type_id = rt.id and s.id = &quot; +
+            &quot;rrt.resource_id and rt.&quot; + RDF_TYPE_URI_COLUMN + &quot; like :&quot; + RDF_TYPE_URI_PARAM +
+            &quot; group by rrt.&quot; + RESOURCE_ID_COLUMN + &quot;) r_filter&quot;;
+    private static final String RDF_TYPES_SUB_TABLE = &quot;, (SELECT rrt.resource_id,  group_concat_function as rdf_type &quot; +
+            &quot; from &quot; + SEARCH_RESOURCE_RDF_TYPE_TABLE + &quot; rrt, &quot; +
+            &quot;search_rdf_type rt ,&quot; + SIMPLE_SEARCH_TABLE + &quot; s &quot; +
+            &quot;WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r &quot;;
+
+    private static final String POSTGRES_GROUP_CONCAT_FUNCTION = &quot;STRING_AGG(b.rdf_type_uri, ',')&quot;;
+    private static final String DEFAULT_GROUP_CONCAT_FUNCTION = &quot;GROUP_CONCAT(distinct b.rdf_type_uri &quot; +
+            &quot;ORDER BY b.rdf_type_uri ASC SEPARATOR ',')&quot;;
+
+    private static final String UPSERT_SIMPLE_SEARCH_TRANSACTION_H2 =
+            &quot;MERGE INTO &quot; + SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; +
+                    CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;,&quot; +
+                    FEDORA_ID_COLUMN + &quot;,&quot; + OPERATION_COLUMN + &quot;, &quot; + TRANSACTION_ID_COLUMN +
+                    &quot;) KEY (&quot; + FEDORA_ID_COLUMN + &quot;, &quot; + TRANSACTION_ID_COLUMN + &quot;) VALUES ( :&quot; + MODIFIED_PARAM +
+                    &quot;, :&quot; + CREATED_PARAM + &quot;, :&quot; + CONTENT_SIZE_PARAM + &quot;, :&quot; + MIME_TYPE_PARAM + &quot;,&quot; +
+                    &quot;:&quot; + FEDORA_ID_PARAM + &quot;, :&quot; + OPERATION_PARAM + &quot;, :&quot; + TRANSACTION_ID_PARAM + &quot;)&quot;;
+
+    private static final String UPSERT_SIMPLE_SEARCH_H2 =
+            &quot;MERGE INTO &quot; + SIMPLE_SEARCH_TABLE + &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; +
+                    CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;,&quot; +
+                    FEDORA_ID_COLUMN + &quot;) KEY (&quot; + FEDORA_ID_COLUMN + &quot;) VALUES ( :&quot; + MODIFIED_PARAM +
+                    &quot;, :&quot; + CREATED_PARAM + &quot;, :&quot; + CONTENT_SIZE_PARAM + &quot;, :&quot; + MIME_TYPE_PARAM + &quot;,&quot; +
+                    &quot;:&quot; + FEDORA_ID_PARAM + &quot;)&quot;;
+
+    private static final String UPSERT_SIMPLE_SEARCH_TRANSACTION_MYSQL_MARIA =
+            &quot;INSERT INTO &quot; + SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; +
+                    CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;,&quot; +
+                    FEDORA_ID_COLUMN + &quot;,&quot; + OPERATION_COLUMN + &quot;, &quot; + TRANSACTION_ID_COLUMN +
+                    &quot;)  VALUES ( :&quot; + MODIFIED_PARAM + &quot;, :&quot; + CREATED_PARAM + &quot;, :&quot; + CONTENT_SIZE_PARAM +
+                    &quot;, :&quot; + MIME_TYPE_PARAM + &quot;,&quot; + &quot;:&quot; + FEDORA_ID_PARAM + &quot;, :&quot; + OPERATION_PARAM +
+                    &quot;, :&quot; + TRANSACTION_ID_PARAM + &quot;) ON DUPLICATE KEY &quot; +
+                    &quot;UPDATE &quot; + MODIFIED_COLUMN + &quot; = VALUES(&quot; + MODIFIED_COLUMN + &quot;), &quot; +
+                    CREATED_COLUMN + &quot;= VALUES(&quot; + CREATED_COLUMN + &quot;),&quot; +
+                    CONTENT_SIZE_COLUMN + &quot;= VALUES(&quot; + CONTENT_SIZE_COLUMN + &quot;),&quot; +
+                    MIME_TYPE_COLUMN + &quot;= VALUES(&quot; + MIME_TYPE_COLUMN + &quot;),&quot; +
+                    OPERATION_COLUMN + &quot;= VALUES(&quot; + OPERATION_COLUMN + &quot;)&quot;;
+
+    private static final String UPSERT_SIMPLE_SEARCH_MYSQL_MARIA =
+            &quot;INSERT INTO &quot; + SIMPLE_SEARCH_TABLE + &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; +
+                    CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;,&quot; +
+                    FEDORA_ID_COLUMN + &quot;)  VALUES ( :&quot; + MODIFIED_PARAM + &quot;, :&quot; + CREATED_PARAM +
+                    &quot;, :&quot; + CONTENT_SIZE_PARAM + &quot;, :&quot; + MIME_TYPE_PARAM + &quot;,&quot; + &quot;:&quot; + FEDORA_ID_PARAM + &quot;) &quot; +
+                    &quot;ON DUPLICATE KEY UPDATE &quot; + MODIFIED_COLUMN + &quot; = VALUES(&quot; + MODIFIED_COLUMN + &quot;), &quot; +
+                    CREATED_COLUMN + &quot;= VALUES(&quot; + CREATED_COLUMN + &quot;),&quot; +
+                    CONTENT_SIZE_COLUMN + &quot;= VALUES(&quot; + CONTENT_SIZE_COLUMN + &quot;),&quot; +
+                    MIME_TYPE_COLUMN + &quot;= VALUES(&quot; + MIME_TYPE_COLUMN + &quot;)&quot;;
+
+    private static final String UPSERT_SIMPLE_SEARCH_TRANSACTION_POSTGRESQL =
+            &quot;INSERT INTO &quot; + SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; +
+                    CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;,&quot; +
+                    FEDORA_ID_COLUMN + &quot;,&quot; + OPERATION_COLUMN + &quot;, &quot; + TRANSACTION_ID_COLUMN +
+                    &quot;)  VALUES ( :&quot; + MODIFIED_PARAM +
+                    &quot;, :&quot; + CREATED_PARAM + &quot;, :&quot; + CONTENT_SIZE_PARAM + &quot;, :&quot; + MIME_TYPE_PARAM + &quot;,&quot; +
+                    &quot;:&quot; + FEDORA_ID_PARAM + &quot;, :&quot; + OPERATION_PARAM + &quot;, :&quot; + TRANSACTION_ID_PARAM + &quot;) ON CONFLICT &quot; +
+                    &quot;( &quot; + FEDORA_ID_COLUMN + &quot;, &quot; + TRANSACTION_ID_COLUMN + &quot;) &quot; +
+                    &quot;DO UPDATE SET &quot; + MODIFIED_COLUMN + &quot; = EXCLUDED.&quot; + MODIFIED_COLUMN + &quot;, &quot; +
+                    CREATED_COLUMN + &quot; = EXCLUDED.&quot; + CREATED_COLUMN + &quot;, &quot; +
+                    CONTENT_SIZE_COLUMN + &quot; = EXCLUDED.&quot; + CONTENT_SIZE_COLUMN + &quot;, &quot; +
+                    MIME_TYPE_COLUMN + &quot; = EXCLUDED.&quot; + MIME_TYPE_COLUMN + &quot;, &quot; +
+                    OPERATION_COLUMN + &quot; = EXCLUDED.&quot; + OPERATION_COLUMN;
+
+    private static final String UPSERT_SIMPLE_SEARCH_POSTGRESQL =
+            &quot;INSERT INTO &quot; + SIMPLE_SEARCH_TABLE + &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; +
+                    CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;,&quot; +
+                    FEDORA_ID_COLUMN + &quot;)  VALUES ( :&quot; + MODIFIED_PARAM +
+                    &quot;, :&quot; + CREATED_PARAM + &quot;, :&quot; + CONTENT_SIZE_PARAM + &quot;, :&quot; + MIME_TYPE_PARAM + &quot;,&quot; +
+                    &quot;:&quot; + FEDORA_ID_PARAM + &quot;) ON CONFLICT ( &quot; + FEDORA_ID_COLUMN + &quot;) &quot; +
+                    &quot;DO UPDATE SET &quot; + MODIFIED_COLUMN + &quot; = EXCLUDED.&quot; + MODIFIED_COLUMN + &quot;, &quot; +
+                    CREATED_COLUMN + &quot; = EXCLUDED.&quot; + CREATED_COLUMN + &quot;, &quot; +
+                    CONTENT_SIZE_COLUMN + &quot; = EXCLUDED.&quot; + CONTENT_SIZE_COLUMN + &quot;, &quot; +
+                    MIME_TYPE_COLUMN + &quot; = EXCLUDED.&quot; + MIME_TYPE_COLUMN;
+
+    private static final String UPSERT_COMMIT_SIMPLE_SEARCH_H2 =
+            &quot;MERGE INTO &quot; + SIMPLE_SEARCH_TABLE +
+                    &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; + CONTENT_SIZE_COLUMN + &quot;,&quot; +
+                    MIME_TYPE_COLUMN + &quot;, &quot; + FEDORA_ID_COLUMN +
+                    &quot;) KEY (&quot; + FEDORA_ID_COLUMN + &quot;) SELECT &quot; + MODIFIED_COLUMN + &quot;, &quot; + CREATED_COLUMN +
+                    &quot;, &quot; + CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;, &quot; + FEDORA_ID_COLUMN + &quot; FROM &quot; +
+                    SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; WHERE &quot; + TRANSACTION_ID_COLUMN + &quot;= :&quot; +
+                    TRANSACTION_ID_PARAM + &quot; AND &quot; + OPERATION_COLUMN + &quot;='add'&quot;;
+
+    private static final String UPSERT_COMMIT_SIMPLE_SEARCH_MYSQL_MARIA = &quot;INSERT INTO &quot; + SIMPLE_SEARCH_TABLE +
+            &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; + CONTENT_SIZE_COLUMN + &quot;,&quot; +
+            MIME_TYPE_COLUMN + &quot;, &quot; + FEDORA_ID_COLUMN +
+            &quot;) SELECT &quot; + MODIFIED_COLUMN + &quot;, &quot; + CREATED_COLUMN +
+            &quot;, &quot; + CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;, &quot; + FEDORA_ID_COLUMN + &quot; FROM &quot; +
+            SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; a WHERE &quot; + TRANSACTION_ID_COLUMN + &quot;= :&quot; +
+            TRANSACTION_ID_PARAM + &quot; AND &quot; + OPERATION_COLUMN + &quot;='add' &quot; +
+            &quot;ON DUPLICATE KEY UPDATE &quot; + MODIFIED_COLUMN + &quot; = a.&quot; + MODIFIED_COLUMN + &quot;, &quot; +
+            CREATED_COLUMN + &quot; = a.&quot; + CREATED_COLUMN + &quot;, &quot; +
+            CONTENT_SIZE_COLUMN + &quot; = a.&quot; + CONTENT_SIZE_COLUMN + &quot;, &quot; +
+            MIME_TYPE_COLUMN + &quot; = a.&quot; + MIME_TYPE_COLUMN;
+
+    private static final String UPSERT_COMMIT_SIMPLE_SEARCH_POSTGRESQL = &quot;INSERT INTO &quot; + SIMPLE_SEARCH_TABLE +
+            &quot; (&quot; + MODIFIED_COLUMN + &quot;,&quot; + CREATED_COLUMN + &quot;, &quot; + CONTENT_SIZE_COLUMN + &quot;,&quot; +
+            MIME_TYPE_COLUMN + &quot;, &quot; + FEDORA_ID_COLUMN +
+            &quot;) SELECT &quot; + MODIFIED_COLUMN + &quot;, &quot; + CREATED_COLUMN +
+            &quot;, &quot; + CONTENT_SIZE_COLUMN + &quot;,&quot; + MIME_TYPE_COLUMN + &quot;, &quot; + FEDORA_ID_COLUMN + &quot; FROM &quot; +
+            SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; WHERE &quot; + TRANSACTION_ID_COLUMN + &quot;= :&quot; +
+            TRANSACTION_ID_PARAM + &quot; AND &quot; + OPERATION_COLUMN + &quot;='add' ON CONFLICT (&quot; + FEDORA_ID_COLUMN + &quot;) &quot; +
+            &quot;DO UPDATE SET &quot; + MODIFIED_COLUMN + &quot; = EXCLUDED.&quot; + MODIFIED_COLUMN + &quot;, &quot; +
+            CREATED_COLUMN + &quot; = EXCLUDED.&quot; + CREATED_COLUMN + &quot;, &quot; +
+            CONTENT_SIZE_COLUMN + &quot; = EXCLUDED.&quot; + CONTENT_SIZE_COLUMN + &quot;, &quot; +
+            MIME_TYPE_COLUMN + &quot; = EXCLUDED.&quot; + MIME_TYPE_COLUMN;
+
+    private static final String COMMIT_RDF_TYPES =
+            &quot;INSERT INTO &quot; + SEARCH_RDF_TYPE_TABLE + &quot; (&quot; + RDF_TYPE_URI_COLUMN + &quot;)&quot; +
+                    &quot; SELECT distinct &quot; + RDF_TYPE_URI_COLUMN + &quot; FROM &quot; + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE +
+                    &quot; WHERE &quot; + TRANSACTION_ID_COLUMN + &quot;= :&quot; + TRANSACTION_ID_PARAM + &quot; AND &quot; + RDF_TYPE_URI_COLUMN +
+                    &quot; NOT IN (SELECT &quot; + RDF_TYPE_URI_PARAM + &quot; FROM &quot; + SEARCH_RDF_TYPE_TABLE + &quot;)&quot;;
+
+    private static final String INSERT_RDF_TYPE =
+            &quot;INSERT INTO &quot; + SEARCH_RDF_TYPE_TABLE + &quot; (&quot; + RDF_TYPE_URI_COLUMN + &quot;)&quot; +
+                    &quot; VALUES (:&quot; + RDF_TYPE_URI_PARAM + &quot;)&quot;;
+
+    private static final String INSERT_RDF_TYPE_POSTGRES =
+            &quot;INSERT INTO &quot; + SEARCH_RDF_TYPE_TABLE + &quot; (&quot; + RDF_TYPE_URI_COLUMN + &quot;)&quot; +
+                    &quot; VALUES (:&quot; + RDF_TYPE_URI_PARAM + &quot;)&quot; +
+                    &quot; ON CONFLICT (&quot; + RDF_TYPE_URI_COLUMN + &quot;) DO NOTHING&quot;;
+
+    private static final String COMMIT_RDF_TYPE_ASSOCIATIONS =
+            &quot;INSERT INTO &quot; + SEARCH_RESOURCE_RDF_TYPE_TABLE +
+                    &quot; (&quot; + RESOURCE_ID_COLUMN + &quot;,&quot; + RDF_TYPE_ID_COLUMN + &quot;)&quot; +
+                    &quot; SELECT a.&quot; + ID_COLUMN + &quot;, b.&quot; + ID_COLUMN + &quot; FROM &quot; + SIMPLE_SEARCH_TABLE + &quot; a, &quot; +
+                    SEARCH_RDF_TYPE_TABLE + &quot; b, &quot; + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE + &quot; c WHERE c.&quot; +
+                    TRANSACTION_ID_COLUMN + &quot;= :&quot; + TRANSACTION_ID_PARAM + &quot; AND b.&quot; + RDF_TYPE_URI_COLUMN +
+                    &quot;= c.&quot; + RDF_TYPE_URI_COLUMN + &quot; AND c.&quot; + FEDORA_ID_COLUMN + &quot; = a.&quot; + FEDORA_ID_COLUMN +
+                    &quot; GROUP BY a.&quot; + ID_COLUMN + &quot;, b.&quot; + ID_COLUMN;
+
+    private static final String COMMIT_DELETE_RESOURCES_IN_TRANSACTION =
+            &quot;DELETE FROM &quot; + SIMPLE_SEARCH_TABLE + &quot; WHERE &quot; + FEDORA_ID_COLUMN + &quot; IN (SELECT  &quot; + FEDORA_ID_COLUMN +
+                    &quot; FROM &quot; + SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; WHERE &quot; + TRANSACTION_ID_COLUMN + &quot; = &quot; +
+                    &quot;:&quot; + TRANSACTION_ID_PARAM + &quot; AND &quot; + OPERATION_COLUMN + &quot; = 'delete')&quot;;
+
+    private static final String COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS =
+            &quot;DELETE FROM &quot; + SEARCH_RESOURCE_RDF_TYPE_TABLE + &quot; where &quot; +
+                    RESOURCE_ID_COLUMN + &quot; in (SELECT a.&quot; + ID_COLUMN + &quot; FROM &quot; + SIMPLE_SEARCH_TABLE + &quot; a, &quot; +
+                    SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; b &quot; +
+                    &quot; WHERE a.&quot; + FEDORA_ID_COLUMN + &quot;= b.&quot; + FEDORA_ID_COLUMN + &quot; AND b.&quot; + TRANSACTION_ID_COLUMN +
+                    &quot;= :&quot; + TRANSACTION_ID_PARAM + &quot;)&quot;;
+
+    private static final String DELETE_TRANSACTION =
+            &quot;DELETE FROM &quot; + SIMPLE_SEARCH_TRANSACTIONS_TABLE + &quot; WHERE &quot; + TRANSACTION_ID_COLUMN + &quot; = :&quot; +
+                    TRANSACTION_ID_PARAM;
+
+    private static final String DELETE_RESOURCE_FROM_SEARCH =
+            &quot;DELETE FROM &quot; + SIMPLE_SEARCH_TABLE + &quot; WHERE &quot; + FEDORA_ID_COLUMN + &quot; = :&quot; +
+                    FEDORA_ID_PARAM;
+
+    private static final String DELETE_RDF_TYPE_ASSOCIATIONS_IN_TRANSACTION =
+            &quot;DELETE FROM &quot; + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE + &quot; WHERE &quot; + TRANSACTION_ID_COLUMN + &quot; = :&quot; +
+                    TRANSACTION_ID_PARAM;
+
+
+<span class="fc" id="L261">    private static final Map&lt;DbPlatform, String&gt; DIRECT_UPSERT_MAPPING = Map.of(</span>
+            DbPlatform.H2, UPSERT_SIMPLE_SEARCH_H2,
+            DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
+            DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, UPSERT_SIMPLE_SEARCH_POSTGRESQL
+    );
+
+<span class="fc" id="L268">    private static final Map&lt;DbPlatform, String&gt; TRANSACTION_UPSERT_MAPPING = Map.of(</span>
+            DbPlatform.H2, UPSERT_SIMPLE_SEARCH_TRANSACTION_H2,
+            DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_TRANSACTION_MYSQL_MARIA,
+            DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_TRANSACTION_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, UPSERT_SIMPLE_SEARCH_TRANSACTION_POSTGRESQL
+    );
+
+<span class="fc" id="L275">    private static final Map&lt;DbPlatform, String&gt; UPSERT_COMMIT_MAPPING = Map.of(</span>
+            DbPlatform.H2, UPSERT_COMMIT_SIMPLE_SEARCH_H2,
+            DbPlatform.MYSQL, UPSERT_COMMIT_SIMPLE_SEARCH_MYSQL_MARIA,
+            DbPlatform.MARIADB, UPSERT_COMMIT_SIMPLE_SEARCH_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, UPSERT_COMMIT_SIMPLE_SEARCH_POSTGRESQL
+    );
+
+    /*
+     * Insert an association between a RDF type and a resource.
+     */
+    private static final String INSERT_RDF_TYPE_ASSOC_IN_TRANSACTION = &quot;INSERT INTO &quot; +
+            SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE + &quot; (&quot; + FEDORA_ID_COLUMN + &quot;, &quot; + RDF_TYPE_URI_COLUMN + &quot;, &quot; +
+            TRANSACTION_ID_COLUMN + &quot;) VALUES (:&quot; + FEDORA_ID_PARAM + &quot;, :&quot; + RDF_TYPE_URI_PARAM + &quot;, :&quot; +
+            TRANSACTION_ID_PARAM + &quot;)&quot;;
+
+    private static final String SELECT_RESOURCE_SEARCH_ID = &quot;SELECT &quot; + ID_COLUMN + &quot; FROM &quot; + SIMPLE_SEARCH_TABLE +
+            &quot; WHERE &quot; + FEDORA_ID_COLUMN + &quot; = :&quot; + FEDORA_ID_PARAM;
+
+    private static final String SELECT_RDF_TYPE_ID = &quot;SELECT &quot; + ID_COLUMN + &quot; FROM &quot; + SEARCH_RDF_TYPE_TABLE +
+            &quot; WHERE &quot; + RDF_TYPE_URI_COLUMN + &quot;= :&quot; + RDF_TYPE_URI_PARAM;
+
+    private static final String INSERT_RDF_TYPE_ASSOC = &quot;INSERT INTO &quot; + SEARCH_RESOURCE_RDF_TYPE_TABLE +
+            &quot; (&quot; + RESOURCE_ID_COLUMN + &quot;, &quot; + RDF_TYPE_ID_COLUMN + &quot;)&quot; +
+            &quot; VALUES (:&quot; + RESOURCE_SEARCH_ID_PARAM + &quot;, :&quot; + RDF_TYPE_ID_PARAM + &quot;)&quot;;
+
+    private static final String DELETE_RESOURCE_TYPE_ASSOCIATIONS_IN_TRANSACTION =
+            &quot;DELETE FROM &quot; + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE + &quot; WHERE &quot; +
+                    FEDORA_ID_COLUMN + &quot;= :&quot; + FEDORA_ID_PARAM + &quot; AND &quot; + TRANSACTION_ID_COLUMN + &quot;= :&quot; +
+                    TRANSACTION_ID_PARAM;
+
+    private static final String DELETE_RDF_TYPE_ASSOCIATIONS =
+            &quot;DELETE FROM &quot; + SEARCH_RESOURCE_RDF_TYPE_TABLE + &quot; WHERE &quot; + RESOURCE_ID_COLUMN +
+                    &quot; = (SELECT &quot; + ID_COLUMN + &quot; FROM &quot; + SIMPLE_SEARCH_TABLE + &quot; WHERE &quot; +
+                    FEDORA_ID_COLUMN + &quot; = :&quot; + FEDORA_ID_PARAM + &quot;)&quot;;
+
+<span class="fc" id="L310">    private static final List&lt;String&gt; COUNT_QUERY_COLUMNS = Arrays.asList(&quot;count(0) as count&quot;);</span>
+
+    @Inject
+    private DataSource dataSource;
+
+    private NamedParameterJdbcTemplate jdbcTemplate;
+
+    @Inject
+    private ResourceFactory resourceFactory;
+
+    private DbPlatform dbPlatForm;
+
+    private final Map&lt;URI, Long&gt; rdfTypeIdCache;
+
+    /**
+     * Setup database table and connection
+     */
+    @PostConstruct
+    public void setup() {
+<span class="fc" id="L329">        this.dbPlatForm = DbPlatform.fromDataSource(this.dataSource);</span>
+<span class="fc" id="L330">        this.jdbcTemplate = new NamedParameterJdbcTemplate(this.dataSource);</span>
+<span class="fc" id="L331">    }</span>
+
+<span class="fc" id="L333">    public DbSearchIndexImpl() {</span>
+<span class="fc" id="L334">        this.rdfTypeIdCache = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="fc" id="L335">    }</span>
+
+    @Override
+    public SearchResult doSearch(final SearchParameters parameters) throws InvalidQueryException {
+        //translate parameters into a SQL query
+<span class="fc" id="L340">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+<span class="fc" id="L341">        final var fields = parameters.getFields().stream().map(Condition.Field::toString).collect(toList());</span>
+<span class="fc" id="L342">        final var selectQuery = createSearchQuery(parameters, parameterSource, fields, false);</span>
+<span class="fc" id="L343">        final RowMapper&lt;Map&lt;String, Object&gt;&gt; rowMapper = createRowMapper(fields);</span>
+
+<span class="fc" id="L345">        Integer totalResults = -1;</span>
+<span class="fc bfc" id="L346" title="All 2 branches covered.">        if (parameters.isIncludeTotalResultCount()) {</span>
+<span class="fc" id="L347">            final var countQuery = createSearchQuery(parameters, parameterSource, Collections.emptyList(), true);</span>
+<span class="fc" id="L348">            LOGGER.debug(&quot;countQuery={}, parameterSource={}&quot;, countQuery, parameterSource);</span>
+<span class="fc" id="L349">            totalResults = jdbcTemplate.queryForObject(countQuery.toString(), parameterSource, Integer.class);</span>
+        }
+
+<span class="fc" id="L352">        final var selectQueryStr = selectQuery.toString();</span>
+<span class="fc" id="L353">        LOGGER.debug(&quot;selectQueryStr={}, parameterSource={}&quot;, selectQueryStr, parameterSource);</span>
+
+<span class="fc" id="L355">        final List&lt;Map&lt;String, Object&gt;&gt; items = jdbcTemplate.query(selectQueryStr, parameterSource, rowMapper);</span>
+<span class="fc" id="L356">        final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset(),</span>
+<span class="pc bpc" id="L357" title="1 of 2 branches missed.">                (totalResults != null ? totalResults : 0));</span>
+<span class="fc" id="L358">        LOGGER.debug(&quot;Search query with parameters: {} - {}&quot;, selectQuery.toString(), parameters);</span>
+<span class="fc" id="L359">        return new SearchResult(items, pagination);</span>
+    }
+
+    private RowMapper&lt;Map&lt;String, Object&gt;&gt; createRowMapper(final List&lt;String&gt; fields) {
+<span class="fc" id="L363">        return new RowMapper&lt;Map&lt;String, Object&gt;&gt;() {</span>
+            @Override
+            public Map&lt;String, Object&gt; mapRow(final ResultSet rs, final int rowNum) throws SQLException {
+<span class="fc" id="L366">                final Map&lt;String, Object&gt; map = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L367" title="All 2 branches covered.">                for (final String fieldStr : fields) {</span>
+<span class="fc" id="L368">                    var value = rs.getObject(fieldStr);</span>
+<span class="fc bfc" id="L369" title="All 2 branches covered.">                    if (value instanceof Timestamp) {</span>
+                        //format as iso instant if timestamp
+<span class="fc" id="L371">                        value = ISO_INSTANT.format(Instant.ofEpochMilli(((Timestamp) value).getTime()));</span>
+<span class="fc bfc" id="L372" title="All 2 branches covered.">                    } else if (fieldStr.equals(RDF_TYPE.toString())) {</span>
+                        //convert the comma-separate string to an array for rdf_type
+<span class="fc" id="L374">                        value = value.toString().split(&quot;,&quot;);</span>
+                    }
+<span class="fc" id="L376">                    map.put(fieldStr, value);</span>
+<span class="fc" id="L377">                }</span>
+<span class="fc" id="L378">                return map;</span>
+            }
+        };
+    }
+
+    private StringBuilder createSearchQuery(final SearchParameters parameters,
+                                            final MapSqlParameterSource parameterSource,
+                                            final List&lt;String&gt; selectedFields, final boolean isCountQuery)
+            throws InvalidQueryException {
+
+<span class="fc" id="L388">        final var queryFields = new ArrayList&lt;&gt;(selectedFields);</span>
+<span class="fc" id="L389">        final var fedoraIdStr = FEDORA_ID.toString();</span>
+
+<span class="fc bfc" id="L391" title="All 2 branches covered.">        if (!isCountQuery) {</span>
+<span class="fc bfc" id="L392" title="All 2 branches covered.">            if (!queryFields.contains(fedoraIdStr)) {</span>
+<span class="fc" id="L393">                queryFields.add(0,fedoraIdStr);</span>
+            }
+<span class="fc" id="L395">            queryFields.add(0,&quot;id&quot;);</span>
+        } else {
+<span class="fc" id="L397">            queryFields.add(&quot;count(0)&quot;);</span>
+        }
+
+<span class="fc" id="L400">        final var whereClauses = new ArrayList&lt;String&gt;();</span>
+<span class="fc" id="L401">        final var conditions = parameters.getConditions();</span>
+<span class="fc" id="L402">        final var fields = new ArrayList&lt;String&gt;(queryFields);</span>
+<span class="fc" id="L403">        final var rdfTypeConditionValue =</span>
+<span class="fc" id="L404">                conditions.stream().filter(c -&gt; c.getField().equals(RDF_TYPE)).findFirst().orElse(null);</span>
+<span class="fc" id="L405">        final var returnRdfType = fields.stream().anyMatch(x -&gt; x.equals(RDF_TYPE.toString()));</span>
+<span class="fc bfc" id="L406" title="All 2 branches covered.">        final var returnFields = fields.stream().filter(x -&gt; !x.equals(RDF_TYPE.toString())).collect(toList());</span>
+
+<span class="fc" id="L408">        final var sql = new StringBuilder(&quot;&quot;)</span>
+<span class="fc" id="L409">                .append(&quot;SELECT &quot;)</span>
+<span class="fc" id="L410">                .append(String.join(&quot;,&quot;, returnFields));</span>
+<span class="fc" id="L411">        sql.append(&quot; FROM &quot;)</span>
+<span class="fc" id="L412">                .append(SIMPLE_SEARCH_TABLE).append(&quot; s &quot;);</span>
+
+<span class="fc bfc" id="L414" title="All 2 branches covered.">        if (rdfTypeConditionValue != null) {</span>
+<span class="fc bfc" id="L415" title="All 2 branches covered.">            final var rdfTypeOperator = rdfTypeConditionValue.getObject().contains(&quot;*&quot;) ? &quot; LIKE &quot; : &quot; = &quot;;</span>
+<span class="fc" id="L416">            sql.append(&quot;, (SELECT &quot;).append(RESOURCE_ID_COLUMN).append(&quot; FROM &quot;)</span>
+<span class="fc" id="L417">                    .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(&quot; WHERE &quot;)</span>
+<span class="fc" id="L418">                    .append(RDF_TYPE_ID_COLUMN).append(&quot; IN (&quot;).append(&quot;SELECT ID FROM &quot;).append(SEARCH_RDF_TYPE_TABLE)</span>
+<span class="fc" id="L419">                    .append(&quot; WHERE &quot;).append(RDF_TYPE_URI_COLUMN).append(rdfTypeOperator)</span>
+<span class="fc" id="L420">                    .append(&quot;:&quot;).append(RDF_TYPE_URI_PARAM).append(&quot;)) rdf_type_filter &quot;);</span>
+<span class="fc" id="L421">            whereClauses.add(&quot;rdf_type_filter.resource_id = s.id&quot;);</span>
+<span class="fc" id="L422">            addRdfTypeParam(parameterSource, conditions);</span>
+        }
+
+<span class="fc bfc" id="L425" title="All 2 branches covered.">        for (int i = 0; i &lt; conditions.size(); i++) {</span>
+<span class="fc" id="L426">            addWhereClause(i, parameterSource, whereClauses, conditions.get(i));</span>
+        }
+
+<span class="fc bfc" id="L429" title="All 2 branches covered.">        if (!whereClauses.isEmpty()) {</span>
+<span class="fc" id="L430">            sql.append(&quot; WHERE &quot;);</span>
+<span class="fc bfc" id="L431" title="All 2 branches covered.">            for (final var it = whereClauses.iterator(); it.hasNext(); ) {</span>
+<span class="fc" id="L432">                sql.append(it.next());</span>
+<span class="fc bfc" id="L433" title="All 2 branches covered.">                if (it.hasNext()) {</span>
+<span class="fc" id="L434">                    sql.append(&quot; AND &quot;);</span>
+                }
+            }
+        }
+
+<span class="fc bfc" id="L439" title="All 2 branches covered.">        if (isCountQuery) {</span>
+<span class="fc" id="L440">            return sql;</span>
+        }
+
+<span class="fc bfc" id="L443" title="All 2 branches covered.">        if (parameters.getOrderBy() != null) {</span>
+            //add order by limit and offset to selectquery.
+<span class="fc" id="L445">            sql.append(&quot; ORDER BY &quot;).append(parameters.getOrderBy()).append(&quot; &quot;).append(parameters.getOrder());</span>
+        }
+
+<span class="fc" id="L448">        sql.append(&quot; LIMIT :limit OFFSET :offset&quot;);</span>
+<span class="fc" id="L449">        parameterSource.addValue(&quot;limit&quot;, parameters.getMaxResults());</span>
+<span class="fc" id="L450">        parameterSource.addValue(&quot;offset&quot;, parameters.getOffset());</span>
+
+<span class="fc bfc" id="L452" title="All 2 branches covered.">        if (!returnRdfType) {</span>
+<span class="fc" id="L453">            return sql;</span>
+        } else {
+<span class="fc" id="L455">            final var rdfTypeWrapperSql = new StringBuilder();</span>
+<span class="fc" id="L456">            rdfTypeWrapperSql.append(&quot;SELECT a.*, &quot;)</span>
+<span class="pc bpc" id="L457" title="1 of 2 branches missed.">                    .append(isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION)</span>
+<span class="fc" id="L458">                    .append(&quot; as rdf_type&quot;)</span>
+<span class="fc" id="L459">                    .append(&quot; FROM &quot;)</span>
+<span class="fc" id="L460">                    .append(&quot;(&quot;).append(sql).append(&quot;) a, &quot;)</span>
+<span class="fc" id="L461">                    .append(&quot;(SELECT rrt.resource_id , rt.rdf_type_uri FROM search_resource_rdf_type rrt, &quot; +</span>
+                            &quot;search_rdf_type rt WHERE  rrt.rdf_type_id = rt.id) b &quot;)
+<span class="fc" id="L463">                    .append(&quot;WHERE a.id = b.resource_id GROUP BY &quot;).append(String.join(&quot;,&quot;, returnFields));</span>
+
+<span class="fc bfc" id="L465" title="All 2 branches covered.">            if (parameters.getOrderBy() != null) {</span>
+                //add order by limit and offset to selectquery.
+<span class="fc" id="L467">                rdfTypeWrapperSql.append(&quot; ORDER BY &quot;).append(parameters.getOrderBy()).append(&quot; &quot;)</span>
+<span class="fc" id="L468">                        .append(parameters.getOrder());</span>
+            }
+
+<span class="fc" id="L471">            return rdfTypeWrapperSql;</span>
+        }
+    }
+
+    private void addRdfTypeParam(final MapSqlParameterSource parameterSource, final List&lt;Condition&gt; conditions) {
+<span class="fc" id="L476">        var rdfTypeUriParamValue = &quot;*&quot;;</span>
+<span class="pc bpc" id="L477" title="1 of 2 branches missed.">        for (final Condition condition : conditions) {</span>
+<span class="fc bfc" id="L478" title="All 2 branches covered.">            if (condition.getField().equals(RDF_TYPE)) {</span>
+<span class="fc" id="L479">                rdfTypeUriParamValue = condition.getObject();</span>
+<span class="fc" id="L480">                break;</span>
+            }
+<span class="fc" id="L482">        }</span>
+<span class="fc" id="L483">        parameterSource.addValue(RDF_TYPE_URI_PARAM, convertToSqlLikeWildcard(rdfTypeUriParamValue));</span>
+<span class="fc" id="L484">    }</span>
+
+    private void addWhereClause(final int paramCount, final MapSqlParameterSource parameterSource,
+                                final List&lt;String&gt; whereClauses,
+                                final Condition condition) throws InvalidQueryException {
+<span class="fc" id="L489">        final var field = condition.getField();</span>
+<span class="fc" id="L490">        final var operation = condition.getOperator();</span>
+<span class="fc" id="L491">        var object = condition.getObject();</span>
+<span class="fc" id="L492">        final var paramName = &quot;param&quot; + paramCount;</span>
+<span class="fc bfc" id="L493" title="All 4 branches covered.">        if ((field.equals(FEDORA_ID) || field.equals(MIME_TYPE)) &amp;&amp;</span>
+<span class="pc bpc" id="L494" title="1 of 2 branches missed.">                condition.getOperator().equals(Condition.Operator.EQ)) {</span>
+<span class="fc bfc" id="L495" title="All 2 branches covered.">            if (!object.equals(&quot;*&quot;)) {</span>
+                final String whereClause;
+<span class="fc bfc" id="L497" title="All 2 branches covered.">                if (object.contains(&quot;*&quot;)) {</span>
+<span class="fc" id="L498">                    object = convertToSqlLikeWildcard(object);</span>
+<span class="fc bfc" id="L499" title="All 2 branches covered.">                    if (object.contains(&quot;_&quot;)) {</span>
+<span class="fc" id="L500">                        object = object.replaceAll(&quot;_&quot;, &quot;\\\\_&quot;);</span>
+                    }
+<span class="fc" id="L502">                    whereClause = field + &quot; like :&quot; + paramName;</span>
+                } else {
+<span class="fc" id="L504">                    whereClause = field + &quot; = :&quot; + paramName;</span>
+                }
+
+<span class="fc" id="L507">                whereClauses.add(&quot;s.&quot; +  whereClause);</span>
+<span class="fc" id="L508">                parameterSource.addValue(paramName, object);</span>
+<span class="fc" id="L509">            }</span>
+<span class="pc bpc" id="L510" title="2 of 4 branches missed.">        } else if (field.equals(Condition.Field.CREATED) || field.equals(Condition.Field.MODIFIED)) {</span>
+            //parse date
+            try {
+<span class="nc" id="L513">                final var instant = InstantParser.parse(object);</span>
+<span class="nc" id="L514">                whereClauses.add(&quot;s.&quot; + field + &quot; &quot; + operation.getStringValue() + &quot; :&quot; + paramName);</span>
+<span class="nc" id="L515">                parameterSource.addValue(paramName, new Timestamp(instant.toEpochMilli()), Types.TIMESTAMP);</span>
+<span class="nc" id="L516">            } catch (final Exception ex) {</span>
+<span class="nc" id="L517">                throw new InvalidQueryException(ex.getMessage());</span>
+<span class="nc" id="L518">            }</span>
+<span class="fc bfc" id="L519" title="All 2 branches covered.">        } else if (field.equals(CONTENT_SIZE)) {</span>
+            try {
+<span class="fc" id="L521">                whereClauses.add(field + &quot; &quot; + operation.getStringValue() +</span>
+                        &quot; :&quot; + paramName);
+<span class="fc" id="L523">                parameterSource.addValue(paramName, Long.parseLong(object), Types.INTEGER);</span>
+<span class="nc" id="L524">            } catch (final Exception ex) {</span>
+<span class="nc" id="L525">                throw new InvalidQueryException(ex.getMessage());</span>
+<span class="fc" id="L526">            }</span>
+<span class="pc bpc" id="L527" title="2 of 4 branches missed.">        } else if (field.equals(RDF_TYPE) &amp;&amp; condition.getOperator().equals(Condition.Operator.EQ) ) {</span>
+           //allowed but no where clause added here.
+        } else {
+<span class="nc" id="L530">            throw new InvalidQueryException(&quot;Condition not supported: \&quot;&quot; + condition + &quot;\&quot;&quot;);</span>
+        }
+<span class="fc" id="L532">    }</span>
+
+    private String convertToSqlLikeWildcard(final String value) {
+<span class="fc" id="L535">        return value.replace(&quot;*&quot;, &quot;%&quot;);</span>
+    }
+
+    @Override
+    public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
+<span class="fc" id="L540">        final var fedoraId = resourceHeaders.getId();</span>
+<span class="pc bpc" id="L541" title="1 of 4 branches missed.">        if (fedoraId.isAcl() || fedoraId.isMemento()) {</span>
+<span class="fc" id="L542">            LOGGER.debug(&quot;The search index does not include acls or mementos. Ignoring resource {}&quot;,</span>
+<span class="fc" id="L543">                    fedoraId.getFullId());</span>
+<span class="fc" id="L544">            return;</span>
+        }
+<span class="fc" id="L546">        LOGGER.debug(&quot;Updating search index for {}&quot;, fedoraId);</span>
+<span class="fc" id="L547">        transaction.doInTx(() -&gt; {</span>
+<span class="fc bfc" id="L548" title="All 2 branches covered.">            if (!transaction.isShortLived()) {</span>
+<span class="fc" id="L549">                doUpsertWithTransaction(transaction, resourceHeaders, fedoraId);</span>
+            } else {
+<span class="fc" id="L551">                doDirectUpsert(transaction, resourceHeaders, fedoraId);</span>
+            }
+<span class="fc" id="L553">        });</span>
+
+<span class="fc" id="L555">    }</span>
+
+    private void doDirectUpsert(final Transaction transaction, final ResourceHeaders resourceHeaders,
+                                final FedoraId fedoraId) {
+<span class="fc" id="L559">        final var fullId = fedoraId.getFullId();</span>
+        try {
+<span class="fc" id="L561">            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);</span>
+<span class="fc" id="L562">            doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);</span>
+<span class="fc" id="L563">            final var rdfTypes = new ArrayList&lt;&gt;(Sets.newHashSet(fedoraResource.getTypes()));</span>
+<span class="fc" id="L564">            final var newTypes = insertRdfTypes(rdfTypes);</span>
+<span class="fc" id="L565">            deleteRdfTypeAssociations(fedoraId);</span>
+<span class="fc" id="L566">            insertRdfTypeAssociations(rdfTypes, newTypes, fedoraId);</span>
+<span class="nc" id="L567">        } catch (final Exception e) {</span>
+<span class="nc" id="L568">            throw new RepositoryRuntimeException(&quot;Failed add/updated the search index for : &quot; + fullId, e);</span>
+<span class="fc" id="L569">        }</span>
+<span class="fc" id="L570">    }</span>
+
+    /**
+     * Adds the list of RDF types to the db, if they aren't already there, and returns a set of types that were
+     * actually added.
+     *
+     * @param rdfTypes the types to attempt to add
+     * @return the types that were added
+     */
+    private Set&lt;URI&gt; insertRdfTypes(final List&lt;URI&gt; rdfTypes) {
+<span class="fc" id="L580">        final var addTypes = new HashSet&lt;URI&gt;();</span>
+
+<span class="fc" id="L582">        rdfTypes.stream()</span>
+<span class="fc bfc" id="L583" title="All 2 branches covered.">                .filter(rdfType -&gt; !rdfTypeIdCache.containsKey(rdfType))</span>
+<span class="fc" id="L584">                .forEach(rdfType -&gt; {</span>
+                    try {
+<span class="fc" id="L586">                        final var params = new MapSqlParameterSource();</span>
+<span class="fc" id="L587">                        params.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());</span>
+<span class="pc bpc" id="L588" title="1 of 2 branches missed.">                        if (isPostgres()) {</span>
+                            // weirdly, postgres spoils the entire tx on duplicate keys and must be handled differently
+<span class="nc" id="L590">                            jdbcTemplate.update(INSERT_RDF_TYPE_POSTGRES, params);</span>
+                        } else {
+<span class="fc" id="L592">                            jdbcTemplate.update(INSERT_RDF_TYPE, params);</span>
+                        }
+
+<span class="fc" id="L595">                        addTypes.add(rdfType);</span>
+<span class="fc" id="L596">                    } catch (DuplicateKeyException e) {</span>
+                        // ignore duplicate keys
+<span class="fc" id="L598">                    }</span>
+<span class="fc" id="L599">                });</span>
+
+<span class="fc" id="L601">        return addTypes;</span>
+    }
+
+    private void doUpsertWithTransaction(final Transaction transaction, final ResourceHeaders resourceHeaders,
+                                         final FedoraId fedoraId) {
+<span class="fc" id="L606">        final var fullId = fedoraId.getFullId();</span>
+        try {
+<span class="fc" id="L608">            final var txId = transaction.getId();</span>
+<span class="fc" id="L609">            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);</span>
+<span class="fc" id="L610">            doUpsertIntoTransactionTables(txId, fedoraId, resourceHeaders, &quot;add&quot;);</span>
+            // add rdf type associations to the rdf type association table
+<span class="fc" id="L612">            final var rdfTypes = Sets.newHashSet(fedoraResource.getTypes());</span>
+<span class="fc" id="L613">            insertRdfTypeAssociationsInTransaction(rdfTypes, txId, fedoraId);</span>
+<span class="nc" id="L614">        } catch (final Exception e) {</span>
+<span class="nc" id="L615">            throw new RepositoryRuntimeException(&quot;Failed add/updated the search index for : &quot; + fullId, e);</span>
+<span class="fc" id="L616">        }</span>
+<span class="fc" id="L617">    }</span>
+
+    /**
+     * Do the upsert action to the transaction table.
+     *
+     * @param txId            the transaction id
+     * @param fedoraId        the resourceId
+     * @param resourceHeaders the resources headers
+     * @param operation       the operation to perform.
+     */
+    private void doUpsertIntoTransactionTables(final String txId, final FedoraId fedoraId,
+                                               final ResourceHeaders resourceHeaders, final String operation) {
+<span class="fc" id="L629">        var mimetype = &quot;&quot;;</span>
+<span class="fc" id="L630">        long contentSize = 0;</span>
+<span class="fc" id="L631">        var modified = Instant.now();</span>
+<span class="fc" id="L632">        var created = Instant.now();</span>
+<span class="fc bfc" id="L633" title="All 2 branches covered.">        if (resourceHeaders != null) {</span>
+<span class="fc" id="L634">            contentSize = resourceHeaders.getContentSize();</span>
+<span class="fc" id="L635">            mimetype = resourceHeaders.getMimeType();</span>
+<span class="fc" id="L636">            modified = resourceHeaders.getLastModifiedDate();</span>
+<span class="fc" id="L637">            created = resourceHeaders.getCreatedDate();</span>
+        }
+
+<span class="fc" id="L640">        final var params = new MapSqlParameterSource();</span>
+<span class="fc" id="L641">        params.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());</span>
+<span class="fc" id="L642">        params.addValue(MIME_TYPE_PARAM, mimetype);</span>
+<span class="fc" id="L643">        params.addValue(CONTENT_SIZE_PARAM, contentSize);</span>
+<span class="fc" id="L644">        params.addValue(CREATED_PARAM, formatInstant(created));</span>
+<span class="fc" id="L645">        params.addValue(MODIFIED_PARAM, formatInstant(modified));</span>
+<span class="fc" id="L646">        params.addValue(OPERATION_PARAM, operation);</span>
+<span class="fc" id="L647">        params.addValue(TRANSACTION_ID_PARAM, txId);</span>
+<span class="fc" id="L648">        jdbcTemplate.update(TRANSACTION_UPSERT_MAPPING.get(dbPlatForm), params);</span>
+<span class="fc" id="L649">    }</span>
+
+    /**
+     * Do direct upsert into simpl search table.
+     *
+     * @param fedoraId        the resourceId
+     * @param resourceHeaders the resources headers
+     */
+    private void doUpsertIntoSimpleSearch(final FedoraId fedoraId,
+                                          final ResourceHeaders resourceHeaders) {
+<span class="fc" id="L659">        var mimetype = &quot;&quot;;</span>
+<span class="fc" id="L660">        long contentSize = 0;</span>
+<span class="fc" id="L661">        var modified = Instant.now();</span>
+<span class="fc" id="L662">        var created = Instant.now();</span>
+<span class="pc bpc" id="L663" title="1 of 2 branches missed.">        if (resourceHeaders != null) {</span>
+<span class="fc" id="L664">            contentSize = resourceHeaders.getContentSize();</span>
+<span class="fc" id="L665">            mimetype = resourceHeaders.getMimeType();</span>
+<span class="fc" id="L666">            modified = resourceHeaders.getLastModifiedDate();</span>
+<span class="fc" id="L667">            created = resourceHeaders.getCreatedDate();</span>
+        }
+
+<span class="fc" id="L670">        final var params = new MapSqlParameterSource();</span>
+<span class="fc" id="L671">        params.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());</span>
+<span class="fc" id="L672">        params.addValue(MIME_TYPE_PARAM, mimetype);</span>
+<span class="fc" id="L673">        params.addValue(CONTENT_SIZE_PARAM, contentSize);</span>
+<span class="fc" id="L674">        params.addValue(CREATED_PARAM, formatInstant(created));</span>
+<span class="fc" id="L675">        params.addValue(MODIFIED_PARAM, formatInstant(modified));</span>
+<span class="fc" id="L676">        jdbcTemplate.update(DIRECT_UPSERT_MAPPING.get(dbPlatForm), params);</span>
+<span class="fc" id="L677">    }</span>
+
+    private Timestamp formatInstant(final Instant instant) {
+<span class="pc bpc" id="L680" title="1 of 2 branches missed.">        if (instant == null) {</span>
+<span class="nc" id="L681">            return null;</span>
+        }
+<span class="fc" id="L683">        return Timestamp.from(instant.truncatedTo(ChronoUnit.MILLIS));</span>
+    }
+
+    private void insertRdfTypeAssociationsInTransaction(final Set&lt;URI&gt; rdfTypes,
+                                                        final String txId,
+                                                        final FedoraId fedoraId) {
+        //remove and add type associations for the fedora id.
+<span class="fc" id="L690">        final List&lt;MapSqlParameterSource&gt; parameterSourcesList = new ArrayList&lt;&gt;(rdfTypes.size());</span>
+<span class="fc" id="L691">        final var parameterSource = new MapSqlParameterSource();</span>
+<span class="fc" id="L692">        parameterSource.addValue(TRANSACTION_ID_PARAM, txId);</span>
+<span class="fc" id="L693">        parameterSource.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());</span>
+<span class="fc" id="L694">        jdbcTemplate.update(DELETE_RESOURCE_TYPE_ASSOCIATIONS_IN_TRANSACTION, parameterSource);</span>
+
+<span class="fc bfc" id="L696" title="All 2 branches covered.">        for (final var rdfType : rdfTypes) {</span>
+<span class="fc" id="L697">            final var assocParams = new MapSqlParameterSource();</span>
+<span class="fc" id="L698">            assocParams.addValue(TRANSACTION_ID_PARAM, txId);</span>
+<span class="fc" id="L699">            assocParams.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());</span>
+<span class="fc" id="L700">            assocParams.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());</span>
+<span class="fc" id="L701">            parameterSourcesList.add(assocParams);</span>
+<span class="fc" id="L702">        }</span>
+<span class="fc" id="L703">        final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);</span>
+<span class="fc" id="L704">        jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_ASSOC_IN_TRANSACTION, psArray);</span>
+<span class="fc" id="L705">    }</span>
+
+    private void deleteRdfTypeAssociations(final FedoraId fedoraId) {
+<span class="fc" id="L708">        final var deleteParams = new MapSqlParameterSource();</span>
+<span class="fc" id="L709">        deleteParams.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());</span>
+<span class="fc" id="L710">        jdbcTemplate.update(DELETE_RDF_TYPE_ASSOCIATIONS,</span>
+                deleteParams);
+<span class="fc" id="L712">    }</span>
+
+    private void insertRdfTypeAssociations(final List&lt;URI&gt; rdfTypes,
+                                           final Set&lt;URI&gt; newTypes,
+                                           final FedoraId fedoraId) {
+        //add rdf type associations
+
+<span class="fc" id="L719">        final var resourceSearchId = jdbcTemplate.queryForObject(</span>
+                SELECT_RESOURCE_SEARCH_ID,
+<span class="fc" id="L721">                Map.of(FEDORA_ID_PARAM, fedoraId.getFullId()), Long.class);</span>
+
+<span class="fc" id="L723">        final List&lt;MapSqlParameterSource&gt; parameterSourcesList = new ArrayList&lt;&gt;();</span>
+<span class="fc bfc" id="L724" title="All 2 branches covered.">        for (final var rdfType : rdfTypes) {</span>
+            final Long rdfTypeId;
+<span class="fc bfc" id="L726" title="All 2 branches covered.">            if (newTypes.contains(rdfType)) {</span>
+                // The cache MUST NOT be used when the current TX created the record as it will not be committed yet
+                // and it will break other transactions.
+<span class="fc" id="L729">                rdfTypeId = getRdfTypeIdDirect(rdfType);</span>
+            } else {
+<span class="fc" id="L731">                rdfTypeId = getRdfTypeIdCached(rdfType);</span>
+            }
+
+<span class="fc" id="L734">            final var assocParams = new MapSqlParameterSource();</span>
+<span class="fc" id="L735">            assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);</span>
+<span class="fc" id="L736">            assocParams.addValue(RDF_TYPE_ID_PARAM, rdfTypeId);</span>
+<span class="fc" id="L737">            parameterSourcesList.add(assocParams);</span>
+<span class="fc" id="L738">        }</span>
+
+<span class="fc" id="L740">        final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);</span>
+<span class="fc" id="L741">        jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_ASSOC, psArray);</span>
+<span class="fc" id="L742">    }</span>
+
+    private Long getRdfTypeIdCached(final URI rdfType) {
+<span class="fc" id="L745">        return rdfTypeIdCache.computeIfAbsent(rdfType, this::getRdfTypeIdDirect);</span>
+    }
+
+    private Long getRdfTypeIdDirect(final URI rdfType) {
+<span class="fc" id="L749">        return jdbcTemplate.queryForObject(</span>
+                SELECT_RDF_TYPE_ID,
+<span class="fc" id="L751">                Map.of(RDF_TYPE_URI_PARAM, rdfType.toString()), Long.class);</span>
+    }
+
+    @Override
+    public void removeFromIndex(final Transaction transaction, final FedoraId fedoraId) {
+<span class="fc" id="L756">        transaction.doInTx(() -&gt; {</span>
+<span class="fc bfc" id="L757" title="All 2 branches covered.">            if (!transaction.isShortLived()) {</span>
+                try {
+<span class="fc" id="L759">                    doUpsertIntoTransactionTables(transaction.getId(), fedoraId, null, &quot;delete&quot;);</span>
+<span class="nc" id="L760">                } catch (final Exception e) {</span>
+<span class="nc" id="L761">                    throw new RepositoryRuntimeException(&quot;Failed to remove &quot; + fedoraId + &quot; from search index&quot;, e);</span>
+<span class="fc" id="L762">                }</span>
+            } else {
+<span class="fc" id="L764">                doDirectRemove(fedoraId);</span>
+            }
+<span class="fc" id="L766">        });</span>
+<span class="fc" id="L767">    }</span>
+
+    private void doDirectRemove(final FedoraId fedoraId) {
+<span class="fc" id="L770">        deleteRdfTypeAssociations(fedoraId);</span>
+<span class="fc" id="L771">        deleteResource(fedoraId);</span>
+<span class="fc" id="L772">    }</span>
+
+    private void deleteResource(final FedoraId fedoraId) {
+<span class="fc" id="L775">        final var params = new MapSqlParameterSource();</span>
+<span class="fc" id="L776">        params.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());</span>
+<span class="fc" id="L777">        jdbcTemplate.update(DELETE_RESOURCE_FROM_SEARCH, params);</span>
+<span class="fc" id="L778">    }</span>
+
+    @Override
+    public void reset() {
+<span class="fc" id="L782">        rdfTypeIdCache.clear();</span>
+
+<span class="fc" id="L784">        try (final var conn = this.dataSource.getConnection();</span>
+<span class="fc" id="L785">             final var statement = conn.createStatement()) {</span>
+<span class="fc bfc" id="L786" title="All 2 branches covered.">            for (final var sql : toggleForeignKeyChecks(false)) {</span>
+<span class="fc" id="L787">                statement.addBatch(sql);</span>
+<span class="fc" id="L788">            }</span>
+<span class="fc" id="L789">            statement.addBatch(truncateTable(SEARCH_RESOURCE_RDF_TYPE_TABLE));</span>
+<span class="fc" id="L790">            statement.addBatch(truncateTable(SEARCH_RDF_TYPE_TABLE));</span>
+<span class="fc" id="L791">            statement.addBatch(truncateTable(SIMPLE_SEARCH_TABLE));</span>
+<span class="fc" id="L792">            statement.addBatch(truncateTable(SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE));</span>
+<span class="fc" id="L793">            statement.addBatch(truncateTable(SIMPLE_SEARCH_TRANSACTIONS_TABLE));</span>
+<span class="fc bfc" id="L794" title="All 2 branches covered.">            for (final var sql : toggleForeignKeyChecks(true)) {</span>
+<span class="fc" id="L795">                statement.addBatch(sql);</span>
+<span class="fc" id="L796">            }</span>
+<span class="fc" id="L797">            statement.executeBatch();</span>
+<span class="nc" id="L798">        } catch (final SQLException e) {</span>
+<span class="nc" id="L799">            throw new RepositoryRuntimeException(&quot;Failed to truncate search index tables&quot;, e);</span>
+<span class="fc" id="L800">        }</span>
+<span class="fc" id="L801">    }</span>
+
+    @Override
+    public void commitTransaction(final Transaction tx) {
+<span class="pc bpc" id="L805" title="1 of 2 branches missed.">        if (!tx.isShortLived()) {</span>
+<span class="fc" id="L806">            tx.ensureCommitting();</span>
+<span class="fc" id="L807">            final var txId = tx.getId();</span>
+            try {
+<span class="fc" id="L809">                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+<span class="fc" id="L810">                parameterSource.addValue(TRANSACTION_ID_PARAM, txId);</span>
+<span class="fc" id="L811">                final int deletedAssociations = jdbcTemplate.update(COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS,</span>
+                        parameterSource);
+<span class="fc" id="L813">                final int deletedResources = jdbcTemplate.update(COMMIT_DELETE_RESOURCES_IN_TRANSACTION,</span>
+                        parameterSource);
+<span class="fc" id="L815">                final int addedRdfTypes = jdbcTemplate.update(COMMIT_RDF_TYPES, parameterSource);</span>
+<span class="fc" id="L816">                final int addedResources = jdbcTemplate.update(UPSERT_COMMIT_MAPPING.get(dbPlatForm),</span>
+                        parameterSource);
+<span class="fc" id="L818">                final int addRdfTypeAssociations = jdbcTemplate.update(COMMIT_RDF_TYPE_ASSOCIATIONS, parameterSource);</span>
+<span class="fc" id="L819">                cleanupTransaction(txId);</span>
+<span class="fc" id="L820">                LOGGER.debug(&quot;Commit of tx {} complete with {} resource adds, {} resource associations adds, &quot; +</span>
+                                &quot;{} rdf types adds{},  resource deletes, {} resource/rdf type associations deletes&quot;,
+<span class="fc" id="L822">                        txId, addedResources, addRdfTypeAssociations, addedRdfTypes, deletedResources,</span>
+<span class="fc" id="L823">                        deletedAssociations);</span>
+<span class="nc" id="L824">            } catch (final Exception e) {</span>
+<span class="nc" id="L825">                LOGGER.warn(&quot;Unable to commit search index transaction {}: {}&quot;, txId, e.getMessage());</span>
+<span class="nc" id="L826">                throw new RepositoryRuntimeException(&quot;Unable to commit search index transaction&quot;, e);</span>
+<span class="fc" id="L827">            }</span>
+        }
+<span class="fc" id="L829">    }</span>
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @Override
+    public void rollbackTransaction(final Transaction tx) {
+<span class="pc bpc" id="L834" title="1 of 2 branches missed.">        if (!tx.isShortLived()) {</span>
+<span class="fc" id="L835">            cleanupTransaction(tx.getId());</span>
+        }
+<span class="fc" id="L837">    }</span>
+
+    private void cleanupTransaction(final String txId) {
+<span class="fc" id="L840">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+<span class="fc" id="L841">        parameterSource.addValue(TRANSACTION_ID_PARAM, txId);</span>
+<span class="fc" id="L842">        jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);</span>
+<span class="fc" id="L843">        jdbcTemplate.update(DELETE_RDF_TYPE_ASSOCIATIONS_IN_TRANSACTION, parameterSource);</span>
+<span class="fc" id="L844">        LOGGER.debug(&quot;Transaction data has been removed from the search transaction tables for txId={} &quot;, txId);</span>
+<span class="fc" id="L845">    }</span>
+
+    private List&lt;String&gt; toggleForeignKeyChecks(final boolean enable) {
+
+<span class="pc bpc" id="L849" title="1 of 2 branches missed.">        if (isPostgres()) {</span>
+<span class="nc" id="L850">            return Collections.emptyList();</span>
+<span class="pc bpc" id="L851" title="1 of 2 branches missed.">        } else if (isH2()) {</span>
+<span class="fc bfc" id="L852" title="All 2 branches covered.">            return List.of(&quot;SET REFERENTIAL_INTEGRITY  &quot; + (enable ? &quot;TRUE&quot; : &quot;FALSE&quot;) + &quot;;&quot;);</span>
+        } else {
+<span class="nc bnc" id="L854" title="All 2 branches missed.">            return List.of(&quot;SET FOREIGN_KEY_CHECKS = &quot; + (enable ? 1 : 0) + &quot;;&quot;);</span>
+        }
+    }
+
+    private boolean isPostgres() {
+<span class="fc" id="L859">        return dbPlatForm.equals(POSTGRESQL);</span>
+    }
+
+    private boolean isH2() {
+<span class="fc" id="L863">        return dbPlatForm.equals(H2);</span>
+    }
+
+    private String truncateTable(final String tableName) {
+<span class="fc" id="L867">        final var addCascade = isPostgres();</span>
+<span class="pc bpc" id="L868" title="1 of 2 branches missed.">        return &quot;TRUNCATE TABLE &quot; + tableName + (addCascade ? &quot; CASCADE&quot; : &quot;&quot;) + &quot;;&quot;;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

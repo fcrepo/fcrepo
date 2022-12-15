@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.webapp</a> &gt; <span class="el_source">AuthConfig.java</span></div><h1>AuthConfig.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.webapp;
+
+import java.util.HashSet;
+import java.util.List;
+
+import javax.servlet.Filter;
+
+import org.fcrepo.auth.common.ContainerRolesPrincipalProvider;
+import org.fcrepo.auth.common.DelegateHeaderPrincipalProvider;
+import org.fcrepo.auth.common.HttpHeaderPrincipalProvider;
+import org.fcrepo.auth.common.PrincipalProvider;
+import org.fcrepo.auth.common.ServletContainerAuthFilter;
+import org.fcrepo.auth.common.ServletContainerAuthenticatingRealm;
+import org.fcrepo.auth.webac.WebACAuthorizingRealm;
+import org.fcrepo.auth.webac.WebACFilter;
+import org.fcrepo.config.AuthPropsConfig;
+import org.fcrepo.config.ConditionOnPropertyTrue;
+
+import org.apache.shiro.realm.AuthenticatingRealm;
+import org.apache.shiro.realm.AuthorizingRealm;
+import org.apache.shiro.spring.LifecycleBeanPostProcessor;
+import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
+import org.apache.shiro.web.filter.InvalidRequestFilter;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.mgt.WebSecurityManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+
+/**
+ * Spring config for auth
+ *
+ * @author pwinckles
+ */
+@Configuration
+@Conditional(AuthConfig.AuthorizationEnabled.class)
+<span class="nc" id="L46">public class AuthConfig {</span>
+
+<span class="nc" id="L48">    private static final Logger LOGGER = LoggerFactory.getLogger(AuthConfig.class);</span>
+
+    static class AuthorizationEnabled extends ConditionOnPropertyTrue {
+        AuthorizationEnabled() {
+<span class="nc" id="L52">            super(AuthPropsConfig.FCREPO_AUTH_ENABLED, true);</span>
+<span class="nc" id="L53">        }</span>
+    }
+    static class HeaderPrincipalEnabled extends ConditionOnPropertyTrue {
+        HeaderPrincipalEnabled() {
+<span class="nc" id="L57">            super(AuthPropsConfig.FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED, false);</span>
+<span class="nc" id="L58">        }</span>
+    }
+    static class RolesPrincipalEnabled extends ConditionOnPropertyTrue {
+        RolesPrincipalEnabled() {
+<span class="nc" id="L62">            super(AuthPropsConfig.FCREPO_AUTH_PRINCIPAL_ROLES_ENABLED, false);</span>
+<span class="nc" id="L63">        }</span>
+    }
+    static class DelegatePrincipalEnabled extends ConditionOnPropertyTrue {
+        DelegatePrincipalEnabled() {
+<span class="nc" id="L67">            super(AuthPropsConfig.FCREPO_AUTH_PRINCIPAL_DELEGATE_ENABLED, true);</span>
+<span class="nc" id="L68">        }</span>
+    }
+
+    /**
+     * Optional PrincipalProvider filter that will inspect the request header, &quot;some-header&quot;, for user role values
+     *
+     * @param propsConfig config properties
+     * @return header principal provider
+     */
+    @Bean
+    @Order(3)
+    @Conditional(AuthConfig.HeaderPrincipalEnabled.class)
+    public PrincipalProvider headerProvider(final AuthPropsConfig propsConfig) {
+<span class="nc" id="L81">        LOGGER.info(&quot;Auth header principal provider enabled&quot;);</span>
+<span class="nc" id="L82">        final var provider = new HttpHeaderPrincipalProvider();</span>
+<span class="nc" id="L83">        provider.setHeaderName(propsConfig.getAuthPrincipalHeaderName());</span>
+<span class="nc" id="L84">        provider.setSeparator(propsConfig.getAuthPrincipalHeaderSeparator());</span>
+<span class="nc" id="L85">        return provider;</span>
+    }
+
+    /**
+     * Optional PrincipalProvider filter that will use container configured roles as principals
+     *
+     * @param propsConfig config properties
+     * @return roles principal provider
+     */
+    @Bean
+    @Order(4)
+    @Conditional(AuthConfig.RolesPrincipalEnabled.class)
+    public PrincipalProvider containerRolesProvider(final AuthPropsConfig propsConfig) {
+<span class="nc" id="L98">        LOGGER.info(&quot;Auth roles principal provider enabled&quot;);</span>
+<span class="nc" id="L99">        final var provider = new ContainerRolesPrincipalProvider();</span>
+<span class="nc" id="L100">        provider.setRoleNames(new HashSet&lt;&gt;(propsConfig.getAuthPrincipalRolesList()));</span>
+<span class="nc" id="L101">        return provider;</span>
+    }
+
+    /**
+     * delegatedPrincipleProvider filter allows a single user to be passed in the header &quot;On-Behalf-Of&quot;,
+     *            this is to be used as the actor making the request when authenticating.
+     *            NOTE: Only users with the role fedoraAdmin can delegate to another user.
+     *            NOTE: Only supported in WebAC authentication
+     *
+     * @return delegate principal provider
+     */
+    @Bean
+    @Order(5)
+    @Conditional(AuthConfig.DelegatePrincipalEnabled.class)
+    public PrincipalProvider delegatedPrincipalProvider() {
+<span class="nc" id="L116">        LOGGER.info(&quot;Auth delegate principal provider enabled&quot;);</span>
+<span class="nc" id="L117">        return new DelegateHeaderPrincipalProvider();</span>
+    }
+
+    /**
+     * WebAC Authorization Realm
+     *
+     * @return authorization  realm
+     */
+    @Bean
+    public AuthorizingRealm webACAuthorizingRealm() {
+<span class="nc" id="L127">        return new WebACAuthorizingRealm();</span>
+    }
+
+    /**
+     * Servlet Container Authentication Realm
+     *
+     * @return authentication realm
+     */
+    @Bean
+    public AuthenticatingRealm servletContainerAuthenticatingRealm() {
+<span class="nc" id="L137">        return new ServletContainerAuthenticatingRealm();</span>
+    }
+
+    /**
+     * @return Security Manager
+     */
+    @Bean
+    public WebSecurityManager securityManager() {
+<span class="nc" id="L145">        final var manager = new DefaultWebSecurityManager();</span>
+<span class="nc" id="L146">        manager.setRealms(List.of(webACAuthorizingRealm(), servletContainerAuthenticatingRealm()));</span>
+<span class="nc" id="L147">        return manager;</span>
+    }
+
+    /**
+     * Post processor that automatically invokes init() and destroy() methods
+     *
+     * @return post processor
+     */
+    @Bean
+    public LifecycleBeanPostProcessor lifecycleBeanPostProcessor() {
+<span class="nc" id="L157">        return new LifecycleBeanPostProcessor();</span>
+    }
+
+    /**
+     * @return Authentication Filter
+     */
+    @Bean
+    @Order(1)
+    public Filter servletContainerAuthFilter() {
+<span class="nc" id="L166">        return new ServletContainerAuthFilter();</span>
+    }
+
+    /**
+     * @return Authorization Filter
+     */
+    @Bean
+    @Order(2)
+    public Filter webACFilter() {
+<span class="nc" id="L175">        return new WebACFilter();</span>
+    }
+
+    /**
+     * Shiro's filter for rejecting invalid requests
+     *
+     * @return invalid request filter
+     */
+    @Bean
+    @Order(6)
+    public Filter invalidRequest() {
+<span class="nc" id="L186">        final var filter = new InvalidRequestFilter();</span>
+<span class="nc" id="L187">        filter.setBlockNonAscii(false);</span>
+<span class="nc" id="L188">        filter.setBlockBackslash(false);</span>
+<span class="nc" id="L189">        filter.setBlockSemicolon(false);</span>
+<span class="nc" id="L190">        return filter;</span>
+    }
+
+    /**
+     * Shiro filter. When defining the filter chain, the Auth filter should come first, followed by 0 or more of the
+     * principal provider filters, and finally the webACFilter
+     *
+     * @param propsConfig config properties
+     * @return shiro filter
+     */
+    @Bean
+    @Order(100)
+    public ShiroFilterFactoryBean shiroFilter(final AuthPropsConfig propsConfig) {
+<span class="nc" id="L203">        final var filter = new ShiroFilterFactoryBean();</span>
+<span class="nc" id="L204">        filter.setSecurityManager(securityManager());</span>
+<span class="nc" id="L205">        filter.setFilterChainDefinitions(&quot;/** = servletContainerAuthFilter,&quot;</span>
+<span class="nc" id="L206">                + principalProviderChain(propsConfig) + &quot;webACFilter&quot;);</span>
+<span class="nc" id="L207">        return filter;</span>
+    }
+
+    private String principalProviderChain(final AuthPropsConfig propsConfig) {
+<span class="nc" id="L211">        final var builder = new StringBuilder();</span>
+
+<span class="nc bnc" id="L213" title="All 2 branches missed.">        if (propsConfig.isAuthPrincipalHeaderEnabled()) {</span>
+<span class="nc" id="L214">            builder.append(&quot;headerProvider,&quot;);</span>
+        }
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        if (propsConfig.isAuthPrincipalRolesEnabled()) {</span>
+<span class="nc" id="L217">            builder.append(&quot;containerRolesProvider,&quot;);</span>
+        }
+<span class="nc bnc" id="L219" title="All 2 branches missed.">        if (propsConfig.isAuthPrincipalDelegateEnabled()) {</span>
+<span class="nc" id="L220">            builder.append(&quot;delegatedPrincipalProvider,&quot;);</span>
+        }
+
+<span class="nc" id="L223">        return builder.toString();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

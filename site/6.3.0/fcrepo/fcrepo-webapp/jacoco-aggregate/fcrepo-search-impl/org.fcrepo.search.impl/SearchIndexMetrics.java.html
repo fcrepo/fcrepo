@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SearchIndexMetrics.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.impl</a> &gt; <span class="el_source">SearchIndexMetrics.java</span></div><h1>SearchIndexMetrics.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.search.impl;
+
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.search.api.InvalidQueryException;
+import org.fcrepo.search.api.SearchIndex;
+import org.fcrepo.search.api.SearchParameters;
+import org.fcrepo.search.api.SearchResult;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+/**
+ * SearchIndex wrapper for collecting metrics
+ *
+ * @author pwinckles
+ */
+@Component(&quot;searchIndex&quot;)
+<span class="fc" id="L29">public class SearchIndexMetrics implements SearchIndex {</span>
+
+    private static final String METRIC_NAME = &quot;fcrepo.db&quot;;
+    private static final String DB = &quot;db&quot;;
+    private static final String SEARCH = &quot;search&quot;;
+    private static final String OPERATION = &quot;operation&quot;;
+
+<span class="fc" id="L36">    private static final Timer addUpdateIndexTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, SEARCH, OPERATION, &quot;addUpdateIndex&quot;);
+<span class="fc" id="L38">    private static final Timer removeFromIndexTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, SEARCH, OPERATION, &quot;removeFromIndex&quot;);
+<span class="fc" id="L40">    private static final Timer doSearchTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, SEARCH, OPERATION, &quot;doSearch&quot;);
+<span class="fc" id="L42">    private static final Timer resetTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, SEARCH, OPERATION, &quot;reset&quot;);
+<span class="fc" id="L44">    private static final Timer commitTransactionTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, SEARCH, OPERATION, &quot;commitTransaction&quot;);
+<span class="fc" id="L46">    private static final Timer rollbackTransactionTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, SEARCH, OPERATION, &quot;rollbackTransaction&quot;);
+
+    @Autowired
+    @Qualifier(&quot;searchIndexImpl&quot;)
+    private SearchIndex searchIndexImpl;
+
+    @Override
+    public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
+<span class="fc" id="L55">        addUpdateIndexTimer.record(() -&gt; {</span>
+<span class="fc" id="L56">            searchIndexImpl.addUpdateIndex(transaction, resourceHeaders);</span>
+<span class="fc" id="L57">        });</span>
+<span class="fc" id="L58">    }</span>
+
+    @Override
+    public void removeFromIndex(final Transaction transaction, final FedoraId fedoraId) {
+<span class="fc" id="L62">        removeFromIndexTimer.record(() -&gt; {</span>
+<span class="fc" id="L63">            searchIndexImpl.removeFromIndex(transaction, fedoraId);</span>
+<span class="fc" id="L64">        });</span>
+<span class="fc" id="L65">    }</span>
+
+    @Override
+    public SearchResult doSearch(final SearchParameters parameters) throws InvalidQueryException {
+<span class="fc" id="L69">        final var stopwatch = Timer.start();</span>
+        try {
+<span class="fc" id="L71">            return searchIndexImpl.doSearch(parameters);</span>
+        } finally {
+<span class="fc" id="L73">            stopwatch.stop(doSearchTimer);</span>
+        }
+    }
+
+    @Override
+    public void reset() {
+<span class="fc" id="L79">        resetTimer.record(() -&gt; {</span>
+<span class="fc" id="L80">            searchIndexImpl.reset();</span>
+<span class="fc" id="L81">        });</span>
+<span class="fc" id="L82">    }</span>
+
+    @Override
+    public void commitTransaction(final Transaction tx) {
+<span class="fc" id="L86">        commitTransactionTimer.record(() -&gt; {</span>
+<span class="fc" id="L87">            searchIndexImpl.commitTransaction(tx);</span>
+<span class="fc" id="L88">        });</span>
+<span class="fc" id="L89">    }</span>
+
+    @Override
+    public void rollbackTransaction(final Transaction tx) {
+<span class="fc" id="L93">        rollbackTransactionTimer.record(() -&gt; {</span>
+<span class="fc" id="L94">            searchIndexImpl.rollbackTransaction(tx);</span>
+<span class="fc" id="L95">        });</span>
+<span class="fc" id="L96">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ACLHandleImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-auth-webac</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.webac</a> &gt; <span class="el_source">ACLHandleImpl.java</span></div><h1>ACLHandleImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.auth.webac;
+
+import java.util.List;
+
+import org.fcrepo.kernel.api.auth.ACLHandle;
+import org.fcrepo.kernel.api.auth.WebACAuthorization;
+import org.fcrepo.kernel.api.models.FedoraResource;
+
+/**
+ * A simple class connecting an URI pointing to an ACL to a {@link FedoraResource} that points to that ACL.
+ *
+ * @author ajs6f
+ */
+public class ACLHandleImpl implements ACLHandle {
+
+    private final FedoraResource resource;
+
+    private final List&lt;WebACAuthorization&gt; authorizations;
+    /**
+     * Default constructor.
+     *
+     * @param resource the requested FedoraResource
+     * @param authorizations any authorizations associated with the uri
+     */
+<span class="fc" id="L30">    public ACLHandleImpl(final FedoraResource resource, final List&lt;WebACAuthorization&gt; authorizations) {</span>
+<span class="fc" id="L31">        this.resource = resource;</span>
+<span class="fc" id="L32">        this.authorizations = authorizations;</span>
+<span class="fc" id="L33">    }</span>
+
+    @Override
+    public FedoraResource getResource() {
+<span class="fc" id="L37">        return resource;</span>
+    }
+
+    @Override
+    public List&lt;WebACAuthorization&gt; getAuthorizations() {
+<span class="fc" id="L42">        return authorizations;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

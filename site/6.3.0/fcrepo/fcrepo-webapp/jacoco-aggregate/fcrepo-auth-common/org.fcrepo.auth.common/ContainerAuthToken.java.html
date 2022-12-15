@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ContainerAuthToken.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-auth-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">ContainerAuthToken.java</span></div><h1>ContainerAuthToken.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.auth.common;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.http.auth.BasicUserPrincipal;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+import org.slf4j.Logger;
+
+/**
+ * @author peichman
+ */
+public class ContainerAuthToken implements AuthenticationToken {
+
+<span class="fc" id="L23">    private static final Logger log = getLogger(ContainerAuthToken.class);</span>
+
+    public static final String AUTHORIZED = &quot;AUTHORIZED&quot;;
+
+    private final BasicUserPrincipal servletUser;
+
+    private final Set&lt;ContainerRolesPrincipal&gt; servletRoles;
+
+    /**
+     * @param servletUsername username returned from servlet container authentication
+     * @param servletRoleNames roles returned from servlet container authentication
+     */
+<span class="fc" id="L35">    public ContainerAuthToken(final String servletUsername, final Set&lt;String&gt; servletRoleNames) {</span>
+<span class="fc" id="L36">        servletUser = new BasicUserPrincipal(servletUsername);</span>
+<span class="fc" id="L37">        log.debug(&quot;Setting servlet username {}&quot;, servletUsername);</span>
+<span class="fc" id="L38">        this.servletRoles = new HashSet&lt;&gt;();</span>
+<span class="fc bfc" id="L39" title="All 2 branches covered.">        for (final String roleName : servletRoleNames) {</span>
+<span class="fc" id="L40">            log.debug(&quot;Adding servlet role {} to {}&quot;, roleName, servletUsername);</span>
+<span class="fc" id="L41">            this.servletRoles.add(new ContainerRolesPrincipal(roleName));</span>
+<span class="fc" id="L42">        }</span>
+<span class="fc" id="L43">    }</span>
+
+    @Override
+    public Object getPrincipal() {
+<span class="fc" id="L47">        return servletUser;</span>
+    }
+
+    /**
+     * This token represents a user who was already authenticated by the servlet container, so return a constant
+     * credentials string.
+     */
+    @Override
+    public Object getCredentials() {
+<span class="fc" id="L56">        return AUTHORIZED;</span>
+    }
+
+    /**
+     * @return set of principals
+     */
+    public Set&lt;ContainerRolesPrincipal&gt; getRoles() {
+<span class="fc" id="L63">        return servletRoles;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
