@@ -37,15 +37,15 @@ jobs:
       run: mvn -B -U clean install
   postgres-itest:
     runs-on: ubuntu-latest
-    #continue-on-error: ${{ matrix.experimental }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        java: ['11']
-        #experimental: [false]
-        #include: 
-        #  - java: 17
-        #    os: ubuntu-latest
-        #    experimental: [true]
+        java: ['11', '17']
+        experimental: [false]
+        include: 
+          - java: 17
+            os: ubuntu-latest
+            experimental: [true]
     services:
       postgres:
         image: postgres:12
