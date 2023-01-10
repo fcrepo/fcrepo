@@ -17,7 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        java: ['17']
+        java: ['11', '17']
     steps:
     - name: Git support longpaths
       run: git config --global core.longpaths true
