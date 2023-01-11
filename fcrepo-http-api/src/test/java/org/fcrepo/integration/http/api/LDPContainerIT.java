@@ -686,7 +686,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         changeProxyMember(proxy1Uri, member1Uri, member2Uri, null);
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
 
-        TimeUnit.MILLISECONDS.sleep(1000);
+        TimeUnit.MILLISECONDS.sleep(10000);
 
         createMemento(membershipRescURI);
         final var mementos = listMementoIds(membershipRescId);
@@ -700,7 +700,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertEquals(1, mementos2.size());
         assertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
 
-        TimeUnit.MILLISECONDS.sleep(1000);
+        TimeUnit.MILLISECONDS.sleep(10000);
 
         // Create memento of the proxy, the membership state of the memento should be immutable now
         createMemento(proxy1Uri);
