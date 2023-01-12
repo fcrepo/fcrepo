@@ -699,7 +699,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         final var mementos2 = listMementoIds(membershipRescId);
         assertEquals(1, mementos2.size());
         assertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
-        
+
         TimeUnit.MILLISECONDS.sleep(1000);
 
         // Create memento of the proxy, the membership state of the memento should be immutable now
