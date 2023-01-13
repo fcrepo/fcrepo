@@ -43,8 +43,8 @@ jobs:
       run: mvn -B -U clean install
   postgres-itest:
     runs-on: ubuntu-latest
-    continue-on-error: ${{ matrix.experimental }}
     strategy:
+      max-parallel: 1
       matrix:
         java: ['11']
     services:
@@ -81,6 +81,7 @@ jobs:
   mariadb-itest:
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1
       matrix:
         java: ['11']
     services:
@@ -118,6 +119,7 @@ jobs:
   mysql-itest:
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1
       matrix:
         java: ['11']
     services:
