@@ -215,7 +215,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.isArchivalGroup()).thenReturn(true);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
-        verify(transaction).lockResource(fedoraId);
+        verify(transaction).lockResourceNonExclusive(fedoraId);
         verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
@@ -229,7 +229,7 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.isArchivalGroup()).thenReturn(false);
         when(resourceHeaders.getArchivalGroupId()).thenReturn(agId);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
-        verify(transaction).lockResource(agId);
+        verify(transaction).lockResourceNonExclusive(agId);
         verify(transaction).lockResourceAndGhostNodes(childId);
     }
 

@@ -5,19 +5,25 @@
  */
 package org.fcrepo.kernel.impl.lock;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.google.common.collect.Sets;
-import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.lock.ResourceLockManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import static org.fcrepo.kernel.api.lock.ResourceLockType.EXCLUSIVE;
 
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.lock.ResourceLock;
+import org.fcrepo.kernel.api.lock.ResourceLockManager;
+import org.fcrepo.kernel.api.lock.ResourceLockType;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.collect.Sets;
 
 /**
  * In memory resource lock manager
@@ -29,43 +35,52 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryResourceLockManager.class);
 
-    private final Map<String, Set<String>> transactionLocks;
-    private final Set<String> lockedResources;
-    private final Map<String, Object> internalResourceLocks;
+    private final Map<String, Set<ResourceLock>> transactionLocks;
+    private final Map<String, Set<ResourceLock>> internalResourceLocks;
+    private final Map<String, Set<ResourceLock>> resourceLocks;
 
     public InMemoryResourceLockManager() {
         transactionLocks = new ConcurrentHashMap<>();
-        lockedResources = Sets.newConcurrentHashSet();
+        resourceLocks = new ConcurrentHashMap<>();
         internalResourceLocks = Caffeine.newBuilder()
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .<String, Object>build()
+                .<String, Set<ResourceLock>>build()
                 .asMap();
     }
 
     @Override
-    public void acquire(final String txId, final FedoraId resourceId) {
+    public void acquire(final String txId, final FedoraId resourceId, final ResourceLockType lockType) {
         final var resourceIdStr = resourceId.getResourceId();
 
-        if (transactionHoldsLock(txId, resourceIdStr)) {
+        if (transactionHoldsExclusiveLock(txId, resourceIdStr)) {
             return;
         }
 
-        synchronized (acquireInternalLock(resourceIdStr)) {
-            if (transactionHoldsLock(txId, resourceIdStr)) {
+        synchronized (acquireInternalLock(txId, resourceIdStr, lockType)) {
+            if (transactionHoldsExclusiveLock(txId, resourceIdStr)) {
                 return;
             }
 
-            if (lockedResources.contains(resourceIdStr)) {
-                throw new ConcurrentUpdateException(
-                        String.format("Cannot update %s because it is being updated by another transaction.",
-                                resourceIdStr));
+            if (resourceLocks.containsKey(resourceIdStr)) {
+                final var locks = resourceLocks.get(resourceIdStr);
+                if (locks.size() > 0 && (
+                        lockType.equals(EXCLUSIVE) && locks.parallelStream().anyMatch(l ->
+                        !l.getTransactionId().equals(txId)) ||
+                        locks.parallelStream().anyMatch(l -> l.hasLockType(EXCLUSIVE)))) {
+                    // Can't get an exclusive lock on a resource that already has any lock not owned by the current
+                    // transaction or get any lock if there is already an exclusive lock. If the current transaction
+                    // held this exclusive lock we would not have gotten this far.
+                       throw new ConcurrentUpdateException(
+                               String.format("Cannot update %s because it is being updated by another transaction.",
+                                       resourceIdStr));
+                }
             }
 
             LOG.debug("Transaction {} acquiring lock on {}", txId, resourceIdStr);
 
-            lockedResources.add(resourceIdStr);
-            transactionLocks.computeIfAbsent(txId, key -> Sets.newConcurrentHashSet())
-                    .add(resourceIdStr);
+            final var resourceLock = new ResourceLockImpl(lockType, txId, resourceIdStr);
+            resourceLocks.computeIfAbsent(resourceIdStr, key -> Sets.newConcurrentHashSet()).add(resourceLock);
+            transactionLocks.computeIfAbsent(txId, key -> Sets.newConcurrentHashSet()).add(resourceLock);
         }
     }
 
@@ -73,23 +88,33 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
     public void releaseAll(final String txId) {
         final var locks = transactionLocks.remove(txId);
         if (locks != null) {
-            locks.forEach(resourceId -> {
-                LOG.debug("Transaction {} releasing lock on {}", txId, resourceId);
-                synchronized (acquireInternalLock(resourceId)) {
-                    lockedResources.remove(resourceId);
-                    internalResourceLocks.remove(resourceId);
+            locks.forEach(lock -> {
+                LOG.debug("Transaction {} releasing lock on {}", txId, lock);
+                synchronized (acquireInternalLock(txId, lock.getResourceId(), lock.getLockType())) {
+                    internalResourceLocks.get(lock.getResourceId()).removeIf(
+                            l -> l.getTransactionId().equals(txId));
+                    if (internalResourceLocks.get(lock.getResourceId()).size() == 0) {
+                        internalResourceLocks.remove(lock.getResourceId());
+                    }
+                    resourceLocks.get(lock.getResourceId()).removeIf(
+                            l -> l.getTransactionId().equals(txId));
+                    if (resourceLocks.get(lock.getResourceId()).size() == 0) {
+                        resourceLocks.remove(lock.getResourceId());
+                    }
                 }
             });
         }
     }
 
-    private Object acquireInternalLock(final String resourceId) {
-        return internalResourceLocks.computeIfAbsent(resourceId, key -> new Object());
+    private Object acquireInternalLock(final String txId, final String resourceId, final ResourceLockType lockType) {
+        return internalResourceLocks.computeIfAbsent(resourceId,
+                key -> Sets.newConcurrentHashSet()).add(new ResourceLockImpl(lockType, txId, resourceId));
     }
 
-    private boolean transactionHoldsLock(final String txId, final String resourceId) {
+    private boolean transactionHoldsExclusiveLock(final String txId, final String resourceId) {
         final var locks = transactionLocks.get(txId);
-        return locks != null && locks.contains(resourceId);
+        return locks != null && locks.parallelStream().anyMatch(r -> r.hasLockType(EXCLUSIVE) &&
+                r.hasResource(resourceId));
     }
 
 }

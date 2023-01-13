@@ -22,9 +22,10 @@ public interface ResourceLockManager {
      *
      * @param txId the transaction id to associate the lock to
      * @param resourceId the resource to lock
+     * @param lockType the type of lock we are trying to acquire
      * @throws ConcurrentUpdateException when lock cannot be acquired
      */
-    void acquire(final String txId, final FedoraId resourceId);
+    void acquire(final String txId, final FedoraId resourceId, final ResourceLockType lockType);
 
     /**
      * Releases all of the locks held by the transaction

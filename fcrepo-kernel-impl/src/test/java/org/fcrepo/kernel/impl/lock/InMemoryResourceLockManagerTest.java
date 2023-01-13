@@ -8,6 +8,8 @@ package org.fcrepo.kernel.impl.lock;
 import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.lock.ResourceLockManager;
+import org.fcrepo.kernel.api.lock.ResourceLockType;
+
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -55,29 +57,78 @@ public class InMemoryResourceLockManagerTest {
     }
 
     @Test
-    public void shouldLockResourceWhenNotAlreadyLocked() {
-        lockManager.acquire(txId1, resourceId);
+    public void shouldLockResourceWhenNotAlreadyLockedExclusive() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
     }
 
     @Test
-    public void sameTxShouldBeAbleToReacquireLockItAlreadyHolds() {
-        lockManager.acquire(txId1, resourceId);
-        lockManager.acquire(txId1, resourceId);
+    public void shouldLockResourceWhenNotAlreadyLockedNonExclusive() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.NONEXCLUSIVE);
     }
 
     @Test
-    public void shouldFailToAcquireLockWhenHeldByAnotherTx() {
-        lockManager.acquire(txId1, resourceId);
+    public void sameTxShouldBeAbleToReacquireLockItAlreadyHoldsExclusive() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
+        lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
+    }
+
+    @Test
+    public void sameTxShouldBeAbleToReacquireLockItAlreadyHoldsNonExclusive() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.NONEXCLUSIVE);
+        lockManager.acquire(txId1, resourceId, ResourceLockType.NONEXCLUSIVE);
+    }
+
+    @Test
+    public void shouldFailToAcquireLockWhenHeldByAnotherTxExclusive() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
         assertLockException(() -> {
-            lockManager.acquire(txId2, resourceId);
+            lockManager.acquire(txId2, resourceId, ResourceLockType.EXCLUSIVE);
+        });
+        assertLockException(() -> {
+            lockManager.acquire(txId2, resourceId, ResourceLockType.NONEXCLUSIVE);
         });
     }
 
     @Test
-    public void shouldAcquireLockAfterReleasedByAnotherTx() {
-        lockManager.acquire(txId1, resourceId);
+    public void shouldFailToAcquireLockWhenHeldByAnotherTxSecondExclusive() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.NONEXCLUSIVE);
+        assertLockException(() -> {
+            lockManager.acquire(txId2, resourceId, ResourceLockType.EXCLUSIVE);
+        });
+    }
+
+    @Test
+    public void shouldSucceedToAcquireNonExclusiveLockWhenHeldByAnotherTxNonExclusive() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.NONEXCLUSIVE);
+        lockManager.acquire(txId2, resourceId, ResourceLockType.NONEXCLUSIVE);
+    }
+
+    @Test
+    public void shouldAcquireLockAfterReleasedByAnotherTx1() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
         lockManager.releaseAll(txId1);
-        lockManager.acquire(txId2, resourceId);
+        lockManager.acquire(txId2, resourceId, ResourceLockType.EXCLUSIVE);
+    }
+
+    @Test
+    public void shouldAcquireLockAfterReleasedByAnotherTx2() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
+        lockManager.releaseAll(txId1);
+        lockManager.acquire(txId2, resourceId, ResourceLockType.NONEXCLUSIVE);
+    }
+
+    @Test
+    public void shouldAcquireLockAfterReleasedByAnotherTx3() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.NONEXCLUSIVE);
+        lockManager.releaseAll(txId1);
+        lockManager.acquire(txId2, resourceId, ResourceLockType.EXCLUSIVE);
+    }
+
+    @Test
+    public void shouldAcquireLockAfterReleasedByAnotherTx4() {
+        lockManager.acquire(txId1, resourceId, ResourceLockType.NONEXCLUSIVE);
+        lockManager.releaseAll(txId1);
+        lockManager.acquire(txId2, resourceId, ResourceLockType.NONEXCLUSIVE);
     }
 
     @Test
@@ -87,12 +138,12 @@ public class InMemoryResourceLockManagerTest {
 
         final var future1 = executor.submit(() -> {
             phaser.arriveAndAwaitAdvance();
-            lockManager.acquire(txId1, resourceId);
+            lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
             return true;
         });
         final var future2 = executor.submit(() -> {
             phaser.arriveAndAwaitAdvance();
-            lockManager.acquire(txId1, resourceId);
+            lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
             return true;
         });
 
@@ -103,25 +154,25 @@ public class InMemoryResourceLockManagerTest {
     }
 
     @Test
-    public void concurrentRequestsFromDifferentTxesOnlyOneShouldSucceed()
+    public void concurrentExclusiveRequestsFromDifferentTxesOnlyOneShouldSucceed()
             throws ExecutionException, InterruptedException {
         final var phaser = new Phaser(3);
 
         final var future1 = executor.submit(() -> {
             phaser.arriveAndAwaitAdvance();
             try {
-                lockManager.acquire(txId1, resourceId);
+                lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
                 return true;
-            } catch (ConcurrentUpdateException e) {
+            } catch (final ConcurrentUpdateException e) {
                 return false;
             }
         });
         final var future2 = executor.submit(() -> {
             phaser.arriveAndAwaitAdvance();
             try {
-                lockManager.acquire(txId2, resourceId);
+                lockManager.acquire(txId2, resourceId, ResourceLockType.EXCLUSIVE);
                 return true;
-            } catch (ConcurrentUpdateException e) {
+            } catch (final ConcurrentUpdateException e) {
                 return false;
             }
         });
@@ -136,11 +187,74 @@ public class InMemoryResourceLockManagerTest {
     }
 
     @Test
+    public void concurrentOneExclusiveRequestsFromDifferentTxesOnlyOneShouldSucceed()
+            throws ExecutionException, InterruptedException {
+        final var phaser = new Phaser(3);
+
+        final var future1 = executor.submit(() -> {
+            phaser.arriveAndAwaitAdvance();
+            try {
+                lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
+                return true;
+            } catch (final ConcurrentUpdateException e) {
+                return false;
+            }
+        });
+        final var future2 = executor.submit(() -> {
+            phaser.arriveAndAwaitAdvance();
+            try {
+                lockManager.acquire(txId2, resourceId, ResourceLockType.NONEXCLUSIVE);
+                return true;
+            } catch (final ConcurrentUpdateException e) {
+                return false;
+            }
+        });
+
+        phaser.arriveAndAwaitAdvance();
+
+        if (future1.get()) {
+            assertFalse("Only one tx should have acquired a lock", future2.get());
+        } else {
+            assertTrue("Only one tx should have acquired a lock", future2.get());
+        }
+    }
+
+    @Test
+    public void concurrentNonexclusiveRequestsFromDifferentTxesBothShouldSucceed()
+            throws ExecutionException, InterruptedException {
+        final var phaser = new Phaser(3);
+
+        final var future1 = executor.submit(() -> {
+            phaser.arriveAndAwaitAdvance();
+            try {
+                lockManager.acquire(txId1, resourceId, ResourceLockType.NONEXCLUSIVE);
+                return true;
+            } catch (final ConcurrentUpdateException e) {
+                return false;
+            }
+        });
+        final var future2 = executor.submit(() -> {
+            phaser.arriveAndAwaitAdvance();
+            try {
+                lockManager.acquire(txId2, resourceId, ResourceLockType.NONEXCLUSIVE);
+                return true;
+            } catch (final ConcurrentUpdateException e) {
+                return false;
+            }
+        });
+
+        phaser.arriveAndAwaitAdvance();
+        // Both should succeed.
+        assertTrue(future1.get());
+        assertTrue(future2.get());
+    }
+
+    @Test
     public void releasingAlreadyReleasedLocksShouldDoNothing() {
-        lockManager.acquire(txId1, resourceId);
+        lockManager.acquire(txId1, resourceId, ResourceLockType.EXCLUSIVE);
         lockManager.releaseAll(txId1);
         lockManager.releaseAll(txId1);
-        lockManager.acquire(txId2, resourceId);
+        lockManager.acquire(txId2, resourceId, ResourceLockType.EXCLUSIVE);
     }
 
     private void assertLockException(final Runnable runnable) {
