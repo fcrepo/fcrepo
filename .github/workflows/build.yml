@@ -24,7 +24,7 @@ jobs:
         include:
           - java: 17
             os: ubuntu-latest
-            experimental: [true]
+            experimental: true
     steps:
     - name: Git support longpaths
       run: git config --global core.longpaths true
