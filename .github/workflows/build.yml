@@ -13,11 +13,17 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         java: ['11', '17']
+        experimental: [false]
+        include: 
+          - java: 17
+            os: ubuntu-latest
+            experimental: [true]
     steps:
     - name: Git support longpaths
       run: git config --global core.longpaths true
@@ -40,12 +46,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        java: ['11', '17']
-        experimental: [false]
-        include: 
-          - java: 17
-            os: ubuntu-latest
-            experimental: [true]
+        java: ['11']
     services:
       postgres:
         image: postgres:12
