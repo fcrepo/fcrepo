@@ -297,7 +297,10 @@ public abstract class AbstractService {
             final var parentHeaders = pSession.getHeaders(parentId, null);
             if (parentHeaders.getArchivalGroupId() != null) {
                 // parent is part of an AG, so lock the AG
-                tx.lockResourceNonExclusive(parentHeaders.getArchivalGroupId());
+                tx.lockResource(parentHeaders.getArchivalGroupId());
+            } else if (parentHeaders.isArchivalGroup()) {
+                // parent is an AG, so lock it.
+                tx.lockResource(parentId);
             } else {
                 // otherwise lock the parent.
                 tx.lockResourceNonExclusive(parentId);

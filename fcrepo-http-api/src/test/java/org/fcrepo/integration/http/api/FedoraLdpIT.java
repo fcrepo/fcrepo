@@ -4217,26 +4217,34 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final String second = parent + "/2";
         final String third = parent + "/3";
         final String fourth = parent + "/4";
-        final Thread t1 = new Thread(() -> {
-            executeAndClose(putObjMethod(first));
-        });
-        final Thread t2 = new Thread(() -> {
-            executeAndClose(putObjMethod(second));
-        });
-        final Thread t3 = new Thread(() -> {
-            executeAndClose(putObjMethod(third));
-        });
-        final Thread t4 = new Thread(() -> {
-            executeAndClose(putObjMethod(fourth));
-        });
-        t1.start();
-        t2.start();
-        t3.start();
-        t4.start();
-        t1.join();
-        t2.join();
-        t3.join();
-        t4.join();
+
+        final var phaser = new Phaser(5);
+
+        final RequestThread[] threads = new RequestThread[] {
+                new RequestThread(putObjMethod(first), phaser),
+                new RequestThread(putObjMethod(second), phaser),
+                new RequestThread(putObjMethod(third), phaser),
+                new RequestThread(putObjMethod(fourth), phaser)
+        };
+
+        for (final RequestThread t : threads) {
+            t.start();
+        }
+
+        phaser.arriveAndAwaitAdvance();
+
+        final List<RequestThread> successfulThreads = new ArrayList<>();
+        for (final RequestThread t : threads) {
+            t.join(1000);
+            assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
+            final int status = t.response.getStatusLine().getStatusCode();
+            LOGGER.info("{} received a {} status code.", t.getId(), status);
+            if (status == 201) {
+                successfulThreads.add(t);
+            }
+        }
+
+        assertEquals("All four PUT requests should have been successful!", 4, successfulThreads.size());
 
         try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
             final DatasetGraph graphStore = dataset.asDatasetGraph();

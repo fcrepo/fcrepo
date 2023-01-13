@@ -24,7 +24,6 @@ import org.fcrepo.kernel.api.exception.TransactionClosedException;
 import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.lock.ResourceLockManager;
-import org.fcrepo.kernel.api.lock.ResourceLockType;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
@@ -283,12 +282,12 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public void lockResource(final FedoraId resourceId) {
-        getResourceLockManger().acquire(getId(), resourceId, ResourceLockType.EXCLUSIVE);
+        getResourceLockManger().acquireExclusive(getId(), resourceId);
     }
 
     @Override
     public void lockResourceNonExclusive(final FedoraId resourceId) {
-        getResourceLockManger().acquire(getId(), resourceId, ResourceLockType.NONEXCLUSIVE);
+        getResourceLockManger().acquireNonExclusive(getId(), resourceId);
     }
 
     /**
@@ -299,7 +298,7 @@ public class TransactionImpl implements Transaction {
      */
     @Override
     public void lockResourceAndGhostNodes(final FedoraId resourceId) {
-        getResourceLockManger().acquire(getId(), resourceId, ResourceLockType.EXCLUSIVE);
+        getResourceLockManger().acquireExclusive(getId(), resourceId);
         final var resourceIdStr = resourceId.getResourceId();
         final String estimateParentPath = resourceIdStr.indexOf('/') > -1 ?
                 resourceIdStr.substring(0,resourceIdStr.lastIndexOf('/')) : resourceIdStr;
@@ -313,7 +312,7 @@ public class TransactionImpl implements Transaction {
             FedoraId tempParent = actualParent;
             for (final String part : ghostPaths) {
                 tempParent = tempParent.resolve(part);
-                getResourceLockManger().acquire(getId(), tempParent, ResourceLockType.EXCLUSIVE);
+                getResourceLockManger().acquireExclusive(getId(), tempParent);
             }
         }
     }

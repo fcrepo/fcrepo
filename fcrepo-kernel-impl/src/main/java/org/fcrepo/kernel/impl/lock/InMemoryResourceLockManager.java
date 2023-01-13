@@ -6,6 +6,7 @@
 package org.fcrepo.kernel.impl.lock;
 
 import static org.fcrepo.kernel.api.lock.ResourceLockType.EXCLUSIVE;
+import static org.fcrepo.kernel.api.lock.ResourceLockType.NONEXCLUSIVE;
 
 import java.util.Map;
 import java.util.Set;
@@ -49,9 +50,19 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
     }
 
     @Override
-    public void acquire(final String txId, final FedoraId resourceId, final ResourceLockType lockType) {
+    public void acquireExclusive(final String txId, final FedoraId resourceId) {
+        acquireInternal(txId, resourceId, EXCLUSIVE);
+    }
+
+    @Override
+    public void acquireNonExclusive(final String txId, final FedoraId resourceId) {
+        acquireInternal(txId, resourceId, NONEXCLUSIVE);
+    }
+
+    private void acquireInternal(final String txId, final FedoraId resourceId, final ResourceLockType lockType) {
         final var resourceIdStr = resourceId.getResourceId();
 
+        // This transaction has an exclusive lock
         if (transactionHoldsExclusiveLock(txId, resourceIdStr)) {
             return;
         }
@@ -63,13 +74,19 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
 
             if (resourceLocks.containsKey(resourceIdStr)) {
                 final var locks = resourceLocks.get(resourceIdStr);
-                if (locks.size() > 0 && (
-                        lockType.equals(EXCLUSIVE) && locks.parallelStream().anyMatch(l ->
-                        !l.getTransactionId().equals(txId)) ||
-                        locks.parallelStream().anyMatch(l -> l.hasLockType(EXCLUSIVE)))) {
-                    // Can't get an exclusive lock on a resource that already has any lock not owned by the current
-                    // transaction or get any lock if there is already an exclusive lock. If the current transaction
-                    // held this exclusive lock we would not have gotten this far.
+                if (locks.size() > 0 &&
+                    (
+                        // Can't get an exclusive lock on a resource that already has any lock not owned by the
+                        // current transaction. If the current transaction held the exclusive lock we would
+                        // have exited above.
+                        (lockType.equals(EXCLUSIVE) &&
+                                locks.stream().anyMatch(l ->!l.getTransactionId().equals(txId))
+                        ) ||
+                        // Can get any lock if there is an exclusive lock, again the current transaction
+                        // would not own it or we would have exited above.
+                        locks.stream().anyMatch(l -> l.hasLockType(EXCLUSIVE))
+                    )
+                ) {
                        throw new ConcurrentUpdateException(
                                String.format("Cannot update %s because it is being updated by another transaction.",
                                        resourceIdStr));
@@ -113,7 +130,7 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
 
     private boolean transactionHoldsExclusiveLock(final String txId, final String resourceId) {
         final var locks = transactionLocks.get(txId);
-        return locks != null && locks.parallelStream().anyMatch(r -> r.hasLockType(EXCLUSIVE) &&
+        return locks != null && locks.stream().anyMatch(r -> r.hasLockType(EXCLUSIVE) &&
                 r.hasResource(resourceId));
     }
 
