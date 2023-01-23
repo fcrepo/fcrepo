@@ -4285,11 +4285,16 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final var phaser = new Phaser(5);
 
+        final var tx1 = createTransaction();
+        final var tx2 = createTransaction();
+        final var tx3 = createTransaction();
+        final var tx4 = createTransaction();
+
         final RequestThread[] threads = new RequestThread[] {
-                new RequestThread(putObjMethod(first), phaser),
-                new RequestThread(putObjMethod(second), phaser),
-                new RequestThread(putObjMethod(third), phaser),
-                new RequestThread(putObjMethod(fourth), phaser)
+                new RequestThread(addTxTo(putObjMethod(first), tx1), phaser),
+                new RequestThread(addTxTo(putObjMethod(second), tx2), phaser),
+                new RequestThread(addTxTo(putObjMethod(third), tx3), phaser),
+                new RequestThread(addTxTo(putObjMethod(fourth), tx4), phaser)
         };
 
         for (final RequestThread t : threads) {

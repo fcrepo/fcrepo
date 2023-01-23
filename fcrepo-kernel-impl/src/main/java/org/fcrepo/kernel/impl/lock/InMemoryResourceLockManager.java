@@ -8,7 +8,9 @@ package org.fcrepo.kernel.impl.lock;
 import static org.fcrepo.kernel.api.lock.ResourceLockType.EXCLUSIVE;
 import static org.fcrepo.kernel.api.lock.ResourceLockType.NONEXCLUSIVE;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -37,15 +39,20 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryResourceLockManager.class);
 
     private final Map<String, Set<ResourceLock>> transactionLocks;
-    private final Map<String, Set<ResourceLock>> internalResourceLocks;
     private final Map<String, Set<ResourceLock>> resourceLocks;
+
+    /**
+     * The internal lock is used so that internal to this class there is only one thread at a time acquiring or
+     * releasing locks on a specific resource.
+     */
+    private final Map<String, Object> internalResourceLocks;
 
     public InMemoryResourceLockManager() {
         transactionLocks = new ConcurrentHashMap<>();
         resourceLocks = new ConcurrentHashMap<>();
         internalResourceLocks = Caffeine.newBuilder()
                 .expireAfterAccess(10, TimeUnit.MINUTES)
-                .<String, Set<ResourceLock>>build()
+                .<String, Object>build()
                 .asMap();
     }
 
@@ -61,61 +68,56 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
 
     private void acquireInternal(final String txId, final FedoraId resourceId, final ResourceLockType lockType) {
         final var resourceIdStr = resourceId.getResourceId();
+        final var resourceLock = new ResourceLockImpl(lockType, txId, resourceIdStr);
 
-        // This transaction has an exclusive lock
-        if (transactionHoldsExclusiveLock(txId, resourceIdStr)) {
+        if (transactionHoldsAdequateLock(resourceLock)) {
             return;
         }
 
-        synchronized (acquireInternalLock(txId, resourceIdStr, lockType)) {
-            if (transactionHoldsExclusiveLock(txId, resourceIdStr)) {
+        synchronized (acquireInternalLock(resourceIdStr)) {
+            if (transactionHoldsAdequateLock(resourceLock)) {
                 return;
             }
 
-            if (resourceLocks.containsKey(resourceIdStr)) {
-                final var locks = resourceLocks.get(resourceIdStr);
-                if (locks.size() > 0 &&
-                    (
-                        // Can't get an exclusive lock on a resource that already has any lock not owned by the
-                        // current transaction. If the current transaction held the exclusive lock we would
-                        // have exited above.
-                        (lockType.equals(EXCLUSIVE) &&
-                                locks.stream().anyMatch(l ->!l.getTransactionId().equals(txId))
-                        ) ||
-                        // Can get any lock if there is an exclusive lock, again the current transaction
-                        // would not own it or we would have exited above.
-                        locks.stream().anyMatch(l -> l.hasLockType(EXCLUSIVE))
-                    )
-                ) {
-                       throw new ConcurrentUpdateException(
-                               String.format("Cannot update %s because it is being updated by another transaction.",
-                                       resourceIdStr));
+            final var locks = resourceLocks.get(resourceIdStr);
+
+            if (locks != null) {
+                for (var lock : locks) {
+                    // Throw an exception if either:
+                    // 1. We need an exclusive lock, but another tx already holds any kind of lock
+                    // 2. We need a non-exclusive lock, but another tx holds an exclusive lock
+                    if ((lockType == EXCLUSIVE && !lock.getTransactionId().equals(txId))
+                            || lock.hasLockType(EXCLUSIVE)) {
+                        throw new ConcurrentUpdateException(
+                                String.format("Cannot update %s because it is being updated by another transaction.",
+                                        resourceIdStr));
+                    }
                 }
             }
 
             LOG.debug("Transaction {} acquiring lock on {}", txId, resourceIdStr);
 
-            final var resourceLock = new ResourceLockImpl(lockType, txId, resourceIdStr);
-            resourceLocks.computeIfAbsent(resourceIdStr, key -> Sets.newConcurrentHashSet()).add(resourceLock);
+            // This does not need to be a synchronized collection because we already synchronize internally on the
+            // resource id, so it's not possible to modify concurrently.
+            //
+            // Because we're using set to store the resource locks and the resource's identity is based on its
+            // transaction id and resource id, then a tx will only ever have at most one lock per resource.
+            // This works because we do not release locks individually, but rather all at once.
+            resourceLocks.computeIfAbsent(resourceIdStr, key -> new HashSet<>()).add(resourceLock);
             transactionLocks.computeIfAbsent(txId, key -> Sets.newConcurrentHashSet()).add(resourceLock);
         }
     }
 
     @Override
     public void releaseAll(final String txId) {
-        final var locks = transactionLocks.remove(txId);
-        if (locks != null) {
-            locks.forEach(lock -> {
+        final var txLocks = transactionLocks.remove(txId);
+        if (txLocks != null) {
+            txLocks.forEach(lock -> {
                 LOG.debug("Transaction {} releasing lock on {}", txId, lock);
-                synchronized (acquireInternalLock(txId, lock.getResourceId(), lock.getLockType())) {
-                    internalResourceLocks.get(lock.getResourceId()).removeIf(
-                            l -> l.getTransactionId().equals(txId));
-                    if (internalResourceLocks.get(lock.getResourceId()).size() == 0) {
-                        internalResourceLocks.remove(lock.getResourceId());
-                    }
-                    resourceLocks.get(lock.getResourceId()).removeIf(
-                            l -> l.getTransactionId().equals(txId));
-                    if (resourceLocks.get(lock.getResourceId()).size() == 0) {
+                synchronized (acquireInternalLock(lock.getResourceId())) {
+                    final var locks = resourceLocks.get(lock.getResourceId());
+                    locks.remove(lock);
+                    if (locks.isEmpty()) {
                         resourceLocks.remove(lock.getResourceId());
                     }
                 }
@@ -123,15 +125,28 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
         }
     }
 
-    private Object acquireInternalLock(final String txId, final String resourceId, final ResourceLockType lockType) {
-        return internalResourceLocks.computeIfAbsent(resourceId,
-                key -> Sets.newConcurrentHashSet()).add(new ResourceLockImpl(lockType, txId, resourceId));
+    private Object acquireInternalLock(final String resourceId) {
+        return internalResourceLocks.computeIfAbsent(resourceId, key -> new Object());
     }
 
-    private boolean transactionHoldsExclusiveLock(final String txId, final String resourceId) {
-        final var locks = transactionLocks.get(txId);
-        return locks != null && locks.stream().anyMatch(r -> r.hasLockType(EXCLUSIVE) &&
-                r.hasResource(resourceId));
+    /**
+     * Returns true if the transaction already holds an adequate lock on the resource. This means that it holds an
+     * exclusive lock if an exclusive lock is requested, or any lock if a non-exclusive lock is requested.
+     *
+     * @param requested the requested resource lock
+     * @return true if the transaction already holds an adequate lock
+     */
+    private boolean transactionHoldsAdequateLock(final ResourceLock requested) {
+        final var locks = transactionLocks.get(requested.getTransactionId());
+
+        if (locks == null) {
+            return false;
+        }
+
+        final var held = locks.stream().filter(l -> Objects.equals(requested, l)).findFirst();
+
+        return held.map(l -> l.isAdequate(requested.getLockType()))
+                .orElse(false);
     }
 
 }

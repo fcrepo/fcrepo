@@ -8,15 +8,17 @@ package org.fcrepo.kernel.impl.lock;
 import org.fcrepo.kernel.api.lock.ResourceLock;
 import org.fcrepo.kernel.api.lock.ResourceLockType;
 
+import java.util.Objects;
+
 /**
  * Simple implementation of the complex lock.
  * @author whikloj
  */
 public class ResourceLockImpl implements ResourceLock {
 
-    private String transactionId;
-    private ResourceLockType resourceLockType;
-    private String resourceId;
+    private final String transactionId;
+    private final ResourceLockType resourceLockType;
+    private final String resourceId;
 
     ResourceLockImpl(final ResourceLockType resourceLock, final String txId, final String id) {
         resourceLockType = resourceLock;
@@ -49,6 +51,11 @@ public class ResourceLockImpl implements ResourceLock {
     }
 
     @Override
+    public boolean isAdequate(final ResourceLockType lockType) {
+        return this.resourceLockType == ResourceLockType.EXCLUSIVE || lockType == ResourceLockType.NONEXCLUSIVE;
+    }
+
+    @Override
     public String getTransactionId() {
         return transactionId;
     }
@@ -57,5 +64,22 @@ public class ResourceLockImpl implements ResourceLock {
     public String toString() {
         return String.format("type: %s, txId: %s, resource: %s", resourceLockType, transactionId,
                 resourceId);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final ResourceLockImpl that = (ResourceLockImpl) o;
+        return transactionId.equals(that.transactionId) && resourceId.equals(that.resourceId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(transactionId, resourceId);
     }
 }
