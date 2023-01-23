@@ -19,6 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        # JDK 17  build testing. Allowed to fail as marked experimental
         java: ['11', '17']
         experimental: [false]
         include:
