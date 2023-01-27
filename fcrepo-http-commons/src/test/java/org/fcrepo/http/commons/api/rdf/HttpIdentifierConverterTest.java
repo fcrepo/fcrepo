@@ -295,6 +295,30 @@ public class HttpIdentifierConverterTest {
     }
 
     /**
+     * Test some characters that should remain the same when part of the path
+     */
+    @Test
+    public void testQueryParamCharacters() {
+        final String id = "+&";
+        final String testUri = uriBase + "/" + id;
+        final String fedoraId = converter.toInternalId(testUri);
+        final String expectedId = FEDORA_ID_PREFIX + "/" + id;
+        assertEquals(expectedId, fedoraId);
+    }
+
+    /**
+     * Test encoded versions characters that should remain the same when part of the path
+     */
+    @Test
+    public void testEncodedQueryParamCharacters() {
+        final String encoded = "%2B%26";
+        final String testUri = uriBase + "/" + encoded;
+        final String fedoraId = converter.toInternalId(testUri);
+        final String expectedId = FEDORA_ID_PREFIX + "/+&";
+        assertEquals(expectedId, fedoraId);
+    }
+
+    /**
      * Utility function to get a UUID.
      * @return a UUID.
      */
