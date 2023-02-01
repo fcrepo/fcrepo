@@ -67,19 +67,18 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
     }
 
     private void acquireInternal(final String txId, final FedoraId resourceId, final ResourceLockType lockType) {
-        final var resourceIdStr = resourceId.getResourceId();
-        final var resourceLock = new ResourceLockImpl(lockType, txId, resourceIdStr);
+        final var resourceLock = new ResourceLockImpl(lockType, txId, resourceId);
 
         if (transactionHoldsAdequateLock(resourceLock)) {
             return;
         }
 
-        synchronized (acquireInternalLock(resourceIdStr)) {
+        synchronized (acquireInternalLock(resourceId)) {
             if (transactionHoldsAdequateLock(resourceLock)) {
                 return;
             }
 
-            final var locks = resourceLocks.get(resourceIdStr);
+            final var locks = resourceLocks.get(resourceId.getResourceId());
 
             if (locks != null) {
                 for (final var lock : locks) {
@@ -90,12 +89,12 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
                             || lock.hasLockType(EXCLUSIVE)) {
                         throw new ConcurrentUpdateException(
                                 String.format("Cannot update %s because it is being updated by another transaction.",
-                                        resourceIdStr));
+                                        resourceId.getResourceId()));
                     }
                 }
             }
 
-            LOG.debug("Transaction {} acquiring lock on {}", txId, resourceIdStr);
+            LOG.debug("Transaction {} acquiring lock on {}", txId, resourceId.getResourceId());
 
             // This does not need to be a synchronized collection because we already synchronize internally on the
             // resource id, so it's not possible to modify concurrently.
@@ -103,7 +102,7 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
             // Because we're using set to store the resource locks and the resource's identity is based on its
             // transaction id and resource id, then a tx will only ever have at most one lock per resource.
             // This works because we do not release locks individually, but rather all at once.
-            resourceLocks.computeIfAbsent(resourceIdStr, key -> new HashSet<>()).add(resourceLock);
+            resourceLocks.computeIfAbsent(resourceId.getResourceId(), key -> new HashSet<>()).add(resourceLock);
             transactionLocks.computeIfAbsent(txId, key -> Sets.newConcurrentHashSet()).add(resourceLock);
         }
     }
@@ -115,18 +114,18 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
             txLocks.forEach(lock -> {
                 LOG.debug("Transaction {} releasing lock on {}", txId, lock);
                 synchronized (acquireInternalLock(lock.getResourceId())) {
-                    final var locks = resourceLocks.get(lock.getResourceId());
+                    final var locks = resourceLocks.get(lock.getResourceId().getResourceId());
                     locks.remove(lock);
                     if (locks.isEmpty()) {
-                        resourceLocks.remove(lock.getResourceId());
+                        resourceLocks.remove(lock.getResourceId().getResourceId());
                     }
                 }
             });
         }
     }
 
-    private Object acquireInternalLock(final String resourceId) {
-        return internalResourceLocks.computeIfAbsent(resourceId, key -> new Object());
+    private Object acquireInternalLock(final FedoraId resourceId) {
+        return internalResourceLocks.computeIfAbsent(resourceId.getResourceId(), key -> new Object());
     }
 
     /**

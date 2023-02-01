@@ -5,13 +5,13 @@
  */
 package org.fcrepo.kernel.impl.lock;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.util.UUID;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.lock.ResourceLock;
 import org.fcrepo.kernel.api.lock.ResourceLockType;
 
@@ -25,12 +25,12 @@ import org.junit.Test;
 public class ResourceLockImplTest {
 
     private String txId;
-    private String resourceId;
+    private FedoraId resourceId;
 
     @Before
     public void setUp() {
         txId = "tx" + UUID.randomUUID();
-        resourceId = FEDORA_ID_PREFIX + "/" + UUID.randomUUID();
+        resourceId = FedoraId.create(UUID.randomUUID().toString());
     }
 
     @Test

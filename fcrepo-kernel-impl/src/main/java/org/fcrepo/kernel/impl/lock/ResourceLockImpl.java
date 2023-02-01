@@ -5,6 +5,7 @@
  */
 package org.fcrepo.kernel.impl.lock;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.lock.ResourceLock;
 import org.fcrepo.kernel.api.lock.ResourceLockType;
 
@@ -18,25 +19,25 @@ public class ResourceLockImpl implements ResourceLock {
 
     private final String transactionId;
     private final ResourceLockType resourceLockType;
-    private final String resourceId;
+    private final FedoraId resourceId;
 
-    ResourceLockImpl(final ResourceLockType resourceLock, final String txId, final String id) {
+    ResourceLockImpl(final ResourceLockType resourceLock, final String txId, final FedoraId id) {
         resourceLockType = resourceLock;
         transactionId = txId;
         resourceId = id;
     }
 
-    ResourceLockImpl(final String lockType, final String txId, final String resourceId) {
+    ResourceLockImpl(final String lockType, final String txId, final FedoraId resourceId) {
         this(ResourceLockType.fromString(lockType), txId, resourceId);
     }
 
     @Override
-    public String getResourceId() {
+    public FedoraId getResourceId() {
         return resourceId;
     }
 
     @Override
-    public boolean hasResource(final String resourceId) {
+    public boolean hasResource(final FedoraId resourceId) {
         return this.resourceId.equals(resourceId);
     }
 

@@ -5,6 +5,8 @@
  */
 package org.fcrepo.kernel.api.lock;
 
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
 /**
  * A simple lock with a type, transaction and resource.
  * <p>
@@ -19,14 +21,14 @@ public interface ResourceLock {
     /**
      * @return the resource ID that is locked.
      */
-    String getResourceId();
+    FedoraId getResourceId();
 
     /**
      * Does this lock hold the mentioned item?
-     * @param resourceId the resource ID.
+     * @param resourceId the FedoraId of the resource to check this lock for.
      * @return true if this lock holds it.
      */
-    boolean hasResource(final String resourceId);
+    boolean hasResource(final FedoraId resourceId);
 
     /**
      * @return the lock type
