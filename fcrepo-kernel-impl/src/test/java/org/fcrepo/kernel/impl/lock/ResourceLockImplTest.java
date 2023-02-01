@@ -35,37 +35,31 @@ public class ResourceLockImplTest {
 
     @Test
     public void testExclusiveLockString() {
-        testLockString("exclusive", ResourceLockType.EXCLUSIVE);
+        final ResourceLockImpl newLock = new ResourceLockImpl("exclusive", txId, resourceId);
+        doLockChecks(newLock, ResourceLockType.EXCLUSIVE);
     }
 
     @Test
     public void testExclusiveLock() {
-        testLockType(ResourceLockType.EXCLUSIVE, ResourceLockType.EXCLUSIVE);
+        final ResourceLockImpl newLock = new ResourceLockImpl(ResourceLockType.EXCLUSIVE, txId, resourceId);
+        doLockChecks(newLock, ResourceLockType.EXCLUSIVE);
     }
 
     @Test
     public void testNonExclusiveLockString() {
-        testLockString("non-exclusive", ResourceLockType.NONEXCLUSIVE);
+        final ResourceLockImpl newLock = new ResourceLockImpl("non-exclusive", txId, resourceId);
+        doLockChecks(newLock, ResourceLockType.NONEXCLUSIVE);
     }
 
     @Test
     public void testNonExclusiveLock() {
-        testLockType(ResourceLockType.NONEXCLUSIVE, ResourceLockType.NONEXCLUSIVE);
+        final ResourceLockImpl newLock = new ResourceLockImpl(ResourceLockType.NONEXCLUSIVE, txId, resourceId);
+        doLockChecks(newLock, ResourceLockType.NONEXCLUSIVE);
     }
 
     @Test
     public void testInvalidLockType() {
         assertThrows(IllegalArgumentException.class, () -> new ResourceLockImpl("create", txId, resourceId));
-    }
-
-    private void testLockString(final String type, final ResourceLockType expectedType) {
-        final ResourceLockImpl newLock = new ResourceLockImpl(type, txId, resourceId);
-        doLockChecks(newLock, expectedType);
-    }
-
-    private void testLockType(final ResourceLockType lockType, final ResourceLockType expectedType) {
-        final ResourceLockImpl newLock = new ResourceLockImpl(lockType, txId, resourceId);
-        doLockChecks(newLock, expectedType);
     }
 
     private void doLockChecks(final ResourceLock newLock, final ResourceLockType expectedType) {

@@ -6,6 +6,7 @@
 package org.fcrepo.kernel.api.lock;
 
 /**
+ * Enum for the different types of locks you can acquire on a resource.
  * @author whikloj
  * @since 6.3.1
  */
@@ -24,6 +25,11 @@ public enum ResourceLockType {
         return value;
     }
 
+    /**
+     * To generate a new enum instance by matching on the enum's value
+     * @param value the value of the enum to create
+     * @return the ResourceLockType enum
+     */
     public static ResourceLockType fromString(final String value) {
         for (final var mode : values()) {
             if (mode.value.equalsIgnoreCase(value)) {

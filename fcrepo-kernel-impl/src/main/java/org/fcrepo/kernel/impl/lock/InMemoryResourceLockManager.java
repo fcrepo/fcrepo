@@ -82,7 +82,7 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
             final var locks = resourceLocks.get(resourceIdStr);
 
             if (locks != null) {
-                for (var lock : locks) {
+                for (final var lock : locks) {
                     // Throw an exception if either:
                     // 1. We need an exclusive lock, but another tx already holds any kind of lock
                     // 2. We need a non-exclusive lock, but another tx holds an exclusive lock
