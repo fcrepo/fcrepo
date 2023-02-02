@@ -39,7 +39,7 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryResourceLockManager.class);
 
     private final Map<String, Set<ResourceLock>> transactionLocks;
-    private final Map<String, Set<ResourceLock>> resourceLocks;
+    private final Map<FedoraId, Set<ResourceLock>> resourceLocks;
 
     /**
      * The internal lock is used so that internal to this class there is only one thread at a time acquiring or
@@ -78,7 +78,7 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
                 return;
             }
 
-            final var locks = resourceLocks.get(resourceId.getResourceId());
+            final var locks = resourceLocks.get(resourceId);
 
             if (locks != null) {
                 for (final var lock : locks) {
@@ -102,7 +102,7 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
             // Because we're using set to store the resource locks and the resource's identity is based on its
             // transaction id and resource id, then a tx will only ever have at most one lock per resource.
             // This works because we do not release locks individually, but rather all at once.
-            resourceLocks.computeIfAbsent(resourceId.getResourceId(), key -> new HashSet<>()).add(resourceLock);
+            resourceLocks.computeIfAbsent(resourceId, key -> new HashSet<>()).add(resourceLock);
             transactionLocks.computeIfAbsent(txId, key -> Sets.newConcurrentHashSet()).add(resourceLock);
         }
     }
@@ -114,10 +114,10 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
             txLocks.forEach(lock -> {
                 LOG.debug("Transaction {} releasing lock on {}", txId, lock);
                 synchronized (acquireInternalLock(lock.getResourceId())) {
-                    final var locks = resourceLocks.get(lock.getResourceId().getResourceId());
+                    final var locks = resourceLocks.get(lock.getResourceId());
                     locks.remove(lock);
                     if (locks.isEmpty()) {
-                        resourceLocks.remove(lock.getResourceId().getResourceId());
+                        resourceLocks.remove(lock.getResourceId());
                     }
                 }
             });
