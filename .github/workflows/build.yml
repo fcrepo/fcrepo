@@ -1,5 +1,5 @@
 # This workflow will build a Java project with Maven
-# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-maven
 
 name: Build
 
@@ -13,19 +13,28 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
+      max-parallel: 1
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        # JDK 17  build testing. Allowed to fail as marked experimental
+        java: ['11', '17']
+        experimental: [false]
+        include:
+          - java: 17
+            os: ubuntu-latest
+            experimental: true
     steps:
     - name: Git support longpaths
       run: git config --global core.longpaths true
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Set up JDK 11
+    - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v1
       with:
-        java-version: 11
+        java-version: ${{ matrix.java }}
     - name: Cache Maven packages
       uses: actions/cache@v2
       with:
@@ -36,6 +45,10 @@ jobs:
       run: mvn -B -U clean install
   postgres-itest:
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        java: ['11']
     services:
       postgres:
         image: postgres:12
@@ -55,10 +68,10 @@ jobs:
       run: git config --global core.longpaths true
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Set up JDK 11
+    - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v1
       with:
-        java-version: 11
+        java-version: ${{ matrix.java }}
     - name: Cache Maven packages
       uses: actions/cache@v2
       with:
@@ -69,6 +82,10 @@ jobs:
       run: mvn -B -U -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
   mariadb-itest:
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        java: ['11']
     services:
       postgres:
         image: mariadb:10.5
@@ -89,10 +106,10 @@ jobs:
       run: git config --global core.longpaths true
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Set up JDK 11
+    - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v1
       with:
-        java-version: 11
+        java-version: ${{ matrix.java }}
     - name: Cache Maven packages
       uses: actions/cache@v2
       with:
@@ -103,6 +120,10 @@ jobs:
       run: mvn -B -U -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
   mysql-itest:
     runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        java: ['11']
     services:
       postgres:
         image: mysql:8
@@ -123,10 +144,10 @@ jobs:
       run: git config --global core.longpaths true
     - name: Checkout
       uses: actions/checkout@v2
-    - name: Set up JDK 11
+    - name: Set up JDK ${{ matrix.java }}
       uses: actions/setup-java@v1
       with:
-        java-version: 11
+        java-version: ${{ matrix.java }}
     - name: Cache Maven packages
       uses: actions/cache@v2
       with:
