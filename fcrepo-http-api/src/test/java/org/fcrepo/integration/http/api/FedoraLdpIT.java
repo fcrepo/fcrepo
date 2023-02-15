@@ -4210,6 +4210,114 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testConcurrentPutsAsChildren() throws InterruptedException, IOException {
+        final String parent = getRandomUniqueId();
+        executeAndClose(putObjMethod(parent));
+        final String first = parent + "/1";
+        final String second = parent + "/2";
+        final String third = parent + "/3";
+        final String fourth = parent + "/4";
+
+        final var phaser = new Phaser(5);
+
+        final RequestThread[] threads = new RequestThread[] {
+                new RequestThread(putObjMethod(first), phaser),
+                new RequestThread(putObjMethod(second), phaser),
+                new RequestThread(putObjMethod(third), phaser),
+                new RequestThread(putObjMethod(fourth), phaser)
+        };
+
+        for (final RequestThread t : threads) {
+            t.start();
+        }
+
+        phaser.arriveAndAwaitAdvance();
+
+        final List<RequestThread> successfulThreads = new ArrayList<>();
+        for (final RequestThread t : threads) {
+            t.join(1000);
+            assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
+            final int status = t.response.getStatusLine().getStatusCode();
+            LOGGER.info("{} received a {} status code.", t.getId(), status);
+            if (status == 201) {
+                successfulThreads.add(t);
+            }
+        }
+
+        assertEquals("All four PUT requests should have been successful!", 4, successfulThreads.size());
+
+        try (final CloseableDataset dataset = getDataset(getObjMethod(parent))) {
+            final DatasetGraph graphStore = dataset.asDatasetGraph();
+            final List<String> childPaths = new ArrayList<>();
+            final Iterator<Quad> children = graphStore.find(ANY, ANY, CONTAINS.asNode(), ANY);
+            assertTrue("Four children should have been created (none found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(0));
+            assertTrue("Four children should have been created (only one found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(1));
+            assertTrue("Four children should have been created (only two found).", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(2));
+            assertTrue("Four children should have been created. (only three found)", children.hasNext());
+            childPaths.add(children.next().getObject().getURI());
+            LOGGER.info("Found child: {}", childPaths.get(3));
+            assertFalse("Only four children should have been created.", children.hasNext());
+            assertTrue(childPaths.contains(serverAddress + first));
+            assertTrue(childPaths.contains(serverAddress + second));
+            assertTrue(childPaths.contains(serverAddress + third));
+            assertTrue(childPaths.contains(serverAddress + fourth));
+        }
+    }
+
+    /**
+     * Ghost nodes are special paths that become part of a single resource, so you cannot have the below situation of
+     * /00/1 and /00/2.
+     */
+    @Test
+    public void testConcurrentPutsWithGhostNodes() throws InterruptedException, IOException {
+        final String parent = getRandomUniqueId();
+        executeAndClose(putObjMethod(parent));
+        final String first = parent + "/00/1";
+        final String second = parent + "/00/2";
+        final String third = parent + "/00/3";
+        final String fourth = parent + "/00/4";
+
+        final var phaser = new Phaser(5);
+
+        final var tx1 = createTransaction();
+        final var tx2 = createTransaction();
+        final var tx3 = createTransaction();
+        final var tx4 = createTransaction();
+
+        final RequestThread[] threads = new RequestThread[] {
+                new RequestThread(addTxTo(putObjMethod(first), tx1), phaser),
+                new RequestThread(addTxTo(putObjMethod(second), tx2), phaser),
+                new RequestThread(addTxTo(putObjMethod(third), tx3), phaser),
+                new RequestThread(addTxTo(putObjMethod(fourth), tx4), phaser)
+        };
+
+        for (final RequestThread t : threads) {
+            t.start();
+        }
+
+        phaser.arriveAndAwaitAdvance();
+
+        final List<RequestThread> successfulThreads = new ArrayList<>();
+        for (final RequestThread t : threads) {
+            t.join(1000);
+            assertFalse("Thread " + t.getId() + " could not perform its operation in time!", t.isAlive());
+            final int status = t.response.getStatusLine().getStatusCode();
+            LOGGER.info("{} received a {} status code.", t.getId(), status);
+            if (status == 201) {
+                successfulThreads.add(t);
+            }
+        }
+
+        assertEquals("Only one PUT request should have been successful!", 1, successfulThreads.size());
+    }
+
+    @Test
     public void testConcurrentUpdatesToBinary() throws IOException, InterruptedException {
         // create a binary
         final String path = getRandomUniqueId();

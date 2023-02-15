@@ -74,6 +74,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
+import org.flywaydb.core.Flyway;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -101,6 +102,8 @@ public class TransactionsIT extends AbstractResourceIT {
     private OcflPropsConfig ocflConfig;
     private JdbcTemplate jdbcTemplate;
 
+    private Flyway flyway;
+
     @Before
     public void setup() {
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
@@ -108,11 +111,13 @@ public class TransactionsIT extends AbstractResourceIT {
         ocflConfig = getBean(OcflPropsConfig.class);
         final var dataSource = getBean(DataSource.class);
         jdbcTemplate = new JdbcTemplate(dataSource);
+        flyway = getBean(Flyway.class);
     }
 
     @After
     public void after() {
         objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
+        flyway.clean();
     }
 
     private void dropContainment() {
@@ -151,7 +156,7 @@ public class TransactionsIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testRequestsInTransactionThatDoestExist() {
+    public void testRequestsInTransactionThatDoesntExist() {
         /* create a tx */
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpPost(serverAddress + "fcr:tx/123idontexist")));
     }
@@ -948,10 +953,10 @@ public class TransactionsIT extends AbstractResourceIT {
 
         putBinary(binaryId, txLocation, "binary - updated!");
 
-        assertConcurrentUpdate(() -> putBinary(binaryId, null, "concurrent update!"));
-        assertConcurrentUpdate(() -> updateContainerTitle(childId, "concurrent update!", null));
-        assertConcurrentUpdate(() -> updateContainerTitle(agId, "concurrent update!", null));
-        assertConcurrentUpdate(() -> putContainer(agId + "/child2", null));
+        assertConcurrentUpdateFails(() -> putBinary(binaryId, null, "concurrent update!"));
+        assertConcurrentUpdateFails(() -> updateContainerTitle(childId, "concurrent update!", null));
+        assertConcurrentUpdateFails(() -> updateContainerTitle(agId, "concurrent update!", null));
+        assertConcurrentUpdateFails(() -> putContainer(agId + "/child2", null));
 
         commitTransaction(txLocation);
 
@@ -971,8 +976,8 @@ public class TransactionsIT extends AbstractResourceIT {
 
         putBinary(binaryId, txLocation, "binary - updated!");
 
-        assertConcurrentUpdate(() -> putBinary(binaryId, null, "concurrent update!"));
-        assertConcurrentUpdate(() -> updateContainerTitle(binaryId + "/fcr:metadata", "concurrent update!", null));
+        assertConcurrentUpdateFails(() -> putBinary(binaryId, null, "concurrent update!"));
+        assertConcurrentUpdateFails(() -> updateContainerTitle(binaryId + "/fcr:metadata", "concurrent update!", null));
 
         commitTransaction(txLocation);
 
@@ -989,7 +994,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
         updateContainerTitle(containerId, "new title", txLocation);
 
-        assertConcurrentUpdate(() -> updateContainerTitle(containerId, "concurrent update!", null));
+        assertConcurrentUpdateFails(() -> updateContainerTitle(containerId, "concurrent update!", null));
 
         commitTransaction(txLocation);
 
@@ -1031,8 +1036,8 @@ public class TransactionsIT extends AbstractResourceIT {
 
     /**
      * Test for accounting for ghost nodes during resource locking.
-     * @throws IOException
      * @see <a href="https://fedora-repository.atlassian.net/browse/FCREPO-3584">FCREPO-3584</a>
+     * @throws IOException http error
      */
     @Test
     public void testCheckGhostNodesInResourceLocking() throws IOException {
@@ -1156,7 +1161,39 @@ public class TransactionsIT extends AbstractResourceIT {
         assertBinaryContent("test 1", child, null);
     }
 
-    private void assertConcurrentUpdate(final CheckedRunnable runnable) throws Exception {
+    @Test
+    public void multipleChildrenHoldParentTillLastCompletes() throws IOException {
+        final String parent = getRandomUniqueId();
+        final String child1 = parent + "/" + getRandomUniqueId();
+        final String child2 = parent + "/" + getRandomUniqueId();
+
+        putContainer(parent, null);
+        final String tx1 = createTransaction();
+        final String tx2 = createTransaction();
+
+        // Put a child as part of the first transaction
+        putBinary(child1, tx1, "Some content");
+        // Check you can't delete the parent.
+        assertEquals(CONFLICT.getStatusCode(), getStatus(deleteObjMethod(parent)));
+        // Put a child as part of the second transaction
+        putBinary(child2, tx2, "Some other content");
+        // Check you still can't delete the parent.
+        assertEquals(CONFLICT.getStatusCode(), getStatus(deleteObjMethod(parent)));
+        // Commit transaction 1
+        commitTransaction(tx1);
+        // Check for the child
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(child1)));
+        // Check you STILL can't delete the parent.
+        assertEquals(CONFLICT.getStatusCode(), getStatus(deleteObjMethod(parent)));
+        // Commit transaction 2
+        commitTransaction(tx2);
+        // Check for the second child
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(child2)));
+        // Now you should be able to delete the parent
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(parent)));
+    }
+
+    private void assertConcurrentUpdateFails(final CheckedRunnable runnable) throws Exception {
         try {
             runnable.run();
             fail("Request should fail because the resource should be locked by another transaction.");

@@ -9,7 +9,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +18,7 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.glassfish.jersey.uri.UriTemplate;
 import org.slf4j.Logger;
+import org.springframework.util.StringUtils;
 
 /**
  * Convert between HTTP URIs (LDP paths) and internal Fedora ID using a
@@ -72,7 +72,7 @@ public class HttpIdentifierConverter {
         if (path != null) {
             final String decodedPath;
             if (!encoded) {
-                decodedPath = URLDecoder.decode(path, UTF_8);
+                decodedPath = StringUtils.uriDecode(path, UTF_8);
             } else {
                 decodedPath = path;
             }

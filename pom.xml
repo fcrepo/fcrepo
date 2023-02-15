@@ -4,13 +4,13 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo-parent</artifactId>
-    <version>6.3.1-SNAPSHOT</version>
+    <version>6.4.0-SNAPSHOT</version>
     <relativePath>./fcrepo-parent</relativePath>
   </parent>
 
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>6.3.1-SNAPSHOT</version>
+  <version>6.4.0-SNAPSHOT</version>
   <name>Fedora Commons</name>
   <description>Parent project for Fedora Commons Repository</description>
   <url>http://fedorarepository.org</url>
@@ -22,7 +22,7 @@
       (for scm, site-distribution, etc -->
     <project_name>fcrepo</project_name>
     <project_organization>fcrepo</project_organization>
-    <fcrepo-storage-ocfl.version>6.3.0-SNAPSHOT</fcrepo-storage-ocfl.version>
+    <fcrepo-storage-ocfl.version>6.4.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
     <activemq.version>5.16.3</activemq.version>
     <aws.version>2.17.50</aws.version>
