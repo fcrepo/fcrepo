@@ -12,6 +12,7 @@
 
 <body class="fcrepo_search">
 <div id="main" class="container" page="$searchPage">
+    #parse("views/common-register-header.vsl")
     #parse("views/common-header.vsl")
     #parse("views/search-header.vsl")
 

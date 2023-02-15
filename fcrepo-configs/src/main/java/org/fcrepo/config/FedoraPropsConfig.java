@@ -135,6 +135,10 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.cache.webac.acl.timeout.minutes:10}")
     private long webacCacheTimeout;
 
+    @Value("${fcrepo.register.banner:on}")
+    private String fcrepoRegisterBanner;
+
+
     @PostConstruct
     private void postConstruct() throws IOException {
         LOGGER.info("Fedora home: {}", fedoraHome);
@@ -401,4 +405,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public long getWebacCacheTimeout() {
         return webacCacheTimeout;
     }
+
+    /**
+     * @return whether the repository registration banner should be displayed
+     */
+    public String getFcrepoRegisterBanner() {
+        return fcrepoRegisterBanner;
+    }
+
 }
