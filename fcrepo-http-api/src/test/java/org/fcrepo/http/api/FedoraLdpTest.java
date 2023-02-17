@@ -254,6 +254,7 @@ public class FedoraLdpTest {
 
         final HttpRdfService httpRdfService = new HttpRdfService();
         setField(httpRdfService, "fedoraPropsConfig", fedoraPropsConfig);
+        setField(testObj, "fedoraPropsConfig", fedoraPropsConfig);
         when(fedoraPropsConfig.getServerManagedPropsMode()).thenReturn(STRICT);
 
         setField(testObj, "request", mockRequest);
