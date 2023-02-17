@@ -161,6 +161,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
+    static final String REGISTER_REPO_LINK = "https://registry.lyrasis.org/";
+    static final String REGISTER_REPO_TEXT = "We strongly encourage all users to register their instance " +
+                                             "in the DuraSpace Community Supported Program Registry hosted " +
+                                             "by LYRASIS. Register your installation today:";
+
     private static final String FCR_PREFIX = "fcr:";
     private static final Set<String> ALLOWED_FCR_PARTS = Set.of(FCR_METADATA, FCR_ACL);
 
@@ -589,6 +594,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected void addResourceHttpHeaders(final FedoraResource resource) {
         addResourceHttpHeaders(resource, false);
+    }
+
+
+    protected void addRegisterHeaders() {
+        if (fedoraPropsConfig.getFcrepoRegsiterApiBanner() == true) {
+            servletResponse.addHeader("USER-REGISTRATION", REGISTER_REPO_TEXT + " " + REGISTER_REPO_LINK);
+            servletResponse.addHeader("Link", "<" + REGISTER_REPO_LINK + ">; rel=\"user-regisration\"");
+        }
     }
 
     /**

@@ -789,6 +789,7 @@ public class FedoraLdp extends ContentExposingResource {
             servletResponse.addHeader(LINK, "<" + canonical + ">;rel=\"canonical\"");
 
         }
+        addRegisterHeaders();
         addExternalContentHeaders(resource);
         addTransactionHeaders(resource);
     }
