@@ -37,6 +37,8 @@ import org.fcrepo.config.DigestAlgorithm;
  */
 public class MultiDigestInputStreamWrapper {
 
+    private static final int BUFFER_SIZE = 8192;
+
     private final InputStream sourceStream;
 
     private final Map<String, String> algToDigest;
@@ -165,8 +167,9 @@ public class MultiDigestInputStreamWrapper {
 
         if (!streamRetrieved) {
             // Stream not previously consumed, consume it now in order to calculate digests
+            final var buffer = new byte[BUFFER_SIZE];
             try (final InputStream is = getInputStream()) {
-                while (is.read() != -1) {
+                while (is.read(buffer) != -1) {
                 }
             } catch (final IOException e) {
                 throw new RepositoryRuntimeException("Failed to read content stream while calculating digests", e);

@@ -122,7 +122,7 @@ public interface Transaction {
     void refresh();
 
     /**
-     * Acquires a lock on the specified resource for this transaction.
+     * Acquires an exclusive lock on the specified resource for this transaction.
      *
      * @param resourceId the resource to lock
      * @throws ConcurrentUpdateException if the lock cannot be acquired
@@ -130,7 +130,15 @@ public interface Transaction {
     void lockResource(final FedoraId resourceId);
 
     /**
-     * Acquire a lock on the specified resource and any ghost nodes above it for this transaction.
+     * Acquires a non-exclusive lock on the specified resource for this transaction.
+     *
+     * @param resourceId the resource to lock
+     * @throws ConcurrentUpdateException if the lock cannot be acquired
+     */
+    void lockResourceNonExclusive(final FedoraId resourceId);
+
+    /**
+     * Acquire an exclusive lock on the specified resource and any ghost nodes above it for this transaction.
      *
      * @param resourceId the resource to lock
      * @throws ConcurrentUpdateException if the lock cannot be acquired

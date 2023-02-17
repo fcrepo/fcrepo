@@ -282,7 +282,12 @@ public class TransactionImpl implements Transaction {
 
     @Override
     public void lockResource(final FedoraId resourceId) {
-        getResourceLockManger().acquire(getId(), resourceId);
+        getResourceLockManger().acquireExclusive(getId(), resourceId);
+    }
+
+    @Override
+    public void lockResourceNonExclusive(final FedoraId resourceId) {
+        getResourceLockManger().acquireNonExclusive(getId(), resourceId);
     }
 
     /**
@@ -293,7 +298,7 @@ public class TransactionImpl implements Transaction {
      */
     @Override
     public void lockResourceAndGhostNodes(final FedoraId resourceId) {
-        getResourceLockManger().acquire(getId(), resourceId);
+        getResourceLockManger().acquireExclusive(getId(), resourceId);
         final var resourceIdStr = resourceId.getResourceId();
         final String estimateParentPath = resourceIdStr.indexOf('/') > -1 ?
                 resourceIdStr.substring(0,resourceIdStr.lastIndexOf('/')) : resourceIdStr;
@@ -307,7 +312,7 @@ public class TransactionImpl implements Transaction {
             FedoraId tempParent = actualParent;
             for (final String part : ghostPaths) {
                 tempParent = tempParent.resolve(part);
-                getResourceLockManger().acquire(getId(), tempParent);
+                getResourceLockManger().acquireExclusive(getId(), tempParent);
             }
         }
     }

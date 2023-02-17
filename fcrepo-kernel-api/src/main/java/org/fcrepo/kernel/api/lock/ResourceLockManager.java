@@ -17,14 +17,25 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 public interface ResourceLockManager {
 
     /**
-     * Acquires a lock on the resource, associating it to the txId. If the lock is held by a different transaction,
-     * an exception is thrown. If the lock is already held by the same transaction, then it returns successfully.
+     * Acquires an exclusive lock on the resource, associating it to the txId. If the lock is held by a different
+     * transaction, an exception is thrown. If the lock is already held by the same transaction, then it returns
+     * successfully.
      *
      * @param txId the transaction id to associate the lock to
      * @param resourceId the resource to lock
      * @throws ConcurrentUpdateException when lock cannot be acquired
      */
-    void acquire(final String txId, final FedoraId resourceId);
+    void acquireExclusive(final String txId, final FedoraId resourceId);
+
+    /**
+     * Acquires a non-exclusive lock on the resource, associating it to the txId. If an exclusive lock is held by a
+     * different transaction, an exception is thrown. Otherwise, a non-exclusive lock on the resource is acquired.
+     *
+     * @param txId the transaction id to associate the lock to
+     * @param resourceId the resource to lock
+     * @throws ConcurrentUpdateException when lock cannot be acquired
+     */
+    void acquireNonExclusive(final String txId, final FedoraId resourceId);
 
     /**
      * Releases all of the locks held by the transaction

@@ -207,6 +207,9 @@ public class CreateResourceServiceImplTest {
         verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
+    /**
+     * Test creating a new container directly inside an AG.
+     */
     @Test
     public void testParentAg() {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
@@ -219,6 +222,9 @@ public class CreateResourceServiceImplTest {
         verify(transaction).lockResourceAndGhostNodes(childId);
     }
 
+    /**
+     * Test creating a new container inside a container inside an AG.
+     */
     @Test
     public void testParentContainerInAg() {
         final FedoraId agId = FedoraId.create(UUID.randomUUID().toString());

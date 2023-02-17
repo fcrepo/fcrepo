@@ -298,9 +298,12 @@ public abstract class AbstractService {
             if (parentHeaders.getArchivalGroupId() != null) {
                 // parent is part of an AG, so lock the AG
                 tx.lockResource(parentHeaders.getArchivalGroupId());
+            } else if (parentHeaders.isArchivalGroup()) {
+                // parent is an AG, so lock it.
+                tx.lockResource(parentId);
             } else {
                 // otherwise lock the parent.
-                tx.lockResource(parentId);
+                tx.lockResourceNonExclusive(parentId);
             }
         }
     }
