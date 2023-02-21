@@ -72,7 +72,6 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
@@ -200,30 +199,77 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void txScenario() throws IOException {
-        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/tx-authorization.ttl"));
+    public void txScenarioCommit() throws IOException {
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-tx-authorization.ttl"));
 
-        final Optional<String> txId;
+        final Optional<String> idFromHeader;
         final var txObj = "/rest/fcr:tx";
         final var method = postObjMethod(txObj);
         setAuth(method, "testUser");
         try (final CloseableHttpResponse response = execute(method)) {
-            assertEquals("User 'testUser' can create" + txObj, SC_CREATED, getStatus(response));
-            txId = getHeader(response, "Location").stream().findFirst();
+            assertEquals("User 'testUser' can create " + txObj, SC_CREATED, getStatus(response));
+            idFromHeader = getHeader(response, "Location").stream().findFirst();
         }
 
-        final var txClose = txId.orElseThrow();
-        final var delObj = txObj + txClose.substring(txClose.lastIndexOf("/"));
+        // get the tx uuid from the path
+        final var txId = idFromHeader.map(location -> location.substring(location.lastIndexOf("/")))
+                                     .orElseThrow();
+
+        final var updatedObj = txObj + txId;
+
+        final var getTx = getObjMethod(updatedObj);
+        setAuth(getTx, "testUser");
+        try (final CloseableHttpResponse response = execute(getTx)) {
+            assertEquals("User 'testUser' can get " + updatedObj, SC_NO_CONTENT, getStatus(response));
+        }
+
+        // test post against the transaction uuid as well
+        final var postMethod = postObjMethod(updatedObj);
+        setAuth(postMethod, "testUser");
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals("User 'testUser' can update " + updatedObj, SC_NO_CONTENT, getStatus(response));
+        }
+
+        final var putMethod = putObjMethod(updatedObj);
+        setAuth(putMethod, "testUser");
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals("User 'testUser' can commit " + updatedObj, SC_NO_CONTENT, getStatus(response));
+        }
+    }
+
+    @Test
+    public void txScenarioRollback() throws Exception {
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-tx-authorization.ttl"));
+
+        final Optional<String> idFromHeader;
+        final var txObj = "/rest/fcr:tx";
+        final var method = postObjMethod(txObj);
+        setAuth(method, "testUser");
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("User 'testUser' can create " + txObj, SC_CREATED, getStatus(response));
+            idFromHeader = getHeader(response, "Location").stream().findFirst();
+        }
+
+        // get the tx uuid from the path
+        final var txId = idFromHeader.map(location -> location.substring(location.lastIndexOf("/")))
+                                     .orElseThrow();
+
+        final var delObj = txObj + txId;
         final var closeTx = deleteObjMethod(delObj);
         setAuth(closeTx, "testUser");
         try (final CloseableHttpResponse response = execute(closeTx)) {
-            assertEquals("User 'testUser' cannot interact" + txObj, SC_FORBIDDEN, getStatus(response));
+            assertEquals("User 'testUser' can delete " + delObj, SC_NO_CONTENT, getStatus(response));
         }
+    }
 
-        final var adminCloseTx = deleteObjMethod(delObj);
-        setAuth(adminCloseTx, "fedoraAdmin");
-        try (final CloseableHttpResponse response = execute(adminCloseTx)) {
-            assertEquals("User 'fedoraAdmin' can interact" + txObj, SC_NO_CONTENT, getStatus(response));
+    @Test
+    public void txScenarioUnauthenticated() throws Exception {
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-tx-authorization.ttl"));
+
+        final var txObj = "/rest/fcr:tx";
+        final var method = postObjMethod(txObj);
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Unauthenticated user cannot create " + txObj, SC_FORBIDDEN, getStatus(response));
         }
     }
 
@@ -477,7 +523,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  5. Allow(400) on PATCH with empty SPARQL content.
      *  6. Deny(403) on PATCH with non-SPARQL content.
      *
-     * @throws IOException thrown from injestObj() or *ObjMethod() calls
+     * @throws IOException thrown from ingestObj() or *ObjMethod() calls
      */
     @Test
     public void scenario18Test1() throws IOException {
@@ -2437,14 +2483,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         okPatch.setHeader("Content-type", "application/sparql-update");
         okPatch.setEntity(patchEntity);
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(okPatch));
-    }
-
-    @Test
-    @Ignore
-    public void testAuthenticatedUserCanCreateTransaction() {
-        final HttpPost txnCreatePost = postObjMethod("rest/fcr:tx");
-        setAuth(txnCreatePost, "testUser92");
-        assertEquals(SC_CREATED, getStatus(txnCreatePost));
     }
 
     @Test
