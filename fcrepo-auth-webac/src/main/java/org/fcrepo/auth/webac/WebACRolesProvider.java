@@ -425,23 +425,29 @@ public class WebACRolesProvider {
     }
 
     private List<WebACAuthorization> getDefaultAuthorizations() {
-        final Map<String, List<String>> aclTriples = new HashMap<>();
         final List<WebACAuthorization> authorizations = new ArrayList<>();
 
-        getDefaultAcl(null, authPropsConfig.getRootAuthAclPath())
-                .listStatements().mapWith(Statement::asTriple).forEachRemaining(triple -> {
-            if (hasAclPredicate.test(triple)) {
-                final String predicate = triple.getPredicate().getURI();
-                final List<String> values = aclTriples.computeIfAbsent(predicate,
-                    key -> new ArrayList<>());
-                nodeToStringStream(triple.getObject()).forEach(values::add);
-                if (predicate.equals(WEBAC_AGENT_VALUE)) {
-                    additionalAgentValues(triple.getObject()).forEach(values::add);
+        final var defaultAcls = getDefaultAcl(null, authPropsConfig.getRootAuthAclPath());
+        final var aclSubjects = defaultAcls.listSubjects();
+
+        aclSubjects.forEach(aclResource -> {
+            final Map<String, List<String>> aclTriples = new HashMap<>();
+            aclResource.listProperties().mapWith(Statement::asTriple).forEach(aclTriple -> {
+                if (hasAclPredicate.test(aclTriple)) {
+                    final String predicate = aclTriple.getPredicate().getURI();
+                    final List<String> values = aclTriples.computeIfAbsent(predicate, key -> new ArrayList<>());
+                    nodeToStringStream(aclTriple.getObject()).forEach(values::add);
+                    if (predicate.equals(WEBAC_AGENT_VALUE)) {
+                        additionalAgentValues(aclTriple.getObject()).forEach(values::add);
+                    }
                 }
+            });
+
+            if (!aclTriples.isEmpty()) {
+                authorizations.add(createAuthorizationFromMap(aclTriples));
             }
         });
 
-        authorizations.add(createAuthorizationFromMap(aclTriples));
         return authorizations;
     }
 
