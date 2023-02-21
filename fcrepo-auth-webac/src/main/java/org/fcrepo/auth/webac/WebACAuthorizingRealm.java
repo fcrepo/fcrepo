@@ -14,6 +14,8 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_AUTHENTICATED_AGENT_VALUE
 import static org.fcrepo.auth.webac.WebACFilter.getBaseUri;
 import static org.fcrepo.auth.webac.WebACFilter.identifierConverter;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.net.URI;
@@ -127,8 +129,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         if (targetURIs == null) {
             targetURIs = new HashSet<>();
         }
-        final Map<URI, Map<String, Collection<String>>> rolesForURI =
-                new HashMap<URI, Map<String, Collection<String>>>();
+        final Map<URI, Map<String, Collection<String>>> rolesForURI = new HashMap<>();
         final String contextPath = request.getContextPath() + request.getServletPath();
         for (final URI uri : targetURIs) {
             if (identifierConverter(request).inInternalDomain(uri.toString())) {
@@ -185,10 +186,16 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
     private Map<String, Collection<String>> getRolesForId(final FedoraId id) {
         Map<String, Collection<String>> roles = null;
-        final FedoraResource fedoraResource = getResourceOrParentFromPath(id);
-        if (fedoraResource != null) {
-            // check ACL for the request URI and get a mapping of agent => modes
-            roles = rolesProvider.getRoles(fedoraResource, transaction());
+
+        final var txId = FEDORA_ID_PREFIX + "/" + FCR_TX;
+        if (id.getResourceId().startsWith(txId)) {
+            roles = rolesProvider.getDefaultRoles(id, transaction());
+        } else {
+            final FedoraResource fedoraResource = getResourceOrParentFromPath(id);
+            if (fedoraResource != null) {
+                // check ACL for the request URI and get a mapping of agent => modes
+                roles = rolesProvider.getRoles(fedoraResource, transaction());
+            }
         }
         return roles;
     }
@@ -206,7 +213,6 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
                         for (final String mode : modesForUser) {
                             final WebACPermission perm = new WebACPermission(URI.create(mode), uri);
                             authzInfo.addObjectPermission(perm);
-                            log.debug("Added permission {}", perm);
                         }
                     }
                 }
