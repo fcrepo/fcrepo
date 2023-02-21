@@ -332,8 +332,7 @@ public class WebACFilter extends RequestContextFilter {
         final String requestURL = httpRequest.getRequestURL().toString();
 
         final var txOrUuid = Pattern.compile(FCR_TX + "(/?|/[0-9a-f\\-]+/?)$");
-        final boolean isTxEndpoint = requestURL.endsWith(FCR_TX) || requestURL.endsWith(FCR_TX + "/") ||
-                                     txOrUuid.matcher(requestURL).find();
+        final boolean isTxEndpoint = txOrUuid.matcher(requestURL).find();
 
         final boolean isAcl = requestURL.endsWith(FCR_ACL);
         final URI requestURI = URI.create(requestURL);
