@@ -104,6 +104,32 @@ public class WebACRolesProvider {
     }
 
     /**
+     * Get the roles assigned to a FedoraId using the default authorization. This allows non-resource transactions to
+     * retrieve an ACL without the need for a stub resource.
+     *
+     * @param id the subject id
+     * @param transaction the transaction being acted upon
+     * @return a mapping of each principal to a set of its roles
+     */
+    public Map<String, Collection<String>> getDefaultRoles(final FedoraId id, final Transaction transaction) {
+        LOGGER.debug("Getting agent roles for id: {}", id);
+        // Construct a list of acceptable acl:accessTo values for the target resource.
+        final List<String> resourcePaths = new ArrayList<>();
+
+        resourcePaths.add(id.getResourceId());
+        resourcePaths.addAll(getAllPathAncestors(id.getResourceId()));
+
+        // Create a function to check acl:accessTo, scoped to the given resourcePaths
+        final Predicate<WebACAuthorization> checkAccessTo = accessTo.apply(resourcePaths);
+
+        final var authorizations = getDefaultAuthorizations();
+        final var effectiveRoles = getEffectiveRoles(authorizations, checkAccessTo, transaction);
+
+        LOGGER.debug("Unfiltered ACL: {}", effectiveRoles);
+        return effectiveRoles;
+    }
+
+    /**
      * Get the roles assigned to this Node.
      *
      * @param resource the subject resource
@@ -111,12 +137,11 @@ public class WebACRolesProvider {
      * @return a set of roles for each principal
      */
     public Map<String, Collection<String>> getRoles(final FedoraResource resource, final Transaction transaction) {
-        LOGGER.debug("Getting agent roles for: {}", resource.getId());
-
+        LOGGER.debug("Getting agent roles for resource: {}", resource.getId());
 
         // Get the effective ACL by searching the target node and any ancestors.
         final Optional<ACLHandle> effectiveAcl = authHandleCache.get(resource.getId(),
-                key -> getEffectiveAcl(resource,false));
+                key -> getEffectiveAcl(resource, false));
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
@@ -146,7 +171,7 @@ public class WebACRolesProvider {
         // root location. This way, the checkAccessTo predicate (below) can be properly
         // created to match any acl:accessTo values that are part of the getDefaultAuthorization.
         // This is not relevant if an effectiveAcl is present.
-        if (!effectiveAcl.isPresent()) {
+        if (effectiveAcl.isEmpty()) {
             resourcePaths.addAll(getAllPathAncestors(resource.getId()));
         }
 
@@ -161,35 +186,54 @@ public class WebACRolesProvider {
         // Read the effective Acl and return a list of acl:Authorization statements
         final List<WebACAuthorization> authorizations = effectiveAcl
                 .map(ACLHandle::getAuthorizations)
-                .orElseGet(() -> getDefaultAuthorizations());
+                .orElseGet(this::getDefaultAuthorizations);
 
         // Filter the acl:Authorization statements so that they correspond only to statements that apply to
         // the target (or acl-bearing ancestor) resource path or rdf:type.
         // Then, assign all acceptable acl:mode values to the relevant acl:agent values: this creates a UNION
         // of acl:modes for each particular acl:agent.
-        final Map<String, Collection<String>> effectiveRoles = new HashMap<>();
-        authorizations.stream()
-                      .filter(checkAccessTo.or(checkAccessToClass))
-                      .forEach(auth -> {
-                          concat(auth.getAgents().stream(),
-                                  dereferenceAgentGroups(transaction, auth.getAgentGroups()).stream())
-                              .filter(agent -> !agent.equals(FOAF_AGENT_VALUE) &&
-                                               !agent.equals(WEBAC_AUTHENTICATED_AGENT_VALUE))
-                              .forEach(agent -> {
-                                  effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
-                                                .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
-                              });
-                          auth.getAgentClasses().stream().filter(agentClass -> agentClass.equals(FOAF_AGENT_VALUE) ||
-                                                                               agentClass.equals(
-                                                                                   WEBAC_AUTHENTICATED_AGENT_VALUE))
-                              .forEach(agentClass -> {
-                                  effectiveRoles.computeIfAbsent(agentClass, key -> new HashSet<>())
-                                                .addAll(auth.getModes().stream().map(URI::toString).collect(toSet()));
-                              });
-                      });
+        final Map<String, Collection<String>> effectiveRoles =
+            getEffectiveRoles(authorizations, checkAccessTo.or(checkAccessToClass), transaction);
 
         LOGGER.debug("Unfiltered ACL: {}", effectiveRoles);
 
+        return effectiveRoles;
+    }
+
+    /**
+     * Get the effective roles for a list of authorizations
+     *
+     * @param authorizations The authorizations to get roles for
+     * @param authorizationFilter The filter to apply on the list of roles
+     * @param transaction the transaction being acted upon
+     * @return a mapping of each principal to a set of its roles
+     */
+    private Map<String, Collection<String>> getEffectiveRoles(final List<WebACAuthorization> authorizations,
+                                                              final Predicate<WebACAuthorization> authorizationFilter,
+                                                              final Transaction transaction) {
+        final Predicate<String> isFoafOrAuthenticated = (agentClass) ->
+            agentClass.equals(FOAF_AGENT_VALUE) || agentClass.equals(WEBAC_AUTHENTICATED_AGENT_VALUE);
+
+        final Map<String, Collection<String>> effectiveRoles = new HashMap<>();
+        authorizations.stream()
+                      .filter(authorizationFilter)
+                      .forEach(auth -> {
+                          final var modes = auth.getModes().stream().map(URI::toString).collect(toSet());
+                          concat(auth.getAgents().stream(),
+                                 dereferenceAgentGroups(transaction, auth.getAgentGroups()).stream())
+                              .filter(Predicate.not(isFoafOrAuthenticated))
+                              .forEach(agent -> {
+                                  effectiveRoles.computeIfAbsent(agent, key -> new HashSet<>())
+                                                .addAll(modes);
+                              });
+                          auth.getAgentClasses()
+                              .stream()
+                              .filter(isFoafOrAuthenticated)
+                              .forEach(agentClass -> {
+                                  effectiveRoles.computeIfAbsent(agentClass, key -> new HashSet<>())
+                                                .addAll(modes);
+                              });
+                      });
         return effectiveRoles;
     }
 
