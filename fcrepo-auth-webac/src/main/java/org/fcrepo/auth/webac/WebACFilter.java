@@ -753,7 +753,7 @@ public class WebACFilter extends RequestContextFilter {
      */
     private static boolean isBinaryOrDescription(final FedoraResource resource) {
         // Tombstone are the only known resource with a null interaction model.
-        return resource.getInteractionModel() != null && (
+        return resource != null && resource.getInteractionModel() != null && (
                 resource.getInteractionModel().equals(NON_RDF_SOURCE.toString()) ||
                 resource.getInteractionModel().equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
     }
