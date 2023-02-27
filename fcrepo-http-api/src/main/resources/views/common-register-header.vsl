@@ -1,5 +1,6 @@
-#if($fedoraProps.getFcrepoRegisterBanner() == "on")
+#if($fedoraProps.getBannerEnabled() )
 <div class="alert alert-info" role="alert">
-Fedora is an open source project supported entirely by it's users. To continue the on-going maintenance of the software and ensure Fedora is meeting the needs of the community, we are working to gather information on current installations. We strongly encourage all users to register their instance in the DuraSpace Community Supported Program Registry hosted by LYRASIS. <a class="btn btn-primary" href="https://registry.lyrasis.org/" role="button">Register your installation today</a>
+<p>Fedora is an open source project supported entirely by it's users. To continue the on-going maintenance of the software and ensure Fedora is meeting the needs of the community, we are working to gather information on current installations. We strongly encourage all users to register their instance in the DuraSpace Community Supported Program Registry hosted by LYRASIS.</p>
+<p><a class="btn btn-primary" href="https://registry.lyrasis.org/" role="button">Register your installation today</a></p>
 </div>
 #end

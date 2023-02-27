@@ -12,7 +12,6 @@
 
 <body  class="fcrepo_container">
 <div  id="main" class="container" resource="$topic.getURI()">
-    #parse("views/common-register-header.vsl")
     #parse("views/common-node-header.vsl")
 
 
