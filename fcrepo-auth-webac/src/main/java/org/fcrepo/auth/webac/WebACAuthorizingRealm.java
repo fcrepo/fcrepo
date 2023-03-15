@@ -189,7 +189,8 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
         final var txId = FEDORA_ID_PREFIX + "/" + FCR_TX;
         if (id.getResourceId().startsWith(txId)) {
-            roles = rolesProvider.getDefaultRoles(id, transaction());
+            final FedoraResource rootResource = getResourceOrParentFromPath(FedoraId.getRepositoryRootId());
+            roles = rolesProvider.getDefaultRoles(id, rootResource, transaction());
         } else {
             final FedoraResource fedoraResource = getResourceOrParentFromPath(id);
             if (fedoraResource != null) {

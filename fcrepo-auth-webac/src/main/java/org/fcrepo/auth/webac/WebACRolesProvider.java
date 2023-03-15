@@ -108,21 +108,35 @@ public class WebACRolesProvider {
      * retrieve an ACL without the need for a stub resource.
      *
      * @param id the subject id
+     * @param rootResource the resource for info:fedora
      * @param transaction the transaction being acted upon
      * @return a mapping of each principal to a set of its roles
      */
-    public Map<String, Collection<String>> getDefaultRoles(final FedoraId id, final Transaction transaction) {
+    public Map<String, Collection<String>> getDefaultRoles(final FedoraId id,
+                                                           final FedoraResource rootResource,
+                                                           final Transaction transaction) {
         LOGGER.debug("Getting agent roles for id: {}", id);
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
 
+        // See if the root acl has been updated
+        final var effectiveAcl = authHandleCache.get(rootResource.getId(), key -> getEffectiveAcl(rootResource, false));
+        effectiveAcl.map(ACLHandle::getResource)
+            .filter(effectiveResource -> !effectiveResource.getId().equals(id.getResourceId()))
+            .ifPresent(effectiveResource -> {
+                resourcePaths.add(effectiveResource.getId());
+            });
+
+
+        // Add the tx + ancestor paths
         resourcePaths.add(id.getResourceId());
         resourcePaths.addAll(getAllPathAncestors(id.getResourceId()));
 
         // Create a function to check acl:accessTo, scoped to the given resourcePaths
         final Predicate<WebACAuthorization> checkAccessTo = accessTo.apply(resourcePaths);
 
-        final var authorizations = getDefaultAuthorizations();
+        final var authorizations = effectiveAcl.map(ACLHandle::getAuthorizations)
+                                               .orElseGet(this::getDefaultAuthorizations);
         final var effectiveRoles = getEffectiveRoles(authorizations, checkAccessTo, transaction);
 
         LOGGER.debug("Unfiltered ACL: {}", effectiveRoles);
@@ -362,7 +376,7 @@ public class WebACRolesProvider {
      * @return a list of acl:Authorization objects
      */
     private List<WebACAuthorization> getAuthorizations(final FedoraResource aclResource,
-                                                           final boolean ancestorAcl) {
+                                                       final boolean ancestorAcl) {
 
         final List<WebACAuthorization> authorizations = new ArrayList<>();
 
