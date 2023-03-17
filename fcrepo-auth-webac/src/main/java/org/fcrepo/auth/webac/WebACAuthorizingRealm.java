@@ -188,15 +188,12 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         Map<String, Collection<String>> roles = null;
 
         final var txId = FEDORA_ID_PREFIX + "/" + FCR_TX;
-        if (id.getResourceId().startsWith(txId)) {
-            final FedoraResource rootResource = getResourceOrParentFromPath(FedoraId.getRepositoryRootId());
-            roles = rolesProvider.getDefaultRoles(id, rootResource, transaction());
-        } else {
-            final FedoraResource fedoraResource = getResourceOrParentFromPath(id);
-            if (fedoraResource != null) {
-                // check ACL for the request URI and get a mapping of agent => modes
-                roles = rolesProvider.getRoles(fedoraResource, transaction());
-            }
+        final FedoraResource fedoraResource = getResourceOrParentFromPath(id);
+        if (id.getResourceId().startsWith(txId) && fedoraResource != null) {
+            roles = rolesProvider.getRoles(id, fedoraResource, transaction());
+        } else if (fedoraResource != null) {
+            // check ACL for the request URI and get a mapping of agent => modes
+            roles = rolesProvider.getRoles(fedoraResource, transaction());
         }
         return roles;
     }

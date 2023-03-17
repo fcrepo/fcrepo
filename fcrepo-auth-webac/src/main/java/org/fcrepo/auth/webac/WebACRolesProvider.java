@@ -108,19 +108,20 @@ public class WebACRolesProvider {
      * retrieve an ACL without the need for a stub resource.
      *
      * @param id the subject id
-     * @param rootResource the resource for info:fedora
+     * @param fedoraResource the parent resource of the id, most likely info:fedora
      * @param transaction the transaction being acted upon
      * @return a mapping of each principal to a set of its roles
      */
-    public Map<String, Collection<String>> getDefaultRoles(final FedoraId id,
-                                                           final FedoraResource rootResource,
-                                                           final Transaction transaction) {
+    public Map<String, Collection<String>> getRoles(final FedoraId id,
+                                                    final FedoraResource fedoraResource,
+                                                    final Transaction transaction) {
         LOGGER.debug("Getting agent roles for id: {}", id);
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
 
         // See if the root acl has been updated
-        final var effectiveAcl = authHandleCache.get(rootResource.getId(), key -> getEffectiveAcl(rootResource, false));
+        final var effectiveAcl = authHandleCache.get(fedoraResource.getId(),
+                                                     key -> getEffectiveAcl(fedoraResource, false));
         effectiveAcl.map(ACLHandle::getResource)
             .filter(effectiveResource -> !effectiveResource.getId().equals(id.getResourceId()))
             .ifPresent(effectiveResource -> {
