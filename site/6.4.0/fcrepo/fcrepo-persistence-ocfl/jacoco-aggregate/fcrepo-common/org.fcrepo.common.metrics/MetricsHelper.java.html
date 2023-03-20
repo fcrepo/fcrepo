@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>MetricsHelper.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.common.metrics</a> &gt; <span class="el_source">MetricsHelper.java</span></div><h1>MetricsHelper.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.common.metrics;
+
+import io.micrometer.core.instrument.Timer;
+import org.fcrepo.common.lang.UncheckedCallable;
+
+/**
+ * Helper for recording metrics
+ *
+ * @author pwinckles
+ */
+public final class MetricsHelper {
+
+    private MetricsHelper() {
+        // static class
+    }
+
+    /**
+     * Records a timing metric around the code in the closure.
+     *
+     * @param timer the timer to record to
+     * @param callable the closure to time
+     * @param &lt;T&gt; the return type
+     * @return the result of the closure
+     */
+    public static &lt;T&gt; T time(final Timer timer, final UncheckedCallable&lt;T&gt; callable) {
+<span class="nc" id="L31">        final var stopwatch = Timer.start();</span>
+        try {
+<span class="nc" id="L33">            return callable.call();</span>
+        } finally {
+<span class="nc" id="L35">            stopwatch.stop(timer);</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

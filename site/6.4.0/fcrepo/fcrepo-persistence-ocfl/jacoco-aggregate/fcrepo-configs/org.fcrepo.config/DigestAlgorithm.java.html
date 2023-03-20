@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>DigestAlgorithm.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">DigestAlgorithm.java</span></div><h1>DigestAlgorithm.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.config;
+
+import static java.util.stream.Collectors.toSet;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Stream;
+
+/**
+ * Digest Algorith enum
+ * @author cbeer
+ *
+ * Moved to its own class for Fedora 6.0.0
+ */
+<span class="nc" id="L20">public enum DigestAlgorithm {</span>
+<span class="nc" id="L21">    SHA1(&quot;SHA&quot;, &quot;urn:sha1&quot;, &quot;sha-1&quot;, &quot;sha1&quot;),</span>
+<span class="nc" id="L22">    SHA256(&quot;SHA-256&quot;, &quot;urn:sha-256&quot;, &quot;sha256&quot;),</span>
+<span class="nc" id="L23">    SHA512(&quot;SHA-512&quot;, &quot;urn:sha-512&quot;, &quot;sha512&quot;),</span>
+<span class="nc" id="L24">    SHA512256(&quot;SHA-512/256&quot;, &quot;urn:sha-512/256&quot;, &quot;sha512/256&quot;),</span>
+<span class="nc" id="L25">    MD5(&quot;MD5&quot;, &quot;urn:md5&quot;),</span>
+<span class="nc" id="L26">    MISSING(&quot;NONE&quot;, &quot;missing&quot;);</span>
+
+    final private String algorithm;
+    final private String scheme;
+    final private Set&lt;String&gt; aliases;
+
+<span class="nc" id="L32">    DigestAlgorithm(final String alg, final String scheme, final String... aliases) {</span>
+<span class="nc" id="L33">        this.algorithm = alg;</span>
+<span class="nc" id="L34">        this.scheme = scheme;</span>
+<span class="nc" id="L35">        this.aliases = Stream.concat(Arrays.stream(aliases), Stream.of(algorithm)).map(String::valueOf)</span>
+<span class="nc" id="L36">                        .map(String::toLowerCase).collect(toSet());</span>
+<span class="nc" id="L37">    }</span>
+
+    /**
+     * Return the scheme associated with the provided algorithm (e.g. SHA-1 returns urn:sha1)
+     *
+     * @param alg for which scheme is requested
+     * @return scheme
+     */
+    public static String getScheme(final String alg) {
+<span class="nc" id="L46">        return Arrays.stream(values()).filter(value -&gt;</span>
+<span class="nc bnc" id="L47" title="All 4 branches missed.">                value.algorithm.equalsIgnoreCase(alg) || value.algorithm.replace(&quot;-&quot;, &quot;&quot;).equalsIgnoreCase(alg)</span>
+<span class="nc" id="L48">        ).findFirst().orElse(MISSING).scheme;</span>
+    }
+
+    /**
+     * Return enum value for the provided scheme (e.g. urn:sha1 returns SHA-1)
+     *
+     * @param argScheme for which enum is requested
+     * @return enum value associated with the arg scheme
+     */
+    public static DigestAlgorithm fromScheme(final String argScheme) {
+<span class="nc" id="L58">        return Arrays.stream(values()).filter(value -&gt; value.scheme.equalsIgnoreCase(argScheme)</span>
+<span class="nc" id="L59">        ).findFirst().orElse(MISSING);</span>
+    }
+
+    /**
+     * Return enum value for the provided algorithm
+     *
+     * @param alg algorithm name to seek
+     * @return enum value associated with the algorithm name, or missing if not found
+     */
+    public static DigestAlgorithm fromAlgorithm(final String alg) {
+<span class="nc" id="L69">        final String seek = alg.toLowerCase();</span>
+<span class="nc" id="L70">        return Arrays.stream(values())</span>
+<span class="nc" id="L71">                .filter(value -&gt; value.aliases.contains(seek))</span>
+<span class="nc" id="L72">                .findFirst()</span>
+<span class="nc" id="L73">                .orElse(MISSING);</span>
+    }
+
+    /**
+     * Return true if the provided algorithm is included in this enum
+     *
+     * @param alg to test
+     * @return true if arg algorithm is supported
+     */
+    public static boolean isSupportedAlgorithm(final String alg) {
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        return !getScheme(alg).equals(MISSING.scheme);</span>
+    }
+
+    /**
+     * @return the aliases
+     */
+    public Set&lt;String&gt; getAliases() {
+<span class="nc" id="L90">        return aliases;</span>
+    }
+
+    /**
+     * @return the algorithm
+     */
+    public String getAlgorithm() {
+<span class="nc" id="L97">        return algorithm;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

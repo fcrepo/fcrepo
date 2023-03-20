@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceHeaderUtils.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.common</a> &gt; <span class="el_source">ResourceHeaderUtils.java</span></div><h1>ResourceHeaderUtils.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.persistence.common;
+
+import java.net.URI;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.Collection;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+
+import org.apache.commons.codec.digest.DigestUtils;
+
+/**
+ * Helper utilities for populate resource headers
+ *
+ * @author bbpennel
+ */
+public class ResourceHeaderUtils {
+
+    /**
+     * Private constructor
+     */
+    private ResourceHeaderUtils() {
+    }
+
+    /**
+     * Construct and populate minimal headers expected for a new resource
+     *
+     * @param parentId identifier of the parent
+     * @param fedoraId identifier of the new resource
+     * @param interactionModel interaction model of the resource
+     * @return new resource headers object
+     */
+    public static ResourceHeadersImpl newResourceHeaders(final FedoraId parentId, final FedoraId fedoraId,
+                                                         final String interactionModel) {
+<span class="nc" id="L41">        final ResourceHeadersImpl headers = new ResourceHeadersImpl();</span>
+<span class="nc" id="L42">        headers.setHeadersVersion(ResourceHeaders.V1_0);</span>
+<span class="nc" id="L43">        headers.setId(fedoraId);</span>
+<span class="nc" id="L44">        headers.setParent(parentId);</span>
+<span class="nc" id="L45">        headers.setInteractionModel(interactionModel);</span>
+
+<span class="nc" id="L47">        return headers;</span>
+    }
+
+    /**
+     * Update creation headers to the current state
+     *
+     * @param headers headers object to update
+     * @param userPrincipal user principal performing the change
+     */
+    public static void touchCreationHeaders(final ResourceHeadersImpl headers, final String userPrincipal) {
+<span class="nc" id="L57">        touchCreationHeaders(headers, userPrincipal, null);</span>
+<span class="nc" id="L58">    }</span>
+
+    /**
+     * Update creation headers to the current state.
+     *
+     * @param headers headers object to update
+     * @param userPrincipal user principal performing the change
+     * @param createdDate time created. Defaults to now if not provided.
+     */
+    public static void touchCreationHeaders(final ResourceHeadersImpl headers, final String userPrincipal,
+            final Instant createdDate) {
+        final Instant instant;
+<span class="nc bnc" id="L70" title="All 2 branches missed.">        if (createdDate == null) {</span>
+<span class="nc" id="L71">            final ZonedDateTime now = ZonedDateTime.now();</span>
+<span class="nc" id="L72">            instant = now.toInstant();</span>
+<span class="nc" id="L73">        } else {</span>
+<span class="nc" id="L74">            instant = createdDate;</span>
+        }
+<span class="nc" id="L76">        headers.setCreatedDate(instant);</span>
+<span class="nc" id="L77">        headers.setCreatedBy(userPrincipal);</span>
+<span class="nc" id="L78">        headers.setMementoCreatedDate(instant);</span>
+<span class="nc" id="L79">    }</span>
+
+    /**
+     * Update modification headers to the current state
+     *
+     * @param headers headers object to update
+     * @param userPrincipal user principal performing the change
+     */
+    public static void touchModificationHeaders(final ResourceHeadersImpl headers, final String userPrincipal) {
+<span class="nc" id="L88">        touchModificationHeaders(headers, userPrincipal, null);</span>
+<span class="nc" id="L89">    }</span>
+
+    /**
+     * Update modification headers to the current state
+     *
+     * @param headers headers object to update
+     * @param userPrincipal user principal performing the change
+     * @param modifiedDate modified time. Defaults to now if not provided.
+     */
+    public static void touchModificationHeaders(final ResourceHeadersImpl headers, final String userPrincipal,
+            final Instant modifiedDate) {
+        final Instant instant;
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (modifiedDate == null) {</span>
+<span class="nc" id="L102">            final ZonedDateTime now = ZonedDateTime.now();</span>
+<span class="nc" id="L103">            instant = now.toInstant();</span>
+<span class="nc" id="L104">        } else {</span>
+<span class="nc" id="L105">            instant = modifiedDate;</span>
+        }
+<span class="nc" id="L107">        headers.setLastModifiedDate(instant);</span>
+<span class="nc" id="L108">        headers.setLastModifiedBy(userPrincipal);</span>
+<span class="nc" id="L109">        touchMementoCreateHeaders(headers, instant);</span>
+
+<span class="nc" id="L111">        final String stateToken = DigestUtils.md5Hex(String.valueOf(instant.toEpochMilli())).toUpperCase();</span>
+<span class="nc" id="L112">        headers.setStateToken(stateToken);</span>
+<span class="nc" id="L113">    }</span>
+
+    /**
+     * Update the mementoCreatedDate header
+     * @param headers headers object to update.
+     * @param versionDate time this version is created.
+     */
+    public static void touchMementoCreateHeaders(final ResourceHeadersImpl headers, final Instant versionDate) {
+        final Instant instant;
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if (versionDate == null) {</span>
+<span class="nc" id="L123">            final ZonedDateTime now = ZonedDateTime.now();</span>
+<span class="nc" id="L124">            instant = now.toInstant();</span>
+<span class="nc" id="L125">        } else {</span>
+<span class="nc" id="L126">            instant = versionDate;</span>
+        }
+<span class="nc" id="L128">        headers.setMementoCreatedDate(instant);</span>
+<span class="nc" id="L129">    }</span>
+
+    public static void touchMementoCreateHeaders(final ResourceHeadersImpl headers) {
+<span class="nc" id="L132">        touchMementoCreateHeaders(headers, null);</span>
+<span class="nc" id="L133">    }</span>
+
+    /**
+     * Populate general binary resource headers
+     *
+     * @param headers headers object to update
+     * @param mimetype mimetype
+     * @param filename filename
+     * @param filesize filesize
+     * @param digests digests
+     */
+    public static void populateBinaryHeaders(final ResourceHeadersImpl headers, final String mimetype,
+            final String filename, final long filesize, final Collection&lt;URI&gt; digests) {
+<span class="nc" id="L146">        headers.setMimeType(mimetype);</span>
+<span class="nc" id="L147">        headers.setDigests(digests);</span>
+<span class="nc" id="L148">        headers.setFilename(filename);</span>
+<span class="nc" id="L149">        headers.setContentSize(filesize);</span>
+<span class="nc" id="L150">    }</span>
+
+    /**
+     * Populate external binary related headers
+     *
+     * @param headers headers object to update
+     * @param externalUrl url of external binary content
+     * @param externalHandling handling for the external content
+     */
+    public static void populateExternalBinaryHeaders(final ResourceHeadersImpl headers,
+            final String externalUrl, final String externalHandling) {
+<span class="nc" id="L161">        headers.setExternalHandling(externalHandling);</span>
+<span class="nc" id="L162">        headers.setExternalUrl(externalUrl);</span>
+<span class="nc" id="L163">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

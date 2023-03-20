@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>DbPlatform.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.common.db</a> &gt; <span class="el_source">DbPlatform.java</span></div><h1>DbPlatform.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.common.db;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.DataSource;
+import java.sql.SQLException;
+
+/**
+ * Detects the database platform from a datasource.
+ *
+ * @author pwinckles
+ * @since 6.0.0
+ */
+<span class="nc" id="L21">public enum DbPlatform {</span>
+
+<span class="nc" id="L23">    POSTGRESQL(&quot;PostgreSQL&quot;),</span>
+<span class="nc" id="L24">    H2(&quot;H2&quot;),</span>
+<span class="nc" id="L25">    MYSQL(&quot;MySQL&quot;),</span>
+<span class="nc" id="L26">    MARIADB(&quot;MariaDB&quot;);</span>
+
+<span class="nc" id="L28">    private static final Logger LOGGER = LoggerFactory.getLogger(DbPlatform.class);</span>
+
+    private final String name;
+
+<span class="nc" id="L32">    DbPlatform(final String name) {</span>
+<span class="nc" id="L33">        this.name = name;</span>
+<span class="nc" id="L34">    }</span>
+
+    public static DbPlatform fromDataSource(final DataSource dataSource) {
+<span class="nc" id="L37">        try (final var connection = dataSource.getConnection()) {</span>
+<span class="nc" id="L38">            final var name = connection.getMetaData().getDatabaseProductName();</span>
+<span class="nc" id="L39">            LOGGER.debug(&quot;Identified database as: {}&quot;, name);</span>
+<span class="nc" id="L40">            return fromString(name);</span>
+<span class="nc" id="L41">        } catch (final SQLException e) {</span>
+<span class="nc" id="L42">            throw new RuntimeException(e);</span>
+        }
+    }
+
+    public static DbPlatform fromString(final String name) {
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        for (final var platform : values()) {</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            if (platform.name.equals(name)) {</span>
+<span class="nc" id="L49">                return platform;</span>
+            }
+        }
+<span class="nc" id="L52">        throw new IllegalArgumentException(&quot;Unknown database platform: &quot; + name);</span>
+    }
+
+    public String getName() {
+<span class="nc" id="L56">        return name;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

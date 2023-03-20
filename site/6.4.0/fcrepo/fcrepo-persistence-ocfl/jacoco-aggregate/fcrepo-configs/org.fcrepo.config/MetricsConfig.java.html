@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>MetricsConfig.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository OCFL Persistence Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">MetricsConfig.java</span></div><h1>MetricsConfig.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.config;
+
+import io.micrometer.core.instrument.Meter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.micrometer.core.instrument.binder.system.UptimeMetrics;
+import io.micrometer.core.instrument.config.MeterFilter;
+import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.prometheus.client.CollectorRegistry;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import java.time.Duration;
+
+/**
+ * @author pwinckles
+ */
+@Configuration
+<span class="nc" id="L33">public class MetricsConfig extends BasePropsConfig {</span>
+
+    @Value(&quot;${fcrepo.metrics.enable:false}&quot;)
+    private boolean metricsEnabled;
+
+    @Bean
+    public MeterRegistry meterRegistry() {
+        final MeterRegistry registry;
+
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        if (metricsEnabled) {</span>
+<span class="nc" id="L43">            registry = new PrometheusMeterRegistry(new PrometheusConfig() {</span>
+                @Override
+                public Duration step() {
+<span class="nc" id="L46">                    return Duration.ofSeconds(30);</span>
+                }
+                @Override
+                public String get(final String key) {
+<span class="nc" id="L50">                    return null;</span>
+                }
+            });
+            // Enables distribution stats for all timer metrics
+<span class="nc" id="L54">            registry.config().meterFilter(new MeterFilter() {</span>
+                @Override
+                public DistributionStatisticConfig configure(final Meter.Id id,
+                                                             final DistributionStatisticConfig config) {
+<span class="nc bnc" id="L58" title="All 2 branches missed.">                    if (id.getType() == Meter.Type.TIMER) {</span>
+<span class="nc" id="L59">                        return DistributionStatisticConfig.builder()</span>
+<span class="nc" id="L60">                                .percentilesHistogram(true)</span>
+<span class="nc" id="L61">                                .percentiles(0.5, 0.90, 0.99)</span>
+<span class="nc" id="L62">                                .build().merge(config);</span>
+                    }
+<span class="nc" id="L64">                    return config;</span>
+                }
+            });
+<span class="nc" id="L67">            new JvmThreadMetrics().bindTo(registry);</span>
+<span class="nc" id="L68">            new JvmGcMetrics().bindTo(registry);</span>
+<span class="nc" id="L69">            new JvmMemoryMetrics().bindTo(registry);</span>
+<span class="nc" id="L70">            new ProcessorMetrics().bindTo(registry);</span>
+<span class="nc" id="L71">            new UptimeMetrics().bindTo(registry);</span>
+        } else {
+<span class="nc" id="L73">            registry = new SimpleMeterRegistry();</span>
+        }
+
+<span class="nc" id="L76">        Metrics.addRegistry(registry);</span>
+
+<span class="nc" id="L78">        return registry;</span>
+    }
+
+    @Bean
+    public CollectorRegistry collectorRegistry(final MeterRegistry meterRegistry) {
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (meterRegistry instanceof PrometheusMeterRegistry) {</span>
+<span class="nc" id="L84">            return ((PrometheusMeterRegistry) meterRegistry).getPrometheusRegistry();</span>
+        }
+<span class="nc" id="L86">        return CollectorRegistry.defaultRegistry;</span>
+    }
+
+    /**
+     * @return whether metrics are enabled
+     */
+    public boolean isMetricsEnabled() {
+<span class="nc" id="L93">        return metricsEnabled;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
