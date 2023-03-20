@@ -1,0 +1,205 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6"></a>
+<span class="sourceLineNo">007</span><a id="line.7">package org.fcrepo.kernel.impl.observer;</a>
+<span class="sourceLineNo">008</span><a id="line.8"></a>
+<span class="sourceLineNo">009</span><a id="line.9">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import org.fcrepo.kernel.api.observer.Event;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import org.fcrepo.kernel.api.observer.EventType;</a>
+<span class="sourceLineNo">012</span><a id="line.12"></a>
+<span class="sourceLineNo">013</span><a id="line.13">import java.net.URI;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import java.time.Instant;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import java.util.Set;</a>
+<span class="sourceLineNo">016</span><a id="line.16"></a>
+<span class="sourceLineNo">017</span><a id="line.17">import static com.google.common.base.Preconditions.checkNotNull;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import static java.util.UUID.randomUUID;</a>
+<span class="sourceLineNo">019</span><a id="line.19"></a>
+<span class="sourceLineNo">020</span><a id="line.20">/**</a>
+<span class="sourceLineNo">021</span><a id="line.21"> * An event that describes one or more actions that a user preformed on a resource.</a>
+<span class="sourceLineNo">022</span><a id="line.22"> *</a>
+<span class="sourceLineNo">023</span><a id="line.23"> * @author pwinckles</a>
+<span class="sourceLineNo">024</span><a id="line.24"> */</a>
+<span class="sourceLineNo">025</span><a id="line.25">public class EventImpl implements Event {</a>
+<span class="sourceLineNo">026</span><a id="line.26"></a>
+<span class="sourceLineNo">027</span><a id="line.27">    private final String eventId;</a>
+<span class="sourceLineNo">028</span><a id="line.28">    private final FedoraId fedoraId;</a>
+<span class="sourceLineNo">029</span><a id="line.29">    private final Set&lt;EventType&gt; types;</a>
+<span class="sourceLineNo">030</span><a id="line.30">    private final Set&lt;String&gt; resourceTypes;</a>
+<span class="sourceLineNo">031</span><a id="line.31">    private final String userID;</a>
+<span class="sourceLineNo">032</span><a id="line.32">    private final URI userURI;</a>
+<span class="sourceLineNo">033</span><a id="line.33">    private final String userAgent;</a>
+<span class="sourceLineNo">034</span><a id="line.34">    private final String baseUrl;</a>
+<span class="sourceLineNo">035</span><a id="line.35">    private final Instant date;</a>
+<span class="sourceLineNo">036</span><a id="line.36"></a>
+<span class="sourceLineNo">037</span><a id="line.37">    /**</a>
+<span class="sourceLineNo">038</span><a id="line.38">     * Create a new FedoraEvent</a>
+<span class="sourceLineNo">039</span><a id="line.39">     *</a>
+<span class="sourceLineNo">040</span><a id="line.40">     * @param fedoraId the FedoraId of the resource the event is on</a>
+<span class="sourceLineNo">041</span><a id="line.41">     * @param types a collection of Fedora EventTypes</a>
+<span class="sourceLineNo">042</span><a id="line.42">     * @param resourceTypes the rdf types of the corresponding resource</a>
+<span class="sourceLineNo">043</span><a id="line.43">     * @param userID the acting user for this event</a>
+<span class="sourceLineNo">044</span><a id="line.44">     * @param userURI the uri of the acting user for this event</a>
+<span class="sourceLineNo">045</span><a id="line.45">     * @param userAgent the user-agent associated with the request</a>
+<span class="sourceLineNo">046</span><a id="line.46">     * @param baseUrl the originating request's baseUrl</a>
+<span class="sourceLineNo">047</span><a id="line.47">     * @param date the timestamp for this event</a>
+<span class="sourceLineNo">048</span><a id="line.48">     */</a>
+<span class="sourceLineNo">049</span><a id="line.49">    public EventImpl(final FedoraId fedoraId, final Set&lt;EventType&gt; types,</a>
+<span class="sourceLineNo">050</span><a id="line.50">                     final Set&lt;String&gt; resourceTypes, final String userID,</a>
+<span class="sourceLineNo">051</span><a id="line.51">                     final URI userURI, final String userAgent, final String baseUrl,</a>
+<span class="sourceLineNo">052</span><a id="line.52">                     final Instant date) {</a>
+<span class="sourceLineNo">053</span><a id="line.53">        this.eventId = "urn:uuid:" + randomUUID().toString();</a>
+<span class="sourceLineNo">054</span><a id="line.54">        this.fedoraId = checkNotNull(fedoraId, "fedoraId cannot be null");</a>
+<span class="sourceLineNo">055</span><a id="line.55">        this.types = Set.copyOf(checkNotNull(types, "types cannot be null"));</a>
+<span class="sourceLineNo">056</span><a id="line.56">        this.resourceTypes = Set.copyOf(checkNotNull(resourceTypes, "resourceTypes cannot be null"));</a>
+<span class="sourceLineNo">057</span><a id="line.57">        this.userID = userID;</a>
+<span class="sourceLineNo">058</span><a id="line.58">        this.userURI = userURI;</a>
+<span class="sourceLineNo">059</span><a id="line.59">        this.userAgent = userAgent;</a>
+<span class="sourceLineNo">060</span><a id="line.60">        checkNotNull(baseUrl, "baseUrl cannot be null");</a>
+<span class="sourceLineNo">061</span><a id="line.61">        // baseUrl is expected to not have a trailing slash</a>
+<span class="sourceLineNo">062</span><a id="line.62">        this.baseUrl = baseUrl.replaceAll("/+$", "");</a>
+<span class="sourceLineNo">063</span><a id="line.63">        this.date = checkNotNull(date, "date cannot be null");</a>
+<span class="sourceLineNo">064</span><a id="line.64">    }</a>
+<span class="sourceLineNo">065</span><a id="line.65"></a>
+<span class="sourceLineNo">066</span><a id="line.66">    @Override</a>
+<span class="sourceLineNo">067</span><a id="line.67">    public FedoraId getFedoraId() {</a>
+<span class="sourceLineNo">068</span><a id="line.68">        return fedoraId;</a>
+<span class="sourceLineNo">069</span><a id="line.69">    }</a>
+<span class="sourceLineNo">070</span><a id="line.70"></a>
+<span class="sourceLineNo">071</span><a id="line.71">    @Override</a>
+<span class="sourceLineNo">072</span><a id="line.72">    public Set&lt;EventType&gt; getTypes() {</a>
+<span class="sourceLineNo">073</span><a id="line.73">        return types;</a>
+<span class="sourceLineNo">074</span><a id="line.74">    }</a>
+<span class="sourceLineNo">075</span><a id="line.75"></a>
+<span class="sourceLineNo">076</span><a id="line.76">    @Override</a>
+<span class="sourceLineNo">077</span><a id="line.77">    public Set&lt;String&gt; getResourceTypes() {</a>
+<span class="sourceLineNo">078</span><a id="line.78">        return resourceTypes;</a>
+<span class="sourceLineNo">079</span><a id="line.79">    }</a>
+<span class="sourceLineNo">080</span><a id="line.80"></a>
+<span class="sourceLineNo">081</span><a id="line.81">    @Override</a>
+<span class="sourceLineNo">082</span><a id="line.82">    public String getPath() {</a>
+<span class="sourceLineNo">083</span><a id="line.83">        return fedoraId.getFullIdPath();</a>
+<span class="sourceLineNo">084</span><a id="line.84">    }</a>
+<span class="sourceLineNo">085</span><a id="line.85"></a>
+<span class="sourceLineNo">086</span><a id="line.86">    @Override</a>
+<span class="sourceLineNo">087</span><a id="line.87">    public String getUserID() {</a>
+<span class="sourceLineNo">088</span><a id="line.88">        return userID;</a>
+<span class="sourceLineNo">089</span><a id="line.89">    }</a>
+<span class="sourceLineNo">090</span><a id="line.90"></a>
+<span class="sourceLineNo">091</span><a id="line.91">    @Override</a>
+<span class="sourceLineNo">092</span><a id="line.92">    public Instant getDate() {</a>
+<span class="sourceLineNo">093</span><a id="line.93">        return date;</a>
+<span class="sourceLineNo">094</span><a id="line.94">    }</a>
+<span class="sourceLineNo">095</span><a id="line.95"></a>
+<span class="sourceLineNo">096</span><a id="line.96">    @Override</a>
+<span class="sourceLineNo">097</span><a id="line.97">    public String getEventID() {</a>
+<span class="sourceLineNo">098</span><a id="line.98">        return eventId;</a>
+<span class="sourceLineNo">099</span><a id="line.99">    }</a>
+<span class="sourceLineNo">100</span><a id="line.100"></a>
+<span class="sourceLineNo">101</span><a id="line.101">    @Override</a>
+<span class="sourceLineNo">102</span><a id="line.102">    public URI getUserURI() {</a>
+<span class="sourceLineNo">103</span><a id="line.103">        return userURI;</a>
+<span class="sourceLineNo">104</span><a id="line.104">    }</a>
+<span class="sourceLineNo">105</span><a id="line.105"></a>
+<span class="sourceLineNo">106</span><a id="line.106">    @Override</a>
+<span class="sourceLineNo">107</span><a id="line.107">    public String getUserAgent() {</a>
+<span class="sourceLineNo">108</span><a id="line.108">        return userAgent;</a>
+<span class="sourceLineNo">109</span><a id="line.109">    }</a>
+<span class="sourceLineNo">110</span><a id="line.110"></a>
+<span class="sourceLineNo">111</span><a id="line.111">    @Override</a>
+<span class="sourceLineNo">112</span><a id="line.112">    public String getBaseUrl() {</a>
+<span class="sourceLineNo">113</span><a id="line.113">        return baseUrl;</a>
+<span class="sourceLineNo">114</span><a id="line.114">    }</a>
+<span class="sourceLineNo">115</span><a id="line.115"></a>
+<span class="sourceLineNo">116</span><a id="line.116">    @Override</a>
+<span class="sourceLineNo">117</span><a id="line.117">    public String toString() {</a>
+<span class="sourceLineNo">118</span><a id="line.118">        return "EventImpl{" +</a>
+<span class="sourceLineNo">119</span><a id="line.119">                "eventId='" + eventId + '\'' +</a>
+<span class="sourceLineNo">120</span><a id="line.120">                ", fedoraId=" + fedoraId +</a>
+<span class="sourceLineNo">121</span><a id="line.121">                ", types=" + types +</a>
+<span class="sourceLineNo">122</span><a id="line.122">                ", resourceTypes=" + resourceTypes +</a>
+<span class="sourceLineNo">123</span><a id="line.123">                ", userID='" + userID + '\'' +</a>
+<span class="sourceLineNo">124</span><a id="line.124">                ", userURI=" + userURI +</a>
+<span class="sourceLineNo">125</span><a id="line.125">                ", userAgent=" + userAgent +</a>
+<span class="sourceLineNo">126</span><a id="line.126">                ", baseUrl=" + baseUrl +</a>
+<span class="sourceLineNo">127</span><a id="line.127">                ", date=" + date +</a>
+<span class="sourceLineNo">128</span><a id="line.128">                '}';</a>
+<span class="sourceLineNo">129</span><a id="line.129">    }</a>
+<span class="sourceLineNo">130</span><a id="line.130"></a>
+<span class="sourceLineNo">131</span><a id="line.131">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

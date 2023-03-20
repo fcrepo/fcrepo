@@ -1,0 +1,210 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6"></a>
+<span class="sourceLineNo">007</span><a id="line.7">package org.fcrepo.kernel.impl.cache;</a>
+<span class="sourceLineNo">008</span><a id="line.8"></a>
+<span class="sourceLineNo">009</span><a id="line.9">import static java.util.stream.Collectors.toList;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import static org.apache.jena.vocabulary.RDF.type;</a>
+<span class="sourceLineNo">011</span><a id="line.11"></a>
+<span class="sourceLineNo">012</span><a id="line.12">import java.net.URI;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import java.util.List;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import java.util.Map;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import java.util.concurrent.ConcurrentHashMap;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import java.util.concurrent.TimeUnit;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import java.util.function.Supplier;</a>
+<span class="sourceLineNo">018</span><a id="line.18"></a>
+<span class="sourceLineNo">019</span><a id="line.19">import org.fcrepo.config.FedoraPropsConfig;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import org.fcrepo.kernel.api.RdfStream;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.fcrepo.kernel.api.ReadOnlyTransaction;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.fcrepo.kernel.api.cache.UserTypesCache;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">024</span><a id="line.24"></a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.apache.jena.graph.Triple;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import org.springframework.stereotype.Component;</a>
+<span class="sourceLineNo">027</span><a id="line.27"></a>
+<span class="sourceLineNo">028</span><a id="line.28">import com.github.benmanes.caffeine.cache.Cache;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import com.github.benmanes.caffeine.cache.Caffeine;</a>
+<span class="sourceLineNo">030</span><a id="line.30"></a>
+<span class="sourceLineNo">031</span><a id="line.31">/**</a>
+<span class="sourceLineNo">032</span><a id="line.32"> * Default UserTypesCache implementation</a>
+<span class="sourceLineNo">033</span><a id="line.33"> *</a>
+<span class="sourceLineNo">034</span><a id="line.34"> * @author pwinckles</a>
+<span class="sourceLineNo">035</span><a id="line.35"> */</a>
+<span class="sourceLineNo">036</span><a id="line.36">@Component</a>
+<span class="sourceLineNo">037</span><a id="line.37">public class UserTypesCacheImpl implements UserTypesCache {</a>
+<span class="sourceLineNo">038</span><a id="line.38"></a>
+<span class="sourceLineNo">039</span><a id="line.39">    private final Cache&lt;FedoraId, List&lt;URI&gt;&gt; globalCache;</a>
+<span class="sourceLineNo">040</span><a id="line.40">    private final Map&lt;String, Cache&lt;FedoraId, List&lt;URI&gt;&gt;&gt; sessionCaches;</a>
+<span class="sourceLineNo">041</span><a id="line.41"></a>
+<span class="sourceLineNo">042</span><a id="line.42">    public UserTypesCacheImpl(final FedoraPropsConfig config) {</a>
+<span class="sourceLineNo">043</span><a id="line.43">        this.globalCache = Caffeine.newBuilder()</a>
+<span class="sourceLineNo">044</span><a id="line.44">                .maximumSize(config.getUserTypesCacheSize())</a>
+<span class="sourceLineNo">045</span><a id="line.45">                .expireAfterAccess(config.getUserTypesCacheTimeout(), TimeUnit.MINUTES)</a>
+<span class="sourceLineNo">046</span><a id="line.46">                .build();</a>
+<span class="sourceLineNo">047</span><a id="line.47">        this.sessionCaches = new ConcurrentHashMap&lt;&gt;();</a>
+<span class="sourceLineNo">048</span><a id="line.48">    }</a>
+<span class="sourceLineNo">049</span><a id="line.49"></a>
+<span class="sourceLineNo">050</span><a id="line.50">    /**</a>
+<span class="sourceLineNo">051</span><a id="line.51">     * {@inheritDoc}</a>
+<span class="sourceLineNo">052</span><a id="line.52">     */</a>
+<span class="sourceLineNo">053</span><a id="line.53">    @Override</a>
+<span class="sourceLineNo">054</span><a id="line.54">    public List&lt;URI&gt; getUserTypes(final FedoraId resourceId,</a>
+<span class="sourceLineNo">055</span><a id="line.55">                                  final String sessionId,</a>
+<span class="sourceLineNo">056</span><a id="line.56">                                  final Supplier&lt;RdfStream&gt; rdfProvider) {</a>
+<span class="sourceLineNo">057</span><a id="line.57">        if (isNotReadOnlySession(sessionId)) {</a>
+<span class="sourceLineNo">058</span><a id="line.58">            final var sessionCache = getSessionCache(sessionId);</a>
+<span class="sourceLineNo">059</span><a id="line.59"></a>
+<span class="sourceLineNo">060</span><a id="line.60">            return sessionCache.get(resourceId, k -&gt; {</a>
+<span class="sourceLineNo">061</span><a id="line.61">                return globalCache.get(resourceId, k2 -&gt; {</a>
+<span class="sourceLineNo">062</span><a id="line.62">                    return extractRdfTypes(rdfProvider.get());</a>
+<span class="sourceLineNo">063</span><a id="line.63">                });</a>
+<span class="sourceLineNo">064</span><a id="line.64">            });</a>
+<span class="sourceLineNo">065</span><a id="line.65">        } else {</a>
+<span class="sourceLineNo">066</span><a id="line.66">            return globalCache.get(resourceId, k -&gt; {</a>
+<span class="sourceLineNo">067</span><a id="line.67">                return extractRdfTypes(rdfProvider.get());</a>
+<span class="sourceLineNo">068</span><a id="line.68">            });</a>
+<span class="sourceLineNo">069</span><a id="line.69">        }</a>
+<span class="sourceLineNo">070</span><a id="line.70">    }</a>
+<span class="sourceLineNo">071</span><a id="line.71"></a>
+<span class="sourceLineNo">072</span><a id="line.72">    /**</a>
+<span class="sourceLineNo">073</span><a id="line.73">     * {@inheritDoc}</a>
+<span class="sourceLineNo">074</span><a id="line.74">     */</a>
+<span class="sourceLineNo">075</span><a id="line.75">    @Override</a>
+<span class="sourceLineNo">076</span><a id="line.76">    public void cacheUserTypes(final FedoraId resourceId,</a>
+<span class="sourceLineNo">077</span><a id="line.77">                               final RdfStream rdf,</a>
+<span class="sourceLineNo">078</span><a id="line.78">                               final String sessionId) {</a>
+<span class="sourceLineNo">079</span><a id="line.79">        if (isNotReadOnlySession(sessionId)) {</a>
+<span class="sourceLineNo">080</span><a id="line.80">            getSessionCache(sessionId).put(resourceId, extractRdfTypes(rdf));</a>
+<span class="sourceLineNo">081</span><a id="line.81">        }</a>
+<span class="sourceLineNo">082</span><a id="line.82">    }</a>
+<span class="sourceLineNo">083</span><a id="line.83"></a>
+<span class="sourceLineNo">084</span><a id="line.84">    /**</a>
+<span class="sourceLineNo">085</span><a id="line.85">     * {@inheritDoc}</a>
+<span class="sourceLineNo">086</span><a id="line.86">     */</a>
+<span class="sourceLineNo">087</span><a id="line.87">    @Override</a>
+<span class="sourceLineNo">088</span><a id="line.88">    public void cacheUserTypes(final FedoraId resourceId,</a>
+<span class="sourceLineNo">089</span><a id="line.89">                               final List&lt;URI&gt; userTypes,</a>
+<span class="sourceLineNo">090</span><a id="line.90">                               final String sessionId) {</a>
+<span class="sourceLineNo">091</span><a id="line.91">        if (isNotReadOnlySession(sessionId)) {</a>
+<span class="sourceLineNo">092</span><a id="line.92">            getSessionCache(sessionId).put(resourceId, userTypes);</a>
+<span class="sourceLineNo">093</span><a id="line.93">        }</a>
+<span class="sourceLineNo">094</span><a id="line.94">    }</a>
+<span class="sourceLineNo">095</span><a id="line.95"></a>
+<span class="sourceLineNo">096</span><a id="line.96">    /**</a>
+<span class="sourceLineNo">097</span><a id="line.97">     * {@inheritDoc}</a>
+<span class="sourceLineNo">098</span><a id="line.98">     */</a>
+<span class="sourceLineNo">099</span><a id="line.99">    @Override</a>
+<span class="sourceLineNo">100</span><a id="line.100">    public void mergeSessionCache(final String sessionId) {</a>
+<span class="sourceLineNo">101</span><a id="line.101">        if (isNotReadOnlySession(sessionId)) {</a>
+<span class="sourceLineNo">102</span><a id="line.102">            final var sessionCache = getSessionCache(sessionId);</a>
+<span class="sourceLineNo">103</span><a id="line.103">            globalCache.putAll(sessionCache.asMap());</a>
+<span class="sourceLineNo">104</span><a id="line.104">            dropSessionCache(sessionId);</a>
+<span class="sourceLineNo">105</span><a id="line.105">        }</a>
+<span class="sourceLineNo">106</span><a id="line.106">    }</a>
+<span class="sourceLineNo">107</span><a id="line.107"></a>
+<span class="sourceLineNo">108</span><a id="line.108">    /**</a>
+<span class="sourceLineNo">109</span><a id="line.109">     * {@inheritDoc}</a>
+<span class="sourceLineNo">110</span><a id="line.110">     */</a>
+<span class="sourceLineNo">111</span><a id="line.111">    @Override</a>
+<span class="sourceLineNo">112</span><a id="line.112">    public void dropSessionCache(final String sessionId) {</a>
+<span class="sourceLineNo">113</span><a id="line.113">        if (isNotReadOnlySession(sessionId)) {</a>
+<span class="sourceLineNo">114</span><a id="line.114">            sessionCaches.remove(sessionId);</a>
+<span class="sourceLineNo">115</span><a id="line.115">        }</a>
+<span class="sourceLineNo">116</span><a id="line.116">    }</a>
+<span class="sourceLineNo">117</span><a id="line.117"></a>
+<span class="sourceLineNo">118</span><a id="line.118">    private Cache&lt;FedoraId, List&lt;URI&gt;&gt; getSessionCache(final String sessionId) {</a>
+<span class="sourceLineNo">119</span><a id="line.119">        return sessionCaches.computeIfAbsent(sessionId, k -&gt; {</a>
+<span class="sourceLineNo">120</span><a id="line.120">            return Caffeine.newBuilder()</a>
+<span class="sourceLineNo">121</span><a id="line.121">                    .maximumSize(1024)</a>
+<span class="sourceLineNo">122</span><a id="line.122">                    .build();</a>
+<span class="sourceLineNo">123</span><a id="line.123">        });</a>
+<span class="sourceLineNo">124</span><a id="line.124">    }</a>
+<span class="sourceLineNo">125</span><a id="line.125"></a>
+<span class="sourceLineNo">126</span><a id="line.126">    private List&lt;URI&gt; extractRdfTypes(final RdfStream rdf) {</a>
+<span class="sourceLineNo">127</span><a id="line.127">        return rdf.filter(t -&gt; t.predicateMatches(type.asNode()))</a>
+<span class="sourceLineNo">128</span><a id="line.128">                .map(Triple::getObject)</a>
+<span class="sourceLineNo">129</span><a id="line.129">                .map(t -&gt; URI.create(t.toString()))</a>
+<span class="sourceLineNo">130</span><a id="line.130">                .collect(toList());</a>
+<span class="sourceLineNo">131</span><a id="line.131">    }</a>
+<span class="sourceLineNo">132</span><a id="line.132"></a>
+<span class="sourceLineNo">133</span><a id="line.133">    private boolean isNotReadOnlySession(final String sessionId) {</a>
+<span class="sourceLineNo">134</span><a id="line.134">        return !ReadOnlyTransaction.READ_ONLY_TX_ID.equals(sessionId);</a>
+<span class="sourceLineNo">135</span><a id="line.135">    }</a>
+<span class="sourceLineNo">136</span><a id="line.136">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
