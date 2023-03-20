@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraId.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Kernel Implementation</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.identifiers</a> &gt; <span class="el_source">FedoraId.java</span></div><h1>FedoraId.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api.identifiers;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
+import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
+
+import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.google.common.escape.Escaper;
+import com.google.common.net.PercentEscaper;
+
+/**
+ * Class to store contextual information about a Fedora ID.
+ *
+ * Differentiates between the original ID of the request and the actual resource we are operating on.
+ *
+ * Resource Id : the shortened ID of the base resource, mostly needed to access the correct persistence object.
+ * fullId : the full ID from the request, used in most cases.
+ *
+ * So a fullId of info:fedora/object1/another/fcr:versions/20000101121212 has an id of info:fedora/object1/another
+ *
+ * @author whikloj
+ * @since 6.0.0
+ */
+public class FedoraId {
+
+    /**
+     * These are strings that can cause problems with our storage layout
+     */
+<span class="nc" id="L51">    private static final Set&lt;String&gt; FORBIDDEN_ID_PART_STRINGS = Set.of(</span>
+            &quot;fcr-root&quot;,
+            &quot;.fcrepo&quot;,
+            &quot;fcr-container.nt&quot;
+    );
+<span class="nc" id="L56">    private static final Set&lt;String&gt; FORBIDDEN_ID_PART_SUFFIXES = Set.of(</span>
+            &quot;~fcr-desc&quot;,
+            &quot;~fcr-acl&quot;,
+            &quot;~fcr-desc.nt&quot;,
+            &quot;~fcr-acl.nt&quot;
+    );
+
+    /**
+     * The Fedora ID with prefix and extensions. eg info:fedora/object1/another/fcr:versions/20000101121212
+     */
+    private final String fullId;
+
+    /**
+     * The Fedora ID with prefix but without extensions. eg info:fedora/object1/another
+     */
+    private final String baseId;
+
+    /**
+     * The Fedora ID without prefix but with extensions. eg /object1/another/fcr:versions/20000101121212
+     */
+    private final String fullPath;
+
+    /**
+     * The Fedora ID prefix and extensions URL encoded.
+     */
+    private final String encodedFullId;
+
+    /**
+     * The Full ID of the described resource. For binary -&gt; binary, container -&gt; container, binary description -&gt; binary
+     */
+    private final String describedId;
+
+
+    private String hashUri;
+<span class="nc" id="L90">    private boolean isRepositoryRoot = false;</span>
+<span class="nc" id="L91">    private boolean isNonRdfSourceDescription = false;</span>
+<span class="nc" id="L92">    private boolean isAcl = false;</span>
+<span class="nc" id="L93">    private boolean isMemento = false;</span>
+<span class="nc" id="L94">    private boolean isTimemap = false;</span>
+<span class="nc" id="L95">    private boolean isTombstone = false;</span>
+    private Instant mementoDatetime;
+    private String mementoDatetimeStr;
+
+<span class="nc" id="L99">    private final static Set&lt;Pattern&gt; extensions = Set.of(FCR_TOMBSTONE, FCR_METADATA, FCR_ACL, FCR_VERSIONS)</span>
+<span class="nc" id="L100">            .stream().map(Pattern::compile).collect(Collectors.toSet());</span>
+
+<span class="nc" id="L102">    private final static Escaper fedoraIdEscaper = new PercentEscaper(&quot;-._~!$'()*,;&amp;=@:+/?#&quot;, false);</span>
+
+    /**
+     * Basic constructor.
+     * @param fullId The full identifier or null if root.
+     * @throws IllegalArgumentException If ID does not start with expected prefix.
+     */
+<span class="nc" id="L109">    private FedoraId(final String fullId) {</span>
+<span class="nc" id="L110">        this.fullId = ensurePrefix(fullId).replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+        // Carry the path of the request for any exceptions.
+<span class="nc" id="L112">        this.fullPath = this.fullId.substring(FEDORA_ID_PREFIX.length());</span>
+<span class="nc" id="L113">        checkForInvalidPath();</span>
+<span class="nc" id="L114">        this.baseId = processIdentifier();</span>
+<span class="nc" id="L115">        enforceStorageLayoutNamingConstraints();</span>
+<span class="nc" id="L116">        this.encodedFullId = fedoraIdEscaper.escape(this.fullId);</span>
+<span class="nc" id="L117">        this.describedId = this.fullId.replace(&quot;/&quot; + FCR_METADATA, &quot;&quot;);</span>
+<span class="nc" id="L118">    }</span>
+
+    /**
+     * Static create method
+     * @param additions One or more strings to build an ID.
+     * @return The FedoraId.
+     */
+    @JsonCreator
+    public static FedoraId create(final String... additions) {
+<span class="nc" id="L127">        return new FedoraId(idBuilder(additions));</span>
+    }
+
+    /**
+     * Get a FedoraId for repository root.
+     * @return The FedoraId for repository root.
+     */
+    public static FedoraId getRepositoryRootId() {
+<span class="nc" id="L135">        return new FedoraId(null);</span>
+    }
+
+    /**
+     * Is the identifier for the repository root.
+     * @return true of id is equal to info:fedora/
+     */
+    public boolean isRepositoryRoot() {
+<span class="nc" id="L143">        return isRepositoryRoot;</span>
+    }
+
+    /**
+     * Is the identifier for a Memento?
+     * @return true if the id is for the fcr:versions endpoint and has a memento datetime string after it.
+     */
+    public boolean isMemento() {
+<span class="nc" id="L151">        return isMemento;</span>
+    }
+
+    /**
+     * Is the identifier for an ACL?
+     * @return true if the id is for the fcr:acl endpoint.
+     */
+    public boolean isAcl() {
+<span class="nc" id="L159">        return isAcl;</span>
+    }
+
+    /**
+     * Is the identifier for a timemap?
+     * @return true if id for the fcr:versions endpoint and NOT a memento.
+     */
+    public boolean isTimemap() {
+<span class="nc" id="L167">        return isTimemap;</span>
+    }
+
+    /**
+     * Is the identifier for a nonRdfSourceDescription?
+     * @return true if id for the fcr:metadata endpoint
+     */
+    public boolean isDescription() {
+<span class="nc" id="L175">        return isNonRdfSourceDescription;</span>
+    }
+
+    /**
+     * Is the identifier for a tombstone
+     * @return true if id for the fcr:tombstone endpoint
+     */
+    public boolean isTombstone() {
+<span class="nc" id="L183">        return isTombstone;</span>
+    }
+
+    /**
+     * Is the identifier for a hash uri?
+     * @return true if full id referenced a hash uri.
+     */
+    public boolean isHashUri() {
+<span class="nc bnc" id="L191" title="All 2 branches missed.">        return hashUri != null;</span>
+    }
+
+    /**
+     * Get the hash uri.
+     * @return the hash uri from the id or null if none.
+     */
+    public String getHashUri() {
+<span class="nc" id="L199">        return hashUri;</span>
+    }
+
+    /**
+     * Returns the ID string for the physical resource the Fedora ID describes. In most cases, this ID is the same as
+     * the full resource ID. However, if the resource is a memento, timemap, or tombstone, then the ID returned here
+     * will be for the resource that contains it. Here are some examples:
+     *
+     * &lt;ul&gt;
+     *     &lt;li&gt;&quot;info:fedora/object1/another/fcr:versions/20000101121212&quot; =&amp;gt; &quot;info:fedora/object1/another&quot;&lt;/li&gt;
+     *     &lt;li&gt;&quot;info:fedora/object1/another/fcr:metadata&quot; =&amp;gt; &quot;info:fedora/object1/another/fcr:metadata&quot;&lt;/li&gt;
+     *     &lt;li&gt;&quot;info:fedora/object1/another&quot; =&amp;gt; &quot;info:fedora/object1/another&quot;&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @return the ID of the associated physical resource
+     */
+    public String getResourceId() {
+<span class="nc bnc" id="L216" title="All 2 branches missed.">        if (isNonRdfSourceDescription) {</span>
+<span class="nc" id="L217">            return baseId + &quot;/&quot; + FCR_METADATA;</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        } else if (isAcl) {</span>
+<span class="nc" id="L219">            return baseId + &quot;/&quot; + FCR_ACL;</span>
+        }
+<span class="nc" id="L221">        return baseId;</span>
+    }
+
+    /**
+     * Behaves the same as {@link #getResourceId()} except it returns a FedoraId rather than a String.
+     *
+     * @return the ID of the associated physical resource
+     */
+    public FedoraId asResourceId() {
+<span class="nc" id="L230">        return FedoraId.create(getResourceId());</span>
+    }
+
+    /**
+     * Returns the ID string for the base ID the Fedora ID describes. This value is the equivalent of the full ID
+     * with all extensions removed.
+     *
+     * &lt;ul&gt;
+     *     &lt;li&gt;&quot;info:fedora/object1/another/fcr:versions/20000101121212&quot; =&amp;gt; &quot;info:fedora/object1/another&quot;&lt;/li&gt;
+     *     &lt;li&gt;&quot;info:fedora/object1/another/fcr:metadata&quot; =&amp;gt; &quot;info:fedora/object1/another&quot;&lt;/li&gt;
+     *     &lt;li&gt;&quot;info:fedora/object1/another&quot; =&amp;gt; &quot;info:fedora/object1/another&quot;&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @return the ID of the associated base resource
+     */
+    public String getBaseId() {
+<span class="nc" id="L246">        return baseId;</span>
+    }
+
+    /**
+     * Behaves the same as {@link #getBaseId()} except it returns a FedoraId rather than a String.
+     *
+     * @return the ID of the associated base resource
+     */
+    public FedoraId asBaseId() {
+<span class="nc" id="L255">        return FedoraId.create(getBaseId());</span>
+    }
+
+    /**
+     * Return the original full ID.
+     * @return the id.
+     */
+    public String getFullId() {
+<span class="nc" id="L263">        return fullId;</span>
+    }
+
+    /**
+     * Return the original full ID without the info:fedora prefix.
+     * @return the full id path part
+     */
+    public String getFullIdPath() {
+<span class="nc" id="L271">        return fullPath;</span>
+    }
+
+    /**
+     * @return The encoded full ID.
+     */
+    public String getEncodedFullId() {
+<span class="nc" id="L278">        return encodedFullId;</span>
+    }
+
+    /**
+     * Return the Memento datetime as Instant.
+     * @return The datetime or null if not a memento.
+     */
+    public Instant getMementoInstant() {
+<span class="nc" id="L286">        return mementoDatetime;</span>
+    }
+
+    /**
+     * Return the Memento datetime string.
+     * @return The yyyymmddhhiiss memento datetime or null if not a Memento.
+     */
+    public String getMementoString() {
+<span class="nc" id="L294">        return mementoDatetimeStr;</span>
+    }
+
+    /**
+     * Creates a new Fedora ID by joining the base ID of this Fedora ID with the specified string part. Any extensions
+     * that this Fedora ID contains are discarded. For example:
+     * &lt;p&gt;
+     * Resolving &quot;child&quot; against &quot;info:fedora/object1/another/fcr:versions/20000101121212&quot; yields
+     * &quot;info:fedora/object1/another/child&quot;.
+     *
+     * @param child the part to join
+     * @return new Fedora ID in the form baseId/child
+     */
+    public FedoraId resolve(final String child) {
+<span class="nc bnc" id="L308" title="All 2 branches missed.">        if (StringUtils.isBlank(child)) {</span>
+<span class="nc" id="L309">            throw new IllegalArgumentException(&quot;Child cannot be blank&quot;);</span>
+        }
+<span class="nc" id="L311">        return FedoraId.create(baseId, child);</span>
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to an ACL resource. The base ID, full ID without extensions,
+     * is always used to construct an ACL ID. If this ID is already an ACL, then it returns itself.
+     *
+     * @return ACL resource ID
+     */
+    public FedoraId asAcl() {
+<span class="nc bnc" id="L321" title="All 2 branches missed.">        if (isAcl()) {</span>
+<span class="nc" id="L322">            return this;</span>
+        }
+
+<span class="nc" id="L325">        return FedoraId.create(getBaseId(), FCR_ACL);</span>
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a binary description resource. There is no guarantee that
+     * the binary description resource exists. If this ID is already a description, then it returns itself. Otherwise,
+     * it uses the base ID, without extensions, to construct the new ID. If this Fedora ID is a timemap or memento or
+     * a hash uri, then these extensions are applied to new description ID as well.
+     *
+     * @return description resource ID
+     */
+    public FedoraId asDescription() {
+<span class="nc bnc" id="L337" title="All 2 branches missed.">        if (isDescription()) {</span>
+<span class="nc" id="L338">            return this;</span>
+        }
+
+<span class="nc bnc" id="L341" title="All 2 branches missed.">        if (isTimemap()) {</span>
+<span class="nc" id="L342">            return FedoraId.create(getBaseId(), FCR_METADATA, FCR_VERSIONS);</span>
+        }
+
+<span class="nc bnc" id="L345" title="All 2 branches missed.">        if (isMemento()) {</span>
+<span class="nc" id="L346">            return FedoraId.create(getBaseId(), FCR_METADATA, FCR_VERSIONS, appendHashIfPresent(getMementoString()));</span>
+        }
+
+<span class="nc" id="L349">        return FedoraId.create(getBaseId(), appendHashIfPresent(FCR_METADATA));</span>
+    }
+
+    /**
+     * Returns the FullId of the described resource.
+     *
+     * @return The ID.
+     */
+    public String getFullDescribedId() {
+<span class="nc" id="L358">        return describedId;</span>
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a tombstone resource. If this ID is already a tombstone,
+     * then it returns itself. Otherwise, it uses the base ID, without extensions, to construct the new ID.
+     *
+     * @return tombstone resource ID
+     */
+    public FedoraId asTombstone() {
+<span class="nc bnc" id="L368" title="All 2 branches missed.">        if (isTombstone()) {</span>
+<span class="nc" id="L369">            return this;</span>
+        }
+
+<span class="nc" id="L372">        return FedoraId.create(getBaseId(), FCR_TOMBSTONE);</span>
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a timemap resource. If this ID is already a timemap,
+     * then it returns itself. Otherwise, it uses the base ID, without extensions, to construct the new ID. Unless
+     * this ID is a binary description, in which case the new ID is constructed using the full ID.
+     *
+     * @return timemap resource ID
+     */
+    public FedoraId asTimemap() {
+<span class="nc bnc" id="L383" title="All 2 branches missed.">        if (isTimemap()) {</span>
+<span class="nc" id="L384">            return this;</span>
+        }
+
+<span class="nc bnc" id="L387" title="All 2 branches missed.">        if (isDescription()) {</span>
+<span class="nc" id="L388">            return FedoraId.create(getBaseId(), FCR_METADATA, FCR_VERSIONS);</span>
+        }
+
+<span class="nc" id="L391">        return FedoraId.create(getBaseId(), FCR_VERSIONS);</span>
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a memento resource. If this ID is already a memento,
+     * then it returns itself. If this ID is an ACL, tombstone, or timemap, then the new ID is constructed using this
+     * ID's base ID. Otherwise, the full ID is used.
+     *
+     * @param mementoInstant memento representation
+     * @return memento resource ID
+     */
+    public FedoraId asMemento(final Instant mementoInstant) {
+<span class="nc" id="L403">        return asMemento(MEMENTO_LABEL_FORMATTER.format(mementoInstant));</span>
+    }
+
+    /**
+     * Creates a new Fedora ID based on this ID that points to a memento resource. If this ID is already a memento,
+     * then it returns itself. If this ID is an ACL, tombstone, or timemap, then the new ID is constructed using this
+     * ID's base ID. If this ID is a description, then the new ID is appended to the description ID.
+     *
+     * @param mementoString string memento representation
+     * @return memento resource ID
+     */
+    public FedoraId asMemento(final String mementoString) {
+<span class="nc bnc" id="L415" title="All 2 branches missed.">        if (isMemento()) {</span>
+<span class="nc" id="L416">            return this;</span>
+        }
+
+<span class="nc bnc" id="L419" title="All 2 branches missed.">        if (isDescription()) {</span>
+<span class="nc" id="L420">            return FedoraId.create(getBaseId(), FCR_METADATA, FCR_VERSIONS, appendHashIfPresent(mementoString));</span>
+        }
+
+<span class="nc bnc" id="L423" title="All 6 branches missed.">        if (isAcl() || isTombstone() || isTimemap()) {</span>
+<span class="nc" id="L424">            return FedoraId.create(getBaseId(), FCR_VERSIONS, mementoString);</span>
+        }
+
+<span class="nc" id="L427">        return FedoraId.create(getBaseId(), FCR_VERSIONS, appendHashIfPresent(mementoString));</span>
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+<span class="nc bnc" id="L432" title="All 2 branches missed.">        if (obj == this) {</span>
+<span class="nc" id="L433">            return true;</span>
+        }
+
+<span class="nc bnc" id="L436" title="All 2 branches missed.">        if (!(obj instanceof FedoraId)) {</span>
+<span class="nc" id="L437">            return false;</span>
+        }
+
+<span class="nc" id="L440">        final var testObj = (FedoraId) obj;</span>
+<span class="nc" id="L441">        return Objects.equals(testObj.getFullId(), this.getFullId());</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L446">        return getFullId().hashCode();</span>
+    }
+
+    @JsonValue
+    @Override
+    public String toString() {
+<span class="nc" id="L452">        return getFullId();</span>
+    }
+
+    /**
+     * Concatenates all the parts with slashes
+     * @param parts array of strings
+     * @return the concatenated string.
+     */
+    private static String idBuilder(final String... parts) {
+<span class="nc bnc" id="L461" title="All 4 branches missed.">        if (parts != null &amp;&amp; parts.length &gt; 0) {</span>
+<span class="nc" id="L462">            return Arrays.stream(parts).filter(Objects::nonNull)</span>
+<span class="nc bnc" id="L463" title="All 2 branches missed.">                    .map(s -&gt; s.startsWith(&quot;/&quot;) ? s.substring(1) : s)</span>
+<span class="nc bnc" id="L464" title="All 2 branches missed.">                    .map(s -&gt; s.endsWith(&quot;/&quot;) ? s.substring(0, s.length() - 1 ) : s)</span>
+<span class="nc" id="L465">                    .collect(Collectors.joining(&quot;/&quot;));</span>
+        }
+<span class="nc" id="L467">        return &quot;&quot;;</span>
+    }
+
+    /**
+     * Ensure the ID has the info:fedora/ prefix.
+     * @param id the identifier, if null assume repository root (info:fedora/)
+     * @return the identifier with the info:fedora/ prefix.
+     */
+    private static String ensurePrefix(final String id) {
+<span class="nc bnc" id="L476" title="All 2 branches missed.">        if (id == null) {</span>
+<span class="nc" id="L477">            return FEDORA_ID_PREFIX;</span>
+        }
+<span class="nc bnc" id="L479" title="All 2 branches missed.">        return id.startsWith(FEDORA_ID_PREFIX) ? id : FEDORA_ID_PREFIX + &quot;/&quot; + id;</span>
+    }
+
+    /**
+     * Process the original ID into its parts without using a regular expression.
+     */
+    private String processIdentifier() {
+        // Regex pattern which decomposes a http resource uri into components
+        // The first group determines if it is an fcr:metadata non-rdf source.
+        // The second group determines if the path is for a memento or timemap.
+        // The third group allows for a memento identifier.
+        // The fourth group for allows ACL.
+        // The fifth group allows for any hashed suffixes.
+        // &quot;.*?(/&quot; + FCR_METADATA + &quot;)?(/&quot; + FCR_VERSIONS + &quot;(/\\d{14})?)?(/&quot; + FCR_ACL + &quot;)?(\\#\\S+)?$&quot;);
+<span class="nc bnc" id="L493" title="All 2 branches missed.">        if (this.fullId.contains(&quot;//&quot;)) {</span>
+<span class="nc" id="L494">            throw new InvalidResourceIdentifierException(String.format(&quot;Path contains empty element! %s&quot;, fullPath));</span>
+        }
+<span class="nc" id="L496">        String processID = this.fullId;</span>
+<span class="nc bnc" id="L497" title="All 2 branches missed.">        if (processID.equals(FEDORA_ID_PREFIX)) {</span>
+<span class="nc" id="L498">            this.isRepositoryRoot = true;</span>
+<span class="nc" id="L499">            return this.fullId;</span>
+        }
+<span class="nc bnc" id="L501" title="All 2 branches missed.">        if (processID.contains(&quot;#&quot;)) {</span>
+<span class="nc" id="L502">            final String[] hashSplits = StringUtils.splitPreserveAllTokens(processID, &quot;#&quot;);</span>
+<span class="nc bnc" id="L503" title="All 2 branches missed.">            if (hashSplits.length &gt; 2) {</span>
+<span class="nc" id="L504">                throw new InvalidResourceIdentifierException(String.format(</span>
+                        &quot;Path &lt;%s&gt; is invalid. It may not contain more than one #&quot;,
+                        fullPath));
+            }
+<span class="nc" id="L508">            this.hashUri = hashSplits[1];</span>
+<span class="nc" id="L509">            processID = hashSplits[0];</span>
+        }
+<span class="nc bnc" id="L511" title="All 2 branches missed.">        if (processID.contains(FCR_TOMBSTONE)) {</span>
+<span class="nc" id="L512">            processID = removePart(processID, FCR_TOMBSTONE);</span>
+<span class="nc" id="L513">            this.isTombstone = true;</span>
+        }
+<span class="nc bnc" id="L515" title="All 2 branches missed.">        if (processID.contains(FCR_ACL)) {</span>
+<span class="nc" id="L516">            processID = removePart(processID, FCR_ACL);</span>
+<span class="nc" id="L517">            this.isAcl = true;</span>
+        }
+<span class="nc bnc" id="L519" title="All 2 branches missed.">        if (processID.contains(FCR_VERSIONS)) {</span>
+<span class="nc" id="L520">            final String[] versionSplits = split(processID, FCR_VERSIONS);</span>
+<span class="nc bnc" id="L521" title="All 2 branches missed.">            if (versionSplits.length &gt; 2) {</span>
+<span class="nc" id="L522">                throw new InvalidResourceIdentifierException(String.format(</span>
+                        &quot;Path &lt;%s&gt; is invalid. May not contain multiple %s parts.&quot;,
+                        fullPath, FCR_VERSIONS));
+<span class="nc bnc" id="L525" title="All 4 branches missed.">            } else if (versionSplits.length == 2 &amp;&amp; versionSplits[1].isEmpty()) {</span>
+<span class="nc" id="L526">                this.isTimemap = true;</span>
+            } else {
+<span class="nc" id="L528">                final String afterVersion = versionSplits[1];</span>
+<span class="nc bnc" id="L529" title="All 2 branches missed.">                if (afterVersion.matches(&quot;/\\d{14}&quot;)) {</span>
+<span class="nc" id="L530">                    this.isMemento = true;</span>
+<span class="nc" id="L531">                    this.mementoDatetimeStr = afterVersion.substring(1);</span>
+                    try {
+<span class="nc" id="L533">                        this.mementoDatetime = Instant.from(MEMENTO_LABEL_FORMATTER.parse(this.mementoDatetimeStr));</span>
+<span class="nc" id="L534">                    } catch (final DateTimeParseException e) {</span>
+<span class="nc" id="L535">                        throw new InvalidMementoPathException(String.format(&quot;Invalid request for memento at %s&quot;,</span>
+                                fullPath));
+<span class="nc" id="L537">                    }</span>
+<span class="nc bnc" id="L538" title="All 2 branches missed.">                } else if (afterVersion.equals(&quot;/&quot;)) {</span>
+                    // Possible trailing slash?
+<span class="nc" id="L540">                    this.isTimemap = true;</span>
+                } else {
+<span class="nc" id="L542">                    throw new InvalidMementoPathException(String.format(&quot;Invalid request for memento at %s&quot;, fullPath));</span>
+                }
+            }
+<span class="nc" id="L545">            processID = versionSplits[0];</span>
+        }
+<span class="nc bnc" id="L547" title="All 2 branches missed.">        if (processID.contains(FCR_METADATA)) {</span>
+<span class="nc" id="L548">            processID = removePart(processID, FCR_METADATA);</span>
+<span class="nc" id="L549">            this.isNonRdfSourceDescription = true;</span>
+        }
+<span class="nc bnc" id="L551" title="All 2 branches missed.">        if (processID.endsWith(&quot;/&quot;)) {</span>
+<span class="nc" id="L552">            processID = processID.replaceAll(&quot;/+$&quot;, &quot;&quot;);</span>
+        }
+
+<span class="nc" id="L555">        return processID;</span>
+    }
+
+    private String removePart(final String original, final String part) {
+<span class="nc" id="L559">        final String[] split = split(original, part);</span>
+<span class="nc bnc" id="L560" title="All 6 branches missed.">        if (split.length &gt; 2 || (split.length == 2 &amp;&amp; !split[1].isEmpty())) {</span>
+<span class="nc" id="L561">            throw new InvalidResourceIdentifierException(&quot;Path is invalid:&quot; + fullPath);</span>
+        }
+<span class="nc" id="L563">        return split[0];</span>
+    }
+
+    private String[] split(final String original, final String part) {
+<span class="nc" id="L567">        return StringUtils.splitByWholeSeparatorPreserveAllTokens(original, &quot;/&quot; + part);</span>
+    }
+
+    /**
+     * Check for obvious path errors.
+     */
+    private void checkForInvalidPath() {
+        // Check for combinations of endpoints not allowed.
+<span class="nc" id="L575">        if (</span>
+            // ID contains fcr:acl or fcr:tombstone AND fcr:metadata or fcr:versions
+<span class="nc bnc" id="L577" title="All 4 branches missed.">            ((this.fullId.contains(FCR_ACL) || this.fullId.contains(FCR_TOMBSTONE)) &amp;&amp;</span>
+<span class="nc bnc" id="L578" title="All 4 branches missed.">                (this.fullId.contains(FCR_METADATA) || this.fullId.contains(FCR_VERSIONS))) ||</span>
+            // or ID contains fcr:acl AND fcr:tombstone
+<span class="nc bnc" id="L580" title="All 4 branches missed.">            (this.fullId.contains(FCR_TOMBSTONE) &amp;&amp; this.fullId.contains(FCR_ACL))</span>
+        ) {
+<span class="nc" id="L582">            throw new InvalidResourceIdentifierException(String.format(&quot;Path is invalid: %s&quot;, fullPath));</span>
+        }
+        // Ensure we don't have 2 of any of the extensions, ie. info:fedora/object/fcr:acl/fcr:acl, etc.
+<span class="nc bnc" id="L585" title="All 2 branches missed.">        for (final Pattern extension : extensions) {</span>
+<span class="nc bnc" id="L586" title="All 2 branches missed.">            if (extension.matcher(this.fullId).results().count() &gt; 1) {</span>
+<span class="nc" id="L587">                throw new InvalidResourceIdentifierException(String.format(&quot;Path is invalid: %s&quot;, fullPath));</span>
+            }
+<span class="nc" id="L589">        }</span>
+<span class="nc" id="L590">    }</span>
+
+    /**
+     * Ensures that the Fedora ID does not violate any naming restrictions that are in place prevent collisions on disk.
+     * These restrictions are based on the following naming conventions:
+     *      https://wiki.lyrasis.org/display/FF/Design+-+Fedora+OCFL+Object+Structure
+     *
+     * All ids should be validated on resource creation
+     */
+    private void enforceStorageLayoutNamingConstraints() {
+<span class="nc" id="L600">        final var finalPart = StringUtils.substringAfterLast(baseId, &quot;/&quot;);</span>
+
+<span class="nc bnc" id="L602" title="All 2 branches missed.">        if (FORBIDDEN_ID_PART_STRINGS.contains(finalPart)) {</span>
+<span class="nc" id="L603">            throw new InvalidResourceIdentifierException(</span>
+<span class="nc" id="L604">                    String.format(&quot;Invalid resource ID. IDs may not contain the string '%s'.&quot;, finalPart));</span>
+        }
+
+<span class="nc" id="L607">        FORBIDDEN_ID_PART_SUFFIXES.forEach(suffix -&gt; {</span>
+<span class="nc bnc" id="L608" title="All 4 branches missed.">            if (finalPart.endsWith(suffix) &amp;&amp; !finalPart.equals(suffix)) {</span>
+<span class="nc" id="L609">                throw new InvalidResourceIdentifierException(</span>
+<span class="nc" id="L610">                        String.format(&quot;Invalid resource ID. IDs may not end with '%s'.&quot;, suffix));</span>
+            }
+<span class="nc" id="L612">        });</span>
+<span class="nc" id="L613">    }</span>
+
+    private String appendHashIfPresent(final String original) {
+<span class="nc bnc" id="L616" title="All 2 branches missed.">        if (isHashUri()) {</span>
+<span class="nc" id="L617">            return original + &quot;#&quot; + getHashUri();</span>
+        }
+<span class="nc" id="L619">        return original;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
