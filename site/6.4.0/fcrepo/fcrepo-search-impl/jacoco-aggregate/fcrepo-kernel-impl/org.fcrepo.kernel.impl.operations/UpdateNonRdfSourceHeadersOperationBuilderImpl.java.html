@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>UpdateNonRdfSourceHeadersOperationBuilderImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.operations</a> &gt; <span class="el_source">UpdateNonRdfSourceHeadersOperationBuilderImpl.java</span></div><h1>UpdateNonRdfSourceHeadersOperationBuilderImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.operations;
+
+import org.apache.jena.rdf.model.Model;
+import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.UpdateNonRdfSourceHeadersOperation;
+import org.fcrepo.kernel.api.operations.UpdateNonRdfSourceHeadersOperationBuilder;
+
+import java.net.URI;
+import java.util.Collection;
+
+/**
+ * Builder for an operation for updating headers of non-rdf sources
+ *
+ * @author mikejritter
+ * @author bbpennel
+ */
+public class UpdateNonRdfSourceHeadersOperationBuilderImpl extends AbstractRelaxableResourceOperationBuilder
+                                                           implements UpdateNonRdfSourceHeadersOperationBuilder {
+
+    private String mimeType;
+
+    private String filename;
+
+    /**
+     * Constructor
+     *
+     * @param transaction the transaction
+     * @param resourceId the fedora identifier
+     * @param serverManagedPropsMode server managed properties mode
+     */
+    public UpdateNonRdfSourceHeadersOperationBuilderImpl(final Transaction transaction,
+                                            final FedoraId resourceId,
+                                            final ServerManagedPropsMode serverManagedPropsMode) {
+<span class="nc" id="L41">        super(transaction, resourceId, serverManagedPropsMode);</span>
+<span class="nc" id="L42">    }</span>
+
+    @Override
+    public UpdateNonRdfSourceHeadersOperationBuilder mimeType(final String mimetype) {
+<span class="nc" id="L46">        this.mimeType = mimetype;</span>
+<span class="nc" id="L47">        return this;</span>
+    }
+
+    @Override
+    public UpdateNonRdfSourceHeadersOperationBuilder filename(final String filename) {
+<span class="nc" id="L52">        this.filename = filename;</span>
+<span class="nc" id="L53">        return this;</span>
+    }
+
+    @Override
+    public UpdateNonRdfSourceHeadersOperationBuilder contentDigests(final Collection&lt;URI&gt; digests) {
+<span class="nc" id="L58">        throw new UnsupportedOperationException(&quot;Not supported for update header operations&quot;);</span>
+    }
+
+    @Override
+    public UpdateNonRdfSourceHeadersOperationBuilder contentSize(final long size) {
+<span class="nc" id="L63">        throw new UnsupportedOperationException(&quot;Not supported for update header operations&quot;);</span>
+    }
+
+    @Override
+    public UpdateNonRdfSourceHeadersOperationBuilder userPrincipal(final String userPrincipal) {
+<span class="nc" id="L68">        super.userPrincipal(userPrincipal);</span>
+<span class="nc" id="L69">        return this;</span>
+    }
+
+    @Override
+    public UpdateNonRdfSourceHeadersOperationBuilder relaxedProperties(final Model model) {
+<span class="nc" id="L74">        super.relaxedProperties(model);</span>
+<span class="nc" id="L75">        return this;</span>
+    }
+
+    @Override
+    public UpdateNonRdfSourceHeadersOperation build() {
+<span class="nc" id="L80">        final var operation = new UpdateNonRdfSourceHeadersOperationImpl(transaction, rescId.asBaseId());</span>
+<span class="nc" id="L81">        operation.setUserPrincipal(userPrincipal);</span>
+<span class="nc" id="L82">        operation.setCreatedBy(createdBy);</span>
+<span class="nc" id="L83">        operation.setCreatedDate(createdDate);</span>
+<span class="nc" id="L84">        operation.setLastModifiedBy(lastModifiedBy);</span>
+<span class="nc" id="L85">        operation.setLastModifiedDate(lastModifiedDate);</span>
+<span class="nc" id="L86">        operation.setFilename(filename);</span>
+<span class="nc" id="L87">        operation.setMimeType(mimeType);</span>
+<span class="nc" id="L88">        return operation;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

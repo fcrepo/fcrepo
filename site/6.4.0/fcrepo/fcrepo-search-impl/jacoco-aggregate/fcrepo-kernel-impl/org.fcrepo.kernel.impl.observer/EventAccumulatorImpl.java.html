@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>EventAccumulatorImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.observer</a> &gt; <span class="el_source">EventAccumulatorImpl.java</span></div><h1>EventAccumulatorImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.kernel.impl.observer;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.net.URI;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
+import org.fcrepo.config.AuthPropsConfig;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
+
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+import com.google.common.eventbus.EventBus;
+
+/**
+ * @author pwinckles
+ */
+@Component
+public class EventAccumulatorImpl implements EventAccumulator {
+
+<span class="nc" id="L41">    private final static Logger LOG = LoggerFactory.getLogger(EventAccumulatorImpl.class);</span>
+
+    private final Map&lt;String, Multimap&lt;FedoraId, EventBuilder&gt;&gt; transactionEventMap;
+
+    @Inject
+    private ResourceFactory resourceFactory;
+
+    @Inject
+    private EventBus eventBus;
+
+    @Inject
+    private AuthPropsConfig authPropsConfig;
+
+<span class="nc" id="L54">    public EventAccumulatorImpl() {</span>
+<span class="nc" id="L55">        this.transactionEventMap = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="nc" id="L56">    }</span>
+
+    @Override
+    public void recordEventForOperation(final Transaction transaction, final FedoraId fedoraId,
+                                        final ResourceOperation operation) {
+<span class="nc" id="L61">        checkNotNull(transaction, &quot;transaction cannot be blank&quot;);</span>
+<span class="nc" id="L62">        checkNotNull(fedoraId, &quot;fedoraId cannot be null&quot;);</span>
+
+<span class="nc" id="L64">        final String transactionId = transaction.getId();</span>
+<span class="nc" id="L65">        final var events = transactionEventMap.computeIfAbsent(transactionId, key -&gt;</span>
+<span class="nc" id="L66">                MultimapBuilder.hashKeys().arrayListValues().build());</span>
+<span class="nc" id="L67">        final var eventBuilder = ResourceOperationEventBuilder.fromResourceOperation(</span>
+<span class="nc" id="L68">                fedoraId, operation, authPropsConfig.getUserAgentBaseUri());</span>
+<span class="nc" id="L69">        events.put(fedoraId, eventBuilder);</span>
+<span class="nc" id="L70">    }</span>
+
+    @Override
+    public void emitEvents(final Transaction transaction, final String baseUrl, final String userAgent) {
+<span class="nc" id="L74">        LOG.debug(&quot;Emitting events for transaction {}&quot;, transaction.getId());</span>
+
+<span class="nc" id="L76">        final var eventMap = transactionEventMap.remove(transaction.getId());</span>
+
+<span class="nc bnc" id="L78" title="All 2 branches missed.">        if (eventMap != null) {</span>
+<span class="nc" id="L79">            eventMap.keySet().forEach(fedoraId -&gt; {</span>
+<span class="nc" id="L80">                final var events = eventMap.get(fedoraId);</span>
+
+                try {
+<span class="nc" id="L83">                    final var mergedBuilder = events.stream()</span>
+<span class="nc" id="L84">                            .reduce(EventBuilder::merge).get();</span>
+
+<span class="nc" id="L86">                    final var event = mergedBuilder</span>
+<span class="nc" id="L87">                            .withResourceTypes(loadResourceTypes(transaction, fedoraId))</span>
+<span class="nc" id="L88">                            .withBaseUrl(baseUrl)</span>
+<span class="nc" id="L89">                            .withUserAgent(userAgent)</span>
+<span class="nc" id="L90">                            .build();</span>
+
+<span class="nc" id="L92">                    LOG.debug(&quot;Emitting event: {}&quot;, event);</span>
+<span class="nc" id="L93">                    eventBus.post(event);</span>
+<span class="nc" id="L94">                } catch (final Exception e) {</span>
+<span class="nc" id="L95">                    LOG.error(&quot;Failed to emit events: {}&quot;, events, e);</span>
+<span class="nc" id="L96">                }</span>
+<span class="nc" id="L97">            });</span>
+        }
+<span class="nc" id="L99">    }</span>
+
+    @Override
+    public void clearEvents(final Transaction transaction) {
+<span class="nc" id="L103">        LOG.trace(&quot;Clearing events for transaction {}&quot;, transaction.getId());</span>
+<span class="nc" id="L104">        transactionEventMap.remove(transaction.getId());</span>
+<span class="nc" id="L105">    }</span>
+
+    private Set&lt;String&gt; loadResourceTypes(final Transaction transaction, final FedoraId fedoraId) {
+        try {
+<span class="nc" id="L109">            return resourceFactory.getResource(transaction, fedoraId).getTypes().stream()</span>
+<span class="nc" id="L110">                    .map(URI::toString)</span>
+<span class="nc" id="L111">                    .collect(Collectors.toSet());</span>
+<span class="nc" id="L112">        } catch (final Exception e) {</span>
+<span class="nc" id="L113">            LOG.debug(&quot;Could not load resource types for {}&quot;, fedoraId, e);</span>
+            // This can happen if the resource no longer exists
+<span class="nc" id="L115">            return Collections.emptySet();</span>
+        }
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

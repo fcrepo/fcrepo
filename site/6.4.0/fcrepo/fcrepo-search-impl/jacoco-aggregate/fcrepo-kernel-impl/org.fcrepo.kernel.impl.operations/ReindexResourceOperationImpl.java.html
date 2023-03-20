@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ReindexResourceOperationImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.operations</a> &gt; <span class="el_source">ReindexResourceOperationImpl.java</span></div><h1>ReindexResourceOperationImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.operations;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.ReindexResourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
+
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.REINDEX;
+
+
+/**
+ * Operation for reindexing a resource
+ *
+ * @author dbernstein
+ */
+public class ReindexResourceOperationImpl extends AbstractResourceOperation implements ReindexResourceOperation {
+
+    private Transaction transaction;
+
+    protected ReindexResourceOperationImpl(final Transaction transaction, final FedoraId rescId) {
+<span class="nc" id="L26">        super(transaction, rescId);</span>
+<span class="nc" id="L27">    }</span>
+
+    @Override
+    public ResourceOperationType getType() {
+<span class="nc" id="L31">        return REINDEX;</span>
+    }
+
+    public void setTransaction(final Transaction tx) {
+<span class="nc" id="L35">        transaction = tx;</span>
+<span class="nc" id="L36">    }</span>
+
+    @Override
+    public Transaction getTransaction() {
+<span class="nc" id="L40">        return transaction;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>UserTypesCacheImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Search Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.cache</a> &gt; <span class="el_source">UserTypesCacheImpl.java</span></div><h1>UserTypesCacheImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.kernel.impl.cache;
+
+import static java.util.stream.Collectors.toList;
+import static org.apache.jena.vocabulary.RDF.type;
+
+import java.net.URI;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+import org.apache.jena.graph.Triple;
+import org.springframework.stereotype.Component;
+
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
+/**
+ * Default UserTypesCache implementation
+ *
+ * @author pwinckles
+ */
+@Component
+public class UserTypesCacheImpl implements UserTypesCache {
+
+    private final Cache&lt;FedoraId, List&lt;URI&gt;&gt; globalCache;
+    private final Map&lt;String, Cache&lt;FedoraId, List&lt;URI&gt;&gt;&gt; sessionCaches;
+
+<span class="nc" id="L42">    public UserTypesCacheImpl(final FedoraPropsConfig config) {</span>
+<span class="nc" id="L43">        this.globalCache = Caffeine.newBuilder()</span>
+<span class="nc" id="L44">                .maximumSize(config.getUserTypesCacheSize())</span>
+<span class="nc" id="L45">                .expireAfterAccess(config.getUserTypesCacheTimeout(), TimeUnit.MINUTES)</span>
+<span class="nc" id="L46">                .build();</span>
+<span class="nc" id="L47">        this.sessionCaches = new ConcurrentHashMap&lt;&gt;();</span>
+<span class="nc" id="L48">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List&lt;URI&gt; getUserTypes(final FedoraId resourceId,
+                                  final String sessionId,
+                                  final Supplier&lt;RdfStream&gt; rdfProvider) {
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (isNotReadOnlySession(sessionId)) {</span>
+<span class="nc" id="L58">            final var sessionCache = getSessionCache(sessionId);</span>
+
+<span class="nc" id="L60">            return sessionCache.get(resourceId, k -&gt; {</span>
+<span class="nc" id="L61">                return globalCache.get(resourceId, k2 -&gt; {</span>
+<span class="nc" id="L62">                    return extractRdfTypes(rdfProvider.get());</span>
+                });
+            });
+        } else {
+<span class="nc" id="L66">            return globalCache.get(resourceId, k -&gt; {</span>
+<span class="nc" id="L67">                return extractRdfTypes(rdfProvider.get());</span>
+            });
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void cacheUserTypes(final FedoraId resourceId,
+                               final RdfStream rdf,
+                               final String sessionId) {
+<span class="nc bnc" id="L79" title="All 2 branches missed.">        if (isNotReadOnlySession(sessionId)) {</span>
+<span class="nc" id="L80">            getSessionCache(sessionId).put(resourceId, extractRdfTypes(rdf));</span>
+        }
+<span class="nc" id="L82">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void cacheUserTypes(final FedoraId resourceId,
+                               final List&lt;URI&gt; userTypes,
+                               final String sessionId) {
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (isNotReadOnlySession(sessionId)) {</span>
+<span class="nc" id="L92">            getSessionCache(sessionId).put(resourceId, userTypes);</span>
+        }
+<span class="nc" id="L94">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void mergeSessionCache(final String sessionId) {
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (isNotReadOnlySession(sessionId)) {</span>
+<span class="nc" id="L102">            final var sessionCache = getSessionCache(sessionId);</span>
+<span class="nc" id="L103">            globalCache.putAll(sessionCache.asMap());</span>
+<span class="nc" id="L104">            dropSessionCache(sessionId);</span>
+        }
+<span class="nc" id="L106">    }</span>
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void dropSessionCache(final String sessionId) {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (isNotReadOnlySession(sessionId)) {</span>
+<span class="nc" id="L114">            sessionCaches.remove(sessionId);</span>
+        }
+<span class="nc" id="L116">    }</span>
+
+    private Cache&lt;FedoraId, List&lt;URI&gt;&gt; getSessionCache(final String sessionId) {
+<span class="nc" id="L119">        return sessionCaches.computeIfAbsent(sessionId, k -&gt; {</span>
+<span class="nc" id="L120">            return Caffeine.newBuilder()</span>
+<span class="nc" id="L121">                    .maximumSize(1024)</span>
+<span class="nc" id="L122">                    .build();</span>
+        });
+    }
+
+    private List&lt;URI&gt; extractRdfTypes(final RdfStream rdf) {
+<span class="nc" id="L127">        return rdf.filter(t -&gt; t.predicateMatches(type.asNode()))</span>
+<span class="nc" id="L128">                .map(Triple::getObject)</span>
+<span class="nc" id="L129">                .map(t -&gt; URI.create(t.toString()))</span>
+<span class="nc" id="L130">                .collect(toList());</span>
+    }
+
+    private boolean isNotReadOnlySession(final String sessionId) {
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        return !ReadOnlyTransaction.READ_ONLY_TX_ID.equals(sessionId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
