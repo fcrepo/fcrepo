@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SubjectMappingUtil.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Statistics API</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.utils</a> &gt; <span class="el_source">SubjectMappingUtil.java</span></div><h1>SubjectMappingUtil.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api.utils;
+
+import static org.apache.jena.graph.NodeFactory.createURI;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+
+/**
+ * Utility for remapping subjects in rdf triples.
+ *
+ * @author bbpennel
+ */
+public class SubjectMappingUtil {
+
+    private SubjectMappingUtil() {
+        // Empty constructor for static utility class
+    }
+
+    /**
+     * Maps the subject of t from resourceUri to destinationUri to produce a new Triple.
+     * If the triple does not have the subject resourceUri, then the triple is unchanged.
+     *
+     * @param t triple to be remapped.
+     * @param resourceUri resource subject uri to be remapped.
+     * @param destinationUri subject uri for the resultant triple.
+     * @return triple with subject remapped to destinationUri or the original subject.
+     */
+    public static Triple mapSubject(final Triple t, final String resourceUri, final String destinationUri) {
+<span class="nc" id="L34">        final Node destinationNode = createURI(destinationUri);</span>
+<span class="nc" id="L35">        return mapSubject(t, resourceUri, destinationNode);</span>
+    }
+
+    /**
+     * Maps the subject of t from resourceUri to destinationNode to produce a new Triple.
+     * If the triple does not have the subject resourceUri, then the triple is unchanged.
+     *
+     * @param t triple to be remapped.
+     * @param resourceUri resource subject uri to be remapped.
+     * @param destinationNode subject node for the resultant triple.
+     * @return triple with subject remapped to destinationNode or the original subject.
+     */
+    public static Triple mapSubject(final Triple t, final String resourceUri, final Node destinationNode) {
+<span class="nc" id="L48">        final Node tripleSubj = t.getSubject();</span>
+<span class="nc" id="L49">        final String tripleSubjUri = tripleSubj.getURI();</span>
+        final Node subject;
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (tripleSubjUri.equals(resourceUri)) {</span>
+<span class="nc" id="L52">            subject = destinationNode;</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        } else if (tripleSubjUri.startsWith(resourceUri)) {</span>
+            // If the subject begins with the originating resource uri, such as a hash uri, then rebase
+            // the portions of the subject after the resource uri to the destination uri.
+<span class="nc" id="L56">            final String suffix = tripleSubjUri.substring(resourceUri.length());</span>
+<span class="nc" id="L57">            subject = createURI(destinationNode.getURI() + suffix);</span>
+<span class="nc" id="L58">        } else {</span>
+<span class="nc" id="L59">            subject = t.getSubject();</span>
+        }
+<span class="nc" id="L61">        return new Triple(subject, t.getPredicate(), t.getObject());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
