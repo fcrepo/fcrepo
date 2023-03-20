@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>/Users/whikloj/www/fcrepo4/fcrepo-release/fcrepo-http-commons/src/main/java/org/fcrepo/http/commons/responses/RdfStreamProvider.java xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<div id="overview"><a href="../../../../../../apidocs/org/fcrepo/http/commons/responses">View Javadoc</a></div><pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   <em class="jxr_comment"> * The contents of this file are subject to the license and copyright</em>
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment"> * detailed in the LICENSE and NOTICE files at the root of the source</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * tree.</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <strong class="jxr_keyword">package</strong> org.fcrepo.http.commons.responses;
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> javax.ws.rs.core.MediaType.TEXT_PLAIN;
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.http.commons.domain.RDFMediaType.N3;
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.slf4j.LoggerFactory.getLogger;
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <strong class="jxr_keyword">import</strong> java.io.OutputStream;
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">import</strong> java.lang.annotation.Annotation;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.lang.reflect.Type;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> javax.ws.rs.Produces;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> javax.ws.rs.core.MediaType;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> javax.ws.rs.core.MultivaluedMap;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> javax.ws.rs.ext.MessageBodyWriter;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> javax.ws.rs.ext.Provider;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.slf4j.Logger;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <em class="jxr_javadoccomment"> * Provides serialization for streaming RDF results.</em>
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <em class="jxr_javadoccomment"> * @author ajs6f</em>
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <em class="jxr_javadoccomment"> * @since Nov 19, 2013</em>
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  @Provider
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  @Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, JSON_LD})
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> RdfStreamProvider <strong class="jxr_keyword">implements</strong> MessageBodyWriter&lt;RdfNamespacedStream&gt; {
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Logger LOGGER = getLogger(RdfStreamProvider.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>      @Override
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> isWriteable(<strong class="jxr_keyword">final</strong> Class&lt;?&gt; type, <strong class="jxr_keyword">final</strong> Type genericType,
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>              <strong class="jxr_keyword">final</strong> Annotation[] annotations, <strong class="jxr_keyword">final</strong> MediaType mediaType) {
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>          LOGGER.debug(
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>                  <span class="jxr_string">"Checking to see if we can serialize type: {} to mimeType: {}"</span>,
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>                  type.getName(), mediaType.toString());
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>          <strong class="jxr_keyword">if</strong> (!RdfNamespacedStream.<strong class="jxr_keyword">class</strong>.isAssignableFrom(type)) {
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>              <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>          }
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>          <strong class="jxr_keyword">if</strong> (mediaType.equals(TEXT_HTML_TYPE)
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>                  || (mediaType.getType().equals(<span class="jxr_string">"application"</span>) &amp;&amp; mediaType
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>                          .getSubtype().equals(<span class="jxr_string">"html"</span>))) {
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>              LOGGER.debug(<span class="jxr_string">"Was asked for an HTML mimeType, returning false."</span>);
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>              <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>          }
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>          LOGGER.debug(<span class="jxr_string">"Assuming that this is an attempt to retrieve RDF, returning true."</span>);
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>          <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      }
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>      @Override
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">long</strong> getSize(<strong class="jxr_keyword">final</strong> <a name="RdfNamespacedStream" href="../../../../../org/fcrepo/http/commons/responses/RdfNamespacedStream.html#RdfNamespacedStream">RdfNamespacedStream</a> t, <strong class="jxr_keyword">final</strong> Class&lt;?&gt; type,
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>              <strong class="jxr_keyword">final</strong> Type genericType, <strong class="jxr_keyword">final</strong> Annotation[] annotations,
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>              <strong class="jxr_keyword">final</strong> MediaType mediaType) {
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>          <em class="jxr_comment">// We do not know how long the stream is</em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>          <strong class="jxr_keyword">return</strong> -1;
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      }
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>      @Override
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> writeTo(<strong class="jxr_keyword">final</strong> <a name="RdfNamespacedStream" href="../../../../../org/fcrepo/http/commons/responses/RdfNamespacedStream.html#RdfNamespacedStream">RdfNamespacedStream</a> nsStream, <strong class="jxr_keyword">final</strong> Class&lt;?&gt; type,
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>          <strong class="jxr_keyword">final</strong> Type genericType, <strong class="jxr_keyword">final</strong> Annotation[] annotations,
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>          <strong class="jxr_keyword">final</strong> MediaType mediaType,
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>          <strong class="jxr_keyword">final</strong> MultivaluedMap&lt;String, Object&gt; httpHeaders,
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>          <strong class="jxr_keyword">final</strong> OutputStream entityStream) {
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>          LOGGER.debug(<span class="jxr_string">"Serializing an RdfStream to mimeType: {}"</span>, mediaType);
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>          <strong class="jxr_keyword">final</strong> <a name="RdfStreamStreamingOutput" href="../../../../../org/fcrepo/http/commons/responses/RdfStreamStreamingOutput.html#RdfStreamStreamingOutput">RdfStreamStreamingOutput</a> streamOutput = <strong class="jxr_keyword">new</strong> <a name="RdfStreamStreamingOutput" href="../../../../../org/fcrepo/http/commons/responses/RdfStreamStreamingOutput.html#RdfStreamStreamingOutput">RdfStreamStreamingOutput</a>(nsStream.stream,
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>                  nsStream.namespaces, mediaType);
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>          streamOutput.write(entityStream);
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      }
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  }
+</pre>
+<hr/>
+<div id="footer">Copyright &#169; 2013&#x2013;2023 <a href="http://www.duraspace.org/">DuraSpace, Inc.</a>. All rights reserved.</div>
+</body>
+</html>
