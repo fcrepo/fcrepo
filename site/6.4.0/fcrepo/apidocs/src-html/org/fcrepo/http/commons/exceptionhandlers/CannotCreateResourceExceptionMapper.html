@@ -1,0 +1,121 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.http.commons.exceptionhandlers;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static javax.ws.rs.core.Response.status;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import static javax.ws.rs.core.Response.Status.BAD_REQUEST;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">012</span><a id="line.12"></a>
+<span class="sourceLineNo">013</span><a id="line.13">import org.fcrepo.kernel.api.exception.CannotCreateResourceException;</a>
+<span class="sourceLineNo">014</span><a id="line.14"></a>
+<span class="sourceLineNo">015</span><a id="line.15">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">016</span><a id="line.16"></a>
+<span class="sourceLineNo">017</span><a id="line.17">import javax.servlet.ServletContext;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import javax.ws.rs.core.Context;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import javax.ws.rs.core.Link;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import javax.ws.rs.core.Response;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import javax.ws.rs.core.UriInfo;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import javax.ws.rs.ext.Provider;</a>
+<span class="sourceLineNo">023</span><a id="line.23">/**</a>
+<span class="sourceLineNo">024</span><a id="line.24"> * @author bseeger</a>
+<span class="sourceLineNo">025</span><a id="line.25"> * @since 2017-04-07</a>
+<span class="sourceLineNo">026</span><a id="line.26"> */</a>
+<span class="sourceLineNo">027</span><a id="line.27">@Provider</a>
+<span class="sourceLineNo">028</span><a id="line.28">public class CannotCreateResourceExceptionMapper extends ConstraintExceptionMapper&lt;CannotCreateResourceException&gt;</a>
+<span class="sourceLineNo">029</span><a id="line.29">    implements ExceptionDebugLogging {</a>
+<span class="sourceLineNo">030</span><a id="line.30"></a>
+<span class="sourceLineNo">031</span><a id="line.31">    private static final Logger LOGGER = getLogger(CannotCreateResourceExceptionMapper.class);</a>
+<span class="sourceLineNo">032</span><a id="line.32"></a>
+<span class="sourceLineNo">033</span><a id="line.33">    @Context</a>
+<span class="sourceLineNo">034</span><a id="line.34">    private UriInfo uriInfo;</a>
+<span class="sourceLineNo">035</span><a id="line.35"></a>
+<span class="sourceLineNo">036</span><a id="line.36">    @Context</a>
+<span class="sourceLineNo">037</span><a id="line.37">    private ServletContext context;</a>
+<span class="sourceLineNo">038</span><a id="line.38"></a>
+<span class="sourceLineNo">039</span><a id="line.39">    @Override</a>
+<span class="sourceLineNo">040</span><a id="line.40">    public Response toResponse(final CannotCreateResourceException e) {</a>
+<span class="sourceLineNo">041</span><a id="line.41">        debugException(this, e, LOGGER);</a>
+<span class="sourceLineNo">042</span><a id="line.42">        final Link link = buildConstraintLink(e, context, uriInfo);</a>
+<span class="sourceLineNo">043</span><a id="line.43">        final String msg = e.getMessage();</a>
+<span class="sourceLineNo">044</span><a id="line.44">        return status(BAD_REQUEST).entity(msg).links(link).type(TEXT_PLAIN_WITH_CHARSET).build();</a>
+<span class="sourceLineNo">045</span><a id="line.45">    }</a>
+<span class="sourceLineNo">046</span><a id="line.46"></a>
+<span class="sourceLineNo">047</span><a id="line.47">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

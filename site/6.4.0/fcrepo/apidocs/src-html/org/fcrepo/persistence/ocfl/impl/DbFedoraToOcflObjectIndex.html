@@ -1,0 +1,452 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6"></a>
+<span class="sourceLineNo">007</span><a id="line.7">package org.fcrepo.persistence.ocfl.impl;</a>
+<span class="sourceLineNo">008</span><a id="line.8"></a>
+<span class="sourceLineNo">009</span><a id="line.9">import java.util.Collections;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import java.util.List;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import java.util.Map;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import java.util.concurrent.TimeUnit;</a>
+<span class="sourceLineNo">013</span><a id="line.13"></a>
+<span class="sourceLineNo">014</span><a id="line.14">import javax.annotation.Nonnull;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import javax.annotation.PostConstruct;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import javax.inject.Inject;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import javax.sql.DataSource;</a>
+<span class="sourceLineNo">018</span><a id="line.18"></a>
+<span class="sourceLineNo">019</span><a id="line.19">import org.fcrepo.common.db.DbPlatform;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import org.fcrepo.kernel.api.Transaction;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.fcrepo.config.OcflPropsConfig;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.fcrepo.storage.ocfl.cache.Cache;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.fcrepo.storage.ocfl.cache.CaffeineCache;</a>
+<span class="sourceLineNo">029</span><a id="line.29"></a>
+<span class="sourceLineNo">030</span><a id="line.30">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import org.slf4j.LoggerFactory;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.springframework.beans.factory.annotation.Autowired;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.springframework.dao.DataIntegrityViolationException;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import org.springframework.dao.DuplicateKeyException;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import org.springframework.dao.EmptyResultDataAccessException;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import org.springframework.jdbc.BadSqlGrammarException;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import org.springframework.jdbc.core.RowMapper;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;</a>
+<span class="sourceLineNo">040</span><a id="line.40">import org.springframework.stereotype.Component;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import org.springframework.transaction.annotation.Propagation;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import org.springframework.transaction.annotation.Transactional;</a>
+<span class="sourceLineNo">043</span><a id="line.43"></a>
+<span class="sourceLineNo">044</span><a id="line.44">import com.github.benmanes.caffeine.cache.Caffeine;</a>
+<span class="sourceLineNo">045</span><a id="line.45"></a>
+<span class="sourceLineNo">046</span><a id="line.46">/**</a>
+<span class="sourceLineNo">047</span><a id="line.47"> * Maps Fedora IDs to the OCFL IDs of the OCFL objects the Fedora resource is stored in. This implementation is backed</a>
+<span class="sourceLineNo">048</span><a id="line.48"> * by a relational database.</a>
+<span class="sourceLineNo">049</span><a id="line.49"> *</a>
+<span class="sourceLineNo">050</span><a id="line.50"> * @author pwinckles</a>
+<span class="sourceLineNo">051</span><a id="line.51"> */</a>
+<span class="sourceLineNo">052</span><a id="line.52">@Component("ocflIndexImpl")</a>
+<span class="sourceLineNo">053</span><a id="line.53">public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {</a>
+<span class="sourceLineNo">054</span><a id="line.54"></a>
+<span class="sourceLineNo">055</span><a id="line.55">    private static final Logger LOGGER = LoggerFactory.getLogger(DbFedoraToOcflObjectIndex.class);</a>
+<span class="sourceLineNo">056</span><a id="line.56"></a>
+<span class="sourceLineNo">057</span><a id="line.57">    private static final String MAPPING_TABLE = "ocfl_id_map";</a>
+<span class="sourceLineNo">058</span><a id="line.58"></a>
+<span class="sourceLineNo">059</span><a id="line.59">    private static final String FEDORA_ID_COLUMN = "fedora_id";</a>
+<span class="sourceLineNo">060</span><a id="line.60"></a>
+<span class="sourceLineNo">061</span><a id="line.61">    private static final String FEDORA_ROOT_ID_COLUMN = "fedora_root_id";</a>
+<span class="sourceLineNo">062</span><a id="line.62"></a>
+<span class="sourceLineNo">063</span><a id="line.63">    private static final String OCFL_ID_COLUMN = "ocfl_id";</a>
+<span class="sourceLineNo">064</span><a id="line.64"></a>
+<span class="sourceLineNo">065</span><a id="line.65">    private static final String TRANSACTION_OPERATIONS_TABLE = "ocfl_id_map_session_operations";</a>
+<span class="sourceLineNo">066</span><a id="line.66"></a>
+<span class="sourceLineNo">067</span><a id="line.67">    private static final String TRANSACTION_ID_COLUMN = "session_id";</a>
+<span class="sourceLineNo">068</span><a id="line.68"></a>
+<span class="sourceLineNo">069</span><a id="line.69">    private static final String OPERATION_COLUMN = "operation";</a>
+<span class="sourceLineNo">070</span><a id="line.70"></a>
+<span class="sourceLineNo">071</span><a id="line.71">    /*</a>
+<span class="sourceLineNo">072</span><a id="line.72">     * Lookup all mappings for the resource id.</a>
+<span class="sourceLineNo">073</span><a id="line.73">     */</a>
+<span class="sourceLineNo">074</span><a id="line.74">    private static final String LOOKUP_MAPPING = "SELECT " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">075</span><a id="line.75">            MAPPING_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :fedoraId";</a>
+<span class="sourceLineNo">076</span><a id="line.76"></a>
+<span class="sourceLineNo">077</span><a id="line.77">    /*</a>
+<span class="sourceLineNo">078</span><a id="line.78">     * Lookup all mappings from the mapping table as well as any new 'add's and excluding any 'delete's in this</a>
+<span class="sourceLineNo">079</span><a id="line.79">     * transaction.</a>
+<span class="sourceLineNo">080</span><a id="line.80">     */</a>
+<span class="sourceLineNo">081</span><a id="line.81">    private static final String LOOKUP_MAPPING_IN_TRANSACTION = "SELECT x." + FEDORA_ROOT_ID_COLUMN + "," +</a>
+<span class="sourceLineNo">082</span><a id="line.82">            " x." + OCFL_ID_COLUMN + " FROM" +</a>
+<span class="sourceLineNo">083</span><a id="line.83">            " (SELECT " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " + MAPPING_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">084</span><a id="line.84">            FEDORA_ID_COLUMN + " = :fedoraId" +</a>
+<span class="sourceLineNo">085</span><a id="line.85">            " UNION SELECT " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">086</span><a id="line.86">            " WHERE " + FEDORA_ID_COLUMN + " = :fedoraId AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +</a>
+<span class="sourceLineNo">087</span><a id="line.87">            " AND " + OPERATION_COLUMN + " = 'add') x";</a>
+<span class="sourceLineNo">088</span><a id="line.88"></a>
+<span class="sourceLineNo">089</span><a id="line.89">    /*</a>
+<span class="sourceLineNo">090</span><a id="line.90">     * Add an 'add' operation to the transaction table.</a>
+<span class="sourceLineNo">091</span><a id="line.91">     */</a>
+<span class="sourceLineNo">092</span><a id="line.92">    private static final String UPSERT_MAPPING_TX_POSTGRESQL = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">093</span><a id="line.93">            " ( " + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +</a>
+<span class="sourceLineNo">094</span><a id="line.94">            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:fedoraId, :fedoraRootId, :ocflId," +</a>
+<span class="sourceLineNo">095</span><a id="line.95">            " :transactionId, :operation) ON CONFLICT (" + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ")" +</a>
+<span class="sourceLineNo">096</span><a id="line.96">            " DO UPDATE SET " + FEDORA_ROOT_ID_COLUMN + " = EXCLUDED." + FEDORA_ROOT_ID_COLUMN + ", " +</a>
+<span class="sourceLineNo">097</span><a id="line.97">            OCFL_ID_COLUMN + " = EXCLUDED." + OCFL_ID_COLUMN + ", " + OPERATION_COLUMN + " = EXCLUDED." +</a>
+<span class="sourceLineNo">098</span><a id="line.98">            OPERATION_COLUMN;</a>
+<span class="sourceLineNo">099</span><a id="line.99"></a>
+<span class="sourceLineNo">100</span><a id="line.100">    private static final String UPSERT_MAPPING_TX_MYSQL_MARIA = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">101</span><a id="line.101">            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +</a>
+<span class="sourceLineNo">102</span><a id="line.102">            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +</a>
+<span class="sourceLineNo">103</span><a id="line.103">            " VALUES (:fedoraId, :fedoraRootId, :ocflId, :transactionId, :operation) ON DUPLICATE KEY UPDATE " +</a>
+<span class="sourceLineNo">104</span><a id="line.104">            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ROOT_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +</a>
+<span class="sourceLineNo">105</span><a id="line.105">            OCFL_ID_COLUMN + "), " + OPERATION_COLUMN + " = VALUES(" + OPERATION_COLUMN + ")";</a>
+<span class="sourceLineNo">106</span><a id="line.106"></a>
+<span class="sourceLineNo">107</span><a id="line.107">    private static final String UPSERT_MAPPING_TX_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">108</span><a id="line.108">            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ", " +</a>
+<span class="sourceLineNo">109</span><a id="line.109">            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ")" +</a>
+<span class="sourceLineNo">110</span><a id="line.110">            " KEY (" + FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ")" +</a>
+<span class="sourceLineNo">111</span><a id="line.111">            " VALUES (:fedoraId, :fedoraRootId, :ocflId, :transactionId, :operation)";</a>
+<span class="sourceLineNo">112</span><a id="line.112"></a>
+<span class="sourceLineNo">113</span><a id="line.113">    private static final String DIRECT_INSERT_MAPPING = "INSERT INTO " + MAPPING_TABLE +</a>
+<span class="sourceLineNo">114</span><a id="line.114">            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ")" +</a>
+<span class="sourceLineNo">115</span><a id="line.115">            " VALUES (:fedoraId, :fedoraRootId, :ocflId)";</a>
+<span class="sourceLineNo">116</span><a id="line.116"></a>
+<span class="sourceLineNo">117</span><a id="line.117">    private static final String DIRECT_INSERT_POSTGRESQL = " ON CONFLICT (" + FEDORA_ID_COLUMN + ")" +</a>
+<span class="sourceLineNo">118</span><a id="line.118">            " DO UPDATE SET " + FEDORA_ROOT_ID_COLUMN + " = EXCLUDED." + FEDORA_ROOT_ID_COLUMN + ", " +</a>
+<span class="sourceLineNo">119</span><a id="line.119">            OCFL_ID_COLUMN + " = EXCLUDED." + OCFL_ID_COLUMN;</a>
+<span class="sourceLineNo">120</span><a id="line.120"></a>
+<span class="sourceLineNo">121</span><a id="line.121">    private static final String DIRECT_INSERT_MYSQL_MARIA = " ON DUPLICATE KEY UPDATE " +</a>
+<span class="sourceLineNo">122</span><a id="line.122">            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ROOT_ID_COLUMN + "), " + OCFL_ID_COLUMN +</a>
+<span class="sourceLineNo">123</span><a id="line.123">            " = VALUES(" + OCFL_ID_COLUMN + ")";</a>
+<span class="sourceLineNo">124</span><a id="line.124"></a>
+<span class="sourceLineNo">125</span><a id="line.125">    private static final String DIRECT_INSERT_H2 = "MERGE INTO " + MAPPING_TABLE +</a>
+<span class="sourceLineNo">126</span><a id="line.126">            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ") " +</a>
+<span class="sourceLineNo">127</span><a id="line.127">            " KEY (" + FEDORA_ID_COLUMN + ")" +</a>
+<span class="sourceLineNo">128</span><a id="line.128">            " VALUES (:fedoraId, :fedoraRootId, :ocflId)";</a>
+<span class="sourceLineNo">129</span><a id="line.129"></a>
+<span class="sourceLineNo">130</span><a id="line.130">    private static final Map&lt;DbPlatform, String&gt; DIRECT_INSERT_MAP = Map.of(</a>
+<span class="sourceLineNo">131</span><a id="line.131">        DbPlatform.H2, DIRECT_INSERT_H2,</a>
+<span class="sourceLineNo">132</span><a id="line.132">        DbPlatform.MYSQL, DIRECT_INSERT_MAPPING + DIRECT_INSERT_MYSQL_MARIA,</a>
+<span class="sourceLineNo">133</span><a id="line.133">        DbPlatform.MARIADB, DIRECT_INSERT_MAPPING + DIRECT_INSERT_MYSQL_MARIA,</a>
+<span class="sourceLineNo">134</span><a id="line.134">        DbPlatform.POSTGRESQL, DIRECT_INSERT_MAPPING + DIRECT_INSERT_POSTGRESQL</a>
+<span class="sourceLineNo">135</span><a id="line.135">    );</a>
+<span class="sourceLineNo">136</span><a id="line.136"></a>
+<span class="sourceLineNo">137</span><a id="line.137">    /**</a>
+<span class="sourceLineNo">138</span><a id="line.138">     * Map of database product to UPSERT into operations table SQL.</a>
+<span class="sourceLineNo">139</span><a id="line.139">     */</a>
+<span class="sourceLineNo">140</span><a id="line.140">    private static final Map&lt;DbPlatform, String&gt; UPSERT_MAPPING_TX_MAP = Map.of(</a>
+<span class="sourceLineNo">141</span><a id="line.141">            DbPlatform.MYSQL, UPSERT_MAPPING_TX_MYSQL_MARIA,</a>
+<span class="sourceLineNo">142</span><a id="line.142">            DbPlatform.H2, UPSERT_MAPPING_TX_H2,</a>
+<span class="sourceLineNo">143</span><a id="line.143">            DbPlatform.POSTGRESQL, UPSERT_MAPPING_TX_POSTGRESQL,</a>
+<span class="sourceLineNo">144</span><a id="line.144">            DbPlatform.MARIADB, UPSERT_MAPPING_TX_MYSQL_MARIA</a>
+<span class="sourceLineNo">145</span><a id="line.145">    );</a>
+<span class="sourceLineNo">146</span><a id="line.146"></a>
+<span class="sourceLineNo">147</span><a id="line.147">    private static final String DIRECT_DELETE_MAPPING = "DELETE FROM ocfl_id_map WHERE fedora_id = :fedoraId";</a>
+<span class="sourceLineNo">148</span><a id="line.148"></a>
+<span class="sourceLineNo">149</span><a id="line.149">    private static final String COMMIT_ADD_MAPPING_POSTGRESQL = "INSERT INTO " + MAPPING_TABLE +</a>
+<span class="sourceLineNo">150</span><a id="line.150">            " ( " + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ") SELECT " +</a>
+<span class="sourceLineNo">151</span><a id="line.151">            FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">152</span><a id="line.152">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +</a>
+<span class="sourceLineNo">153</span><a id="line.153">            " = :transactionId ON CONFLICT ( " +  FEDORA_ID_COLUMN + " )" +</a>
+<span class="sourceLineNo">154</span><a id="line.154">            " DO UPDATE SET " + FEDORA_ROOT_ID_COLUMN + " = EXCLUDED." + FEDORA_ROOT_ID_COLUMN + ", " +</a>
+<span class="sourceLineNo">155</span><a id="line.155">            OCFL_ID_COLUMN + " = EXCLUDED." + OCFL_ID_COLUMN;</a>
+<span class="sourceLineNo">156</span><a id="line.156"></a>
+<span class="sourceLineNo">157</span><a id="line.157">    private static final String COMMIT_ADD_MAPPING_MYSQL_MARIA = "INSERT INTO " + MAPPING_TABLE +</a>
+<span class="sourceLineNo">158</span><a id="line.158">            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ") SELECT " +</a>
+<span class="sourceLineNo">159</span><a id="line.159">            FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">160</span><a id="line.160">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN +</a>
+<span class="sourceLineNo">161</span><a id="line.161">            " = :transactionId ON DUPLICATE KEY UPDATE " +</a>
+<span class="sourceLineNo">162</span><a id="line.162">            FEDORA_ROOT_ID_COLUMN + " = VALUES(" + FEDORA_ROOT_ID_COLUMN + "), " + OCFL_ID_COLUMN + " = VALUES(" +</a>
+<span class="sourceLineNo">163</span><a id="line.163">            OCFL_ID_COLUMN + ")";</a>
+<span class="sourceLineNo">164</span><a id="line.164"></a>
+<span class="sourceLineNo">165</span><a id="line.165">    private static final String COMMIT_ADD_MAPPING_H2 = "MERGE INTO " + MAPPING_TABLE +</a>
+<span class="sourceLineNo">166</span><a id="line.166">            " (" + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + ")" +</a>
+<span class="sourceLineNo">167</span><a id="line.167">            " SELECT " + FEDORA_ID_COLUMN + ", " + FEDORA_ROOT_ID_COLUMN + ", " + OCFL_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">168</span><a id="line.168">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add'";</a>
+<span class="sourceLineNo">169</span><a id="line.169"></a>
+<span class="sourceLineNo">170</span><a id="line.170">    /**</a>
+<span class="sourceLineNo">171</span><a id="line.171">     * Map of database product name to COMMIT to mapping table from operations table</a>
+<span class="sourceLineNo">172</span><a id="line.172">     */</a>
+<span class="sourceLineNo">173</span><a id="line.173">    private static final Map&lt;DbPlatform, String&gt; COMMIT_ADD_MAPPING_MAP = Map.of(</a>
+<span class="sourceLineNo">174</span><a id="line.174">            DbPlatform.MYSQL, COMMIT_ADD_MAPPING_MYSQL_MARIA,</a>
+<span class="sourceLineNo">175</span><a id="line.175">            DbPlatform.H2, COMMIT_ADD_MAPPING_H2,</a>
+<span class="sourceLineNo">176</span><a id="line.176">            DbPlatform.POSTGRESQL, COMMIT_ADD_MAPPING_POSTGRESQL,</a>
+<span class="sourceLineNo">177</span><a id="line.177">            DbPlatform.MARIADB, COMMIT_ADD_MAPPING_MYSQL_MARIA</a>
+<span class="sourceLineNo">178</span><a id="line.178">    );</a>
+<span class="sourceLineNo">179</span><a id="line.179"></a>
+<span class="sourceLineNo">180</span><a id="line.180">    /*</a>
+<span class="sourceLineNo">181</span><a id="line.181">     * Delete records from the mapping table that are to be deleted in this transaction.</a>
+<span class="sourceLineNo">182</span><a id="line.182">     */</a>
+<span class="sourceLineNo">183</span><a id="line.183">    private static final String COMMIT_DELETE_RECORDS = "DELETE FROM " + MAPPING_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">184</span><a id="line.184">            "EXISTS (SELECT * FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">185</span><a id="line.185">            TRANSACTION_ID_COLUMN + " = :transactionId AND " +  OPERATION_COLUMN + " = 'delete' AND " +</a>
+<span class="sourceLineNo">186</span><a id="line.186">            MAPPING_TABLE + "." + FEDORA_ID_COLUMN + " = " + TRANSACTION_OPERATIONS_TABLE + "." + FEDORA_ID_COLUMN +</a>
+<span class="sourceLineNo">187</span><a id="line.187">            ")";</a>
+<span class="sourceLineNo">188</span><a id="line.188"></a>
+<span class="sourceLineNo">189</span><a id="line.189">    /*</a>
+<span class="sourceLineNo">190</span><a id="line.190">     * Collect IDs to invalidate on transaction commit.</a>
+<span class="sourceLineNo">191</span><a id="line.191">     */</a>
+<span class="sourceLineNo">192</span><a id="line.192">    private static final String GET_DELETE_IDS = "SELECT " + FEDORA_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">193</span><a id="line.193">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +</a>
+<span class="sourceLineNo">194</span><a id="line.194">            OPERATION_COLUMN + " = 'delete'";</a>
+<span class="sourceLineNo">195</span><a id="line.195"></a>
+<span class="sourceLineNo">196</span><a id="line.196">    private static final String TRUNCATE_MAPPINGS = "TRUNCATE TABLE " + MAPPING_TABLE;</a>
+<span class="sourceLineNo">197</span><a id="line.197"></a>
+<span class="sourceLineNo">198</span><a id="line.198">    private static final String TRUNCATE_TRANSACTIONS = "TRUNCATE TABLE " + TRANSACTION_OPERATIONS_TABLE;</a>
+<span class="sourceLineNo">199</span><a id="line.199"></a>
+<span class="sourceLineNo">200</span><a id="line.200">    /*</a>
+<span class="sourceLineNo">201</span><a id="line.201">     * Delete all records from the transaction table for the specified transaction.</a>
+<span class="sourceLineNo">202</span><a id="line.202">     */</a>
+<span class="sourceLineNo">203</span><a id="line.203">    private static final String DELETE_ENTIRE_TRANSACTION = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">204</span><a id="line.204">            TRANSACTION_ID_COLUMN + " = :transactionId";</a>
+<span class="sourceLineNo">205</span><a id="line.205"></a>
+<span class="sourceLineNo">206</span><a id="line.206">    /*</a>
+<span class="sourceLineNo">207</span><a id="line.207">     * Row mapper for the Lookup queries.</a>
+<span class="sourceLineNo">208</span><a id="line.208">     */</a>
+<span class="sourceLineNo">209</span><a id="line.209">    private static final RowMapper&lt;FedoraOcflMapping&gt; GET_MAPPING_ROW_MAPPER = (resultSet, i) -&gt; new FedoraOcflMapping(</a>
+<span class="sourceLineNo">210</span><a id="line.210">            FedoraId.create(resultSet.getString(1)),</a>
+<span class="sourceLineNo">211</span><a id="line.211">            resultSet.getString(2)</a>
+<span class="sourceLineNo">212</span><a id="line.212">    );</a>
+<span class="sourceLineNo">213</span><a id="line.213"></a>
+<span class="sourceLineNo">214</span><a id="line.214">    private Cache&lt;String, FedoraOcflMapping&gt; mappingCache;</a>
+<span class="sourceLineNo">215</span><a id="line.215"></a>
+<span class="sourceLineNo">216</span><a id="line.216">    private final DataSource dataSource;</a>
+<span class="sourceLineNo">217</span><a id="line.217"></a>
+<span class="sourceLineNo">218</span><a id="line.218">    private final NamedParameterJdbcTemplate jdbcTemplate;</a>
+<span class="sourceLineNo">219</span><a id="line.219"></a>
+<span class="sourceLineNo">220</span><a id="line.220">    private DbPlatform dbPlatform;</a>
+<span class="sourceLineNo">221</span><a id="line.221"></a>
+<span class="sourceLineNo">222</span><a id="line.222">    @Inject</a>
+<span class="sourceLineNo">223</span><a id="line.223">    private OcflPropsConfig ocflPropsConfig;</a>
+<span class="sourceLineNo">224</span><a id="line.224"></a>
+<span class="sourceLineNo">225</span><a id="line.225">    public DbFedoraToOcflObjectIndex(@Autowired final DataSource dataSource) {</a>
+<span class="sourceLineNo">226</span><a id="line.226">        this.dataSource = dataSource;</a>
+<span class="sourceLineNo">227</span><a id="line.227">        this.jdbcTemplate = new NamedParameterJdbcTemplate(dataSource);</a>
+<span class="sourceLineNo">228</span><a id="line.228">    }</a>
+<span class="sourceLineNo">229</span><a id="line.229"></a>
+<span class="sourceLineNo">230</span><a id="line.230">    @PostConstruct</a>
+<span class="sourceLineNo">231</span><a id="line.231">    public void setup() {</a>
+<span class="sourceLineNo">232</span><a id="line.232">        dbPlatform = DbPlatform.fromDataSource(dataSource);</a>
+<span class="sourceLineNo">233</span><a id="line.233">        final var cache = Caffeine.newBuilder()</a>
+<span class="sourceLineNo">234</span><a id="line.234">                .maximumSize(ocflPropsConfig.getFedoraToOcflCacheSize())</a>
+<span class="sourceLineNo">235</span><a id="line.235">                .expireAfterAccess(ocflPropsConfig.getFedoraToOcflCacheTimeout(), TimeUnit.MINUTES)</a>
+<span class="sourceLineNo">236</span><a id="line.236">                .build();</a>
+<span class="sourceLineNo">237</span><a id="line.237">        this.mappingCache = new CaffeineCache&lt;&gt;(cache);</a>
+<span class="sourceLineNo">238</span><a id="line.238">    }</a>
+<span class="sourceLineNo">239</span><a id="line.239"></a>
+<span class="sourceLineNo">240</span><a id="line.240">    @Override</a>
+<span class="sourceLineNo">241</span><a id="line.241">    public FedoraOcflMapping getMapping(final Transaction transaction, final FedoraId fedoraId)</a>
+<span class="sourceLineNo">242</span><a id="line.242">            throws FedoraOcflMappingNotFoundException {</a>
+<span class="sourceLineNo">243</span><a id="line.243">        try {</a>
+<span class="sourceLineNo">244</span><a id="line.244">            if (transaction.isOpenLongRunning()) {</a>
+<span class="sourceLineNo">245</span><a id="line.245">                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">246</span><a id="line.246">                parameterSource.addValue("fedoraId", fedoraId.getResourceId());</a>
+<span class="sourceLineNo">247</span><a id="line.247">                parameterSource.addValue("transactionId", transaction.getId());</a>
+<span class="sourceLineNo">248</span><a id="line.248">                return jdbcTemplate.queryForObject(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,</a>
+<span class="sourceLineNo">249</span><a id="line.249">                        GET_MAPPING_ROW_MAPPER);</a>
+<span class="sourceLineNo">250</span><a id="line.250">            } else {</a>
+<span class="sourceLineNo">251</span><a id="line.251">                return this.mappingCache.get(fedoraId.getResourceId(), key -&gt;</a>
+<span class="sourceLineNo">252</span><a id="line.252">                        jdbcTemplate.queryForObject(LOOKUP_MAPPING, Map.of("fedoraId", key), GET_MAPPING_ROW_MAPPER)</a>
+<span class="sourceLineNo">253</span><a id="line.253">                );</a>
+<span class="sourceLineNo">254</span><a id="line.254">            }</a>
+<span class="sourceLineNo">255</span><a id="line.255">        } catch (final EmptyResultDataAccessException e) {</a>
+<span class="sourceLineNo">256</span><a id="line.256">            throw new FedoraOcflMappingNotFoundException("No OCFL mapping found for " + fedoraId);</a>
+<span class="sourceLineNo">257</span><a id="line.257">        }</a>
+<span class="sourceLineNo">258</span><a id="line.258">    }</a>
+<span class="sourceLineNo">259</span><a id="line.259"></a>
+<span class="sourceLineNo">260</span><a id="line.260">    @Override</a>
+<span class="sourceLineNo">261</span><a id="line.261">    public FedoraOcflMapping addMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId,</a>
+<span class="sourceLineNo">262</span><a id="line.262">                                        final FedoraId fedoraRootId, final String ocflId) {</a>
+<span class="sourceLineNo">263</span><a id="line.263">        transaction.doInTx(() -&gt; {</a>
+<span class="sourceLineNo">264</span><a id="line.264">            if (!transaction.isShortLived()) {</a>
+<span class="sourceLineNo">265</span><a id="line.265">                upsert(transaction, fedoraId, "add", fedoraRootId, ocflId);</a>
+<span class="sourceLineNo">266</span><a id="line.266">            } else {</a>
+<span class="sourceLineNo">267</span><a id="line.267">                directInsert(fedoraId, fedoraRootId, ocflId);</a>
+<span class="sourceLineNo">268</span><a id="line.268">            }</a>
+<span class="sourceLineNo">269</span><a id="line.269">        });</a>
+<span class="sourceLineNo">270</span><a id="line.270"></a>
+<span class="sourceLineNo">271</span><a id="line.271">        return new FedoraOcflMapping(fedoraRootId, ocflId);</a>
+<span class="sourceLineNo">272</span><a id="line.272">    }</a>
+<span class="sourceLineNo">273</span><a id="line.273"></a>
+<span class="sourceLineNo">274</span><a id="line.274">    @Override</a>
+<span class="sourceLineNo">275</span><a id="line.275">    public void removeMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId) {</a>
+<span class="sourceLineNo">276</span><a id="line.276">        transaction.doInTx(() -&gt; {</a>
+<span class="sourceLineNo">277</span><a id="line.277">            if (!transaction.isShortLived()) {</a>
+<span class="sourceLineNo">278</span><a id="line.278">                upsert(transaction, fedoraId, "delete");</a>
+<span class="sourceLineNo">279</span><a id="line.279">            } else {</a>
+<span class="sourceLineNo">280</span><a id="line.280">                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">281</span><a id="line.281">                parameterSource.addValue("fedoraId", fedoraId.getResourceId());</a>
+<span class="sourceLineNo">282</span><a id="line.282">                jdbcTemplate.update(DIRECT_DELETE_MAPPING, parameterSource);</a>
+<span class="sourceLineNo">283</span><a id="line.283">                this.mappingCache.invalidate(fedoraId.getResourceId());</a>
+<span class="sourceLineNo">284</span><a id="line.284">            }</a>
+<span class="sourceLineNo">285</span><a id="line.285">        });</a>
+<span class="sourceLineNo">286</span><a id="line.286">    }</a>
+<span class="sourceLineNo">287</span><a id="line.287"></a>
+<span class="sourceLineNo">288</span><a id="line.288">    private void upsert(final Transaction transaction, final FedoraId fedoraId, final String operation) {</a>
+<span class="sourceLineNo">289</span><a id="line.289">        upsert(transaction, fedoraId, operation, null, null);</a>
+<span class="sourceLineNo">290</span><a id="line.290">    }</a>
+<span class="sourceLineNo">291</span><a id="line.291"></a>
+<span class="sourceLineNo">292</span><a id="line.292">    /**</a>
+<span class="sourceLineNo">293</span><a id="line.293">     * Perform the upsert to the operations table.</a>
+<span class="sourceLineNo">294</span><a id="line.294">     *</a>
+<span class="sourceLineNo">295</span><a id="line.295">     * @param transaction the transaction/session id.</a>
+<span class="sourceLineNo">296</span><a id="line.296">     * @param fedoraId the resource id.</a>
+<span class="sourceLineNo">297</span><a id="line.297">     * @param operation the operation we are performing (add or delete)</a>
+<span class="sourceLineNo">298</span><a id="line.298">     * @param fedoraRootId the fedora root id (for add only)</a>
+<span class="sourceLineNo">299</span><a id="line.299">     * @param ocflId the ocfl id (for add only).</a>
+<span class="sourceLineNo">300</span><a id="line.300">     */</a>
+<span class="sourceLineNo">301</span><a id="line.301">    private void upsert(final Transaction transaction, final FedoraId fedoraId, final String operation,</a>
+<span class="sourceLineNo">302</span><a id="line.302">                        final FedoraId fedoraRootId, final String ocflId) {</a>
+<span class="sourceLineNo">303</span><a id="line.303">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">304</span><a id="line.304">        parameterSource.addValue("fedoraId", fedoraId.getResourceId());</a>
+<span class="sourceLineNo">305</span><a id="line.305">        parameterSource.addValue("fedoraRootId", fedoraRootId == null ? null : fedoraRootId.getResourceId());</a>
+<span class="sourceLineNo">306</span><a id="line.306">        parameterSource.addValue("ocflId", ocflId);</a>
+<span class="sourceLineNo">307</span><a id="line.307">        parameterSource.addValue("transactionId", transaction.getId());</a>
+<span class="sourceLineNo">308</span><a id="line.308">        parameterSource.addValue("operation", operation);</a>
+<span class="sourceLineNo">309</span><a id="line.309">        try {</a>
+<span class="sourceLineNo">310</span><a id="line.310">            jdbcTemplate.update(UPSERT_MAPPING_TX_MAP.get(dbPlatform), parameterSource);</a>
+<span class="sourceLineNo">311</span><a id="line.311">        } catch (final DataIntegrityViolationException | BadSqlGrammarException e) {</a>
+<span class="sourceLineNo">312</span><a id="line.312">            handleInsertException(fedoraId, e);</a>
+<span class="sourceLineNo">313</span><a id="line.313">        }</a>
+<span class="sourceLineNo">314</span><a id="line.314">    }</a>
+<span class="sourceLineNo">315</span><a id="line.315"></a>
+<span class="sourceLineNo">316</span><a id="line.316">    private void directInsert(final FedoraId fedoraId, final FedoraId fedoraRootId, final String ocflId) {</a>
+<span class="sourceLineNo">317</span><a id="line.317">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">318</span><a id="line.318">        parameterSource.addValue("fedoraId", fedoraId.getResourceId());</a>
+<span class="sourceLineNo">319</span><a id="line.319">        parameterSource.addValue("fedoraRootId", fedoraRootId == null ? null : fedoraRootId.getResourceId());</a>
+<span class="sourceLineNo">320</span><a id="line.320">        parameterSource.addValue("ocflId", ocflId);</a>
+<span class="sourceLineNo">321</span><a id="line.321">        try {</a>
+<span class="sourceLineNo">322</span><a id="line.322">            jdbcTemplate.update(DIRECT_INSERT_MAP.get(dbPlatform), parameterSource);</a>
+<span class="sourceLineNo">323</span><a id="line.323">        } catch (final DataIntegrityViolationException | BadSqlGrammarException e) {</a>
+<span class="sourceLineNo">324</span><a id="line.324">            handleInsertException(fedoraId, e);</a>
+<span class="sourceLineNo">325</span><a id="line.325">        }</a>
+<span class="sourceLineNo">326</span><a id="line.326">    }</a>
+<span class="sourceLineNo">327</span><a id="line.327"></a>
+<span class="sourceLineNo">328</span><a id="line.328">    @Override</a>
+<span class="sourceLineNo">329</span><a id="line.329">    public void reset() {</a>
+<span class="sourceLineNo">330</span><a id="line.330">        try {</a>
+<span class="sourceLineNo">331</span><a id="line.331">            jdbcTemplate.update(TRUNCATE_MAPPINGS, Collections.emptyMap());</a>
+<span class="sourceLineNo">332</span><a id="line.332">            jdbcTemplate.update(TRUNCATE_TRANSACTIONS, Collections.emptyMap());</a>
+<span class="sourceLineNo">333</span><a id="line.333">            this.mappingCache.invalidateAll();</a>
+<span class="sourceLineNo">334</span><a id="line.334">        } catch (final Exception e) {</a>
+<span class="sourceLineNo">335</span><a id="line.335">            throw new RepositoryRuntimeException("Failed to truncate FedoraToOcfl index tables", e);</a>
+<span class="sourceLineNo">336</span><a id="line.336">        }</a>
+<span class="sourceLineNo">337</span><a id="line.337">    }</a>
+<span class="sourceLineNo">338</span><a id="line.338"></a>
+<span class="sourceLineNo">339</span><a id="line.339">    @Override</a>
+<span class="sourceLineNo">340</span><a id="line.340">    public void commit(@Nonnull final Transaction transaction) {</a>
+<span class="sourceLineNo">341</span><a id="line.341">        if (!transaction.isShortLived()) {</a>
+<span class="sourceLineNo">342</span><a id="line.342">            transaction.ensureCommitting();</a>
+<span class="sourceLineNo">343</span><a id="line.343"></a>
+<span class="sourceLineNo">344</span><a id="line.344">            LOGGER.debug("Committing FedoraToOcfl index changes from transaction {}", transaction.getId());</a>
+<span class="sourceLineNo">345</span><a id="line.345">            final Map&lt;String, String&gt; map = Map.of("transactionId", transaction.getId());</a>
+<span class="sourceLineNo">346</span><a id="line.346">            try {</a>
+<span class="sourceLineNo">347</span><a id="line.347">                final List&lt;String&gt; deleteIds = jdbcTemplate.queryForList(GET_DELETE_IDS, map, String.class);</a>
+<span class="sourceLineNo">348</span><a id="line.348">                jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);</a>
+<span class="sourceLineNo">349</span><a id="line.349">                jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);</a>
+<span class="sourceLineNo">350</span><a id="line.350">                jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);</a>
+<span class="sourceLineNo">351</span><a id="line.351">                this.mappingCache.invalidateAll(deleteIds);</a>
+<span class="sourceLineNo">352</span><a id="line.352">            } catch (final Exception e) {</a>
+<span class="sourceLineNo">353</span><a id="line.353">                LOGGER.warn("Unable to commit FedoraToOcfl index transaction {}: {}", transaction, e.getMessage());</a>
+<span class="sourceLineNo">354</span><a id="line.354">                throw new RepositoryRuntimeException("Unable to commit FedoraToOcfl index transaction", e);</a>
+<span class="sourceLineNo">355</span><a id="line.355">            }</a>
+<span class="sourceLineNo">356</span><a id="line.356">        }</a>
+<span class="sourceLineNo">357</span><a id="line.357">    }</a>
+<span class="sourceLineNo">358</span><a id="line.358"></a>
+<span class="sourceLineNo">359</span><a id="line.359">    @Transactional(propagation = Propagation.NOT_SUPPORTED)</a>
+<span class="sourceLineNo">360</span><a id="line.360">    @Override</a>
+<span class="sourceLineNo">361</span><a id="line.361">    public void rollback(@Nonnull final Transaction transaction) {</a>
+<span class="sourceLineNo">362</span><a id="line.362">        if (!transaction.isShortLived()) {</a>
+<span class="sourceLineNo">363</span><a id="line.363">            jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", transaction.getId()));</a>
+<span class="sourceLineNo">364</span><a id="line.364">        }</a>
+<span class="sourceLineNo">365</span><a id="line.365">    }</a>
+<span class="sourceLineNo">366</span><a id="line.366"></a>
+<span class="sourceLineNo">367</span><a id="line.367">    private void handleInsertException(final FedoraId fedoraId, final Exception e) {</a>
+<span class="sourceLineNo">368</span><a id="line.368">        if (e.getMessage().contains("too long for")) {</a>
+<span class="sourceLineNo">369</span><a id="line.369">            throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);</a>
+<span class="sourceLineNo">370</span><a id="line.370">        } else if (e instanceof DuplicateKeyException) {</a>
+<span class="sourceLineNo">371</span><a id="line.371">            throw new RepositoryRuntimeException("Database error - primary key already exists for Fedora ID: " +</a>
+<span class="sourceLineNo">372</span><a id="line.372">                                                 fedoraId, e);</a>
+<span class="sourceLineNo">373</span><a id="line.373">        } else {</a>
+<span class="sourceLineNo">374</span><a id="line.374">            throw new RepositoryRuntimeException("Database error - error during upsert",e);</a>
+<span class="sourceLineNo">375</span><a id="line.375">        }</a>
+<span class="sourceLineNo">376</span><a id="line.376">    }</a>
+<span class="sourceLineNo">377</span><a id="line.377"></a>
+<span class="sourceLineNo">378</span><a id="line.378">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

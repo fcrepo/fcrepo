@@ -1,0 +1,126 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6"></a>
+<span class="sourceLineNo">007</span><a id="line.7">package org.fcrepo.kernel.api.observer;</a>
+<span class="sourceLineNo">008</span><a id="line.8"></a>
+<span class="sourceLineNo">009</span><a id="line.9">import org.fcrepo.kernel.api.Transaction;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import org.fcrepo.kernel.api.operations.ResourceOperation;</a>
+<span class="sourceLineNo">012</span><a id="line.12"></a>
+<span class="sourceLineNo">013</span><a id="line.13">/**</a>
+<span class="sourceLineNo">014</span><a id="line.14"> * Accumulates events for changes made to resources, grouped by transaction. The events are not emitted until after the</a>
+<span class="sourceLineNo">015</span><a id="line.15"> * transaction has been committed. If a transaction is rolled back, {@link #clearEvents} MUST be called to release the</a>
+<span class="sourceLineNo">016</span><a id="line.16"> * stored events.</a>
+<span class="sourceLineNo">017</span><a id="line.17"> *</a>
+<span class="sourceLineNo">018</span><a id="line.18"> * @author pwinckles</a>
+<span class="sourceLineNo">019</span><a id="line.19"> */</a>
+<span class="sourceLineNo">020</span><a id="line.20">public interface EventAccumulator {</a>
+<span class="sourceLineNo">021</span><a id="line.21"></a>
+<span class="sourceLineNo">022</span><a id="line.22">    /**</a>
+<span class="sourceLineNo">023</span><a id="line.23">     * Registers a new event to a transaction.</a>
+<span class="sourceLineNo">024</span><a id="line.24">     *</a>
+<span class="sourceLineNo">025</span><a id="line.25">     * @param transaction the transaction</a>
+<span class="sourceLineNo">026</span><a id="line.26">     * @param fedoraId the id of the affected resource</a>
+<span class="sourceLineNo">027</span><a id="line.27">     * @param operation the operation affecting the resource</a>
+<span class="sourceLineNo">028</span><a id="line.28">     */</a>
+<span class="sourceLineNo">029</span><a id="line.29">    void recordEventForOperation(Transaction transaction, FedoraId fedoraId, ResourceOperation operation);</a>
+<span class="sourceLineNo">030</span><a id="line.30"></a>
+<span class="sourceLineNo">031</span><a id="line.31">    /**</a>
+<span class="sourceLineNo">032</span><a id="line.32">     * Emits all of the events that were accumulated within the transaction. Multiple events affecting the same resource</a>
+<span class="sourceLineNo">033</span><a id="line.33">     * are combined into a single event.</a>
+<span class="sourceLineNo">034</span><a id="line.34">     *</a>
+<span class="sourceLineNo">035</span><a id="line.35">     * &lt;p&gt;This method SHOULD NOT throw an exception if an event fails to be emitted. It should always attempt to emit</a>
+<span class="sourceLineNo">036</span><a id="line.36">     * all events accumulated within a transaction.</a>
+<span class="sourceLineNo">037</span><a id="line.37">     *</a>
+<span class="sourceLineNo">038</span><a id="line.38">     * @param transaction the transaction</a>
+<span class="sourceLineNo">039</span><a id="line.39">     * @param baseUrl the baseUrl of the requests</a>
+<span class="sourceLineNo">040</span><a id="line.40">     * @param userAgent the user-agent of the user making the requests</a>
+<span class="sourceLineNo">041</span><a id="line.41">     */</a>
+<span class="sourceLineNo">042</span><a id="line.42">    void emitEvents(Transaction transaction, String baseUrl, String userAgent);</a>
+<span class="sourceLineNo">043</span><a id="line.43"></a>
+<span class="sourceLineNo">044</span><a id="line.44">    /**</a>
+<span class="sourceLineNo">045</span><a id="line.45">     * Removes all of a transaction's accumulated events without emitting them. This must be called when a transaction</a>
+<span class="sourceLineNo">046</span><a id="line.46">     * is rolled back.</a>
+<span class="sourceLineNo">047</span><a id="line.47">     *</a>
+<span class="sourceLineNo">048</span><a id="line.48">     * @param transaction the id of the transaction</a>
+<span class="sourceLineNo">049</span><a id="line.49">     */</a>
+<span class="sourceLineNo">050</span><a id="line.50">    void clearEvents(Transaction transaction);</a>
+<span class="sourceLineNo">051</span><a id="line.51"></a>
+<span class="sourceLineNo">052</span><a id="line.52">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

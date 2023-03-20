@@ -1,0 +1,1052 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.kernel.impl;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">010</span><a id="line.10"></a>
+<span class="sourceLineNo">011</span><a id="line.11">import java.sql.Timestamp;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import java.time.Instant;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import java.time.temporal.ChronoUnit;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import java.util.Collections;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import java.util.List;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import java.util.Map;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import java.util.NoSuchElementException;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import java.util.Queue;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import java.util.Spliterator;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import java.util.Spliterators;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import java.util.concurrent.ConcurrentLinkedQueue;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import java.util.concurrent.TimeUnit;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import java.util.function.Consumer;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import java.util.stream.Stream;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import java.util.stream.StreamSupport;</a>
+<span class="sourceLineNo">026</span><a id="line.26"></a>
+<span class="sourceLineNo">027</span><a id="line.27">import javax.annotation.Nonnull;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import javax.annotation.PostConstruct;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import javax.inject.Inject;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import javax.sql.DataSource;</a>
+<span class="sourceLineNo">031</span><a id="line.31"></a>
+<span class="sourceLineNo">032</span><a id="line.32">import org.fcrepo.common.db.DbPlatform;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import org.fcrepo.config.FedoraPropsConfig;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import org.fcrepo.kernel.api.ContainmentIndex;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import org.fcrepo.kernel.api.Transaction;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import org.fcrepo.kernel.api.identifiers.FedoraId;</a>
+<span class="sourceLineNo">038</span><a id="line.38"></a>
+<span class="sourceLineNo">039</span><a id="line.39">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">040</span><a id="line.40">import org.springframework.dao.EmptyResultDataAccessException;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;</a>
+<span class="sourceLineNo">042</span><a id="line.42">import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;</a>
+<span class="sourceLineNo">043</span><a id="line.43">import org.springframework.stereotype.Component;</a>
+<span class="sourceLineNo">044</span><a id="line.44">import org.springframework.transaction.annotation.Propagation;</a>
+<span class="sourceLineNo">045</span><a id="line.45">import org.springframework.transaction.annotation.Transactional;</a>
+<span class="sourceLineNo">046</span><a id="line.46"></a>
+<span class="sourceLineNo">047</span><a id="line.47">import com.github.benmanes.caffeine.cache.Cache;</a>
+<span class="sourceLineNo">048</span><a id="line.48">import com.github.benmanes.caffeine.cache.Caffeine;</a>
+<span class="sourceLineNo">049</span><a id="line.49"></a>
+<span class="sourceLineNo">050</span><a id="line.50">/**</a>
+<span class="sourceLineNo">051</span><a id="line.51"> * @author peichman</a>
+<span class="sourceLineNo">052</span><a id="line.52"> * @author whikloj</a>
+<span class="sourceLineNo">053</span><a id="line.53"> * @since 6.0.0</a>
+<span class="sourceLineNo">054</span><a id="line.54"> */</a>
+<span class="sourceLineNo">055</span><a id="line.55">@Component("containmentIndexImpl")</a>
+<span class="sourceLineNo">056</span><a id="line.56">public class ContainmentIndexImpl implements ContainmentIndex {</a>
+<span class="sourceLineNo">057</span><a id="line.57"></a>
+<span class="sourceLineNo">058</span><a id="line.58">    private static final Logger LOGGER = getLogger(ContainmentIndexImpl.class);</a>
+<span class="sourceLineNo">059</span><a id="line.59"></a>
+<span class="sourceLineNo">060</span><a id="line.60">    private int containsLimit = 50000;</a>
+<span class="sourceLineNo">061</span><a id="line.61"></a>
+<span class="sourceLineNo">062</span><a id="line.62">    @Inject</a>
+<span class="sourceLineNo">063</span><a id="line.63">    private DataSource dataSource;</a>
+<span class="sourceLineNo">064</span><a id="line.64"></a>
+<span class="sourceLineNo">065</span><a id="line.65">    private NamedParameterJdbcTemplate jdbcTemplate;</a>
+<span class="sourceLineNo">066</span><a id="line.66"></a>
+<span class="sourceLineNo">067</span><a id="line.67">    private DbPlatform dbPlatform;</a>
+<span class="sourceLineNo">068</span><a id="line.68"></a>
+<span class="sourceLineNo">069</span><a id="line.69">    public static final String RESOURCES_TABLE = "containment";</a>
+<span class="sourceLineNo">070</span><a id="line.70"></a>
+<span class="sourceLineNo">071</span><a id="line.71">    private static final String TRANSACTION_OPERATIONS_TABLE = "containment_transactions";</a>
+<span class="sourceLineNo">072</span><a id="line.72"></a>
+<span class="sourceLineNo">073</span><a id="line.73">    public static final String FEDORA_ID_COLUMN = "fedora_id";</a>
+<span class="sourceLineNo">074</span><a id="line.74"></a>
+<span class="sourceLineNo">075</span><a id="line.75">    private static final String PARENT_COLUMN = "parent";</a>
+<span class="sourceLineNo">076</span><a id="line.76"></a>
+<span class="sourceLineNo">077</span><a id="line.77">    private static final String TRANSACTION_ID_COLUMN = "transaction_id";</a>
+<span class="sourceLineNo">078</span><a id="line.78"></a>
+<span class="sourceLineNo">079</span><a id="line.79">    private static final String OPERATION_COLUMN = "operation";</a>
+<span class="sourceLineNo">080</span><a id="line.80"></a>
+<span class="sourceLineNo">081</span><a id="line.81">    private static final String START_TIME_COLUMN = "start_time";</a>
+<span class="sourceLineNo">082</span><a id="line.82"></a>
+<span class="sourceLineNo">083</span><a id="line.83">    private static final String END_TIME_COLUMN = "end_time";</a>
+<span class="sourceLineNo">084</span><a id="line.84"></a>
+<span class="sourceLineNo">085</span><a id="line.85">    private static final String UPDATED_COLUMN = "updated";</a>
+<span class="sourceLineNo">086</span><a id="line.86"></a>
+<span class="sourceLineNo">087</span><a id="line.87">    /*</a>
+<span class="sourceLineNo">088</span><a id="line.88">     * Select children of a resource that are not marked as deleted.</a>
+<span class="sourceLineNo">089</span><a id="line.89">     */</a>
+<span class="sourceLineNo">090</span><a id="line.90">    private static final String SELECT_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +</a>
+<span class="sourceLineNo">091</span><a id="line.91">            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN + " IS NULL" +</a>
+<span class="sourceLineNo">092</span><a id="line.92">            " ORDER BY " + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";</a>
+<span class="sourceLineNo">093</span><a id="line.93"></a>
+<span class="sourceLineNo">094</span><a id="line.94">    /*</a>
+<span class="sourceLineNo">095</span><a id="line.95">     * Select children of a memento of a resource.</a>
+<span class="sourceLineNo">096</span><a id="line.96">     */</a>
+<span class="sourceLineNo">097</span><a id="line.97">    private static final String SELECT_CHILDREN_OF_MEMENTO = "SELECT " + FEDORA_ID_COLUMN +</a>
+<span class="sourceLineNo">098</span><a id="line.98">            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + START_TIME_COLUMN +</a>
+<span class="sourceLineNo">099</span><a id="line.99">            " &lt;= :asOfTime AND (" + END_TIME_COLUMN + " &gt; :asOfTime OR " + END_TIME_COLUMN + " IS NULL) ORDER BY " +</a>
+<span class="sourceLineNo">100</span><a id="line.100">            FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";</a>
+<span class="sourceLineNo">101</span><a id="line.101"></a>
+<span class="sourceLineNo">102</span><a id="line.102">    /*</a>
+<span class="sourceLineNo">103</span><a id="line.103">     * Select children of a parent from resources table and from the transaction table with an 'add' operation,</a>
+<span class="sourceLineNo">104</span><a id="line.104">     * but exclude any records that also exist in the transaction table with a 'delete' or 'purge' operation.</a>
+<span class="sourceLineNo">105</span><a id="line.105">     */</a>
+<span class="sourceLineNo">106</span><a id="line.106">    private static final String SELECT_CHILDREN_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +</a>
+<span class="sourceLineNo">107</span><a id="line.107">            " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent" +</a>
+<span class="sourceLineNo">108</span><a id="line.108">            " AND " + END_TIME_COLUMN + " IS NULL " +</a>
+<span class="sourceLineNo">109</span><a id="line.109">            " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">110</span><a id="line.110">            " WHERE " + PARENT_COLUMN + " = :parent AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +</a>
+<span class="sourceLineNo">111</span><a id="line.111">            " AND " + OPERATION_COLUMN + " = 'add') x" +</a>
+<span class="sourceLineNo">112</span><a id="line.112">            " WHERE NOT EXISTS " +</a>
+<span class="sourceLineNo">113</span><a id="line.113">            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">114</span><a id="line.114">            " WHERE " + PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN +</a>
+<span class="sourceLineNo">115</span><a id="line.115">            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))" +</a>
+<span class="sourceLineNo">116</span><a id="line.116">            " ORDER BY x." + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";</a>
+<span class="sourceLineNo">117</span><a id="line.117"></a>
+<span class="sourceLineNo">118</span><a id="line.118">    /*</a>
+<span class="sourceLineNo">119</span><a id="line.119">     * Select all children of a resource that are marked for deletion.</a>
+<span class="sourceLineNo">120</span><a id="line.120">     */</a>
+<span class="sourceLineNo">121</span><a id="line.121">    private static final String SELECT_DELETED_CHILDREN = "SELECT " + FEDORA_ID_COLUMN +</a>
+<span class="sourceLineNo">122</span><a id="line.122">            " FROM " + RESOURCES_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN +</a>
+<span class="sourceLineNo">123</span><a id="line.123">            " IS NOT NULL ORDER BY " + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";</a>
+<span class="sourceLineNo">124</span><a id="line.124"></a>
+<span class="sourceLineNo">125</span><a id="line.125">    /*</a>
+<span class="sourceLineNo">126</span><a id="line.126">     * Select children of a resource plus children 'delete'd in the non-committed transaction, but excluding any</a>
+<span class="sourceLineNo">127</span><a id="line.127">     * 'add'ed in the non-committed transaction.</a>
+<span class="sourceLineNo">128</span><a id="line.128">     */</a>
+<span class="sourceLineNo">129</span><a id="line.129">    private static final String SELECT_DELETED_CHILDREN_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN +</a>
+<span class="sourceLineNo">130</span><a id="line.130">            " FROM (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">131</span><a id="line.131">            " WHERE " + PARENT_COLUMN + " = :parent AND " + END_TIME_COLUMN + " IS NOT NULL UNION" +</a>
+<span class="sourceLineNo">132</span><a id="line.132">            " SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">133</span><a id="line.133">            PARENT_COLUMN + " = :parent AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +</a>
+<span class="sourceLineNo">134</span><a id="line.134">            OPERATION_COLUMN + " = 'delete') x" +</a>
+<span class="sourceLineNo">135</span><a id="line.135">            " WHERE NOT EXISTS " +</a>
+<span class="sourceLineNo">136</span><a id="line.136">            "(SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :parent AND " +</a>
+<span class="sourceLineNo">137</span><a id="line.137">            FEDORA_ID_COLUMN + " = x." + FEDORA_ID_COLUMN + " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +</a>
+<span class="sourceLineNo">138</span><a id="line.138">            OPERATION_COLUMN + " = 'add') ORDER BY x." + FEDORA_ID_COLUMN + " LIMIT :containsLimit OFFSET :offSet";</a>
+<span class="sourceLineNo">139</span><a id="line.139"></a>
+<span class="sourceLineNo">140</span><a id="line.140">    /*</a>
+<span class="sourceLineNo">141</span><a id="line.141">     * Upsert a parent child relationship to the transaction operation table.</a>
+<span class="sourceLineNo">142</span><a id="line.142">     */</a>
+<span class="sourceLineNo">143</span><a id="line.143">    private static final String UPSERT_RECORDS_POSTGRESQL = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">144</span><a id="line.144">            " ( " + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +</a>
+<span class="sourceLineNo">145</span><a id="line.145">            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, " +</a>
+<span class="sourceLineNo">146</span><a id="line.146">            ":transactionId, :operation) ON CONFLICT ( " +  FEDORA_ID_COLUMN + ", " + TRANSACTION_ID_COLUMN + ") " +</a>
+<span class="sourceLineNo">147</span><a id="line.147">            "DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +</a>
+<span class="sourceLineNo">148</span><a id="line.148">            START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " = EXCLUDED." +</a>
+<span class="sourceLineNo">149</span><a id="line.149">            END_TIME_COLUMN + ", " + OPERATION_COLUMN + " = EXCLUDED." + OPERATION_COLUMN;</a>
+<span class="sourceLineNo">150</span><a id="line.150"></a>
+<span class="sourceLineNo">151</span><a id="line.151">    private static final String UPSERT_RECORDS_MYSQL_MARIA = "INSERT INTO " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">152</span><a id="line.152">            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +</a>
+<span class="sourceLineNo">153</span><a id="line.153">            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, " +</a>
+<span class="sourceLineNo">154</span><a id="line.154">            ":transactionId, :operation) ON DUPLICATE KEY UPDATE " +</a>
+<span class="sourceLineNo">155</span><a id="line.155">            PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " + START_TIME_COLUMN + " = VALUES(" +</a>
+<span class="sourceLineNo">156</span><a id="line.156">            START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + "), " + OPERATION_COLUMN +</a>
+<span class="sourceLineNo">157</span><a id="line.157">            " = VALUES(" + OPERATION_COLUMN + ")";</a>
+<span class="sourceLineNo">158</span><a id="line.158"></a>
+<span class="sourceLineNo">159</span><a id="line.159">    private static final String UPSERT_RECORDS_H2 = "MERGE INTO " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">160</span><a id="line.160">            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ", " +</a>
+<span class="sourceLineNo">161</span><a id="line.161">            TRANSACTION_ID_COLUMN + ", " + OPERATION_COLUMN + ") KEY (" + FEDORA_ID_COLUMN + ", " +</a>
+<span class="sourceLineNo">162</span><a id="line.162">            TRANSACTION_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime, :transactionId, :operation)";</a>
+<span class="sourceLineNo">163</span><a id="line.163"></a>
+<span class="sourceLineNo">164</span><a id="line.164">    private static final String DIRECT_UPDATE_END_TIME = "UPDATE " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">165</span><a id="line.165">            " SET " + END_TIME_COLUMN + " = :endTime WHERE " +</a>
+<span class="sourceLineNo">166</span><a id="line.166">            PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = :child";</a>
+<span class="sourceLineNo">167</span><a id="line.167"></a>
+<span class="sourceLineNo">168</span><a id="line.168">    private static final Map&lt;DbPlatform, String&gt; UPSERT_MAPPING = Map.of(</a>
+<span class="sourceLineNo">169</span><a id="line.169">            DbPlatform.H2, UPSERT_RECORDS_H2,</a>
+<span class="sourceLineNo">170</span><a id="line.170">            DbPlatform.MYSQL, UPSERT_RECORDS_MYSQL_MARIA,</a>
+<span class="sourceLineNo">171</span><a id="line.171">            DbPlatform.MARIADB, UPSERT_RECORDS_MYSQL_MARIA,</a>
+<span class="sourceLineNo">172</span><a id="line.172">            DbPlatform.POSTGRESQL, UPSERT_RECORDS_POSTGRESQL</a>
+<span class="sourceLineNo">173</span><a id="line.173">    );</a>
+<span class="sourceLineNo">174</span><a id="line.174"></a>
+<span class="sourceLineNo">175</span><a id="line.175">    private static final String DIRECT_INSERT_RECORDS = "INSERT INTO " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">176</span><a id="line.176">            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +</a>
+<span class="sourceLineNo">177</span><a id="line.177">            " VALUES (:parent, :child, :startTime, :endTime)";</a>
+<span class="sourceLineNo">178</span><a id="line.178"></a>
+<span class="sourceLineNo">179</span><a id="line.179">    private static final String DIRECT_INSERT_POSTGRESQL = " ON CONFLICT ( " + FEDORA_ID_COLUMN + ")" +</a>
+<span class="sourceLineNo">180</span><a id="line.180">            "DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +</a>
+<span class="sourceLineNo">181</span><a id="line.181">            START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " +</a>
+<span class="sourceLineNo">182</span><a id="line.182">            END_TIME_COLUMN + " = EXCLUDED." + END_TIME_COLUMN;</a>
+<span class="sourceLineNo">183</span><a id="line.183"></a>
+<span class="sourceLineNo">184</span><a id="line.184">    private static final String DIRECT_INSERT_MYSQL_MARIA = " ON DUPLICATE KEY UPDATE " +</a>
+<span class="sourceLineNo">185</span><a id="line.185">            PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " + START_TIME_COLUMN + " = VALUES(" +</a>
+<span class="sourceLineNo">186</span><a id="line.186">            START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";</a>
+<span class="sourceLineNo">187</span><a id="line.187"></a>
+<span class="sourceLineNo">188</span><a id="line.188">    private static final String DIRECT_INSERT_H2 = "MERGE INTO " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">189</span><a id="line.189">            " (" + PARENT_COLUMN + ", " + FEDORA_ID_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ")" +</a>
+<span class="sourceLineNo">190</span><a id="line.190">            " KEY (" + FEDORA_ID_COLUMN + ") VALUES (:parent, :child, :startTime, :endTime)";</a>
+<span class="sourceLineNo">191</span><a id="line.191"></a>
+<span class="sourceLineNo">192</span><a id="line.192">    private static final Map&lt;DbPlatform, String&gt; DIRECT_UPSERT_MAPPING = Map.of(</a>
+<span class="sourceLineNo">193</span><a id="line.193">        DbPlatform.H2, DIRECT_INSERT_H2,</a>
+<span class="sourceLineNo">194</span><a id="line.194">        DbPlatform.MYSQL, DIRECT_INSERT_RECORDS + DIRECT_INSERT_MYSQL_MARIA,</a>
+<span class="sourceLineNo">195</span><a id="line.195">        DbPlatform.MARIADB, DIRECT_INSERT_RECORDS + DIRECT_INSERT_MYSQL_MARIA,</a>
+<span class="sourceLineNo">196</span><a id="line.196">        DbPlatform.POSTGRESQL, DIRECT_INSERT_RECORDS + DIRECT_INSERT_POSTGRESQL</a>
+<span class="sourceLineNo">197</span><a id="line.197">    );</a>
+<span class="sourceLineNo">198</span><a id="line.198"></a>
+<span class="sourceLineNo">199</span><a id="line.199">    private static final String DIRECT_PURGE = "DELETE FROM containment WHERE fedora_id = :child";</a>
+<span class="sourceLineNo">200</span><a id="line.200"></a>
+<span class="sourceLineNo">201</span><a id="line.201">    /*</a>
+<span class="sourceLineNo">202</span><a id="line.202">     * Remove an insert row from the transaction operation table for this parent child relationship.</a>
+<span class="sourceLineNo">203</span><a id="line.203">     */</a>
+<span class="sourceLineNo">204</span><a id="line.204">    private static final String UNDO_INSERT_CHILD_IN_TRANSACTION = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">205</span><a id="line.205">            " WHERE " + PARENT_COLUMN + " = :parent AND " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN</a>
+<span class="sourceLineNo">206</span><a id="line.206">            + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";</a>
+<span class="sourceLineNo">207</span><a id="line.207"></a>
+<span class="sourceLineNo">208</span><a id="line.208">    /*</a>
+<span class="sourceLineNo">209</span><a id="line.209">     * Remove a mark as deleted row from the transaction operation table for this child relationship (no parent).</a>
+<span class="sourceLineNo">210</span><a id="line.210">     */</a>
+<span class="sourceLineNo">211</span><a id="line.211">    private static final String UNDO_DELETE_CHILD_IN_TRANSACTION_NO_PARENT = "DELETE FROM " +</a>
+<span class="sourceLineNo">212</span><a id="line.212">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN</a>
+<span class="sourceLineNo">213</span><a id="line.213">            + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";</a>
+<span class="sourceLineNo">214</span><a id="line.214"></a>
+<span class="sourceLineNo">215</span><a id="line.215">    /*</a>
+<span class="sourceLineNo">216</span><a id="line.216">     * Is this parent child relationship being added in this transaction?</a>
+<span class="sourceLineNo">217</span><a id="line.217">     */</a>
+<span class="sourceLineNo">218</span><a id="line.218">    private static final String IS_CHILD_ADDED_IN_TRANSACTION = "SELECT TRUE FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">219</span><a id="line.219">            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + PARENT_COLUMN + " = :parent" +</a>
+<span class="sourceLineNo">220</span><a id="line.220">            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";</a>
+<span class="sourceLineNo">221</span><a id="line.221"></a>
+<span class="sourceLineNo">222</span><a id="line.222">    /*</a>
+<span class="sourceLineNo">223</span><a id="line.223">     * Is this child's relationship being marked for deletion in this transaction (no parent)?</a>
+<span class="sourceLineNo">224</span><a id="line.224">     */</a>
+<span class="sourceLineNo">225</span><a id="line.225">    private static final String IS_CHILD_DELETED_IN_TRANSACTION_NO_PARENT = "SELECT TRUE FROM " +</a>
+<span class="sourceLineNo">226</span><a id="line.226">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child " +</a>
+<span class="sourceLineNo">227</span><a id="line.227">            " AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'delete'";</a>
+<span class="sourceLineNo">228</span><a id="line.228"></a>
+<span class="sourceLineNo">229</span><a id="line.229">   /*</a>
+<span class="sourceLineNo">230</span><a id="line.230">    * Delete all rows from the transaction operation table for this transaction.</a>
+<span class="sourceLineNo">231</span><a id="line.231">    */</a>
+<span class="sourceLineNo">232</span><a id="line.232">    private static final String DELETE_ENTIRE_TRANSACTION = "DELETE FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">233</span><a id="line.233">            TRANSACTION_ID_COLUMN + " = :transactionId";</a>
+<span class="sourceLineNo">234</span><a id="line.234"></a>
+<span class="sourceLineNo">235</span><a id="line.235">    /*</a>
+<span class="sourceLineNo">236</span><a id="line.236">     * Add to the main table all rows from the transaction operation table marked 'add' for this transaction.</a>
+<span class="sourceLineNo">237</span><a id="line.237">     */</a>
+<span class="sourceLineNo">238</span><a id="line.238">    private static final String COMMIT_ADD_RECORDS_POSTGRESQL = "INSERT INTO " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">239</span><a id="line.239">            " ( " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ") " +</a>
+<span class="sourceLineNo">240</span><a id="line.240">            "SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN +</a>
+<span class="sourceLineNo">241</span><a id="line.241">            " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " +</a>
+<span class="sourceLineNo">242</span><a id="line.242">            TRANSACTION_ID_COLUMN + " = :transactionId ON CONFLICT ( " +  FEDORA_ID_COLUMN + " )" +</a>
+<span class="sourceLineNo">243</span><a id="line.243">            " DO UPDATE SET " + PARENT_COLUMN + " = EXCLUDED." + PARENT_COLUMN + ", " +</a>
+<span class="sourceLineNo">244</span><a id="line.244">            START_TIME_COLUMN + " = EXCLUDED." + START_TIME_COLUMN + ", " + END_TIME_COLUMN + " = EXCLUDED." +</a>
+<span class="sourceLineNo">245</span><a id="line.245">            END_TIME_COLUMN;</a>
+<span class="sourceLineNo">246</span><a id="line.246"></a>
+<span class="sourceLineNo">247</span><a id="line.247">    private static final String COMMIT_ADD_RECORDS_MYSQL_MARIA = "INSERT INTO " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">248</span><a id="line.248">            " (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ") " +</a>
+<span class="sourceLineNo">249</span><a id="line.249">            "SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN +</a>
+<span class="sourceLineNo">250</span><a id="line.250">            " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + OPERATION_COLUMN + " = 'add' AND " +</a>
+<span class="sourceLineNo">251</span><a id="line.251">            TRANSACTION_ID_COLUMN + " = :transactionId ON DUPLICATE KEY UPDATE " +</a>
+<span class="sourceLineNo">252</span><a id="line.252">            PARENT_COLUMN + " = VALUES(" + PARENT_COLUMN + "), " + START_TIME_COLUMN + " = VALUES(" +</a>
+<span class="sourceLineNo">253</span><a id="line.253">            START_TIME_COLUMN + "), " + END_TIME_COLUMN + " = VALUES(" + END_TIME_COLUMN + ")";</a>
+<span class="sourceLineNo">254</span><a id="line.254"></a>
+<span class="sourceLineNo">255</span><a id="line.255">    private static final String COMMIT_ADD_RECORDS_H2 = "MERGE INTO " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">256</span><a id="line.256">            " (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " + START_TIME_COLUMN + ", " + END_TIME_COLUMN + ") " +</a>
+<span class="sourceLineNo">257</span><a id="line.257">            "KEY (" + FEDORA_ID_COLUMN + ") SELECT " + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ", " +</a>
+<span class="sourceLineNo">258</span><a id="line.258">            START_TIME_COLUMN + ", " + END_TIME_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">259</span><a id="line.259">            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId";</a>
+<span class="sourceLineNo">260</span><a id="line.260"></a>
+<span class="sourceLineNo">261</span><a id="line.261">    private static final Map&lt;DbPlatform, String&gt; COMMIT_ADD_RECORDS_MAP = Map.of(</a>
+<span class="sourceLineNo">262</span><a id="line.262">            DbPlatform.H2, COMMIT_ADD_RECORDS_H2,</a>
+<span class="sourceLineNo">263</span><a id="line.263">            DbPlatform.MYSQL, COMMIT_ADD_RECORDS_MYSQL_MARIA,</a>
+<span class="sourceLineNo">264</span><a id="line.264">            DbPlatform.MARIADB, COMMIT_ADD_RECORDS_MYSQL_MARIA,</a>
+<span class="sourceLineNo">265</span><a id="line.265">            DbPlatform.POSTGRESQL, COMMIT_ADD_RECORDS_POSTGRESQL</a>
+<span class="sourceLineNo">266</span><a id="line.266">    );</a>
+<span class="sourceLineNo">267</span><a id="line.267"></a>
+<span class="sourceLineNo">268</span><a id="line.268">    /*</a>
+<span class="sourceLineNo">269</span><a id="line.269">     * Add an end time to the rows in the main table that match all rows from transaction operation table marked</a>
+<span class="sourceLineNo">270</span><a id="line.270">     * 'delete' for this transaction.</a>
+<span class="sourceLineNo">271</span><a id="line.271">     */</a>
+<span class="sourceLineNo">272</span><a id="line.272">    private static final String COMMIT_DELETE_RECORDS_H2 = "UPDATE " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">273</span><a id="line.273">            " r SET r." + END_TIME_COLUMN + " = ( SELECT t." + END_TIME_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">274</span><a id="line.274">            TRANSACTION_OPERATIONS_TABLE + " t " +</a>
+<span class="sourceLineNo">275</span><a id="line.275">            " WHERE t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN + " AND t." + TRANSACTION_ID_COLUMN +</a>
+<span class="sourceLineNo">276</span><a id="line.276">            " = :transactionId AND t." +  OPERATION_COLUMN +</a>
+<span class="sourceLineNo">277</span><a id="line.277">            " = 'delete' AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + " AND r." +</a>
+<span class="sourceLineNo">278</span><a id="line.278">            END_TIME_COLUMN + " IS NULL)" +</a>
+<span class="sourceLineNo">279</span><a id="line.279">            " WHERE EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." + FEDORA_ID_COLUMN +</a>
+<span class="sourceLineNo">280</span><a id="line.280">            " = r." + FEDORA_ID_COLUMN + " AND t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +</a>
+<span class="sourceLineNo">281</span><a id="line.281">            OPERATION_COLUMN + " = 'delete' AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN + " AND r." +</a>
+<span class="sourceLineNo">282</span><a id="line.282">            END_TIME_COLUMN + " IS NULL)";</a>
+<span class="sourceLineNo">283</span><a id="line.283"></a>
+<span class="sourceLineNo">284</span><a id="line.284">    private static final String COMMIT_DELETE_RECORDS_MYSQL = "UPDATE " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">285</span><a id="line.285">            " r INNER JOIN " + TRANSACTION_OPERATIONS_TABLE + " t ON t." + FEDORA_ID_COLUMN + " = r." +</a>
+<span class="sourceLineNo">286</span><a id="line.286">            FEDORA_ID_COLUMN + " SET r." + END_TIME_COLUMN + " = t." + END_TIME_COLUMN +</a>
+<span class="sourceLineNo">287</span><a id="line.287">            " WHERE t." + PARENT_COLUMN + " = r." +</a>
+<span class="sourceLineNo">288</span><a id="line.288">            PARENT_COLUMN + " AND t." + TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN +</a>
+<span class="sourceLineNo">289</span><a id="line.289">            " = 'delete' AND r." + END_TIME_COLUMN + " IS NULL";</a>
+<span class="sourceLineNo">290</span><a id="line.290"></a>
+<span class="sourceLineNo">291</span><a id="line.291">    private static final String COMMIT_DELETE_RECORDS_POSTGRES = "UPDATE " + RESOURCES_TABLE + " SET " +</a>
+<span class="sourceLineNo">292</span><a id="line.292">            END_TIME_COLUMN + " = t." + END_TIME_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +</a>
+<span class="sourceLineNo">293</span><a id="line.293">            FEDORA_ID_COLUMN + " = " + RESOURCES_TABLE + "." + FEDORA_ID_COLUMN + " AND t." + PARENT_COLUMN +</a>
+<span class="sourceLineNo">294</span><a id="line.294">            " = " + RESOURCES_TABLE + "." + PARENT_COLUMN + " AND t." + TRANSACTION_ID_COLUMN +</a>
+<span class="sourceLineNo">295</span><a id="line.295">            " = :transactionId AND t." + OPERATION_COLUMN + " = 'delete' AND " + RESOURCES_TABLE + "." +</a>
+<span class="sourceLineNo">296</span><a id="line.296">            END_TIME_COLUMN + " IS NULL";</a>
+<span class="sourceLineNo">297</span><a id="line.297"></a>
+<span class="sourceLineNo">298</span><a id="line.298">    private final Map&lt;DbPlatform, String&gt; COMMIT_DELETE_RECORDS = Map.of(</a>
+<span class="sourceLineNo">299</span><a id="line.299">            DbPlatform.H2, COMMIT_DELETE_RECORDS_H2,</a>
+<span class="sourceLineNo">300</span><a id="line.300">            DbPlatform.MARIADB, COMMIT_DELETE_RECORDS_MYSQL,</a>
+<span class="sourceLineNo">301</span><a id="line.301">            DbPlatform.MYSQL, COMMIT_DELETE_RECORDS_MYSQL,</a>
+<span class="sourceLineNo">302</span><a id="line.302">            DbPlatform.POSTGRESQL, COMMIT_DELETE_RECORDS_POSTGRES</a>
+<span class="sourceLineNo">303</span><a id="line.303">    );</a>
+<span class="sourceLineNo">304</span><a id="line.304"></a>
+<span class="sourceLineNo">305</span><a id="line.305">    /*</a>
+<span class="sourceLineNo">306</span><a id="line.306">     * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.</a>
+<span class="sourceLineNo">307</span><a id="line.307">     */</a>
+<span class="sourceLineNo">308</span><a id="line.308">    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">309</span><a id="line.309">            "EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +</a>
+<span class="sourceLineNo">310</span><a id="line.310">            TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'purge' AND" +</a>
+<span class="sourceLineNo">311</span><a id="line.311">            " t." + FEDORA_ID_COLUMN + " = " + RESOURCES_TABLE + "." + FEDORA_ID_COLUMN +</a>
+<span class="sourceLineNo">312</span><a id="line.312">            " AND t." + PARENT_COLUMN + " = " + RESOURCES_TABLE + "." + PARENT_COLUMN + ")";</a>
+<span class="sourceLineNo">313</span><a id="line.313"></a>
+<span class="sourceLineNo">314</span><a id="line.314">    /*</a>
+<span class="sourceLineNo">315</span><a id="line.315">     * Query if a resource exists in the main table and is not deleted.</a>
+<span class="sourceLineNo">316</span><a id="line.316">     */</a>
+<span class="sourceLineNo">317</span><a id="line.317">    private static final String RESOURCE_EXISTS = "SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">318</span><a id="line.318">            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + END_TIME_COLUMN + " IS NULL";</a>
+<span class="sourceLineNo">319</span><a id="line.319"></a>
+<span class="sourceLineNo">320</span><a id="line.320">    /*</a>
+<span class="sourceLineNo">321</span><a id="line.321">     * Resource exists as a record in the transaction operations table with an 'add' operation and not also</a>
+<span class="sourceLineNo">322</span><a id="line.322">     * exists as a 'delete' operation.</a>
+<span class="sourceLineNo">323</span><a id="line.323">     */</a>
+<span class="sourceLineNo">324</span><a id="line.324">    private static final String RESOURCE_EXISTS_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +</a>
+<span class="sourceLineNo">325</span><a id="line.325">            " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +</a>
+<span class="sourceLineNo">326</span><a id="line.326">            "  AND " + END_TIME_COLUMN + " IS NULL UNION SELECT " + FEDORA_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">327</span><a id="line.327">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN +</a>
+<span class="sourceLineNo">328</span><a id="line.328">            " = :transactionId" + " AND " + OPERATION_COLUMN + " = 'add') x WHERE NOT EXISTS " +</a>
+<span class="sourceLineNo">329</span><a id="line.329">            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">330</span><a id="line.330">            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +</a>
+<span class="sourceLineNo">331</span><a id="line.331">            " AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))";</a>
+<span class="sourceLineNo">332</span><a id="line.332"></a>
+<span class="sourceLineNo">333</span><a id="line.333">    /*</a>
+<span class="sourceLineNo">334</span><a id="line.334">     * Query if a resource exists in the main table even if it is deleted.</a>
+<span class="sourceLineNo">335</span><a id="line.335">     */</a>
+<span class="sourceLineNo">336</span><a id="line.336">    private static final String RESOURCE_OR_TOMBSTONE_EXISTS = "SELECT " + FEDORA_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">337</span><a id="line.337">            RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child";</a>
+<span class="sourceLineNo">338</span><a id="line.338"></a>
+<span class="sourceLineNo">339</span><a id="line.339">    /*</a>
+<span class="sourceLineNo">340</span><a id="line.340">     * Resource exists as a record in the main table even if deleted or in the transaction operations table with an</a>
+<span class="sourceLineNo">341</span><a id="line.341">     * 'add' operation and not also exists as a 'delete' operation.</a>
+<span class="sourceLineNo">342</span><a id="line.342">     */</a>
+<span class="sourceLineNo">343</span><a id="line.343">    private static final String RESOURCE_OR_TOMBSTONE_EXISTS_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM" +</a>
+<span class="sourceLineNo">344</span><a id="line.344">            " (SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +</a>
+<span class="sourceLineNo">345</span><a id="line.345">            " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">346</span><a id="line.346">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN +</a>
+<span class="sourceLineNo">347</span><a id="line.347">            " = :transactionId" + " AND " + OPERATION_COLUMN + " = 'add') x WHERE NOT EXISTS " +</a>
+<span class="sourceLineNo">348</span><a id="line.348">            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">349</span><a id="line.349">            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +</a>
+<span class="sourceLineNo">350</span><a id="line.350">            " AND " + OPERATION_COLUMN + " IN ('delete', 'purge'))";</a>
+<span class="sourceLineNo">351</span><a id="line.351"></a>
+<span class="sourceLineNo">352</span><a id="line.352"></a>
+<span class="sourceLineNo">353</span><a id="line.353">    /*</a>
+<span class="sourceLineNo">354</span><a id="line.354">     * Get the parent ID for this resource from the main table if not deleted.</a>
+<span class="sourceLineNo">355</span><a id="line.355">     */</a>
+<span class="sourceLineNo">356</span><a id="line.356">    private static final String PARENT_EXISTS = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">357</span><a id="line.357">            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + END_TIME_COLUMN + " IS NULL";</a>
+<span class="sourceLineNo">358</span><a id="line.358"></a>
+<span class="sourceLineNo">359</span><a id="line.359">    /*</a>
+<span class="sourceLineNo">360</span><a id="line.360">     * Get the parent ID for this resource from the operations table for an 'add' operation in this transaction, but</a>
+<span class="sourceLineNo">361</span><a id="line.361">     * exclude any 'delete' operations for this resource in this transaction.</a>
+<span class="sourceLineNo">362</span><a id="line.362">     */</a>
+<span class="sourceLineNo">363</span><a id="line.363">    private static final String PARENT_EXISTS_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +</a>
+<span class="sourceLineNo">364</span><a id="line.364">            " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +</a>
+<span class="sourceLineNo">365</span><a id="line.365">            " AND " + END_TIME_COLUMN + " IS NULL" +</a>
+<span class="sourceLineNo">366</span><a id="line.366">            " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">367</span><a id="line.367">            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +</a>
+<span class="sourceLineNo">368</span><a id="line.368">            " AND " + OPERATION_COLUMN + " = 'add') x" +</a>
+<span class="sourceLineNo">369</span><a id="line.369">            " WHERE NOT EXISTS " +</a>
+<span class="sourceLineNo">370</span><a id="line.370">            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">371</span><a id="line.371">            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +</a>
+<span class="sourceLineNo">372</span><a id="line.372">            " AND " + OPERATION_COLUMN + " = 'delete')";</a>
+<span class="sourceLineNo">373</span><a id="line.373"></a>
+<span class="sourceLineNo">374</span><a id="line.374">    /*</a>
+<span class="sourceLineNo">375</span><a id="line.375">     * Get the parent ID for this resource from the main table if deleted.</a>
+<span class="sourceLineNo">376</span><a id="line.376">     */</a>
+<span class="sourceLineNo">377</span><a id="line.377">    private static final String PARENT_EXISTS_DELETED = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">378</span><a id="line.378">            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + END_TIME_COLUMN + " IS NOT NULL";</a>
+<span class="sourceLineNo">379</span><a id="line.379"></a>
+<span class="sourceLineNo">380</span><a id="line.380">    /*</a>
+<span class="sourceLineNo">381</span><a id="line.381">     * Get the parent ID for this resource from main table and the operations table for a 'delete' operation in this</a>
+<span class="sourceLineNo">382</span><a id="line.382">     * transaction, excluding any 'add' operations for this resource in this transaction.</a>
+<span class="sourceLineNo">383</span><a id="line.383">     */</a>
+<span class="sourceLineNo">384</span><a id="line.384">    private static final String PARENT_EXISTS_DELETED_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +</a>
+<span class="sourceLineNo">385</span><a id="line.385">            " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +</a>
+<span class="sourceLineNo">386</span><a id="line.386">            " AND " + END_TIME_COLUMN + " IS NOT NULL UNION SELECT " + PARENT_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">387</span><a id="line.387">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN +</a>
+<span class="sourceLineNo">388</span><a id="line.388">            " = :transactionId AND " + OPERATION_COLUMN + " = 'delete') x WHERE NOT EXISTS " +</a>
+<span class="sourceLineNo">389</span><a id="line.389">            " (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " +</a>
+<span class="sourceLineNo">390</span><a id="line.390">            TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add')";</a>
+<span class="sourceLineNo">391</span><a id="line.391"></a>
+<span class="sourceLineNo">392</span><a id="line.392">    /*</a>
+<span class="sourceLineNo">393</span><a id="line.393">     * Does this resource exist in the transaction operation table for an 'add' record.</a>
+<span class="sourceLineNo">394</span><a id="line.394">     */</a>
+<span class="sourceLineNo">395</span><a id="line.395">    private static final String IS_CHILD_ADDED_IN_TRANSACTION_NO_PARENT = "SELECT TRUE FROM " +</a>
+<span class="sourceLineNo">396</span><a id="line.396">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " +</a>
+<span class="sourceLineNo">397</span><a id="line.397">            TRANSACTION_ID_COLUMN + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";</a>
+<span class="sourceLineNo">398</span><a id="line.398"></a>
+<span class="sourceLineNo">399</span><a id="line.399">    /*</a>
+<span class="sourceLineNo">400</span><a id="line.400">     * Delete a row from the transaction operation table with this resource and 'add' operation, no parent required.</a>
+<span class="sourceLineNo">401</span><a id="line.401">     */</a>
+<span class="sourceLineNo">402</span><a id="line.402">    private static final String UNDO_INSERT_CHILD_IN_TRANSACTION_NO_PARENT = "DELETE FROM " +</a>
+<span class="sourceLineNo">403</span><a id="line.403">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN</a>
+<span class="sourceLineNo">404</span><a id="line.404">            + " = :transactionId AND " + OPERATION_COLUMN + " = 'add'";</a>
+<span class="sourceLineNo">405</span><a id="line.405"></a>
+<span class="sourceLineNo">406</span><a id="line.406">    private static final String TRUNCATE_TABLE = "TRUNCATE TABLE ";</a>
+<span class="sourceLineNo">407</span><a id="line.407"></a>
+<span class="sourceLineNo">408</span><a id="line.408">    /*</a>
+<span class="sourceLineNo">409</span><a id="line.409">     * Any record tracked in the containment index is either active or a tombstone. Either way it exists for the</a>
+<span class="sourceLineNo">410</span><a id="line.410">     * purpose of finding ghost nodes.</a>
+<span class="sourceLineNo">411</span><a id="line.411">     */</a>
+<span class="sourceLineNo">412</span><a id="line.412">    private static final String SELECT_ID_LIKE = "SELECT " + FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">413</span><a id="line.413">            FEDORA_ID_COLUMN + " LIKE :resourceId";</a>
+<span class="sourceLineNo">414</span><a id="line.414"></a>
+<span class="sourceLineNo">415</span><a id="line.415">    private static final String SELECT_ID_LIKE_IN_TRANSACTION = "SELECT x." + FEDORA_ID_COLUMN + " FROM (SELECT " +</a>
+<span class="sourceLineNo">416</span><a id="line.416">            FEDORA_ID_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " LIKE :resourceId" +</a>
+<span class="sourceLineNo">417</span><a id="line.417">            " UNION SELECT " + FEDORA_ID_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">418</span><a id="line.418">            FEDORA_ID_COLUMN + " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +</a>
+<span class="sourceLineNo">419</span><a id="line.419">            OPERATION_COLUMN + " = 'add') x WHERE NOT EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE +</a>
+<span class="sourceLineNo">420</span><a id="line.420">            " WHERE " + FEDORA_ID_COLUMN + " LIKE :resourceId AND " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +</a>
+<span class="sourceLineNo">421</span><a id="line.421">            OPERATION_COLUMN + " = 'delete')";</a>
+<span class="sourceLineNo">422</span><a id="line.422"></a>
+<span class="sourceLineNo">423</span><a id="line.423">    private static final String SELECT_LAST_UPDATED = "SELECT " + UPDATED_COLUMN + " FROM " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">424</span><a id="line.424">            " WHERE " + FEDORA_ID_COLUMN + " = :resourceId";</a>
+<span class="sourceLineNo">425</span><a id="line.425"></a>
+<span class="sourceLineNo">426</span><a id="line.426">    private static final String UPDATE_LAST_UPDATED = "UPDATE " + RESOURCES_TABLE + " SET " + UPDATED_COLUMN +</a>
+<span class="sourceLineNo">427</span><a id="line.427">            " = :updated WHERE " + FEDORA_ID_COLUMN + " = :resourceId";</a>
+<span class="sourceLineNo">428</span><a id="line.428"></a>
+<span class="sourceLineNo">429</span><a id="line.429">    private static final String CONDITIONALLY_UPDATE_LAST_UPDATED = "UPDATE " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">430</span><a id="line.430">            " SET " + UPDATED_COLUMN + " = :updated WHERE " + FEDORA_ID_COLUMN + " = :resourceId" +</a>
+<span class="sourceLineNo">431</span><a id="line.431">            " AND (" + UPDATED_COLUMN + " IS NULL OR " + UPDATED_COLUMN + " &lt; :updated)";</a>
+<span class="sourceLineNo">432</span><a id="line.432"></a>
+<span class="sourceLineNo">433</span><a id="line.433">    private static final String SELECT_LAST_UPDATED_IN_TX = "SELECT MAX(x.updated)" +</a>
+<span class="sourceLineNo">434</span><a id="line.434">            " FROM (SELECT " + UPDATED_COLUMN + " as updated FROM " + RESOURCES_TABLE + " WHERE " +</a>
+<span class="sourceLineNo">435</span><a id="line.435">            FEDORA_ID_COLUMN + " = :resourceId UNION SELECT " + START_TIME_COLUMN +</a>
+<span class="sourceLineNo">436</span><a id="line.436">            " as updated FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +</a>
+<span class="sourceLineNo">437</span><a id="line.437">            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId UNION SELECT " +</a>
+<span class="sourceLineNo">438</span><a id="line.438">            END_TIME_COLUMN + " as updated FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN +</a>
+<span class="sourceLineNo">439</span><a id="line.439">            " = :resourceId AND " + OPERATION_COLUMN + " = 'delete' AND " + TRANSACTION_ID_COLUMN +</a>
+<span class="sourceLineNo">440</span><a id="line.440">            " = :transactionId UNION SELECT " + END_TIME_COLUMN +</a>
+<span class="sourceLineNo">441</span><a id="line.441">            " as updated FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " + PARENT_COLUMN + " = :resourceId AND " +</a>
+<span class="sourceLineNo">442</span><a id="line.442">            OPERATION_COLUMN + " = 'add' AND " + TRANSACTION_ID_COLUMN + " = :transactionId) x";</a>
+<span class="sourceLineNo">443</span><a id="line.443"></a>
+<span class="sourceLineNo">444</span><a id="line.444">    private static final String GET_UPDATED_RESOURCES = "SELECT DISTINCT " + PARENT_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">445</span><a id="line.445">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +</a>
+<span class="sourceLineNo">446</span><a id="line.446">            OPERATION_COLUMN + " in ('add', 'delete')";</a>
+<span class="sourceLineNo">447</span><a id="line.447"></a>
+<span class="sourceLineNo">448</span><a id="line.448">    /*</a>
+<span class="sourceLineNo">449</span><a id="line.449">     * Get the startTime for the specified resource from the main table, if it exists.</a>
+<span class="sourceLineNo">450</span><a id="line.450">     */</a>
+<span class="sourceLineNo">451</span><a id="line.451">    private static final String GET_START_TIME = "SELECT " + START_TIME_COLUMN + " FROM " + RESOURCES_TABLE +</a>
+<span class="sourceLineNo">452</span><a id="line.452">            " WHERE " + FEDORA_ID_COLUMN + " = :child";</a>
+<span class="sourceLineNo">453</span><a id="line.453"></a>
+<span class="sourceLineNo">454</span><a id="line.454">    /*</a>
+<span class="sourceLineNo">455</span><a id="line.455">     * Get all resources deleted in this transaction</a>
+<span class="sourceLineNo">456</span><a id="line.456">     */</a>
+<span class="sourceLineNo">457</span><a id="line.457">    private static final String GET_DELETED_RESOURCES = "SELECT " + FEDORA_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">458</span><a id="line.458">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +</a>
+<span class="sourceLineNo">459</span><a id="line.459">            OPERATION_COLUMN + " = 'delete'";</a>
+<span class="sourceLineNo">460</span><a id="line.460"></a>
+<span class="sourceLineNo">461</span><a id="line.461">    /*</a>
+<span class="sourceLineNo">462</span><a id="line.462">     * Get all resources added in this transaction</a>
+<span class="sourceLineNo">463</span><a id="line.463">     */</a>
+<span class="sourceLineNo">464</span><a id="line.464">    private static final String GET_ADDED_RESOURCES = "SELECT " + FEDORA_ID_COLUMN + " FROM " +</a>
+<span class="sourceLineNo">465</span><a id="line.465">            TRANSACTION_OPERATIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :transactionId AND " +</a>
+<span class="sourceLineNo">466</span><a id="line.466">            OPERATION_COLUMN + " = 'add'";</a>
+<span class="sourceLineNo">467</span><a id="line.467"></a>
+<span class="sourceLineNo">468</span><a id="line.468">    @Inject</a>
+<span class="sourceLineNo">469</span><a id="line.469">    private FedoraPropsConfig fedoraPropsConfig;</a>
+<span class="sourceLineNo">470</span><a id="line.470"></a>
+<span class="sourceLineNo">471</span><a id="line.471">    private Cache&lt;String, String&gt; getContainedByCache;</a>
+<span class="sourceLineNo">472</span><a id="line.472"></a>
+<span class="sourceLineNo">473</span><a id="line.473">    private Cache&lt;String, Boolean&gt; resourceExistsCache;</a>
+<span class="sourceLineNo">474</span><a id="line.474"></a>
+<span class="sourceLineNo">475</span><a id="line.475">    /**</a>
+<span class="sourceLineNo">476</span><a id="line.476">     * Connect to the database</a>
+<span class="sourceLineNo">477</span><a id="line.477">     */</a>
+<span class="sourceLineNo">478</span><a id="line.478">    @PostConstruct</a>
+<span class="sourceLineNo">479</span><a id="line.479">    private void setup() {</a>
+<span class="sourceLineNo">480</span><a id="line.480">        jdbcTemplate = getNamedParameterJdbcTemplate();</a>
+<span class="sourceLineNo">481</span><a id="line.481">        dbPlatform = DbPlatform.fromDataSource(dataSource);</a>
+<span class="sourceLineNo">482</span><a id="line.482">        this.getContainedByCache = Caffeine.newBuilder()</a>
+<span class="sourceLineNo">483</span><a id="line.483">                .maximumSize(fedoraPropsConfig.getContainmentCacheSize())</a>
+<span class="sourceLineNo">484</span><a id="line.484">                .expireAfterAccess(fedoraPropsConfig.getContainmentCacheTimeout(), TimeUnit.MINUTES)</a>
+<span class="sourceLineNo">485</span><a id="line.485">                .build();</a>
+<span class="sourceLineNo">486</span><a id="line.486">        this.resourceExistsCache = Caffeine.newBuilder()</a>
+<span class="sourceLineNo">487</span><a id="line.487">                .maximumSize(fedoraPropsConfig.getContainmentCacheSize())</a>
+<span class="sourceLineNo">488</span><a id="line.488">                .expireAfterAccess(fedoraPropsConfig.getContainmentCacheTimeout(), TimeUnit.MINUTES)</a>
+<span class="sourceLineNo">489</span><a id="line.489">                .build();</a>
+<span class="sourceLineNo">490</span><a id="line.490">    }</a>
+<span class="sourceLineNo">491</span><a id="line.491"></a>
+<span class="sourceLineNo">492</span><a id="line.492">    private NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {</a>
+<span class="sourceLineNo">493</span><a id="line.493">        return new NamedParameterJdbcTemplate(getDataSource());</a>
+<span class="sourceLineNo">494</span><a id="line.494">    }</a>
+<span class="sourceLineNo">495</span><a id="line.495"></a>
+<span class="sourceLineNo">496</span><a id="line.496">    void setContainsLimit(final int limit) {</a>
+<span class="sourceLineNo">497</span><a id="line.497">        containsLimit = limit;</a>
+<span class="sourceLineNo">498</span><a id="line.498">    }</a>
+<span class="sourceLineNo">499</span><a id="line.499"></a>
+<span class="sourceLineNo">500</span><a id="line.500">    @Override</a>
+<span class="sourceLineNo">501</span><a id="line.501">    public Stream&lt;String&gt; getContains(@Nonnull final Transaction tx, final FedoraId fedoraId) {</a>
+<span class="sourceLineNo">502</span><a id="line.502">        final String resourceId = fedoraId.isMemento() ? fedoraId.getBaseId() : fedoraId.getFullId();</a>
+<span class="sourceLineNo">503</span><a id="line.503">        final Instant asOfTime = fedoraId.isMemento() ? fedoraId.getMementoInstant() : null;</a>
+<span class="sourceLineNo">504</span><a id="line.504">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">505</span><a id="line.505">        parameterSource.addValue("parent", resourceId);</a>
+<span class="sourceLineNo">506</span><a id="line.506"></a>
+<span class="sourceLineNo">507</span><a id="line.507">        LOGGER.debug("getContains for {} in transaction {} and instant {}", resourceId, tx, asOfTime);</a>
+<span class="sourceLineNo">508</span><a id="line.508"></a>
+<span class="sourceLineNo">509</span><a id="line.509">        final String query;</a>
+<span class="sourceLineNo">510</span><a id="line.510">        if (asOfTime == null) {</a>
+<span class="sourceLineNo">511</span><a id="line.511">            if (tx.isOpenLongRunning()) {</a>
+<span class="sourceLineNo">512</span><a id="line.512">                // we are in a transaction</a>
+<span class="sourceLineNo">513</span><a id="line.513">                parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">514</span><a id="line.514">                query = SELECT_CHILDREN_IN_TRANSACTION;</a>
+<span class="sourceLineNo">515</span><a id="line.515">            } else {</a>
+<span class="sourceLineNo">516</span><a id="line.516">                // not in a transaction</a>
+<span class="sourceLineNo">517</span><a id="line.517">                query = SELECT_CHILDREN;</a>
+<span class="sourceLineNo">518</span><a id="line.518">            }</a>
+<span class="sourceLineNo">519</span><a id="line.519">        } else {</a>
+<span class="sourceLineNo">520</span><a id="line.520">            parameterSource.addValue("asOfTime", formatInstant(asOfTime));</a>
+<span class="sourceLineNo">521</span><a id="line.521">            query = SELECT_CHILDREN_OF_MEMENTO;</a>
+<span class="sourceLineNo">522</span><a id="line.522">        }</a>
+<span class="sourceLineNo">523</span><a id="line.523"></a>
+<span class="sourceLineNo">524</span><a id="line.524">        return StreamSupport.stream(new ContainmentIterator(query, parameterSource), false);</a>
+<span class="sourceLineNo">525</span><a id="line.525">    }</a>
+<span class="sourceLineNo">526</span><a id="line.526"></a>
+<span class="sourceLineNo">527</span><a id="line.527">    @Override</a>
+<span class="sourceLineNo">528</span><a id="line.528">    public Stream&lt;String&gt; getContainsDeleted(@Nonnull final Transaction tx, final FedoraId fedoraId) {</a>
+<span class="sourceLineNo">529</span><a id="line.529">        final String resourceId = fedoraId.getFullId();</a>
+<span class="sourceLineNo">530</span><a id="line.530">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">531</span><a id="line.531">        parameterSource.addValue("parent", resourceId);</a>
+<span class="sourceLineNo">532</span><a id="line.532"></a>
+<span class="sourceLineNo">533</span><a id="line.533">        final String query;</a>
+<span class="sourceLineNo">534</span><a id="line.534">        if (tx.isOpenLongRunning()) {</a>
+<span class="sourceLineNo">535</span><a id="line.535">            // we are in a transaction</a>
+<span class="sourceLineNo">536</span><a id="line.536">            parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">537</span><a id="line.537">            query = SELECT_DELETED_CHILDREN_IN_TRANSACTION;</a>
+<span class="sourceLineNo">538</span><a id="line.538">        } else {</a>
+<span class="sourceLineNo">539</span><a id="line.539">            // not in a transaction</a>
+<span class="sourceLineNo">540</span><a id="line.540">            query = SELECT_DELETED_CHILDREN;</a>
+<span class="sourceLineNo">541</span><a id="line.541">        }</a>
+<span class="sourceLineNo">542</span><a id="line.542">        LOGGER.debug("getContainsDeleted for {} in transaction {}", resourceId, tx);</a>
+<span class="sourceLineNo">543</span><a id="line.543">        return StreamSupport.stream(new ContainmentIterator(query, parameterSource), false);</a>
+<span class="sourceLineNo">544</span><a id="line.544">    }</a>
+<span class="sourceLineNo">545</span><a id="line.545"></a>
+<span class="sourceLineNo">546</span><a id="line.546">    @Override</a>
+<span class="sourceLineNo">547</span><a id="line.547">    public String getContainedBy(@Nonnull final Transaction tx, final FedoraId resource) {</a>
+<span class="sourceLineNo">548</span><a id="line.548">        final String resourceID = resource.getFullId();</a>
+<span class="sourceLineNo">549</span><a id="line.549">        final String parentID;</a>
+<span class="sourceLineNo">550</span><a id="line.550">        if (tx.isOpenLongRunning()) {</a>
+<span class="sourceLineNo">551</span><a id="line.551">            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_IN_TRANSACTION, Map.of("child", resourceID,</a>
+<span class="sourceLineNo">552</span><a id="line.552">                    "transactionId", tx.getId()), String.class).stream().findFirst().orElse(null);</a>
+<span class="sourceLineNo">553</span><a id="line.553">        } else {</a>
+<span class="sourceLineNo">554</span><a id="line.554">            parentID = this.getContainedByCache.get(resourceID, key -&gt;</a>
+<span class="sourceLineNo">555</span><a id="line.555">                    jdbcTemplate.queryForList(PARENT_EXISTS, Map.of("child", key), String.class).stream()</a>
+<span class="sourceLineNo">556</span><a id="line.556">                    .findFirst().orElse(null)</a>
+<span class="sourceLineNo">557</span><a id="line.557">            );</a>
+<span class="sourceLineNo">558</span><a id="line.558">        }</a>
+<span class="sourceLineNo">559</span><a id="line.559">        return parentID;</a>
+<span class="sourceLineNo">560</span><a id="line.560">    }</a>
+<span class="sourceLineNo">561</span><a id="line.561"></a>
+<span class="sourceLineNo">562</span><a id="line.562">    @Override</a>
+<span class="sourceLineNo">563</span><a id="line.563">    public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {</a>
+<span class="sourceLineNo">564</span><a id="line.564">        addContainedBy(tx, parent, child, Instant.now(), null);</a>
+<span class="sourceLineNo">565</span><a id="line.565">    }</a>
+<span class="sourceLineNo">566</span><a id="line.566"></a>
+<span class="sourceLineNo">567</span><a id="line.567">    @Override</a>
+<span class="sourceLineNo">568</span><a id="line.568">    public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child,</a>
+<span class="sourceLineNo">569</span><a id="line.569">                               final Instant startTime, final Instant endTime) {</a>
+<span class="sourceLineNo">570</span><a id="line.570">        tx.doInTx(() -&gt; {</a>
+<span class="sourceLineNo">571</span><a id="line.571">            final String parentID = parent.getFullId();</a>
+<span class="sourceLineNo">572</span><a id="line.572">            final String childID = child.getFullId();</a>
+<span class="sourceLineNo">573</span><a id="line.573"></a>
+<span class="sourceLineNo">574</span><a id="line.574">            if (!tx.isShortLived()) {</a>
+<span class="sourceLineNo">575</span><a id="line.575">                LOGGER.debug("Adding: parent: {}, child: {}, in txn: {}, start time {}, end time {}", parentID, childID,</a>
+<span class="sourceLineNo">576</span><a id="line.576">                        tx.getId(), formatInstant(startTime), formatInstant(endTime));</a>
+<span class="sourceLineNo">577</span><a id="line.577">                doUpsert(tx, parentID, childID, startTime, endTime, "add");</a>
+<span class="sourceLineNo">578</span><a id="line.578">            } else {</a>
+<span class="sourceLineNo">579</span><a id="line.579">                LOGGER.debug("Adding: parent: {}, child: {}, start time {}, end time {}", parentID, childID,</a>
+<span class="sourceLineNo">580</span><a id="line.580">                        formatInstant(startTime), formatInstant(endTime));</a>
+<span class="sourceLineNo">581</span><a id="line.581">                doDirectUpsert(parentID, childID, startTime, endTime);</a>
+<span class="sourceLineNo">582</span><a id="line.582">            }</a>
+<span class="sourceLineNo">583</span><a id="line.583">        });</a>
+<span class="sourceLineNo">584</span><a id="line.584">    }</a>
+<span class="sourceLineNo">585</span><a id="line.585"></a>
+<span class="sourceLineNo">586</span><a id="line.586">    @Override</a>
+<span class="sourceLineNo">587</span><a id="line.587">    public void removeContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {</a>
+<span class="sourceLineNo">588</span><a id="line.588">        tx.doInTx(() -&gt; {</a>
+<span class="sourceLineNo">589</span><a id="line.589">            final String parentID = parent.getFullId();</a>
+<span class="sourceLineNo">590</span><a id="line.590">            final String childID = child.getFullId();</a>
+<span class="sourceLineNo">591</span><a id="line.591"></a>
+<span class="sourceLineNo">592</span><a id="line.592">            if (!tx.isShortLived()) {</a>
+<span class="sourceLineNo">593</span><a id="line.593">                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">594</span><a id="line.594">                parameterSource.addValue("parent", parentID);</a>
+<span class="sourceLineNo">595</span><a id="line.595">                parameterSource.addValue("child", childID);</a>
+<span class="sourceLineNo">596</span><a id="line.596">                parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">597</span><a id="line.597">                final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION, parameterSource)</a>
+<span class="sourceLineNo">598</span><a id="line.598">                        .isEmpty();</a>
+<span class="sourceLineNo">599</span><a id="line.599">                if (addedInTxn) {</a>
+<span class="sourceLineNo">600</span><a id="line.600">                    jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION, parameterSource);</a>
+<span class="sourceLineNo">601</span><a id="line.601">                } else {</a>
+<span class="sourceLineNo">602</span><a id="line.602">                    doUpsert(tx, parentID, childID, null, Instant.now(), "delete");</a>
+<span class="sourceLineNo">603</span><a id="line.603">                }</a>
+<span class="sourceLineNo">604</span><a id="line.604">            } else {</a>
+<span class="sourceLineNo">605</span><a id="line.605">                doDirectUpsert(parentID, childID, null, Instant.now());</a>
+<span class="sourceLineNo">606</span><a id="line.606">                this.getContainedByCache.invalidate(childID);</a>
+<span class="sourceLineNo">607</span><a id="line.607">            }</a>
+<span class="sourceLineNo">608</span><a id="line.608">        });</a>
+<span class="sourceLineNo">609</span><a id="line.609">    }</a>
+<span class="sourceLineNo">610</span><a id="line.610"></a>
+<span class="sourceLineNo">611</span><a id="line.611">    @Override</a>
+<span class="sourceLineNo">612</span><a id="line.612">    public void removeResource(@Nonnull final Transaction tx, final FedoraId resource) {</a>
+<span class="sourceLineNo">613</span><a id="line.613">        tx.doInTx(() -&gt; {</a>
+<span class="sourceLineNo">614</span><a id="line.614">            final String resourceID = resource.getFullId();</a>
+<span class="sourceLineNo">615</span><a id="line.615"></a>
+<span class="sourceLineNo">616</span><a id="line.616">            if (!tx.isShortLived()) {</a>
+<span class="sourceLineNo">617</span><a id="line.617">                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">618</span><a id="line.618">                parameterSource.addValue("child", resourceID);</a>
+<span class="sourceLineNo">619</span><a id="line.619">                parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">620</span><a id="line.620">                final boolean addedInTxn = !jdbcTemplate.queryForList(IS_CHILD_ADDED_IN_TRANSACTION_NO_PARENT,</a>
+<span class="sourceLineNo">621</span><a id="line.621">                        parameterSource).isEmpty();</a>
+<span class="sourceLineNo">622</span><a id="line.622">                if (addedInTxn) {</a>
+<span class="sourceLineNo">623</span><a id="line.623">                    jdbcTemplate.update(UNDO_INSERT_CHILD_IN_TRANSACTION_NO_PARENT, parameterSource);</a>
+<span class="sourceLineNo">624</span><a id="line.624">                } else {</a>
+<span class="sourceLineNo">625</span><a id="line.625">                    final String parent = getContainedBy(tx, resource);</a>
+<span class="sourceLineNo">626</span><a id="line.626">                    if (parent != null) {</a>
+<span class="sourceLineNo">627</span><a id="line.627">                        LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted",</a>
+<span class="sourceLineNo">628</span><a id="line.628">                                parent, resourceID);</a>
+<span class="sourceLineNo">629</span><a id="line.629">                        doUpsert(tx, parent, resourceID, null, Instant.now(), "delete");</a>
+<span class="sourceLineNo">630</span><a id="line.630">                    }</a>
+<span class="sourceLineNo">631</span><a id="line.631">                }</a>
+<span class="sourceLineNo">632</span><a id="line.632">            } else {</a>
+<span class="sourceLineNo">633</span><a id="line.633">                final String parent = getContainedBy(tx, resource);</a>
+<span class="sourceLineNo">634</span><a id="line.634">                if (parent != null) {</a>
+<span class="sourceLineNo">635</span><a id="line.635">                    LOGGER.debug("Marking containment relationship between parent ({}) and child ({}) deleted", parent,</a>
+<span class="sourceLineNo">636</span><a id="line.636">                            resourceID);</a>
+<span class="sourceLineNo">637</span><a id="line.637">                    doDirectUpsert(parent, resourceID, null, Instant.now());</a>
+<span class="sourceLineNo">638</span><a id="line.638">                    this.getContainedByCache.invalidate(resourceID);</a>
+<span class="sourceLineNo">639</span><a id="line.639">                }</a>
+<span class="sourceLineNo">640</span><a id="line.640">            }</a>
+<span class="sourceLineNo">641</span><a id="line.641">        });</a>
+<span class="sourceLineNo">642</span><a id="line.642">    }</a>
+<span class="sourceLineNo">643</span><a id="line.643"></a>
+<span class="sourceLineNo">644</span><a id="line.644">    @Override</a>
+<span class="sourceLineNo">645</span><a id="line.645">    public void purgeResource(@Nonnull final Transaction tx, final FedoraId resource) {</a>
+<span class="sourceLineNo">646</span><a id="line.646">        tx.doInTx(() -&gt; {</a>
+<span class="sourceLineNo">647</span><a id="line.647">            final String resourceID = resource.getFullId();</a>
+<span class="sourceLineNo">648</span><a id="line.648"></a>
+<span class="sourceLineNo">649</span><a id="line.649">            final String parent = getContainedByDeleted(tx, resource);</a>
+<span class="sourceLineNo">650</span><a id="line.650"></a>
+<span class="sourceLineNo">651</span><a id="line.651">            if (parent != null) {</a>
+<span class="sourceLineNo">652</span><a id="line.652">                LOGGER.debug("Removing containment relationship between parent ({}) and child ({})",</a>
+<span class="sourceLineNo">653</span><a id="line.653">                        parent, resourceID);</a>
+<span class="sourceLineNo">654</span><a id="line.654"></a>
+<span class="sourceLineNo">655</span><a id="line.655">                if (!tx.isShortLived()) {</a>
+<span class="sourceLineNo">656</span><a id="line.656">                    doUpsert(tx, parent, resourceID, null, null, "purge");</a>
+<span class="sourceLineNo">657</span><a id="line.657">                } else {</a>
+<span class="sourceLineNo">658</span><a id="line.658">                    final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">659</span><a id="line.659">                    parameterSource.addValue("child", resourceID);</a>
+<span class="sourceLineNo">660</span><a id="line.660">                    jdbcTemplate.update(DIRECT_PURGE, parameterSource);</a>
+<span class="sourceLineNo">661</span><a id="line.661">                }</a>
+<span class="sourceLineNo">662</span><a id="line.662">            }</a>
+<span class="sourceLineNo">663</span><a id="line.663">        });</a>
+<span class="sourceLineNo">664</span><a id="line.664">    }</a>
+<span class="sourceLineNo">665</span><a id="line.665"></a>
+<span class="sourceLineNo">666</span><a id="line.666">    /**</a>
+<span class="sourceLineNo">667</span><a id="line.667">     * Do the Upsert action to the transaction table.</a>
+<span class="sourceLineNo">668</span><a id="line.668">     * @param tx the transaction</a>
+<span class="sourceLineNo">669</span><a id="line.669">     * @param parentId the containing resource id</a>
+<span class="sourceLineNo">670</span><a id="line.670">     * @param resourceId the contained resource id</a>
+<span class="sourceLineNo">671</span><a id="line.671">     * @param startTime the instant the relationship started, if null get the current time from the main table.</a>
+<span class="sourceLineNo">672</span><a id="line.672">     * @param endTime the instant the relationship ended or null for none.</a>
+<span class="sourceLineNo">673</span><a id="line.673">     * @param operation the operation to perform.</a>
+<span class="sourceLineNo">674</span><a id="line.674">     */</a>
+<span class="sourceLineNo">675</span><a id="line.675">    private void doUpsert(final Transaction tx, final String parentId, final String resourceId, final Instant startTime,</a>
+<span class="sourceLineNo">676</span><a id="line.676">                          final Instant endTime, final String operation) {</a>
+<span class="sourceLineNo">677</span><a id="line.677">        final var parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">678</span><a id="line.678">        parameterSource.addValue("child", resourceId);</a>
+<span class="sourceLineNo">679</span><a id="line.679">        parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">680</span><a id="line.680">        parameterSource.addValue("parent", parentId);</a>
+<span class="sourceLineNo">681</span><a id="line.681">        if (startTime == null) {</a>
+<span class="sourceLineNo">682</span><a id="line.682">            parameterSource.addValue("startTime", formatInstant(getCurrentStartTime(resourceId)));</a>
+<span class="sourceLineNo">683</span><a id="line.683">        } else {</a>
+<span class="sourceLineNo">684</span><a id="line.684">            parameterSource.addValue("startTime", formatInstant(startTime));</a>
+<span class="sourceLineNo">685</span><a id="line.685">        }</a>
+<span class="sourceLineNo">686</span><a id="line.686">        parameterSource.addValue("endTime", formatInstant(endTime));</a>
+<span class="sourceLineNo">687</span><a id="line.687">        parameterSource.addValue("operation", operation);</a>
+<span class="sourceLineNo">688</span><a id="line.688">        jdbcTemplate.update(UPSERT_MAPPING.get(dbPlatform), parameterSource);</a>
+<span class="sourceLineNo">689</span><a id="line.689">    }</a>
+<span class="sourceLineNo">690</span><a id="line.690"></a>
+<span class="sourceLineNo">691</span><a id="line.691">    /**</a>
+<span class="sourceLineNo">692</span><a id="line.692">     * Do the Upsert directly to the containment index; not the tx table</a>
+<span class="sourceLineNo">693</span><a id="line.693">     *</a>
+<span class="sourceLineNo">694</span><a id="line.694">     * @param parentId the containing resource id</a>
+<span class="sourceLineNo">695</span><a id="line.695">     * @param resourceId the contained resource id</a>
+<span class="sourceLineNo">696</span><a id="line.696">     * @param startTime the instant the relationship started, if null get the current time from the main table.</a>
+<span class="sourceLineNo">697</span><a id="line.697">     * @param endTime the instant the relationship ended or null for none.</a>
+<span class="sourceLineNo">698</span><a id="line.698">     */</a>
+<span class="sourceLineNo">699</span><a id="line.699">    private void doDirectUpsert(final String parentId, final String resourceId, final Instant startTime,</a>
+<span class="sourceLineNo">700</span><a id="line.700">                                final Instant endTime) {</a>
+<span class="sourceLineNo">701</span><a id="line.701">        final var parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">702</span><a id="line.702">        parameterSource.addValue("child", resourceId);</a>
+<span class="sourceLineNo">703</span><a id="line.703">        parameterSource.addValue("parent", parentId);</a>
+<span class="sourceLineNo">704</span><a id="line.704">        parameterSource.addValue("endTime", formatInstant(endTime));</a>
+<span class="sourceLineNo">705</span><a id="line.705"></a>
+<span class="sourceLineNo">706</span><a id="line.706">        final String query;</a>
+<span class="sourceLineNo">707</span><a id="line.707"></a>
+<span class="sourceLineNo">708</span><a id="line.708">        if (startTime == null) {</a>
+<span class="sourceLineNo">709</span><a id="line.709">            // This the case for an update</a>
+<span class="sourceLineNo">710</span><a id="line.710">            query = DIRECT_UPDATE_END_TIME;</a>
+<span class="sourceLineNo">711</span><a id="line.711">        } else {</a>
+<span class="sourceLineNo">712</span><a id="line.712">            // This is the case for a new record</a>
+<span class="sourceLineNo">713</span><a id="line.713">            parameterSource.addValue("startTime", formatInstant(startTime));</a>
+<span class="sourceLineNo">714</span><a id="line.714">            query = DIRECT_UPSERT_MAPPING.get(dbPlatform);</a>
+<span class="sourceLineNo">715</span><a id="line.715">        }</a>
+<span class="sourceLineNo">716</span><a id="line.716"></a>
+<span class="sourceLineNo">717</span><a id="line.717">        jdbcTemplate.update(query, parameterSource);</a>
+<span class="sourceLineNo">718</span><a id="line.718">        updateParentTimestamp(parentId, startTime, endTime);</a>
+<span class="sourceLineNo">719</span><a id="line.719">        resourceExistsCache.invalidate(resourceId);</a>
+<span class="sourceLineNo">720</span><a id="line.720">    }</a>
+<span class="sourceLineNo">721</span><a id="line.721"></a>
+<span class="sourceLineNo">722</span><a id="line.722">    private void updateParentTimestamp(final String parentId, final Instant startTime, final Instant endTime) {</a>
+<span class="sourceLineNo">723</span><a id="line.723">        final var parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">724</span><a id="line.724">        final var updated = endTime == null ? startTime : endTime;</a>
+<span class="sourceLineNo">725</span><a id="line.725">        parameterSource.addValue("resourceId", parentId);</a>
+<span class="sourceLineNo">726</span><a id="line.726">        parameterSource.addValue("updated", formatInstant(updated));</a>
+<span class="sourceLineNo">727</span><a id="line.727">        jdbcTemplate.update(CONDITIONALLY_UPDATE_LAST_UPDATED, parameterSource);</a>
+<span class="sourceLineNo">728</span><a id="line.728">    }</a>
+<span class="sourceLineNo">729</span><a id="line.729"></a>
+<span class="sourceLineNo">730</span><a id="line.730">    /**</a>
+<span class="sourceLineNo">731</span><a id="line.731">     * Find parent for a resource using a deleted containment relationship.</a>
+<span class="sourceLineNo">732</span><a id="line.732">     * @param tx the transaction.</a>
+<span class="sourceLineNo">733</span><a id="line.733">     * @param resource the child resource id.</a>
+<span class="sourceLineNo">734</span><a id="line.734">     * @return the parent id.</a>
+<span class="sourceLineNo">735</span><a id="line.735">     */</a>
+<span class="sourceLineNo">736</span><a id="line.736">    private String getContainedByDeleted(final Transaction tx, final FedoraId resource) {</a>
+<span class="sourceLineNo">737</span><a id="line.737">        final String resourceID = resource.getFullId();</a>
+<span class="sourceLineNo">738</span><a id="line.738">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">739</span><a id="line.739">        parameterSource.addValue("child", resourceID);</a>
+<span class="sourceLineNo">740</span><a id="line.740">        final List&lt;String&gt; parentID;</a>
+<span class="sourceLineNo">741</span><a id="line.741">        if (tx.isOpenLongRunning()) {</a>
+<span class="sourceLineNo">742</span><a id="line.742">            parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">743</span><a id="line.743">            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED_IN_TRANSACTION, parameterSource, String.class);</a>
+<span class="sourceLineNo">744</span><a id="line.744">        } else {</a>
+<span class="sourceLineNo">745</span><a id="line.745">            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED, parameterSource, String.class);</a>
+<span class="sourceLineNo">746</span><a id="line.746">        }</a>
+<span class="sourceLineNo">747</span><a id="line.747">        return parentID.stream().findFirst().orElse(null);</a>
+<span class="sourceLineNo">748</span><a id="line.748">    }</a>
+<span class="sourceLineNo">749</span><a id="line.749"></a>
+<span class="sourceLineNo">750</span><a id="line.750">    @Override</a>
+<span class="sourceLineNo">751</span><a id="line.751">    public void commitTransaction(final Transaction tx) {</a>
+<span class="sourceLineNo">752</span><a id="line.752">        if (!tx.isShortLived()) {</a>
+<span class="sourceLineNo">753</span><a id="line.753">            tx.ensureCommitting();</a>
+<span class="sourceLineNo">754</span><a id="line.754">            try {</a>
+<span class="sourceLineNo">755</span><a id="line.755">                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">756</span><a id="line.756">                parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">757</span><a id="line.757">                final List&lt;String&gt; changedParents = jdbcTemplate.queryForList(GET_UPDATED_RESOURCES, parameterSource,</a>
+<span class="sourceLineNo">758</span><a id="line.758">                        String.class);</a>
+<span class="sourceLineNo">759</span><a id="line.759">                final List&lt;String&gt; removedResources = jdbcTemplate.queryForList(GET_DELETED_RESOURCES, parameterSource,</a>
+<span class="sourceLineNo">760</span><a id="line.760">                        String.class);</a>
+<span class="sourceLineNo">761</span><a id="line.761">                final List&lt;String&gt; addedResources = jdbcTemplate.queryForList(GET_ADDED_RESOURCES, parameterSource,</a>
+<span class="sourceLineNo">762</span><a id="line.762">                        String.class);</a>
+<span class="sourceLineNo">763</span><a id="line.763">                final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);</a>
+<span class="sourceLineNo">764</span><a id="line.764">                final int deleted = jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);</a>
+<span class="sourceLineNo">765</span><a id="line.765">                final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS_MAP.get(dbPlatform), parameterSource);</a>
+<span class="sourceLineNo">766</span><a id="line.766">                for (final var parent : changedParents) {</a>
+<span class="sourceLineNo">767</span><a id="line.767">                    final var updated = jdbcTemplate.queryForObject(SELECT_LAST_UPDATED_IN_TX,</a>
+<span class="sourceLineNo">768</span><a id="line.768">                            Map.of("resourceId", parent, "transactionId", tx.getId()), Timestamp.class);</a>
+<span class="sourceLineNo">769</span><a id="line.769">                    if (updated != null) {</a>
+<span class="sourceLineNo">770</span><a id="line.770">                        jdbcTemplate.update(UPDATE_LAST_UPDATED,</a>
+<span class="sourceLineNo">771</span><a id="line.771">                                Map.of("resourceId", parent, "updated", updated));</a>
+<span class="sourceLineNo">772</span><a id="line.772">                    }</a>
+<span class="sourceLineNo">773</span><a id="line.773">                }</a>
+<span class="sourceLineNo">774</span><a id="line.774">                jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);</a>
+<span class="sourceLineNo">775</span><a id="line.775">                this.getContainedByCache.invalidateAll(removedResources);</a>
+<span class="sourceLineNo">776</span><a id="line.776">                // Add inserted records to removed records list.</a>
+<span class="sourceLineNo">777</span><a id="line.777">                removedResources.addAll(addedResources);</a>
+<span class="sourceLineNo">778</span><a id="line.778">                this.resourceExistsCache.invalidateAll(removedResources);</a>
+<span class="sourceLineNo">779</span><a id="line.779">                LOGGER.debug("Commit of tx {} complete with {} adds, {} deletes and {} purges",</a>
+<span class="sourceLineNo">780</span><a id="line.780">                        tx.getId(), added, deleted, purged);</a>
+<span class="sourceLineNo">781</span><a id="line.781">            } catch (final Exception e) {</a>
+<span class="sourceLineNo">782</span><a id="line.782">                LOGGER.warn("Unable to commit containment index transaction {}: {}", tx, e.getMessage());</a>
+<span class="sourceLineNo">783</span><a id="line.783">                throw new RepositoryRuntimeException("Unable to commit containment index transaction", e);</a>
+<span class="sourceLineNo">784</span><a id="line.784">            }</a>
+<span class="sourceLineNo">785</span><a id="line.785">        }</a>
+<span class="sourceLineNo">786</span><a id="line.786">    }</a>
+<span class="sourceLineNo">787</span><a id="line.787"></a>
+<span class="sourceLineNo">788</span><a id="line.788">    @Transactional(propagation = Propagation.NOT_SUPPORTED)</a>
+<span class="sourceLineNo">789</span><a id="line.789">    @Override</a>
+<span class="sourceLineNo">790</span><a id="line.790">    public void rollbackTransaction(final Transaction tx) {</a>
+<span class="sourceLineNo">791</span><a id="line.791">        if (!tx.isShortLived()) {</a>
+<span class="sourceLineNo">792</span><a id="line.792">            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">793</span><a id="line.793">            parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">794</span><a id="line.794">            jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, parameterSource);</a>
+<span class="sourceLineNo">795</span><a id="line.795">        }</a>
+<span class="sourceLineNo">796</span><a id="line.796">    }</a>
+<span class="sourceLineNo">797</span><a id="line.797"></a>
+<span class="sourceLineNo">798</span><a id="line.798">    @Override</a>
+<span class="sourceLineNo">799</span><a id="line.799">    public boolean resourceExists(@Nonnull final Transaction tx, final FedoraId fedoraId,</a>
+<span class="sourceLineNo">800</span><a id="line.800">                                  final boolean includeDeleted) {</a>
+<span class="sourceLineNo">801</span><a id="line.801">        // Get the containing ID because fcr:metadata will not exist here but MUST exist if the containing resource does</a>
+<span class="sourceLineNo">802</span><a id="line.802">        final String resourceId = fedoraId.getBaseId();</a>
+<span class="sourceLineNo">803</span><a id="line.803">        LOGGER.debug("Checking if {} exists in transaction {}", resourceId, tx);</a>
+<span class="sourceLineNo">804</span><a id="line.804">        if (fedoraId.isRepositoryRoot()) {</a>
+<span class="sourceLineNo">805</span><a id="line.805">            // Root always exists.</a>
+<span class="sourceLineNo">806</span><a id="line.806">            return true;</a>
+<span class="sourceLineNo">807</span><a id="line.807">        }</a>
+<span class="sourceLineNo">808</span><a id="line.808">        if (tx.isOpenLongRunning()) {</a>
+<span class="sourceLineNo">809</span><a id="line.809">            final var queryToUse = includeDeleted ? RESOURCE_OR_TOMBSTONE_EXISTS_IN_TRANSACTION :</a>
+<span class="sourceLineNo">810</span><a id="line.810">                    RESOURCE_EXISTS_IN_TRANSACTION;</a>
+<span class="sourceLineNo">811</span><a id="line.811">            return !jdbcTemplate.queryForList(queryToUse,</a>
+<span class="sourceLineNo">812</span><a id="line.812">                    Map.of("child", resourceId, "transactionId", tx.getId()), String.class).isEmpty();</a>
+<span class="sourceLineNo">813</span><a id="line.813">        } else if (includeDeleted) {</a>
+<span class="sourceLineNo">814</span><a id="line.814">            final Boolean exists = resourceExistsCache.getIfPresent(resourceId);</a>
+<span class="sourceLineNo">815</span><a id="line.815">            if (exists != null &amp;&amp; exists) {</a>
+<span class="sourceLineNo">816</span><a id="line.816">                // Only return true, false values might change once deleted resources are included.</a>
+<span class="sourceLineNo">817</span><a id="line.817">                return true;</a>
+<span class="sourceLineNo">818</span><a id="line.818">            }</a>
+<span class="sourceLineNo">819</span><a id="line.819">            return !jdbcTemplate.queryForList(RESOURCE_OR_TOMBSTONE_EXISTS,</a>
+<span class="sourceLineNo">820</span><a id="line.820">                    Map.of("child", resourceId), String.class).isEmpty();</a>
+<span class="sourceLineNo">821</span><a id="line.821">        } else {</a>
+<span class="sourceLineNo">822</span><a id="line.822">            return resourceExistsCache.get(resourceId, key -&gt; !jdbcTemplate.queryForList(RESOURCE_EXISTS,</a>
+<span class="sourceLineNo">823</span><a id="line.823">                        Map.of("child", resourceId), String.class).isEmpty()</a>
+<span class="sourceLineNo">824</span><a id="line.824">            );</a>
+<span class="sourceLineNo">825</span><a id="line.825">        }</a>
+<span class="sourceLineNo">826</span><a id="line.826">    }</a>
+<span class="sourceLineNo">827</span><a id="line.827"></a>
+<span class="sourceLineNo">828</span><a id="line.828">    @Override</a>
+<span class="sourceLineNo">829</span><a id="line.829">    public FedoraId getContainerIdByPath(final Transaction tx, final FedoraId fedoraId, final boolean checkDeleted) {</a>
+<span class="sourceLineNo">830</span><a id="line.830">        if (fedoraId.isRepositoryRoot()) {</a>
+<span class="sourceLineNo">831</span><a id="line.831">            // If we are root then we are the top.</a>
+<span class="sourceLineNo">832</span><a id="line.832">            return fedoraId;</a>
+<span class="sourceLineNo">833</span><a id="line.833">        }</a>
+<span class="sourceLineNo">834</span><a id="line.834">        final String parent = getContainedBy(tx, fedoraId);</a>
+<span class="sourceLineNo">835</span><a id="line.835">        if (parent != null) {</a>
+<span class="sourceLineNo">836</span><a id="line.836">            return FedoraId.create(parent);</a>
+<span class="sourceLineNo">837</span><a id="line.837">        }</a>
+<span class="sourceLineNo">838</span><a id="line.838">        String fullId = fedoraId.getFullId();</a>
+<span class="sourceLineNo">839</span><a id="line.839">        while (fullId.contains("/")) {</a>
+<span class="sourceLineNo">840</span><a id="line.840">            fullId = fedoraId.getResourceId().substring(0, fullId.lastIndexOf("/"));</a>
+<span class="sourceLineNo">841</span><a id="line.841">            if (fullId.equals(FEDORA_ID_PREFIX)) {</a>
+<span class="sourceLineNo">842</span><a id="line.842">                return FedoraId.getRepositoryRootId();</a>
+<span class="sourceLineNo">843</span><a id="line.843">            }</a>
+<span class="sourceLineNo">844</span><a id="line.844">            final FedoraId testID = FedoraId.create(fullId);</a>
+<span class="sourceLineNo">845</span><a id="line.845">            if (resourceExists(tx, testID, checkDeleted)) {</a>
+<span class="sourceLineNo">846</span><a id="line.846">                return testID;</a>
+<span class="sourceLineNo">847</span><a id="line.847">            }</a>
+<span class="sourceLineNo">848</span><a id="line.848">        }</a>
+<span class="sourceLineNo">849</span><a id="line.849">        return FedoraId.getRepositoryRootId();</a>
+<span class="sourceLineNo">850</span><a id="line.850">    }</a>
+<span class="sourceLineNo">851</span><a id="line.851"></a>
+<span class="sourceLineNo">852</span><a id="line.852">    @Override</a>
+<span class="sourceLineNo">853</span><a id="line.853">    public void reset() {</a>
+<span class="sourceLineNo">854</span><a id="line.854">        try {</a>
+<span class="sourceLineNo">855</span><a id="line.855">            jdbcTemplate.update(TRUNCATE_TABLE + RESOURCES_TABLE, Collections.emptyMap());</a>
+<span class="sourceLineNo">856</span><a id="line.856">            jdbcTemplate.update(TRUNCATE_TABLE + TRANSACTION_OPERATIONS_TABLE, Collections.emptyMap());</a>
+<span class="sourceLineNo">857</span><a id="line.857">            this.getContainedByCache.invalidateAll();</a>
+<span class="sourceLineNo">858</span><a id="line.858">        } catch (final Exception e) {</a>
+<span class="sourceLineNo">859</span><a id="line.859">            throw new RepositoryRuntimeException("Failed to truncate containment tables", e);</a>
+<span class="sourceLineNo">860</span><a id="line.860">        }</a>
+<span class="sourceLineNo">861</span><a id="line.861">    }</a>
+<span class="sourceLineNo">862</span><a id="line.862"></a>
+<span class="sourceLineNo">863</span><a id="line.863">    @Override</a>
+<span class="sourceLineNo">864</span><a id="line.864">    public boolean hasResourcesStartingWith(final Transaction tx, final FedoraId fedoraId) {</a>
+<span class="sourceLineNo">865</span><a id="line.865">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">866</span><a id="line.866">        parameterSource.addValue("resourceId", fedoraId.getFullId() + "/%");</a>
+<span class="sourceLineNo">867</span><a id="line.867">        final boolean matchingIds;</a>
+<span class="sourceLineNo">868</span><a id="line.868">        if (tx.isOpenLongRunning()) {</a>
+<span class="sourceLineNo">869</span><a id="line.869">            parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">870</span><a id="line.870">            matchingIds = !jdbcTemplate.queryForList(SELECT_ID_LIKE_IN_TRANSACTION, parameterSource, String.class)</a>
+<span class="sourceLineNo">871</span><a id="line.871">                .isEmpty();</a>
+<span class="sourceLineNo">872</span><a id="line.872">        } else {</a>
+<span class="sourceLineNo">873</span><a id="line.873">            matchingIds = !jdbcTemplate.queryForList(SELECT_ID_LIKE, parameterSource, String.class).isEmpty();</a>
+<span class="sourceLineNo">874</span><a id="line.874">        }</a>
+<span class="sourceLineNo">875</span><a id="line.875">        return matchingIds;</a>
+<span class="sourceLineNo">876</span><a id="line.876">    }</a>
+<span class="sourceLineNo">877</span><a id="line.877"></a>
+<span class="sourceLineNo">878</span><a id="line.878">    @Override</a>
+<span class="sourceLineNo">879</span><a id="line.879">    public Instant containmentLastUpdated(final Transaction tx, final FedoraId fedoraId) {</a>
+<span class="sourceLineNo">880</span><a id="line.880">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</a>
+<span class="sourceLineNo">881</span><a id="line.881">        parameterSource.addValue("resourceId", fedoraId.getFullId());</a>
+<span class="sourceLineNo">882</span><a id="line.882">        final String queryToUse;</a>
+<span class="sourceLineNo">883</span><a id="line.883">        if (tx.isOpenLongRunning()) {</a>
+<span class="sourceLineNo">884</span><a id="line.884">            parameterSource.addValue("transactionId", tx.getId());</a>
+<span class="sourceLineNo">885</span><a id="line.885">            queryToUse = SELECT_LAST_UPDATED_IN_TX;</a>
+<span class="sourceLineNo">886</span><a id="line.886">        } else {</a>
+<span class="sourceLineNo">887</span><a id="line.887">            queryToUse = SELECT_LAST_UPDATED;</a>
+<span class="sourceLineNo">888</span><a id="line.888">        }</a>
+<span class="sourceLineNo">889</span><a id="line.889">        try {</a>
+<span class="sourceLineNo">890</span><a id="line.890">            return fromTimestamp(jdbcTemplate.queryForObject(queryToUse, parameterSource, Timestamp.class));</a>
+<span class="sourceLineNo">891</span><a id="line.891">        } catch (final EmptyResultDataAccessException e) {</a>
+<span class="sourceLineNo">892</span><a id="line.892">            return null;</a>
+<span class="sourceLineNo">893</span><a id="line.893">        }</a>
+<span class="sourceLineNo">894</span><a id="line.894">    }</a>
+<span class="sourceLineNo">895</span><a id="line.895"></a>
+<span class="sourceLineNo">896</span><a id="line.896">    /**</a>
+<span class="sourceLineNo">897</span><a id="line.897">     * Get the data source backing this containment index</a>
+<span class="sourceLineNo">898</span><a id="line.898">     * @return data source</a>
+<span class="sourceLineNo">899</span><a id="line.899">     */</a>
+<span class="sourceLineNo">900</span><a id="line.900">    public DataSource getDataSource() {</a>
+<span class="sourceLineNo">901</span><a id="line.901">        return dataSource;</a>
+<span class="sourceLineNo">902</span><a id="line.902">    }</a>
+<span class="sourceLineNo">903</span><a id="line.903"></a>
+<span class="sourceLineNo">904</span><a id="line.904">    /**</a>
+<span class="sourceLineNo">905</span><a id="line.905">     * Set the data source backing this containment index</a>
+<span class="sourceLineNo">906</span><a id="line.906">     * @param dataSource data source</a>
+<span class="sourceLineNo">907</span><a id="line.907">     */</a>
+<span class="sourceLineNo">908</span><a id="line.908">    public void setDataSource(final DataSource dataSource) {</a>
+<span class="sourceLineNo">909</span><a id="line.909">        this.dataSource = dataSource;</a>
+<span class="sourceLineNo">910</span><a id="line.910">    }</a>
+<span class="sourceLineNo">911</span><a id="line.911"></a>
+<span class="sourceLineNo">912</span><a id="line.912">    /**</a>
+<span class="sourceLineNo">913</span><a id="line.913">     * Get the current startTime for the resource</a>
+<span class="sourceLineNo">914</span><a id="line.914">     * @param resourceId id of the resource</a>
+<span class="sourceLineNo">915</span><a id="line.915">     * @return start time or null if no committed record.</a>
+<span class="sourceLineNo">916</span><a id="line.916">     */</a>
+<span class="sourceLineNo">917</span><a id="line.917">    private Instant getCurrentStartTime(final String resourceId) {</a>
+<span class="sourceLineNo">918</span><a id="line.918">        return fromTimestamp(jdbcTemplate.queryForObject(GET_START_TIME, Map.of(</a>
+<span class="sourceLineNo">919</span><a id="line.919">                "child", resourceId</a>
+<span class="sourceLineNo">920</span><a id="line.920">        ), Timestamp.class));</a>
+<span class="sourceLineNo">921</span><a id="line.921">    }</a>
+<span class="sourceLineNo">922</span><a id="line.922"></a>
+<span class="sourceLineNo">923</span><a id="line.923">    private Instant fromTimestamp(final Timestamp timestamp) {</a>
+<span class="sourceLineNo">924</span><a id="line.924">        if (timestamp != null) {</a>
+<span class="sourceLineNo">925</span><a id="line.925">            return timestamp.toInstant();</a>
+<span class="sourceLineNo">926</span><a id="line.926">        }</a>
+<span class="sourceLineNo">927</span><a id="line.927">        return null;</a>
+<span class="sourceLineNo">928</span><a id="line.928">    }</a>
+<span class="sourceLineNo">929</span><a id="line.929"></a>
+<span class="sourceLineNo">930</span><a id="line.930">    /**</a>
+<span class="sourceLineNo">931</span><a id="line.931">     * Format an instant to a timestamp without milliseconds, due to precision</a>
+<span class="sourceLineNo">932</span><a id="line.932">     * issues with memento datetimes.</a>
+<span class="sourceLineNo">933</span><a id="line.933">     * @param instant the instant to format.</a>
+<span class="sourceLineNo">934</span><a id="line.934">     * @return the datetime timestamp</a>
+<span class="sourceLineNo">935</span><a id="line.935">     */</a>
+<span class="sourceLineNo">936</span><a id="line.936">    private Timestamp formatInstant(final Instant instant) {</a>
+<span class="sourceLineNo">937</span><a id="line.937">        if (instant == null) {</a>
+<span class="sourceLineNo">938</span><a id="line.938">            return null;</a>
+<span class="sourceLineNo">939</span><a id="line.939">        }</a>
+<span class="sourceLineNo">940</span><a id="line.940">        return Timestamp.from(instant.truncatedTo(ChronoUnit.SECONDS));</a>
+<span class="sourceLineNo">941</span><a id="line.941">    }</a>
+<span class="sourceLineNo">942</span><a id="line.942"></a>
+<span class="sourceLineNo">943</span><a id="line.943">    /**</a>
+<span class="sourceLineNo">944</span><a id="line.944">     * Private class to back a stream with a paged DB query.</a>
+<span class="sourceLineNo">945</span><a id="line.945">     *</a>
+<span class="sourceLineNo">946</span><a id="line.946">     * If this needs to be run in parallel we will have to override trySplit() and determine a good method to split on.</a>
+<span class="sourceLineNo">947</span><a id="line.947">     */</a>
+<span class="sourceLineNo">948</span><a id="line.948">    private class ContainmentIterator extends Spliterators.AbstractSpliterator&lt;String&gt; {</a>
+<span class="sourceLineNo">949</span><a id="line.949">        final Queue&lt;String&gt; children = new ConcurrentLinkedQueue&lt;&gt;();</a>
+<span class="sourceLineNo">950</span><a id="line.950">        int numOffsets = 0;</a>
+<span class="sourceLineNo">951</span><a id="line.951">        final String queryToUse;</a>
+<span class="sourceLineNo">952</span><a id="line.952">        final MapSqlParameterSource parameterSource;</a>
+<span class="sourceLineNo">953</span><a id="line.953"></a>
+<span class="sourceLineNo">954</span><a id="line.954">        public ContainmentIterator(final String query, final MapSqlParameterSource parameters) {</a>
+<span class="sourceLineNo">955</span><a id="line.955">            super(Long.MAX_VALUE, Spliterator.ORDERED);</a>
+<span class="sourceLineNo">956</span><a id="line.956">            queryToUse = query;</a>
+<span class="sourceLineNo">957</span><a id="line.957">            parameterSource = parameters;</a>
+<span class="sourceLineNo">958</span><a id="line.958">            parameterSource.addValue("containsLimit", containsLimit);</a>
+<span class="sourceLineNo">959</span><a id="line.959">        }</a>
+<span class="sourceLineNo">960</span><a id="line.960"></a>
+<span class="sourceLineNo">961</span><a id="line.961">        @Override</a>
+<span class="sourceLineNo">962</span><a id="line.962">        public boolean tryAdvance(final Consumer&lt;? super String&gt; action) {</a>
+<span class="sourceLineNo">963</span><a id="line.963">            try {</a>
+<span class="sourceLineNo">964</span><a id="line.964">                action.accept(children.remove());</a>
+<span class="sourceLineNo">965</span><a id="line.965">            } catch (final NoSuchElementException e) {</a>
+<span class="sourceLineNo">966</span><a id="line.966">                parameterSource.addValue("offSet", numOffsets * containsLimit);</a>
+<span class="sourceLineNo">967</span><a id="line.967">                numOffsets += 1;</a>
+<span class="sourceLineNo">968</span><a id="line.968">                children.addAll(jdbcTemplate.queryForList(queryToUse, parameterSource, String.class));</a>
+<span class="sourceLineNo">969</span><a id="line.969">                if (children.size() == 0) {</a>
+<span class="sourceLineNo">970</span><a id="line.970">                    // no more elements.</a>
+<span class="sourceLineNo">971</span><a id="line.971">                    return false;</a>
+<span class="sourceLineNo">972</span><a id="line.972">                }</a>
+<span class="sourceLineNo">973</span><a id="line.973">                action.accept(children.remove());</a>
+<span class="sourceLineNo">974</span><a id="line.974">            }</a>
+<span class="sourceLineNo">975</span><a id="line.975">            return true;</a>
+<span class="sourceLineNo">976</span><a id="line.976">        }</a>
+<span class="sourceLineNo">977</span><a id="line.977">    }</a>
+<span class="sourceLineNo">978</span><a id="line.978">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

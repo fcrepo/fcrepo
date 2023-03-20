@@ -1,0 +1,163 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.kernel.impl.services;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static java.util.stream.Stream.empty;</a>
+<span class="sourceLineNo">009</span><a id="line.9"></a>
+<span class="sourceLineNo">010</span><a id="line.10">import java.util.ArrayList;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import java.util.List;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import java.util.stream.Stream;</a>
+<span class="sourceLineNo">013</span><a id="line.13"></a>
+<span class="sourceLineNo">014</span><a id="line.14">import javax.inject.Inject;</a>
+<span class="sourceLineNo">015</span><a id="line.15"></a>
+<span class="sourceLineNo">016</span><a id="line.16">import org.fcrepo.kernel.api.Transaction;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import org.fcrepo.kernel.api.models.FedoraResource;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import org.fcrepo.kernel.api.services.ContainmentTriplesService;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import org.fcrepo.kernel.api.services.ManagedPropertiesService;</a>
+<span class="sourceLineNo">021</span><a id="line.21">import org.fcrepo.kernel.api.services.MembershipService;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import org.fcrepo.kernel.api.services.ReferenceService;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import org.fcrepo.kernel.api.services.ResourceTripleService;</a>
+<span class="sourceLineNo">024</span><a id="line.24"></a>
+<span class="sourceLineNo">025</span><a id="line.25">import org.apache.jena.graph.Triple;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import org.springframework.beans.factory.annotation.Autowired;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import org.springframework.beans.factory.annotation.Qualifier;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import org.springframework.stereotype.Component;</a>
+<span class="sourceLineNo">029</span><a id="line.29"></a>
+<span class="sourceLineNo">030</span><a id="line.30">/**</a>
+<span class="sourceLineNo">031</span><a id="line.31"> * Implementation of the ResourceTripleService</a>
+<span class="sourceLineNo">032</span><a id="line.32"> * @author whikloj</a>
+<span class="sourceLineNo">033</span><a id="line.33"> * @since 6.0.0</a>
+<span class="sourceLineNo">034</span><a id="line.34"> */</a>
+<span class="sourceLineNo">035</span><a id="line.35">@Component</a>
+<span class="sourceLineNo">036</span><a id="line.36">public class ResourceTripleServiceImpl implements ResourceTripleService {</a>
+<span class="sourceLineNo">037</span><a id="line.37"></a>
+<span class="sourceLineNo">038</span><a id="line.38">    @Inject</a>
+<span class="sourceLineNo">039</span><a id="line.39">    private ManagedPropertiesService managedPropertiesService;</a>
+<span class="sourceLineNo">040</span><a id="line.40"></a>
+<span class="sourceLineNo">041</span><a id="line.41">    @Inject</a>
+<span class="sourceLineNo">042</span><a id="line.42">    private ContainmentTriplesService containmentTriplesService;</a>
+<span class="sourceLineNo">043</span><a id="line.43"></a>
+<span class="sourceLineNo">044</span><a id="line.44">    @Autowired</a>
+<span class="sourceLineNo">045</span><a id="line.45">    @Qualifier("referenceService")</a>
+<span class="sourceLineNo">046</span><a id="line.46">    private ReferenceService referenceService;</a>
+<span class="sourceLineNo">047</span><a id="line.47"></a>
+<span class="sourceLineNo">048</span><a id="line.48">    @Inject</a>
+<span class="sourceLineNo">049</span><a id="line.49">    private MembershipService membershipService;</a>
+<span class="sourceLineNo">050</span><a id="line.50"></a>
+<span class="sourceLineNo">051</span><a id="line.51">    @Override</a>
+<span class="sourceLineNo">052</span><a id="line.52">    public Stream&lt;Triple&gt; getResourceTriples(final Transaction tx, final FedoraResource resource,</a>
+<span class="sourceLineNo">053</span><a id="line.53">                                             final LdpTriplePreferences preferences, final int limit) {</a>
+<span class="sourceLineNo">054</span><a id="line.54">        final List&lt;Stream&lt;Triple&gt;&gt; streams = new ArrayList&lt;&gt;();</a>
+<span class="sourceLineNo">055</span><a id="line.55"></a>
+<span class="sourceLineNo">056</span><a id="line.56">        // Provide user RDF if we didn't ask for omit=ldp:PreferMinimalContainer.</a>
+<span class="sourceLineNo">057</span><a id="line.57">        if (preferences.displayUserRdf()) {</a>
+<span class="sourceLineNo">058</span><a id="line.58">            streams.add(resource.getTriples());</a>
+<span class="sourceLineNo">059</span><a id="line.59">        }</a>
+<span class="sourceLineNo">060</span><a id="line.60">        // Provide server-managed triples if we didn't ask for omit=fedora:ServerManaged or</a>
+<span class="sourceLineNo">061</span><a id="line.61">        // omit=ldp:PreferMinimalContainer</a>
+<span class="sourceLineNo">062</span><a id="line.62">        if (preferences.displayServerManaged()) {</a>
+<span class="sourceLineNo">063</span><a id="line.63">            streams.add(this.managedPropertiesService.get(resource));</a>
+<span class="sourceLineNo">064</span><a id="line.64">        }</a>
+<span class="sourceLineNo">065</span><a id="line.65">        // containment triples about this resource, return by default. Containment is server managed so also</a>
+<span class="sourceLineNo">066</span><a id="line.66">        // check for that prefer tag.</a>
+<span class="sourceLineNo">067</span><a id="line.67">        if (preferences.displayContainment()) {</a>
+<span class="sourceLineNo">068</span><a id="line.68">            if (limit == -1) {</a>
+<span class="sourceLineNo">069</span><a id="line.69">                streams.add(this.containmentTriplesService.get(tx, resource));</a>
+<span class="sourceLineNo">070</span><a id="line.70">            } else {</a>
+<span class="sourceLineNo">071</span><a id="line.71">                streams.add(this.containmentTriplesService.get(tx, resource).limit(limit));</a>
+<span class="sourceLineNo">072</span><a id="line.72">            }</a>
+<span class="sourceLineNo">073</span><a id="line.73">        }</a>
+<span class="sourceLineNo">074</span><a id="line.74"></a>
+<span class="sourceLineNo">075</span><a id="line.75">        // LDP container membership triples for this resource, returned by default. Membership is server managed so</a>
+<span class="sourceLineNo">076</span><a id="line.76">        // also check that tag.</a>
+<span class="sourceLineNo">077</span><a id="line.77">        if (preferences.displayMembership()) {</a>
+<span class="sourceLineNo">078</span><a id="line.78">            streams.add(membershipService.getMembership(tx, resource.getFedoraId()));</a>
+<span class="sourceLineNo">079</span><a id="line.79">        }</a>
+<span class="sourceLineNo">080</span><a id="line.80"></a>
+<span class="sourceLineNo">081</span><a id="line.81">        // Include inbound references to this object, NOT returned by default.</a>
+<span class="sourceLineNo">082</span><a id="line.82">        if (preferences.displayReferences()) {</a>
+<span class="sourceLineNo">083</span><a id="line.83">            streams.add(referenceService.getInboundReferences(tx, resource));</a>
+<span class="sourceLineNo">084</span><a id="line.84">        }</a>
+<span class="sourceLineNo">085</span><a id="line.85"></a>
+<span class="sourceLineNo">086</span><a id="line.86">        return streams.stream().reduce(empty(), Stream::concat);</a>
+<span class="sourceLineNo">087</span><a id="line.87">    }</a>
+<span class="sourceLineNo">088</span><a id="line.88"></a>
+<span class="sourceLineNo">089</span><a id="line.89">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

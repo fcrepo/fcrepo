@@ -1,0 +1,126 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6"></a>
+<span class="sourceLineNo">007</span><a id="line.7">package org.fcrepo.config;</a>
+<span class="sourceLineNo">008</span><a id="line.8"></a>
+<span class="sourceLineNo">009</span><a id="line.9">import java.util.Objects;</a>
+<span class="sourceLineNo">010</span><a id="line.10"></a>
+<span class="sourceLineNo">011</span><a id="line.11">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import org.slf4j.LoggerFactory;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import org.springframework.context.annotation.ConditionContext;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import org.springframework.context.annotation.ConfigurationCondition;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import org.springframework.core.type.AnnotatedTypeMetadata;</a>
+<span class="sourceLineNo">016</span><a id="line.16"></a>
+<span class="sourceLineNo">017</span><a id="line.17">/**</a>
+<span class="sourceLineNo">018</span><a id="line.18"> * This condition enables a bean/configuration when the specified property matches the expected value</a>
+<span class="sourceLineNo">019</span><a id="line.19"> *</a>
+<span class="sourceLineNo">020</span><a id="line.20"> * Implementations must provide a no-arg constructor.</a>
+<span class="sourceLineNo">021</span><a id="line.21"> *</a>
+<span class="sourceLineNo">022</span><a id="line.22"> * @author pwinckles</a>
+<span class="sourceLineNo">023</span><a id="line.23"> */</a>
+<span class="sourceLineNo">024</span><a id="line.24">public abstract class ConditionOnProperty&lt;T&gt; implements ConfigurationCondition {</a>
+<span class="sourceLineNo">025</span><a id="line.25"></a>
+<span class="sourceLineNo">026</span><a id="line.26">    private static final Logger LOGGER = LoggerFactory.getLogger(ConditionOnProperty.class);</a>
+<span class="sourceLineNo">027</span><a id="line.27"></a>
+<span class="sourceLineNo">028</span><a id="line.28">    private final String name;</a>
+<span class="sourceLineNo">029</span><a id="line.29">    private final T expected;</a>
+<span class="sourceLineNo">030</span><a id="line.30">    private final T defaultValue;</a>
+<span class="sourceLineNo">031</span><a id="line.31">    private final Class&lt;T&gt; clazz;</a>
+<span class="sourceLineNo">032</span><a id="line.32"></a>
+<span class="sourceLineNo">033</span><a id="line.33">    public ConditionOnProperty(final String name, final T expected, final T defaultValue, final Class&lt;T&gt; clazz) {</a>
+<span class="sourceLineNo">034</span><a id="line.34">        this.name = name;</a>
+<span class="sourceLineNo">035</span><a id="line.35">        this.expected = expected;</a>
+<span class="sourceLineNo">036</span><a id="line.36">        this.defaultValue = defaultValue;</a>
+<span class="sourceLineNo">037</span><a id="line.37">        this.clazz = clazz;</a>
+<span class="sourceLineNo">038</span><a id="line.38">    }</a>
+<span class="sourceLineNo">039</span><a id="line.39"></a>
+<span class="sourceLineNo">040</span><a id="line.40">    @Override</a>
+<span class="sourceLineNo">041</span><a id="line.41">    public boolean matches(final ConditionContext context, final AnnotatedTypeMetadata metadata) {</a>
+<span class="sourceLineNo">042</span><a id="line.42">        LOGGER.debug("Prop {}: {}", name, context.getEnvironment().getProperty(name));</a>
+<span class="sourceLineNo">043</span><a id="line.43">        return Objects.equals(expected, context.getEnvironment().getProperty(name, clazz, defaultValue));</a>
+<span class="sourceLineNo">044</span><a id="line.44">    }</a>
+<span class="sourceLineNo">045</span><a id="line.45"></a>
+<span class="sourceLineNo">046</span><a id="line.46">    @Override</a>
+<span class="sourceLineNo">047</span><a id="line.47">    public ConfigurationPhase getConfigurationPhase() {</a>
+<span class="sourceLineNo">048</span><a id="line.48">        // This forces spring to not evaluate these conditions until after it has loaded other @Configuration classes,</a>
+<span class="sourceLineNo">049</span><a id="line.49">        // ensuring that the properties have been loaded.</a>
+<span class="sourceLineNo">050</span><a id="line.50">        return ConfigurationPhase.REGISTER_BEAN;</a>
+<span class="sourceLineNo">051</span><a id="line.51">    }</a>
+<span class="sourceLineNo">052</span><a id="line.52">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
