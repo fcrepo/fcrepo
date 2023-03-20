@@ -1,0 +1,132 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.kernel.api.rdf;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import java.io.File;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import java.io.IOException;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import java.util.HashMap;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import java.util.Map;</a>
+<span class="sourceLineNo">012</span><a id="line.12"></a>
+<span class="sourceLineNo">013</span><a id="line.13">import org.fcrepo.kernel.api.utils.AutoReloadingConfiguration;</a>
+<span class="sourceLineNo">014</span><a id="line.14"></a>
+<span class="sourceLineNo">015</span><a id="line.15">import com.fasterxml.jackson.core.type.TypeReference;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import com.fasterxml.jackson.databind.ObjectMapper;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;</a>
+<span class="sourceLineNo">018</span><a id="line.18"></a>
+<span class="sourceLineNo">019</span><a id="line.19">/**</a>
+<span class="sourceLineNo">020</span><a id="line.20"> * Registry of RDF namespaces</a>
+<span class="sourceLineNo">021</span><a id="line.21"> *</a>
+<span class="sourceLineNo">022</span><a id="line.22"> * @author bbpennel</a>
+<span class="sourceLineNo">023</span><a id="line.23"> */</a>
+<span class="sourceLineNo">024</span><a id="line.24">public class RdfNamespaceRegistry extends AutoReloadingConfiguration {</a>
+<span class="sourceLineNo">025</span><a id="line.25"></a>
+<span class="sourceLineNo">026</span><a id="line.26">    private Map&lt;String, String&gt; namespaces;</a>
+<span class="sourceLineNo">027</span><a id="line.27"></a>
+<span class="sourceLineNo">028</span><a id="line.28">    /**</a>
+<span class="sourceLineNo">029</span><a id="line.29">     * Load the namespace prefix to URI configuration file</a>
+<span class="sourceLineNo">030</span><a id="line.30">     */</a>
+<span class="sourceLineNo">031</span><a id="line.31">    @Override</a>
+<span class="sourceLineNo">032</span><a id="line.32">    protected synchronized void loadConfiguration() throws IOException {</a>
+<span class="sourceLineNo">033</span><a id="line.33">        final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());</a>
+<span class="sourceLineNo">034</span><a id="line.34">        final TypeReference&lt;HashMap&lt;String, String&gt;&gt; typeRef = new TypeReference&lt;HashMap&lt;String, String&gt;&gt;() {};</a>
+<span class="sourceLineNo">035</span><a id="line.35">        namespaces = mapper.readValue(new File(configPath), typeRef);</a>
+<span class="sourceLineNo">036</span><a id="line.36">    }</a>
+<span class="sourceLineNo">037</span><a id="line.37"></a>
+<span class="sourceLineNo">038</span><a id="line.38">    /**</a>
+<span class="sourceLineNo">039</span><a id="line.39">     * Get the mapping of namespace prefixes to URIs</a>
+<span class="sourceLineNo">040</span><a id="line.40">     *</a>
+<span class="sourceLineNo">041</span><a id="line.41">     * @return map of namespace prefixes to URIs, or an empty map if no mapping was provided.</a>
+<span class="sourceLineNo">042</span><a id="line.42">     */</a>
+<span class="sourceLineNo">043</span><a id="line.43">    public Map&lt;String, String&gt; getNamespaces() {</a>
+<span class="sourceLineNo">044</span><a id="line.44">        if (namespaces == null) {</a>
+<span class="sourceLineNo">045</span><a id="line.45">            namespaces = new HashMap&lt;&gt;();</a>
+<span class="sourceLineNo">046</span><a id="line.46">        }</a>
+<span class="sourceLineNo">047</span><a id="line.47">        return namespaces;</a>
+<span class="sourceLineNo">048</span><a id="line.48">    }</a>
+<span class="sourceLineNo">049</span><a id="line.49"></a>
+<span class="sourceLineNo">050</span><a id="line.50">    /**</a>
+<span class="sourceLineNo">051</span><a id="line.51">     * Set the mapping of namespace prefixes to URIs</a>
+<span class="sourceLineNo">052</span><a id="line.52">     *</a>
+<span class="sourceLineNo">053</span><a id="line.53">     * @param namespaces mapping of namespaces</a>
+<span class="sourceLineNo">054</span><a id="line.54">     */</a>
+<span class="sourceLineNo">055</span><a id="line.55">    public void setNamespaces(final Map&lt;String, String&gt; namespaces) {</a>
+<span class="sourceLineNo">056</span><a id="line.56">        this.namespaces = namespaces;</a>
+<span class="sourceLineNo">057</span><a id="line.57">    }</a>
+<span class="sourceLineNo">058</span><a id="line.58">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
