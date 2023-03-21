@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TurtleSerializer.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository JMS Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-event-serialization</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.event.serialization</a> &gt; <span class="el_source">TurtleSerializer.java</span></div><h1>TurtleSerializer.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.event.serialization;
+
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
+
+import org.apache.jena.rdf.model.Model;
+import org.fcrepo.kernel.api.observer.Event;
+
+/**
+ * Serialize a Event as Turtle
+ * @author acoburn
+ * @since 6/16/16
+ */
+<span class="nc" id="L19">public class TurtleSerializer implements EventSerializer {</span>
+
+    /**
+     * Serialize a Event in RDF using Turtle syntax
+     * @param evt the Fedora event
+     * @return a string of RDF, using Turtle syntax
+     */
+    @Override
+    public String serialize(final Event evt) {
+<span class="nc" id="L28">        final Model model = EventSerializer.toModel(evt);</span>
+<span class="nc" id="L29">        final ByteArrayOutputStream out = new ByteArrayOutputStream();</span>
+<span class="nc" id="L30">        model.write(out, &quot;TTL&quot;);</span>
+<span class="nc" id="L31">        return out.toString(StandardCharsets.UTF_8);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
