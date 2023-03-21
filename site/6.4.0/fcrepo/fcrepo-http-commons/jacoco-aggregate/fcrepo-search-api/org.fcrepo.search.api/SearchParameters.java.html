@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>SearchParameters.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.api</a> &gt; <span class="el_source">SearchParameters.java</span></div><h1>SearchParameters.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.search.api;
+
+import com.google.common.base.MoreObjects;
+
+import java.util.List;
+
+/**
+ * A pojo encapsulating the parameters of a search
+ *
+ * @author dbernstein
+ */
+public class SearchParameters {
+
+    private final List&lt;Condition&gt; conditions;
+
+    private final List&lt;Condition.Field&gt; fields;
+
+    private final int offset;
+
+    private final int maxResults;
+
+    private final Condition.Field orderBy;
+
+    private final String order;
+
+    private final boolean includeTotalResultCount;
+    /**
+     * Constructoor
+     *
+     * @param fields     The fields to be returned in the results
+     * @param conditions The conditions
+     * @param maxResults The max results
+     * @param offset     The offset
+     * @param orderBy    The field by which to order the results
+     * @param order      The order: ie &quot;asc&quot; or &quot;desc&quot;
+     * @param includeTotalResultCount A flag indicating whether or not to return the total result count.
+     */
+    public SearchParameters(final List&lt;Condition.Field&gt; fields, final List&lt;Condition&gt; conditions, final int maxResults,
+                            final int offset, final Condition.Field orderBy, final String order,
+<span class="nc" id="L45">                            final boolean includeTotalResultCount) {</span>
+<span class="nc" id="L46">        this.fields = fields;</span>
+<span class="nc" id="L47">        this.conditions = conditions;</span>
+<span class="nc" id="L48">        this.maxResults = maxResults;</span>
+<span class="nc" id="L49">        this.offset = offset;</span>
+<span class="nc" id="L50">        this.orderBy = orderBy;</span>
+<span class="nc" id="L51">        this.order = order;</span>
+<span class="nc" id="L52">        this.includeTotalResultCount = includeTotalResultCount;</span>
+<span class="nc" id="L53">    }</span>
+
+    /**
+     * The offset (zero-based)
+     *
+     * @return
+     */
+    public int getOffset() {
+<span class="nc" id="L61">        return offset;</span>
+    }
+
+    /**
+     * The max number of results to return
+     *
+     * @return
+     */
+    public int getMaxResults() {
+<span class="nc" id="L70">        return maxResults;</span>
+    }
+
+    /**
+     * The conditions limiting the search
+     *
+     * @return
+     */
+    public List&lt;Condition&gt; getConditions() {
+<span class="nc" id="L79">        return conditions;</span>
+    }
+
+    /**
+     * Returns the list of fields to display in the results.
+     *
+     * @return
+     */
+    public List&lt;Condition.Field&gt; getFields() {
+<span class="nc" id="L88">        return fields;</span>
+    }
+
+    /**
+     * Returns the field by which to order the results.
+     *
+     * @return
+     */
+    public Condition.Field getOrderBy() {
+<span class="nc" id="L97">        return orderBy;</span>
+    }
+
+    /**
+     * Returns the order direction (asc or desc) of the results.
+     *
+     * @return
+     */
+    public String getOrder() {
+<span class="nc" id="L106">        return order;</span>
+    }
+
+    /**
+     * Returns flag indicating whether or not to include the total result count in the query results.
+     * @return
+     */
+    public boolean isIncludeTotalResultCount() {
+<span class="nc" id="L114">        return includeTotalResultCount;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L119">        final MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this);</span>
+<span class="nc" id="L120">        helper.add(&quot;conditions&quot;, conditions);</span>
+<span class="nc" id="L121">        helper.add(&quot;maxResults&quot;, maxResults);</span>
+<span class="nc" id="L122">        helper.add(&quot;offset&quot;, offset);</span>
+<span class="nc" id="L123">        helper.add(&quot;fields&quot;, fields);</span>
+<span class="nc" id="L124">        helper.add(&quot;orderBy&quot;, orderBy);</span>
+<span class="nc" id="L125">        helper.add(&quot;order&quot;, order);</span>
+<span class="nc" id="L126">        helper.add(&quot;includeTotalResultCount&quot;, includeTotalResultCount);</span>
+<span class="nc" id="L127">        return helper.toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

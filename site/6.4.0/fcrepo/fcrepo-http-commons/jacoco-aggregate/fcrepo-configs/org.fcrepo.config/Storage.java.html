@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>Storage.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">Storage.java</span></div><h1>Storage.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.config;
+
+/**
+ * Indicates what storage backend to use.
+ *
+ * @author pwinckles
+ */
+<span class="nc" id="L14">public enum Storage {</span>
+
+<span class="nc" id="L16">    OCFL_FILESYSTEM(&quot;ocfl-fs&quot;),</span>
+<span class="nc" id="L17">    OCFL_S3(&quot;ocfl-s3&quot;);</span>
+
+    private final String value;
+
+<span class="nc" id="L21">    Storage(final String value) {</span>
+<span class="nc" id="L22">        this.value = value;</span>
+<span class="nc" id="L23">    }</span>
+
+    public String getValue() {
+<span class="nc" id="L26">        return value;</span>
+    }
+
+    public static Storage fromString(final String value) {
+<span class="nc bnc" id="L30" title="All 2 branches missed.">        for (final var storage : values()) {</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">            if (storage.value.equalsIgnoreCase(value)) {</span>
+<span class="nc" id="L32">                return storage;</span>
+            }
+        }
+<span class="nc" id="L35">        throw new IllegalArgumentException(&quot;Unknown storage: &quot; + value);</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L40">        return value;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

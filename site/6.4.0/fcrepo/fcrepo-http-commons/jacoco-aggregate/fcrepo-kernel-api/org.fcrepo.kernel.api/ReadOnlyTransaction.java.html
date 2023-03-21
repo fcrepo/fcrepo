@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ReadOnlyTransaction.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api</a> &gt; <span class="el_source">ReadOnlyTransaction.java</span></div><h1>ReadOnlyTransaction.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.kernel.api;
+
+import java.time.Duration;
+import java.time.Instant;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+/**
+ * A read-only tx that never expires and cannot be committed.
+ *
+ * @author pwinckles
+ */
+public class ReadOnlyTransaction implements Transaction {
+
+    // This is not a perfect way to create a singleton, but it should be fine for its purposes as it does
+    // not really need to be a singleton.
+<span class="nc" id="L23">    public static final ReadOnlyTransaction INSTANCE = new ReadOnlyTransaction();</span>
+
+    public static final String READ_ONLY_TX_ID = &quot;read-only&quot;;
+
+    private ReadOnlyTransaction() {
+        // empty
+    }
+
+    @Override
+    public void commit() {
+        // no-op
+<span class="nc" id="L34">    }</span>
+
+    @Override
+    public void commitIfShortLived() {
+        // no-op
+<span class="nc" id="L39">    }</span>
+
+    @Override
+    public boolean isCommitted() {
+<span class="nc" id="L43">        return false;</span>
+    }
+
+    @Override
+    public void rollback() {
+        // no-op
+<span class="nc" id="L49">    }</span>
+
+    @Override
+    public void fail() {
+        // no-op
+<span class="nc" id="L54">    }</span>
+
+    @Override
+    public boolean isRolledBack() {
+<span class="nc" id="L58">        return false;</span>
+    }
+
+    @Override
+    public boolean isOpenLongRunning() {
+<span class="nc" id="L63">        return false;</span>
+    }
+
+    @Override
+    public boolean isOpen() {
+<span class="nc" id="L68">        return true;</span>
+    }
+
+    @Override
+    public void ensureCommitting() {
+        // no-op
+<span class="nc" id="L74">    }</span>
+
+    @Override
+    public boolean isReadOnly() {
+<span class="nc" id="L78">        return true;</span>
+    }
+
+    @Override
+    public String getId() {
+<span class="nc" id="L83">        return READ_ONLY_TX_ID;</span>
+    }
+
+    @Override
+    public boolean isShortLived() {
+<span class="nc" id="L88">        return true;</span>
+    }
+
+    @Override
+    public void setShortLived(final boolean shortLived) {
+        // no-op
+<span class="nc" id="L94">    }</span>
+
+    @Override
+    public void expire() {
+        // no-op
+<span class="nc" id="L99">    }</span>
+
+    @Override
+    public boolean hasExpired() {
+<span class="nc" id="L103">        return false;</span>
+    }
+
+    @Override
+    public Instant updateExpiry(final Duration amountToAdd) {
+<span class="nc" id="L108">        return Instant.now().plus(amountToAdd);</span>
+    }
+
+    @Override
+    public Instant getExpires() {
+<span class="nc" id="L113">        return Instant.now().plus(Duration.ofMinutes(1));</span>
+    }
+
+    @Override
+    public void refresh() {
+        // no-op
+<span class="nc" id="L119">    }</span>
+
+    @Override
+    public void lockResource(final FedoraId resourceId) {
+        // no-op
+<span class="nc" id="L124">    }</span>
+
+    @Override
+    public void lockResourceNonExclusive(final FedoraId resourceId) {
+        // no-op
+<span class="nc" id="L129">    }</span>
+
+    @Override
+    public void lockResourceAndGhostNodes(final FedoraId resourceId) {
+        // no-op
+<span class="nc" id="L134">    }</span>
+
+    @Override
+    public void releaseResourceLocksIfShortLived() {
+        // no-op
+<span class="nc" id="L139">    }</span>
+
+    @Override
+    public void doInTx(final Runnable runnable) {
+<span class="nc" id="L143">        runnable.run();</span>
+<span class="nc" id="L144">    }</span>
+
+    @Override
+    public void setBaseUri(final String baseUri) {
+        // no-op
+<span class="nc" id="L149">    }</span>
+
+    @Override
+    public void setUserAgent(final String userAgent) {
+        // no-op
+<span class="nc" id="L154">    }</span>
+
+    @Override
+    public void suppressEvents() {
+        // no-op
+<span class="nc" id="L159">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
