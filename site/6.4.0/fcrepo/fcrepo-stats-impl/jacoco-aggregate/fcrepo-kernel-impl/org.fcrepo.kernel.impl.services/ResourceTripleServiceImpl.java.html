@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceTripleServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Stats Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">ResourceTripleServiceImpl.java</span></div><h1>ResourceTripleServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static java.util.stream.Stream.empty;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
+import org.fcrepo.kernel.api.services.ContainmentTriplesService;
+import org.fcrepo.kernel.api.services.ManagedPropertiesService;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.kernel.api.services.ResourceTripleService;
+
+import org.apache.jena.graph.Triple;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+/**
+ * Implementation of the ResourceTripleService
+ * @author whikloj
+ * @since 6.0.0
+ */
+@Component
+<span class="nc" id="L36">public class ResourceTripleServiceImpl implements ResourceTripleService {</span>
+
+    @Inject
+    private ManagedPropertiesService managedPropertiesService;
+
+    @Inject
+    private ContainmentTriplesService containmentTriplesService;
+
+    @Autowired
+    @Qualifier(&quot;referenceService&quot;)
+    private ReferenceService referenceService;
+
+    @Inject
+    private MembershipService membershipService;
+
+    @Override
+    public Stream&lt;Triple&gt; getResourceTriples(final Transaction tx, final FedoraResource resource,
+                                             final LdpTriplePreferences preferences, final int limit) {
+<span class="nc" id="L54">        final List&lt;Stream&lt;Triple&gt;&gt; streams = new ArrayList&lt;&gt;();</span>
+
+        // Provide user RDF if we didn't ask for omit=ldp:PreferMinimalContainer.
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (preferences.displayUserRdf()) {</span>
+<span class="nc" id="L58">            streams.add(resource.getTriples());</span>
+        }
+        // Provide server-managed triples if we didn't ask for omit=fedora:ServerManaged or
+        // omit=ldp:PreferMinimalContainer
+<span class="nc bnc" id="L62" title="All 2 branches missed.">        if (preferences.displayServerManaged()) {</span>
+<span class="nc" id="L63">            streams.add(this.managedPropertiesService.get(resource));</span>
+        }
+        // containment triples about this resource, return by default. Containment is server managed so also
+        // check for that prefer tag.
+<span class="nc bnc" id="L67" title="All 2 branches missed.">        if (preferences.displayContainment()) {</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            if (limit == -1) {</span>
+<span class="nc" id="L69">                streams.add(this.containmentTriplesService.get(tx, resource));</span>
+            } else {
+<span class="nc" id="L71">                streams.add(this.containmentTriplesService.get(tx, resource).limit(limit));</span>
+            }
+        }
+
+        // LDP container membership triples for this resource, returned by default. Membership is server managed so
+        // also check that tag.
+<span class="nc bnc" id="L77" title="All 2 branches missed.">        if (preferences.displayMembership()) {</span>
+<span class="nc" id="L78">            streams.add(membershipService.getMembership(tx, resource.getFedoraId()));</span>
+        }
+
+        // Include inbound references to this object, NOT returned by default.
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (preferences.displayReferences()) {</span>
+<span class="nc" id="L83">            streams.add(referenceService.getInboundReferences(tx, resource));</span>
+        }
+
+<span class="nc" id="L86">        return streams.stream().reduce(empty(), Stream::concat);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

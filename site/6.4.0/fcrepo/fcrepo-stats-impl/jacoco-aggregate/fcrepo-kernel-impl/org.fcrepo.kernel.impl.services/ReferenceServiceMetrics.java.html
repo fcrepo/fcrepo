@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ReferenceServiceMetrics.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Stats Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">ReferenceServiceMetrics.java</span></div><h1>ReferenceServiceMetrics.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.kernel.impl.services;
+
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Timer;
+import org.fcrepo.common.metrics.MetricsHelper;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+/**
+ * ReferenceService wrapper for collecting metrics
+ *
+ * @author pwinckles
+ */
+@Component(&quot;referenceService&quot;)
+<span class="nc" id="L27">public class ReferenceServiceMetrics implements ReferenceService {</span>
+
+    private static final String METRIC_NAME = &quot;fcrepo.db&quot;;
+    private static final String DB = &quot;db&quot;;
+    private static final String REFERENCE = &quot;reference&quot;;
+    private static final String OPERATION = &quot;operation&quot;;
+
+<span class="nc" id="L34">    private static final Timer getInboundReferences = Metrics.timer(METRIC_NAME,</span>
+            DB, REFERENCE, OPERATION, &quot;getInboundReferences&quot;);
+<span class="nc" id="L36">    private static final Timer deleteAllReferencesTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, REFERENCE, OPERATION, &quot;deleteAllReferences&quot;);
+<span class="nc" id="L38">    private static final Timer updateReferencesTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, REFERENCE, OPERATION, &quot;updateReferences&quot;);
+<span class="nc" id="L40">    private static final Timer commitTransactionTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, REFERENCE, OPERATION, &quot;commitTransaction&quot;);
+<span class="nc" id="L42">    private static final Timer rollbackTransactionTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, REFERENCE, OPERATION, &quot;rollbackTransaction&quot;);
+<span class="nc" id="L44">    private static final Timer resetTimer = Metrics.timer(METRIC_NAME,</span>
+            DB, REFERENCE, OPERATION, &quot;reset&quot;);
+
+    @Autowired
+    @Qualifier(&quot;referenceServiceImpl&quot;)
+    private ReferenceService referenceServiceImpl;
+
+    @Override
+    public RdfStream getInboundReferences(final Transaction tx, final FedoraResource resource) {
+<span class="nc" id="L53">        return MetricsHelper.time(getInboundReferences, () -&gt; {</span>
+<span class="nc" id="L54">            return referenceServiceImpl.getInboundReferences(tx, resource);</span>
+        });
+    }
+
+    @Override
+    public void deleteAllReferences(final Transaction tx, final FedoraId resourceId) {
+<span class="nc" id="L60">        deleteAllReferencesTimer.record(() -&gt; {</span>
+<span class="nc" id="L61">            referenceServiceImpl.deleteAllReferences(tx, resourceId);</span>
+<span class="nc" id="L62">        });</span>
+<span class="nc" id="L63">    }</span>
+
+    @Override
+    public void updateReferences(final Transaction tx,
+                                 final FedoraId resourceId,
+                                 final String userPrincipal,
+                                 final RdfStream rdfStream) {
+<span class="nc" id="L70">        updateReferencesTimer.record(() -&gt; {</span>
+<span class="nc" id="L71">            referenceServiceImpl.updateReferences(tx, resourceId, userPrincipal, rdfStream);</span>
+<span class="nc" id="L72">        });</span>
+<span class="nc" id="L73">    }</span>
+
+    @Override
+    public void commitTransaction(final Transaction tx) {
+<span class="nc" id="L77">        commitTransactionTimer.record(() -&gt; {</span>
+<span class="nc" id="L78">            referenceServiceImpl.commitTransaction(tx);</span>
+<span class="nc" id="L79">        });</span>
+<span class="nc" id="L80">    }</span>
+
+    @Override
+    public void rollbackTransaction(final Transaction tx) {
+<span class="nc" id="L84">        rollbackTransactionTimer.record(() -&gt; {</span>
+<span class="nc" id="L85">            referenceServiceImpl.rollbackTransaction(tx);</span>
+<span class="nc" id="L86">        });</span>
+<span class="nc" id="L87">    }</span>
+
+    @Override
+    public void reset() {
+<span class="nc" id="L91">        resetTimer.record(() -&gt; {</span>
+<span class="nc" id="L92">            referenceServiceImpl.reset();</span>
+<span class="nc" id="L93">        });</span>
+<span class="nc" id="L94">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

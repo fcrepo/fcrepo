@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractRelaxableResourceOperationBuilder.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Stats Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.operations</a> &gt; <span class="el_source">AbstractRelaxableResourceOperationBuilder.java</span></div><h1>AbstractRelaxableResourceOperationBuilder.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.operations;
+
+import org.apache.jena.rdf.model.Model;
+import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.RelaxableResourceOperationBuilder;
+
+import java.time.Instant;
+
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedBy;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getCreatedDate;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedBy;
+import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.getModifiedDate;
+
+/**
+ * Abstract builder for constructing relaxable resource operations
+ * @author bbpennel
+ */
+public abstract class AbstractRelaxableResourceOperationBuilder extends AbstractResourceOperationBuilder
+                                                                implements RelaxableResourceOperationBuilder {
+    protected String lastModifiedBy;
+
+    protected String createdBy;
+
+    protected Instant lastModifiedDate;
+
+    protected Instant createdDate;
+
+    protected ServerManagedPropsMode serverManagedPropsMode;
+
+    protected AbstractRelaxableResourceOperationBuilder(final Transaction transaction, final FedoraId rescId,
+                                                        final ServerManagedPropsMode serverManagedPropsMode) {
+<span class="nc" id="L39">        super(transaction, rescId);</span>
+<span class="nc" id="L40">        this.serverManagedPropsMode = serverManagedPropsMode;</span>
+<span class="nc" id="L41">    }</span>
+
+    @Override
+    public RelaxableResourceOperationBuilder relaxedProperties(final Model model) {
+        // Has no affect if the server is not in relaxed mode
+<span class="nc bnc" id="L46" title="All 4 branches missed.">        if (model != null &amp;&amp; serverManagedPropsMode == ServerManagedPropsMode.RELAXED) {</span>
+<span class="nc" id="L47">            final var resc = model.getResource(rescId.asResourceId().getFullDescribedId());</span>
+
+<span class="nc" id="L49">            final var createdDateVal = getCreatedDate(resc);</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">            if (createdDateVal != null) {</span>
+<span class="nc" id="L51">                this.createdDate = createdDateVal.toInstant();</span>
+            }
+<span class="nc" id="L53">            final var createdByVal = getCreatedBy(resc);</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">            if (createdByVal != null) {</span>
+<span class="nc" id="L55">                this.createdBy = createdByVal;</span>
+            }
+<span class="nc" id="L57">            final var modifiedDate = getModifiedDate(resc);</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">            if (modifiedDate != null) {</span>
+<span class="nc" id="L59">                this.lastModifiedDate = modifiedDate.toInstant();</span>
+            }
+<span class="nc" id="L61">            final var modifiedBy = getModifiedBy(resc);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">            if (modifiedBy != null) {</span>
+<span class="nc" id="L63">                this.lastModifiedBy = modifiedBy;</span>
+            }
+        }
+
+<span class="nc" id="L67">        return this;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

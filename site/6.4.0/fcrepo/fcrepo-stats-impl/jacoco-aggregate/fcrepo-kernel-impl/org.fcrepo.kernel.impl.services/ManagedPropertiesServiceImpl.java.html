@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ManagedPropertiesServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Stats Impl</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">ManagedPropertiesServiceImpl.java</span></div><h1>ManagedPropertiesServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
+import static org.apache.jena.datatypes.xsd.impl.XSDDateTimeType.XSDdateTime;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Stream;
+
+import org.apache.jena.graph.Triple;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.services.ManagedPropertiesService;
+import org.springframework.stereotype.Component;
+
+/**
+ * Retrieve the managed properties as triples
+ *
+ * @author dbernstein
+ * @since 2020-01-07
+ */
+@Component
+<span class="nc" id="L41">public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {</span>
+
+    @Override
+    public Stream&lt;Triple&gt; get(final FedoraResource resource) {
+<span class="nc" id="L45">        final List&lt;Triple&gt; triples = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L47">        final var describedResource = resource.getDescribedResource();</span>
+<span class="nc" id="L48">        final var subject = createURI(resolveId(describedResource));</span>
+
+<span class="nc" id="L50">        var createdBy = resource.getCreatedBy();</span>
+<span class="nc" id="L51">        var createdDate = resource.getCreatedDate();</span>
+<span class="nc" id="L52">        var lastModifiedBy = resource.getLastModifiedBy();</span>
+<span class="nc" id="L53">        var lastModifiedDate = resource.getLastModifiedDate();</span>
+
+<span class="nc bnc" id="L55" title="All 2 branches missed.">        if (describedResource instanceof Binary) {</span>
+<span class="nc" id="L56">            final Binary binary = (Binary) describedResource;</span>
+
+<span class="nc" id="L58">            createdBy = binary.getCreatedBy();</span>
+<span class="nc" id="L59">            createdDate = binary.getCreatedDate();</span>
+<span class="nc" id="L60">            lastModifiedBy = binary.getLastModifiedBy();</span>
+<span class="nc" id="L61">            lastModifiedDate = binary.getLastModifiedDate();</span>
+
+<span class="nc" id="L63">            triples.add(Triple.create(subject, HAS_SIZE.asNode(),</span>
+<span class="nc" id="L64">                    createLiteral(String.valueOf(binary.getContentSize()), XSDlong)));</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">            if (binary.getFilename() != null) {</span>
+<span class="nc" id="L66">                triples.add(Triple.create(subject, HAS_ORIGINAL_NAME.asNode(), createLiteral(binary.getFilename())));</span>
+            }
+<span class="nc bnc" id="L68" title="All 2 branches missed.">            if (binary.getMimeType() != null) {</span>
+<span class="nc" id="L69">                triples.add(Triple.create(subject, HAS_MIME_TYPE.asNode(), createLiteral(binary.getMimeType())));</span>
+            }
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            if (binary.getContentDigests() != null) {</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">                for (var digest : binary.getContentDigests()) {</span>
+<span class="nc" id="L73">                    triples.add(Triple.create(subject, HAS_MESSAGE_DIGEST.asNode(),</span>
+<span class="nc" id="L74">                            createURI(digest.toString())));</span>
+<span class="nc" id="L75">                }</span>
+
+            }
+        }
+
+<span class="nc" id="L80">        triples.add(Triple.create(subject, CREATED_DATE.asNode(),</span>
+<span class="nc" id="L81">                                  createLiteral(createdDate.toString(), XSDdateTime)));</span>
+<span class="nc" id="L82">        triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),</span>
+<span class="nc" id="L83">                                  createLiteral(lastModifiedDate.toString(), XSDdateTime)));</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (createdBy != null) {</span>
+<span class="nc" id="L85">            triples.add(Triple.create(subject, CREATED_BY.asNode(), createLiteral(createdBy)));</span>
+        }
+<span class="nc bnc" id="L87" title="All 2 branches missed.">        if (lastModifiedBy != null) {</span>
+<span class="nc" id="L88">            triples.add(Triple.create(subject, LAST_MODIFIED_BY.asNode(), createLiteral(lastModifiedBy)));</span>
+        }
+
+<span class="nc" id="L91">        describedResource.getSystemTypes(true).forEach(triple -&gt; {</span>
+<span class="nc" id="L92">            triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));</span>
+<span class="nc" id="L93">        });</span>
+
+<span class="nc" id="L95">        return new DefaultRdfStream(subject, triples.stream());</span>
+    }
+
+    private String resolveId(final FedoraResource resource) {
+<span class="nc bnc" id="L99" title="All 2 branches missed.">        if (resource instanceof TimeMap) {</span>
+<span class="nc" id="L100">            return resource.getFedoraId().getFullId();</span>
+        }
+<span class="nc" id="L102">        return resource.getId();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
