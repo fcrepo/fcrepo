@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>HttpApiResources.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api.url</a> &gt; <span class="el_source">HttpApiResources.java</span></div><h1>HttpApiResources.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.api.url;
+
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_TRANSACTION_SERVICE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
+
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+
+import org.fcrepo.http.api.Transactions;
+import org.fcrepo.http.commons.api.rdf.UriAwareResourceModelFactory;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+
+import org.springframework.stereotype.Component;
+
+import javax.ws.rs.core.UriInfo;
+
+/**
+ * Inject our HTTP API methods into the object graphs
+ *
+ * @author awoods
+ */
+@Component
+<span class="nc" id="L33">public class HttpApiResources implements UriAwareResourceModelFactory {</span>
+
+    @Override
+    public Model createModelForResource(final FedoraResource resource,
+        final UriInfo uriInfo) {
+
+<span class="nc" id="L39">        final Model model = createDefaultModel();</span>
+
+<span class="nc" id="L41">        final Resource s = createResource(resource.getFedoraId().getFullId());</span>
+
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        if (resource.hasType(REPOSITORY_ROOT.getURI())) {</span>
+<span class="nc" id="L44">            addRepositoryStatements(uriInfo, model, s);</span>
+        }
+
+<span class="nc bnc" id="L47" title="All 4 branches missed.">        if (resource instanceof NonRdfSourceDescription &amp;&amp; !resource.isMemento()) {</span>
+<span class="nc" id="L48">            addContentStatements((Binary)resource.getDescribedResource(), model);</span>
+        }
+<span class="nc" id="L50">        return model;</span>
+    }
+
+    private static void addContentStatements(final Binary resource,
+                                             final Model model) {
+        // fcr:fixity
+<span class="nc" id="L56">        final Resource subject = createResource(resource.getFedoraId().getFullId());</span>
+<span class="nc" id="L57">        model.add(subject, HAS_FIXITY_SERVICE, createResource(subject.getURI() +</span>
+                &quot;/fcr:fixity&quot;));
+<span class="nc" id="L59">    }</span>
+
+
+    private void addRepositoryStatements(final UriInfo uriInfo, final Model model,
+        final Resource s) {
+        // fcr:tx
+<span class="nc" id="L65">        model.add(s, HAS_TRANSACTION_SERVICE, createResource(uriInfo</span>
+<span class="nc" id="L66">                .getBaseUriBuilder().path(Transactions.class)</span>
+<span class="nc" id="L67">                .build().toASCIIString()));</span>
+<span class="nc" id="L68">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

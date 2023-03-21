@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RdfLexicon.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api</a> &gt; <span class="el_source">RdfLexicon.java</span></div><h1>RdfLexicon.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api;
+
+import static com.google.common.collect.ImmutableSet.of;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.RDF.type;
+
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+
+import com.google.common.collect.ImmutableSet;
+
+/**
+ * A lexicon of the RDF properties that the fcrepo kernel (or close-to-core modules) use
+ *
+ * @author ajs6f
+ */
+public final class RdfLexicon {
+
+    /**
+     * Repository namespace &quot;fedora&quot;
+    **/
+    public static final String REPOSITORY_NAMESPACE = &quot;http://fedora.info/definitions/v4/repository#&quot;;
+
+    public static final String REPOSITORY_WEBAC_NAMESPACE = &quot;http://fedora.info/definitions/v4/webac#&quot;;
+
+    public static final String FCREPO_API_NAMESPACE = &quot;http://fedora.info/definitions/fcrepo#&quot;;
+
+    public static final String ACTIVITY_STREAMS_NAMESPACE = &quot;https://www.w3.org/ns/activitystreams#&quot;;
+
+    public static final String EBUCORE_NAMESPACE = &quot;http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#&quot;;
+
+    public static final String OA_NAMESPACE = &quot;http://www.w3.org/ns/oa#&quot;;
+
+    public static final String PROV_NAMESPACE = &quot;http://www.w3.org/ns/prov#&quot;;
+
+    public static final String PREMIS_NAMESPACE = &quot;http://www.loc.gov/premis/rdf/v1#&quot;;
+
+    public static final String MEMENTO_NAMESPACE = &quot;http://mementoweb.org/ns#&quot;;
+
+    public static final String RDF_NAMESPACE = &quot;http://www.w3.org/1999/02/22-rdf-syntax-ns#&quot;;
+
+
+    /**
+     * Namespace for the W3C WebAC vocabulary.
+     */
+    public static final String WEBAC_NAMESPACE_VALUE = &quot;http://www.w3.org/ns/auth/acl#&quot;;
+
+    /**
+     * Linked Data Platform namespace.
+     */
+    public static final String LDP_NAMESPACE = &quot;http://www.w3.org/ns/ldp#&quot;;
+
+    /**
+     * Is this namespace one that the repository manages?
+     */
+<span class="nc bnc" id="L67" title="All 2 branches missed.">    public static final Predicate&lt;String&gt; isManagedNamespace = p -&gt; p.equals(REPOSITORY_NAMESPACE) ||</span>
+<span class="nc bnc" id="L68" title="All 4 branches missed.">            p.equals(LDP_NAMESPACE) || p.equals(MEMENTO_NAMESPACE);</span>
+
+    /**
+     * Tests if the triple has a predicate of rdf:type and an object with a managed namespace.
+     * @see RdfLexicon#isManagedNamespace
+     */
+<span class="nc bnc" id="L74" title="All 2 branches missed.">    public static final Predicate&lt;Triple&gt; restrictedType = s -&gt; s.getPredicate().equals(type.asNode()) &amp;&amp;</span>
+<span class="nc bnc" id="L75" title="All 4 branches missed.">            (s.getObject().isURI() &amp;&amp; isManagedNamespace.test(s.getObject().getNameSpace()));</span>
+
+    // FIXITY
+<span class="nc" id="L78">    public static final Resource PREMIS_FIXITY =</span>
+<span class="nc" id="L79">            createResource(PREMIS_NAMESPACE + &quot;Fixity&quot;);</span>
+<span class="nc" id="L80">    public static final Resource PREMIS_EVENT_OUTCOME_DETAIL =</span>
+<span class="nc" id="L81">            createResource(PREMIS_NAMESPACE + &quot;EventOutcomeDetail&quot;);</span>
+
+<span class="nc" id="L83">    public static final Property HAS_MESSAGE_DIGEST =</span>
+<span class="nc" id="L84">            createProperty(PREMIS_NAMESPACE + &quot;hasMessageDigest&quot;);</span>
+
+<span class="nc" id="L86">    public static final Property HAS_SIZE =</span>
+<span class="nc" id="L87">        createProperty(PREMIS_NAMESPACE + &quot;hasSize&quot;);</span>
+<span class="nc" id="L88">    public static final Property HAS_FIXITY_RESULT =</span>
+<span class="nc" id="L89">        createProperty(PREMIS_NAMESPACE + &quot;hasFixity&quot;);</span>
+
+<span class="nc" id="L91">    private static final Set&lt;Property&gt; fixityProperties = of(</span>
+            HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST);
+
+<span class="nc" id="L94">    public static final Property HAS_FIXITY_STATE =</span>
+<span class="nc" id="L95">            createProperty(PREMIS_NAMESPACE + &quot;hasEventOutcome&quot;);</span>
+
+<span class="nc" id="L97">    public static final Property WRITABLE =</span>
+<span class="nc" id="L98">            createProperty(REPOSITORY_NAMESPACE + &quot;writable&quot;);</span>
+
+    public static final String FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI = REPOSITORY_NAMESPACE +
+            &quot;NonRdfSourceDescription&quot;;
+
+    // Server managed properties
+<span class="nc" id="L104">    public static final Property CREATED_DATE =</span>
+<span class="nc" id="L105">            createProperty(REPOSITORY_NAMESPACE + &quot;created&quot;);</span>
+<span class="nc" id="L106">    public static final Property CREATED_BY =</span>
+<span class="nc" id="L107">            createProperty(REPOSITORY_NAMESPACE + &quot;createdBy&quot;);</span>
+<span class="nc" id="L108">    public static final Property LAST_MODIFIED_DATE =</span>
+<span class="nc" id="L109">            createProperty(REPOSITORY_NAMESPACE + &quot;lastModified&quot;);</span>
+<span class="nc" id="L110">    public static final Property LAST_MODIFIED_BY =</span>
+<span class="nc" id="L111">            createProperty(REPOSITORY_NAMESPACE + &quot;lastModifiedBy&quot;);</span>
+
+<span class="nc" id="L113">    public static final Resource FEDORA_CONTAINER =</span>
+<span class="nc" id="L114">            createResource(REPOSITORY_NAMESPACE + &quot;Container&quot;);</span>
+<span class="nc" id="L115">    public static final Resource FEDORA_BINARY =</span>
+<span class="nc" id="L116">            createResource(REPOSITORY_NAMESPACE + &quot;Binary&quot;);</span>
+<span class="nc" id="L117">    public static final Resource FEDORA_RESOURCE =</span>
+<span class="nc" id="L118">            createResource(REPOSITORY_NAMESPACE + &quot;Resource&quot;);</span>
+<span class="nc" id="L119">    public static final Resource FEDORA_PAIR_TREE =</span>
+<span class="nc" id="L120">            createResource(REPOSITORY_NAMESPACE + &quot;Pairtree&quot;);</span>
+<span class="nc" id="L121">    public static final Resource ARCHIVAL_GROUP =</span>
+<span class="nc" id="L122">            createResource(REPOSITORY_NAMESPACE + &quot;ArchivalGroup&quot;);</span>
+
+    // Linked Data Platform
+<span class="nc" id="L125">    public static final Property PAGE =</span>
+<span class="nc" id="L126">        createProperty(LDP_NAMESPACE + &quot;Page&quot;);</span>
+<span class="nc" id="L127">    public static final Resource CONTAINER =</span>
+<span class="nc" id="L128">            createResource(LDP_NAMESPACE + &quot;Container&quot;);</span>
+<span class="nc" id="L129">    public static final Resource BASIC_CONTAINER =</span>
+<span class="nc" id="L130">            createResource(LDP_NAMESPACE + &quot;BasicContainer&quot;);</span>
+<span class="nc" id="L131">    public static final Resource DIRECT_CONTAINER =</span>
+<span class="nc" id="L132">            createResource(LDP_NAMESPACE + &quot;DirectContainer&quot;);</span>
+<span class="nc" id="L133">    public static final Resource INDIRECT_CONTAINER =</span>
+<span class="nc" id="L134">            createResource(LDP_NAMESPACE + &quot;IndirectContainer&quot;);</span>
+<span class="nc" id="L135">    public static final Property MEMBERSHIP_RESOURCE =</span>
+<span class="nc" id="L136">            createProperty(LDP_NAMESPACE + &quot;membershipResource&quot;);</span>
+<span class="nc" id="L137">    public static final Property HAS_MEMBER_RELATION =</span>
+<span class="nc" id="L138">            createProperty(LDP_NAMESPACE + &quot;hasMemberRelation&quot;);</span>
+<span class="nc" id="L139">    public static final Property INSERTED_CONTENT_RELATION =</span>
+<span class="nc" id="L140">            createProperty(LDP_NAMESPACE + &quot;insertedContentRelation&quot;);</span>
+<span class="nc" id="L141">    public static final Property IS_MEMBER_OF_RELATION =</span>
+<span class="nc" id="L142">            createProperty(LDP_NAMESPACE + &quot;isMemberOfRelation&quot;);</span>
+<span class="nc" id="L143">    public static final Property CONTAINS =</span>
+<span class="nc" id="L144">        createProperty(LDP_NAMESPACE + &quot;contains&quot;);</span>
+<span class="nc" id="L145">    public static final Property LDP_MEMBER =</span>
+<span class="nc" id="L146">            createProperty(LDP_NAMESPACE + &quot;member&quot;);</span>
+<span class="nc" id="L147">    public static final Resource RESOURCE =</span>
+<span class="nc" id="L148">            createResource(LDP_NAMESPACE + &quot;Resource&quot;);</span>
+<span class="nc" id="L149">    public static final Resource RDF_SOURCE =</span>
+<span class="nc" id="L150">            createResource(LDP_NAMESPACE + &quot;RDFSource&quot;);</span>
+<span class="nc" id="L151">    public static final Resource NON_RDF_SOURCE =</span>
+<span class="nc" id="L152">        createResource(LDP_NAMESPACE + &quot;NonRDFSource&quot;);</span>
+<span class="nc" id="L153">    public static final Property CONSTRAINED_BY =</span>
+<span class="nc" id="L154">            createProperty(LDP_NAMESPACE + &quot;constrainedBy&quot;);</span>
+<span class="nc" id="L155">    public static final Property MEMBER_SUBJECT =</span>
+<span class="nc" id="L156">            createProperty(LDP_NAMESPACE + &quot;MemberSubject&quot;);</span>
+
+<span class="nc" id="L158">    private static final Set&lt;Property&gt; ldpManagedProperties = of(CONTAINS);</span>
+
+    // REPOSITORY INFORMATION
+<span class="nc" id="L161">    public static final Property HAS_TRANSACTION_SERVICE =</span>
+<span class="nc" id="L162">            createProperty(REPOSITORY_NAMESPACE + &quot;hasTransactionProvider&quot;);</span>
+<span class="nc" id="L163">    public static final Resource REPOSITORY_ROOT =</span>
+<span class="nc" id="L164">            createResource(REPOSITORY_NAMESPACE + &quot;RepositoryRoot&quot;);</span>
+
+    // OTHER SERVICES
+<span class="nc" id="L167">    public static final Property HAS_FIXITY_SERVICE =</span>
+<span class="nc" id="L168">            createProperty(REPOSITORY_NAMESPACE + &quot;hasFixityService&quot;);</span>
+
+<span class="nc" id="L170">    public static final Property HAS_MIME_TYPE =</span>
+<span class="nc" id="L171">            createProperty(EBUCORE_NAMESPACE + &quot;hasMimeType&quot;);</span>
+<span class="nc" id="L172">    public static final Property HAS_ORIGINAL_NAME =</span>
+<span class="nc" id="L173">            createProperty(EBUCORE_NAMESPACE + &quot;filename&quot;);</span>
+
+    // EXTERNAL CONTENT
+<span class="nc" id="L176">    public static final Property EXTERNAL_CONTENT = createProperty(FCREPO_API_NAMESPACE + &quot;ExternalContent&quot;);</span>
+
+    // RDF EXTRACTION
+<span class="nc" id="L179">    public static final Property INBOUND_REFERENCES = createProperty(FCREPO_API_NAMESPACE + &quot;PreferInboundReferences&quot;);</span>
+<span class="nc" id="L180">    public static final Property PREFER_SERVER_MANAGED = createProperty(FCREPO_API_NAMESPACE + &quot;ServerManaged&quot;);</span>
+<span class="nc" id="L181">    public static final Property PREFER_MINIMAL_CONTAINER = createProperty(LDP_NAMESPACE +</span>
+            &quot;PreferMinimalContainer&quot;);
+<span class="nc" id="L183">    public static final Property PREFER_CONTAINMENT = createProperty(LDP_NAMESPACE + &quot;PreferContainment&quot;);</span>
+<span class="nc" id="L184">    public static final Property PREFER_MEMBERSHIP = createProperty(LDP_NAMESPACE + &quot;PreferMembership&quot;);</span>
+
+
+<span class="nc" id="L187">    public static final Property EMBED_CONTAINED = createProperty(OA_NAMESPACE + &quot;PreferContainedDescriptions&quot;);</span>
+
+
+    // WEBAC
+    public static final String WEBAC_ACCESS_CONTROL_VALUE = WEBAC_NAMESPACE_VALUE + &quot;accessControl&quot;;
+
+    public static final String WEBAC_ACCESS_TO = WEBAC_NAMESPACE_VALUE + &quot;accessTo&quot;;
+
+    public static final String WEBAC_ACCESS_TO_CLASS = WEBAC_NAMESPACE_VALUE + &quot;accessToClass&quot;;
+
+<span class="nc" id="L197">    public static final Property WEBAC_ACCESS_TO_PROPERTY = createProperty(WEBAC_ACCESS_TO);</span>
+
+    public static final String FEDORA_WEBAC_ACL_URI = REPOSITORY_WEBAC_NAMESPACE + &quot;Acl&quot;;
+
+    // Properties which are managed by the server but are not from managed namespaces
+    private static final Set&lt;Property&gt; serverManagedProperties;
+    static {
+<span class="nc" id="L204">        final ImmutableSet.Builder&lt;Property&gt; b = ImmutableSet.builder();</span>
+<span class="nc" id="L205">        b.addAll(fixityProperties).addAll(ldpManagedProperties);</span>
+<span class="nc" id="L206">        serverManagedProperties = b.build();</span>
+    }
+
+<span class="nc" id="L209">    private static final Predicate&lt;Property&gt; hasFedoraNamespace =</span>
+<span class="nc bnc" id="L210" title="All 4 branches missed.">        p -&gt; !p.isAnon() &amp;&amp; p.getNameSpace().startsWith(REPOSITORY_NAMESPACE);</span>
+
+<span class="nc" id="L212">    private static Predicate&lt;Property&gt; hasMementoNamespace =</span>
+<span class="nc bnc" id="L213" title="All 4 branches missed.">        p -&gt; !p.isAnon() &amp;&amp; p.getNameSpace().startsWith(MEMENTO_NAMESPACE);</span>
+
+    // Set of relaxable server managed properties
+<span class="nc" id="L216">    private static final Set&lt;Property&gt; serverManagedRelaxableProperties = Set.of(</span>
+            CREATED_DATE, CREATED_BY, LAST_MODIFIED_DATE, LAST_MODIFIED_BY
+    );
+
+    /**
+     * Detects whether an RDF property is managed by the repository.
+     */
+<span class="nc" id="L223">    public static final Predicate&lt;Property&gt; isManagedPredicate =</span>
+<span class="nc" id="L224">            hasFedoraNamespace.or(hasMementoNamespace).or(serverManagedProperties::contains);</span>
+
+    /**
+     * Tests if a property is relaxable (if the server is in relaxed mode).
+     */
+<span class="nc" id="L229">    public static final Predicate&lt;Property&gt; isRelaxablePredicate = serverManagedRelaxableProperties::contains;</span>
+
+    // VERSIONING
+    /**
+     * Memento TimeMap type.
+     */
+    public static final String VERSIONING_TIMEMAP_TYPE = MEMENTO_NAMESPACE + &quot;TimeMap&quot;;
+<span class="nc" id="L236">    public static final Resource VERSIONING_TIMEMAP = createResource(VERSIONING_TIMEMAP_TYPE);</span>
+
+    /**
+     * Memento TimeGate type.
+     */
+    public static final String VERSIONING_TIMEGATE_TYPE = MEMENTO_NAMESPACE + &quot;TimeGate&quot;;
+
+    /**
+     * Type for memento objects.
+     */
+    public static final String MEMENTO_TYPE = MEMENTO_NAMESPACE + &quot;Memento&quot;;
+
+    /**
+     * This is an internal RDF type for versionable resources, this may be replaced by a Memento type.
+     */
+<span class="nc" id="L251">    public static final Resource VERSIONED_RESOURCE =</span>
+<span class="nc" id="L252">        createResource(MEMENTO_NAMESPACE + &quot;OriginalResource&quot;);</span>
+
+<span class="nc" id="L254">    public static final Property MEMENTO_ORIGINAL_RESOURCE =</span>
+<span class="nc" id="L255">        createProperty(MEMENTO_NAMESPACE + &quot;original&quot;);</span>
+
+    /*
+     * Interaction Models.
+     */
+<span class="nc" id="L260">    public static final Set&lt;Resource&gt; INTERACTION_MODEL_RESOURCES = of(</span>
+            BASIC_CONTAINER, INDIRECT_CONTAINER, DIRECT_CONTAINER, NON_RDF_SOURCE);
+
+    /**
+     * String set of valid interaction models with full LDP URI.
+     */
+<span class="nc" id="L266">    public static final Set&lt;String&gt; INTERACTION_MODELS_FULL = INTERACTION_MODEL_RESOURCES.stream().map(Resource::getURI)</span>
+<span class="nc" id="L267">            .collect(Collectors.toSet());</span>
+
+    /**
+     * This defines what we assume if you don't specify.
+     */
+<span class="nc" id="L272">    public static final Resource DEFAULT_INTERACTION_MODEL = BASIC_CONTAINER;</span>
+
+    private RdfLexicon() {
+        // This constructor left intentionally blank.
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

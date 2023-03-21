@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraTombstones.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">FedoraTombstones.java</span></div><h1>FedoraTombstones.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.api;
+
+import com.google.common.annotations.VisibleForTesting;
+import io.micrometer.core.annotation.Timed;
+
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.api.services.PurgeResourceService;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Scope;
+
+import javax.inject.Inject;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.OPTIONS;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.core.Response;
+
+import static javax.ws.rs.core.HttpHeaders.ALLOW;
+import static javax.ws.rs.core.Response.noContent;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * CRUD operations on Fedora tombstones
+ *
+ * @author cbeer
+ */
+@Timed
+@Scope(&quot;request&quot;)
+@Path(&quot;/{path: .*}/fcr:tombstone&quot;)
+public class FedoraTombstones extends ContentExposingResource {
+
+<span class="nc" id="L44">    private static final Logger LOGGER = getLogger(FedoraTombstones.class);</span>
+
+    @PathParam(&quot;path&quot;) protected String externalPath;
+
+    @Inject
+    private PurgeResourceService purgeResourceService;
+
+    /**
+     * Default JAX-RS entry point
+     */
+    public FedoraTombstones() {
+<span class="nc" id="L55">        super();</span>
+<span class="nc" id="L56">    }</span>
+
+    /**
+     * Create a new FedoraTombstones instance for a given path
+     * @param externalPath the external path
+     */
+    @VisibleForTesting
+<span class="nc" id="L63">    public FedoraTombstones(final String externalPath) {</span>
+<span class="nc" id="L64">        this.externalPath = externalPath;</span>
+<span class="nc" id="L65">    }</span>
+
+    /**
+     * Delete a tombstone resource (freeing the original resource to be reused)
+     * @return the free resource
+     */
+    @DELETE
+    public Response delete() {
+<span class="nc" id="L73">        final FedoraResource resource = resource();</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">        if (!(resource instanceof Tombstone)) {</span>
+            // If the resource is not deleted there is no tombstone.
+<span class="nc" id="L76">            return Response.status(Response.Status.NOT_FOUND).build();</span>
+        }
+        try {
+<span class="nc" id="L79">            final Tombstone tombstone = (Tombstone) resource;</span>
+<span class="nc" id="L80">            LOGGER.info(&quot;Delete tombstone: {}&quot;, resource.getFedoraId());</span>
+<span class="nc" id="L81">            doInDbTxWithRetry(() -&gt; {</span>
+<span class="nc" id="L82">                purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());</span>
+<span class="nc" id="L83">                transaction().commitIfShortLived();</span>
+<span class="nc" id="L84">            });</span>
+<span class="nc" id="L85">            return noContent().build();</span>
+        } finally {
+<span class="nc" id="L87">            transaction().releaseResourceLocksIfShortLived();</span>
+        }
+    }
+
+    /*
+     * These methods are disallowed, but need to exist here or the path gets caught by the FedoraLdp path matcher.
+     */
+    @GET
+    public Response get() {
+<span class="nc" id="L96">        return methodNotAllowed();</span>
+    }
+
+    @POST
+    public Response post() {
+<span class="nc" id="L101">        return methodNotAllowed();</span>
+    }
+    @PUT
+    public Response put() {
+<span class="nc" id="L105">        return methodNotAllowed();</span>
+    }
+
+    @OPTIONS
+    public Response options() {
+<span class="nc" id="L110">        return Response.ok().header(ALLOW, &quot;DELETE&quot;).build();</span>
+    }
+
+    @Override
+    protected FedoraResource resource() {
+<span class="nc" id="L115">        final FedoraId resourceId = identifierConverter().pathToInternalId(externalPath);</span>
+        try {
+<span class="nc" id="L117">            return getFedoraResource(transaction(), resourceId);</span>
+<span class="nc" id="L118">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L119">            throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    @Override
+    protected String externalPath() {
+<span class="nc" id="L125">        return null;</span>
+    }
+
+    private Response methodNotAllowed() {
+<span class="nc" id="L129">        return Response.status(Response.Status.METHOD_NOT_ALLOWED).header(ALLOW, &quot;DELETE&quot;).build();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

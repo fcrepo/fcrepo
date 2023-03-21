@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TombstoneException.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.exception</a> &gt; <span class="el_source">TombstoneException.java</span></div><h1>TombstoneException.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api.exception;
+
+import static java.time.ZoneOffset.UTC;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+
+import java.time.format.DateTimeFormatter;
+import java.util.Objects;
+
+import org.fcrepo.kernel.api.models.FedoraResource;
+
+/**
+ * Exception when a Tombstone {@link org.fcrepo.kernel.api.models.FedoraResource}
+ * is used where a real object is expected
+ *
+ * @author cabeer
+ * @since 10/16/14
+ */
+public class TombstoneException extends RepositoryRuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    private final String uri;
+
+<span class="nc" id="L29">    private static DateTimeFormatter isoFormatter = ISO_INSTANT.withZone(UTC);</span>
+
+    /**
+     * Construct a new tombstone exception for a resource
+     * @param resource the fedora resource
+     */
+    public TombstoneException(final FedoraResource resource) {
+<span class="nc" id="L36">        this(resource, null);</span>
+<span class="nc" id="L37">    }</span>
+
+    /**
+     * Create a new tombstone exception with a URI to the tombstone resource
+     * @param resource the fedora resource
+     * @param tombstoneUri the uri to the tombstone resource for the Link header.
+     */
+    public TombstoneException(final FedoraResource resource, final String tombstoneUri) {
+<span class="nc" id="L45">        super(&quot;Discovered tombstone resource at &quot; + resource.getFedoraId().getFullIdPath() +</span>
+<span class="nc bnc" id="L46" title="All 2 branches missed.">                (Objects.nonNull(resource.getLastModifiedDate()) ? &quot;, departed at: &quot; +</span>
+<span class="nc" id="L47">                isoFormatter.format(resource.getLastModifiedDate()) : &quot;&quot;));</span>
+<span class="nc" id="L48">        this.uri = tombstoneUri;</span>
+<span class="nc" id="L49">    }</span>
+
+    /**
+     * Get a URI to the tombstone resource
+     * @return the URI to the tombstone resource
+     */
+    public String getURI() {
+<span class="nc" id="L56">        return uri;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

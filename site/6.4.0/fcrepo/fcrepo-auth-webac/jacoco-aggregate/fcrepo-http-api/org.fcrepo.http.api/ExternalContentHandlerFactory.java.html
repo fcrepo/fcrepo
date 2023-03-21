@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ExternalContentHandlerFactory.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.api</a> &gt; <span class="el_source">ExternalContentHandlerFactory.java</span></div><h1>ExternalContentHandlerFactory.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.api;
+
+import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
+import org.slf4j.Logger;
+
+/**
+ * Constructs ExternalContentHandler objects from link headers
+ *
+ * @author bbpennel
+ */
+<span class="nc" id="L22">public class ExternalContentHandlerFactory {</span>
+
+<span class="nc" id="L24">    private static final Logger LOGGER = getLogger(ExternalContentHandlerFactory.class);</span>
+
+    private ExternalContentPathValidator validator;
+
+    /**
+     * Looks for ExternalContent link header and if it finds one it will return a new ExternalContentHandler object
+     * based on the found Link header. If multiple external content headers were found or the URI provided in the
+     * header is not a valid external content path, then an ExternalMessageBodyException will be thrown.
+     *
+     * @param links links from the request header
+     * @return External Content Handler Object if Link header found, else null
+     * @throws ExternalMessageBodyException thrown if more than one external content link was provided, or if the URL
+     *         of the header was not a valid external content path.
+     */
+    public ExternalContentHandler createFromLinks(final List&lt;String&gt; links) throws ExternalMessageBodyException {
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        if (links == null) {</span>
+<span class="nc" id="L40">            return null;</span>
+        }
+
+<span class="nc" id="L43">        final List&lt;String&gt; externalContentLinks = links.stream()</span>
+<span class="nc" id="L44">                .filter(x -&gt; x.contains(EXTERNAL_CONTENT.toString()))</span>
+<span class="nc" id="L45">                .collect(Collectors.toList());</span>
+
+<span class="nc bnc" id="L47" title="All 2 branches missed.">        if (externalContentLinks.size() &gt; 1) {</span>
+            // got a problem, you can only have one ExternalContent links
+<span class="nc" id="L49">            throw new ExternalMessageBodyException(&quot;More then one External Content Link header in request&quot;);</span>
+<span class="nc bnc" id="L50" title="All 2 branches missed.">        } else if (externalContentLinks.size() == 1) {</span>
+<span class="nc" id="L51">            final String link = externalContentLinks.get(0);</span>
+<span class="nc" id="L52">            final String uri = getUriString(link);</span>
+            // Validate that the URI is valid according to allowed set of external uris
+            try {
+<span class="nc" id="L55">                validator.validate(uri);</span>
+<span class="nc" id="L56">            } catch (final ExternalMessageBodyException e) {</span>
+<span class="nc" id="L57">                LOGGER.warn(&quot;Rejected invalid external path {}&quot;, uri);</span>
+<span class="nc" id="L58">                throw e;</span>
+<span class="nc" id="L59">            }</span>
+
+<span class="nc" id="L61">            return new ExternalContentHandler(link);</span>
+        }
+
+<span class="nc" id="L64">        return null;</span>
+    }
+
+    private static String getUriString(final String link) {
+<span class="nc" id="L68">        final String value = link.trim();</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">        if (value.startsWith(&quot;&lt;&quot;)) {</span>
+<span class="nc" id="L70">            final int gtIndex = value.indexOf('&gt;');</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            if (gtIndex != -1) {</span>
+<span class="nc" id="L72">                return value.substring(1, gtIndex).trim();</span>
+            } else {
+<span class="nc" id="L74">                throw new IllegalArgumentException(&quot;Missing token &gt; in &quot; + value);</span>
+            }
+        } else {
+<span class="nc" id="L77">            throw new IllegalArgumentException(&quot;Missing starting token &lt; in &quot; + value);</span>
+        }
+    }
+
+    /**
+     * Set the external content path validator
+     *
+     * @param validator validator
+     */
+    public void setValidator(final ExternalContentPathValidator validator) {
+<span class="nc" id="L87">        this.validator = validator;</span>
+<span class="nc" id="L88">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

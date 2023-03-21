@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>HttpHeaderPrincipalProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-auth-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">HttpHeaderPrincipalProvider.java</span></div><h1>HttpHeaderPrincipalProvider.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.auth.common;
+
+import static java.util.Collections.emptySet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.http.HttpServletRequest;
+
+import java.security.Principal;
+import java.util.HashSet;
+import java.util.Set;
+
+/**
+ * An example principal provider that extracts principals from request headers.
+ *
+ * @author Gregory Jansen
+ * @author Mike Daines
+ * @see PrincipalProvider
+ */
+<span class="nc" id="L26">public class HttpHeaderPrincipalProvider extends AbstractPrincipalProvider {</span>
+
+    public static class HttpHeaderPrincipal implements Principal {
+
+        private final String name;
+
+<span class="nc" id="L32">        protected HttpHeaderPrincipal(final String name) {</span>
+<span class="nc" id="L33">            this.name = name;</span>
+<span class="nc" id="L34">        }</span>
+
+        @Override
+        public String getName() {
+<span class="nc" id="L38">            return name;</span>
+        }
+
+        @Override
+        public String toString() {
+<span class="nc" id="L43">            return name;</span>
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+<span class="nc bnc" id="L48" title="All 2 branches missed.">            if (o instanceof HttpHeaderPrincipal) {</span>
+<span class="nc" id="L49">                return ((HttpHeaderPrincipal) o).getName().equals(</span>
+<span class="nc" id="L50">                        this.getName());</span>
+            }
+<span class="nc" id="L52">            return false;</span>
+        }
+
+        @Override
+        public int hashCode() {
+<span class="nc bnc" id="L57" title="All 2 branches missed.">            if (name == null) {</span>
+<span class="nc" id="L58">                return 0;</span>
+            }
+<span class="nc" id="L60">            return name.hashCode();</span>
+        }
+
+    }
+
+    private String headerName;
+
+<span class="nc" id="L67">    private String separator = &quot;&quot;;</span>
+
+<span class="nc" id="L69">    private static final Logger LOGGER = LoggerFactory.getLogger(HttpHeaderPrincipalProvider.class);</span>
+
+    /**
+     * @param headerName The name of the header from which to extract principals
+     */
+    public void setHeaderName(final String headerName) {
+<span class="nc" id="L75">        this.headerName = headerName;</span>
+<span class="nc" id="L76">    }</span>
+
+    /**
+     * @param separator The string by which to split header values
+     */
+    public void setSeparator(final String separator) {
+<span class="nc" id="L82">        this.separator = separator;</span>
+<span class="nc" id="L83">    }</span>
+
+    /*
+    * (non-Javadoc)
+    * @see
+    * org.fcrepo.auth.PrincipalProvider#getPrincipals(javax.servlet.http.HttpServletRequest)
+    */
+    @Override
+    public Set&lt;Principal&gt; getPrincipals(final HttpServletRequest request) {
+<span class="nc" id="L92">        LOGGER.debug(&quot;Checking for principals using {}&quot;, HttpHeaderPrincipalProvider.class.getSimpleName());</span>
+
+<span class="nc bnc" id="L94" title="All 4 branches missed.">        if (headerName == null || separator == null) {</span>
+<span class="nc" id="L95">            LOGGER.debug(&quot;headerName or separator not initialized&quot;);</span>
+<span class="nc" id="L96">            return emptySet();</span>
+        }
+
+<span class="nc" id="L99">        LOGGER.debug(&quot;Trying to get principals from header: {}; separator: {}&quot;, headerName, separator);</span>
+
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (request == null) {</span>
+<span class="nc" id="L102">            LOGGER.debug(&quot;Servlet request from servletCredentials was null&quot;);</span>
+<span class="nc" id="L103">            return emptySet();</span>
+        }
+
+<span class="nc" id="L106">        final String value = request.getHeader(headerName);</span>
+
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L109">            LOGGER.debug(&quot;Value for header {} is null&quot;, headerName);</span>
+<span class="nc" id="L110">            return emptySet();</span>
+        }
+
+<span class="nc" id="L113">        final String[] names = value.split(separator);</span>
+
+<span class="nc" id="L115">        final Set&lt;Principal&gt; principals = new HashSet&lt;&gt;();</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">        for (final String name : names) {</span>
+<span class="nc" id="L118">            LOGGER.debug(&quot;Adding HTTP header-provided principal: {}&quot;, name.trim());</span>
+<span class="nc" id="L119">            principals.add(createPrincipal(name));</span>
+        }
+
+<span class="nc" id="L122">        return principals;</span>
+
+    }
+
+    protected Principal createPrincipal(final String name) {
+<span class="nc" id="L127">        return new HttpHeaderPrincipal(name.trim());</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

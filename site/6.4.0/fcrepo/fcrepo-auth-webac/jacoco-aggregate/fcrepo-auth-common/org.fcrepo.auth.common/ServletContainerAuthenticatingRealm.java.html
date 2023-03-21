@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ServletContainerAuthenticatingRealm.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository WebAC Authorization Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-auth-common</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.auth.common</a> &gt; <span class="el_source">ServletContainerAuthenticatingRealm.java</span></div><h1>ServletContainerAuthenticatingRealm.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.auth.common;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.Set;
+
+import org.apache.shiro.authc.AuthenticationException;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
+import org.apache.shiro.realm.AuthenticatingRealm;
+import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
+import org.slf4j.Logger;
+
+/**
+ * @author peichman
+ */
+<span class="nc" id="L24">public class ServletContainerAuthenticatingRealm extends AuthenticatingRealm {</span>
+
+<span class="nc" id="L26">    private static final Logger log = getLogger(ServletContainerAuthenticatingRealm.class);</span>
+
+    @Override
+    public String getName() {
+<span class="nc" id="L30">        return &quot;servlet container authentication&quot;;</span>
+    }
+
+    @Override
+    protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token)
+            throws AuthenticationException {
+<span class="nc" id="L36">        final ContainerAuthToken authToken = (ContainerAuthToken) token;</span>
+<span class="nc" id="L37">        final SimplePrincipalCollection principals = new SimplePrincipalCollection();</span>
+<span class="nc" id="L38">        log.debug(&quot;Creating principals from servlet container principal and roles&quot;);</span>
+        // container-managed auth username
+<span class="nc" id="L40">        principals.add(authToken.getPrincipal(), getName());</span>
+        // container-managed auth roles
+<span class="nc" id="L42">        final Set&lt;ContainerRolesPrincipal&gt; roles = authToken.getRoles();</span>
+<span class="nc bnc" id="L43" title="All 2 branches missed.">        if (!roles.isEmpty()) {</span>
+<span class="nc" id="L44">            principals.addAll(roles, getName());</span>
+        }
+<span class="nc" id="L46">        return new SimpleAuthenticationInfo(principals, ContainerAuthToken.AUTHORIZED);</span>
+    }
+
+    @Override
+    public boolean supports(final AuthenticationToken token) {
+<span class="nc" id="L51">        return token instanceof ContainerAuthToken;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
