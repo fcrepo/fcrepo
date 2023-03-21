@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RdfStreamStreamingOutput.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.responses</a> &gt; <span class="el_source">RdfStreamStreamingOutput.java</span></div><h1>RdfStreamStreamingOutput.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.responses;
+
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static org.apache.jena.riot.Lang.JSONLD;
+import static org.apache.jena.riot.Lang.RDFXML;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
+import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
+import static org.apache.jena.riot.RDFFormat.JSONLD_COMPACT_FLAT;
+import static org.apache.jena.riot.RDFFormat.JSONLD_EXPAND_FLAT;
+import static org.apache.jena.riot.RDFFormat.JSONLD_FLATTEN_FLAT;
+import static org.apache.jena.riot.system.StreamRDFWriter.defaultSerialization;
+import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
+import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+
+import java.io.OutputStream;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.Set;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.StreamingOutput;
+
+import com.google.common.util.concurrent.AbstractFuture;
+import org.apache.jena.riot.RiotException;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.NsIterator;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.system.StreamRDF;
+import org.fcrepo.kernel.api.RdfStream;
+import org.slf4j.Logger;
+
+/**
+ * Serializes an {@link RdfStream}.
+ *
+ * @author ajs6f
+ * @since Oct 30, 2013
+ */
+public class RdfStreamStreamingOutput extends AbstractFuture&lt;Void&gt; implements
+        StreamingOutput {
+
+<span class="nc" id="L57">    private static final Logger LOGGER = getLogger(RdfStreamStreamingOutput.class);</span>
+
+    private static final String JSONLD_COMPACTED = &quot;http://www.w3.org/ns/json-ld#compacted&quot;;
+
+    private static final String JSONLD_FLATTENED = &quot;http://www.w3.org/ns/json-ld#flattened&quot;;
+
+    private static final String RDF_TYPE = RDF_NAMESPACE + &quot;type&quot;;
+
+    private final Lang format;
+
+    private final MediaType mediaType;
+
+    private final RdfStream rdfStream;
+
+    private final Map&lt;String, String&gt; namespaces;
+
+    /**
+     * Normal constructor
+     *
+     * @param rdfStream the rdf stream
+     * @param namespaces a namespace mapping
+     * @param mediaType the media type
+     */
+    public RdfStreamStreamingOutput(final RdfStream rdfStream, final Map&lt;String, String&gt; namespaces,
+            final MediaType mediaType) {
+<span class="nc" id="L82">        super();</span>
+
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        if (LOGGER.isDebugEnabled()) {</span>
+<span class="nc" id="L85">            getRegisteredLanguages().forEach(format -&gt; {</span>
+<span class="nc" id="L86">                LOGGER.debug(&quot;Discovered RDF writer writeableFormats: {} with mimeTypes: {}&quot;,</span>
+<span class="nc" id="L87">                        format.getName(), String.join(&quot; &quot;, format.getAltContentTypes()));</span>
+<span class="nc" id="L88">            });</span>
+        }
+<span class="nc" id="L90">        final Lang format = contentTypeToLang(mediaType.getType() + &quot;/&quot; + mediaType.getSubtype());</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">        if (format != null) {</span>
+<span class="nc" id="L92">            this.format = format;</span>
+<span class="nc" id="L93">            this.mediaType = mediaType;</span>
+<span class="nc" id="L94">            LOGGER.debug(&quot;Setting up to serialize to: {}&quot;, format);</span>
+        } else {
+<span class="nc" id="L96">            throw new WebApplicationException(NOT_ACCEPTABLE);</span>
+        }
+
+<span class="nc" id="L99">        this.rdfStream = rdfStream;</span>
+<span class="nc" id="L100">        this.namespaces = namespaces;</span>
+<span class="nc" id="L101">    }</span>
+
+    @Override
+    public void write(final OutputStream output) {
+        try {
+<span class="nc" id="L106">            LOGGER.debug(&quot;Serializing RDF stream in: {}&quot;, format);</span>
+<span class="nc" id="L107">            write(rdfStream, output, format, mediaType, namespaces);</span>
+<span class="nc" id="L108">        } catch (final RiotException e) {</span>
+<span class="nc" id="L109">            setException(e);</span>
+<span class="nc" id="L110">            LOGGER.debug(&quot;Error serializing RDF: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L111">            throw new WebApplicationException(e);</span>
+<span class="nc" id="L112">        }</span>
+<span class="nc" id="L113">    }</span>
+
+    private static void write(final RdfStream rdfStream,
+                       final OutputStream output,
+                       final Lang dataFormat,
+                       final MediaType dataMediaType,
+                       final Map&lt;String, String&gt; nsPrefixes) {
+
+<span class="nc" id="L121">        final RDFFormat format = defaultSerialization(dataFormat);</span>
+
+        // For formats that can be block-streamed (n-triples, turtle)
+<span class="nc bnc" id="L124" title="All 2 branches missed.">        if (format != null) {</span>
+<span class="nc" id="L125">            LOGGER.debug(&quot;Stream-based serialization of {}&quot;, dataFormat.toString());</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">            if (RDFFormat.NTRIPLES.equals(format)) {</span>
+<span class="nc" id="L127">                serializeNTriples(rdfStream, format, output);</span>
+            } else {
+<span class="nc" id="L129">                serializeBlockStreamed(rdfStream, output, format, nsPrefixes);</span>
+            }
+        // For formats that require analysis of the entire model and cannot be streamed directly (rdfxml, n3)
+        } else {
+<span class="nc" id="L133">            LOGGER.debug(&quot;Non-stream serialization of {}&quot;, dataFormat.toString());</span>
+<span class="nc" id="L134">            serializeNonStreamed(rdfStream, output, dataFormat, dataMediaType, nsPrefixes);</span>
+        }
+<span class="nc" id="L136">    }</span>
+
+    private static void serializeNTriples(final RdfStream rdfStream, final RDFFormat format,
+            final OutputStream output) {
+<span class="nc" id="L140">        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format.getLang()));</span>
+<span class="nc" id="L141">        stream.start();</span>
+<span class="nc" id="L142">        rdfStream.forEach(stream::triple);</span>
+<span class="nc" id="L143">        stream.finish();</span>
+<span class="nc" id="L144">    }</span>
+
+    private static void serializeBlockStreamed(final RdfStream rdfStream, final OutputStream output,
+            final RDFFormat format, final Map&lt;String, String&gt; nsPrefixes) {
+
+<span class="nc" id="L149">        final Set&lt;String&gt; namespacesPresent = new HashSet&lt;&gt;();</span>
+
+<span class="nc" id="L151">        final StreamRDF stream = new SynchonizedStreamRDFWrapper(getWriterStream(output, format.getLang()));</span>
+<span class="nc" id="L152">        stream.start();</span>
+        // Must read the rdf stream before writing out ns prefixes, otherwise the prefixes come after the triples
+<span class="nc" id="L154">        final List&lt;Triple&gt; tripleList = rdfStream.peek(t -&gt; {</span>
+            // Collect the namespaces present in the RDF stream, using the same
+            // criteria for where to look that jena's model.listNameSpaces() does
+<span class="nc" id="L157">            namespacesPresent.add(t.getPredicate().getNameSpace());</span>
+<span class="nc bnc" id="L158" title="All 4 branches missed.">            if (RDF_TYPE.equals(t.getPredicate().getURI()) &amp;&amp; t.getObject().isURI()) {</span>
+<span class="nc" id="L159">                namespacesPresent.add(t.getObject().getNameSpace());</span>
+            }
+<span class="nc" id="L161">        }).collect(Collectors.toList());</span>
+
+<span class="nc" id="L163">        nsPrefixes.forEach((prefix, uri) -&gt; {</span>
+            // Only add namespace prefixes if the namespace is present in the rdf stream
+<span class="nc bnc" id="L165" title="All 2 branches missed.">            if (namespacesPresent.contains(uri)) {</span>
+<span class="nc" id="L166">                stream.prefix(prefix, uri);</span>
+            }
+<span class="nc" id="L168">        });</span>
+<span class="nc" id="L169">        tripleList.forEach(stream::triple);</span>
+<span class="nc" id="L170">        stream.finish();</span>
+<span class="nc" id="L171">    }</span>
+
+    private static void serializeNonStreamed(final RdfStream rdfStream, final OutputStream output,
+            final Lang dataFormat, final MediaType dataMediaType, final Map&lt;String, String&gt; nsPrefixes) {
+<span class="nc" id="L175">        final Model model = rdfStream.collect(toModel());</span>
+
+<span class="nc" id="L177">        model.setNsPrefixes(filterNamespacesToPresent(model, nsPrefixes));</span>
+        // use block output streaming for RDFXML
+<span class="nc bnc" id="L179" title="All 2 branches missed.">        if (RDFXML.equals(dataFormat)) {</span>
+<span class="nc" id="L180">            RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">        } else if (JSONLD.equals(dataFormat)) {</span>
+<span class="nc" id="L182">            final RDFFormat jsonldFormat = getFormatFromMediaType(dataMediaType);</span>
+<span class="nc" id="L183">            RDFDataMgr.write(output, model.getGraph(), jsonldFormat);</span>
+<span class="nc" id="L184">        } else {</span>
+<span class="nc" id="L185">            RDFDataMgr.write(output, model.getGraph(), dataFormat);</span>
+        }
+<span class="nc" id="L187">    }</span>
+
+    /**
+     * Filters the map of namespace prefix mappings to just those containing namespace URIs present in the model
+     *
+     * @param model model
+     * @param nsPrefixes map of namespace to uris
+     * @return nsPrefixes filtered to namespaces found in the model
+     */
+    private static Map&lt;String, String&gt; filterNamespacesToPresent(final Model model,
+            final Map&lt;String, String&gt; nsPrefixes) {
+<span class="nc" id="L198">        final Map&lt;String, String&gt; resultNses = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L199">        final Set&lt;Entry&lt;String, String&gt;&gt; nsSet = nsPrefixes.entrySet();</span>
+<span class="nc" id="L200">        final NsIterator nsIt = model.listNameSpaces();</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">        while (nsIt.hasNext()) {</span>
+<span class="nc" id="L202">            final String ns = nsIt.next();</span>
+
+<span class="nc" id="L204">            final Optional&lt;Entry&lt;String, String&gt;&gt; nsOpt = nsSet.stream()</span>
+<span class="nc" id="L205">                    .filter(nsEntry -&gt; nsEntry.getValue().equals(ns))</span>
+<span class="nc" id="L206">                    .findFirst();</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">            if (nsOpt.isPresent()) {</span>
+<span class="nc" id="L208">                final Entry&lt;String, String&gt; nsMatch = nsOpt.get();</span>
+<span class="nc" id="L209">                resultNses.put(nsMatch.getKey(), nsMatch.getValue());</span>
+            }
+<span class="nc" id="L211">        }</span>
+
+<span class="nc" id="L213">        return resultNses;</span>
+    }
+
+    private static RDFFormat getFormatFromMediaType(final MediaType mediaType) {
+<span class="nc" id="L217">        final String profile = mediaType.getParameters().getOrDefault(&quot;profile&quot;, &quot;&quot;);</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">        if (profile.equals(JSONLD_COMPACTED)) {</span>
+<span class="nc" id="L219">            return JSONLD_COMPACT_FLAT;</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">        } else if (profile.equals(JSONLD_FLATTENED)) {</span>
+<span class="nc" id="L221">            return JSONLD_FLATTEN_FLAT;</span>
+        }
+<span class="nc" id="L223">        return JSONLD_EXPAND_FLAT;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

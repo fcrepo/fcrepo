@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RdfStreamProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.responses</a> &gt; <span class="el_source">RdfStreamProvider.java</span></div><h1>RdfStreamProvider.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.responses;
+
+import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
+import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
+import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
+import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
+import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.io.OutputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
+
+import javax.ws.rs.Produces;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.ext.MessageBodyWriter;
+import javax.ws.rs.ext.Provider;
+
+import org.slf4j.Logger;
+
+/**
+ * Provides serialization for streaming RDF results.
+ *
+ * @author ajs6f
+ * @since Nov 19, 2013
+ */
+@Provider
+@Produces({TURTLE, N3, N3_ALT2, RDF_XML, NTRIPLES, TEXT_PLAIN, JSON_LD})
+<span class="nc" id="L38">public class RdfStreamProvider implements MessageBodyWriter&lt;RdfNamespacedStream&gt; {</span>
+
+<span class="nc" id="L40">    private static final Logger LOGGER = getLogger(RdfStreamProvider.class);</span>
+
+    @Override
+    public boolean isWriteable(final Class&lt;?&gt; type, final Type genericType,
+            final Annotation[] annotations, final MediaType mediaType) {
+<span class="nc" id="L45">        LOGGER.debug(</span>
+                &quot;Checking to see if we can serialize type: {} to mimeType: {}&quot;,
+<span class="nc" id="L47">                type.getName(), mediaType.toString());</span>
+<span class="nc bnc" id="L48" title="All 2 branches missed.">        if (!RdfNamespacedStream.class.isAssignableFrom(type)) {</span>
+<span class="nc" id="L49">            return false;</span>
+        }
+<span class="nc bnc" id="L51" title="All 2 branches missed.">        if (mediaType.equals(TEXT_HTML_TYPE)</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">                || (mediaType.getType().equals(&quot;application&quot;) &amp;&amp; mediaType</span>
+<span class="nc bnc" id="L53" title="All 2 branches missed.">                        .getSubtype().equals(&quot;html&quot;))) {</span>
+<span class="nc" id="L54">            LOGGER.debug(&quot;Was asked for an HTML mimeType, returning false.&quot;);</span>
+<span class="nc" id="L55">            return false;</span>
+        }
+<span class="nc" id="L57">        LOGGER.debug(&quot;Assuming that this is an attempt to retrieve RDF, returning true.&quot;);</span>
+<span class="nc" id="L58">        return true;</span>
+    }
+
+    @Override
+    public long getSize(final RdfNamespacedStream t, final Class&lt;?&gt; type,
+            final Type genericType, final Annotation[] annotations,
+            final MediaType mediaType) {
+        // We do not know how long the stream is
+<span class="nc" id="L66">        return -1;</span>
+    }
+
+    @Override
+    public void writeTo(final RdfNamespacedStream nsStream, final Class&lt;?&gt; type,
+        final Type genericType, final Annotation[] annotations,
+        final MediaType mediaType,
+        final MultivaluedMap&lt;String, Object&gt; httpHeaders,
+        final OutputStream entityStream) {
+
+<span class="nc" id="L76">        LOGGER.debug(&quot;Serializing an RdfStream to mimeType: {}&quot;, mediaType);</span>
+<span class="nc" id="L77">        final RdfStreamStreamingOutput streamOutput = new RdfStreamStreamingOutput(nsStream.stream,</span>
+                nsStream.namespaces, mediaType);
+<span class="nc" id="L79">        streamOutput.write(entityStream);</span>
+<span class="nc" id="L80">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

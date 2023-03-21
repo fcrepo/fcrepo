@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>PreconditionException.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.exception</a> &gt; <span class="el_source">PreconditionException.java</span></div><h1>PreconditionException.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.kernel.api.exception;
+
+import static org.apache.http.HttpStatus.SC_PRECONDITION_FAILED;
+import static org.apache.http.HttpStatus.SC_NOT_MODIFIED;
+
+/**
+ * @author dbernstein
+ * @since Jun 22, 2017
+ */
+public class PreconditionException extends RepositoryRuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    private int httpStatus;
+
+    /**
+     * Ordinary constructor
+     *
+     * @param msg error message
+     * @param httpStatus the http status code
+     */
+    public PreconditionException(final String msg, final int httpStatus) {
+<span class="nc" id="L29">        super(msg);</span>
+<span class="nc bnc" id="L30" title="All 4 branches missed.">        if (httpStatus != SC_PRECONDITION_FAILED &amp;&amp; httpStatus != SC_NOT_MODIFIED) {</span>
+<span class="nc" id="L31">            throw new IllegalArgumentException(&quot;Invalid httpStatus (&quot; + httpStatus +</span>
+                    &quot;). The http status for PreconditionExceptions must be &quot; +
+                    SC_PRECONDITION_FAILED + &quot; or &quot; + SC_NOT_MODIFIED);
+        }
+<span class="nc" id="L35">        this.httpStatus = httpStatus;</span>
+<span class="nc" id="L36">    }</span>
+
+    /**
+     * @return the httpStatus
+     */
+    public int getHttpStatus() {
+<span class="nc" id="L42">        return httpStatus;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

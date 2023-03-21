@@ -1,0 +1,527 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ViewHelpers.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.responses</a> &gt; <span class="el_source">ViewHelpers.java</span></div><h1>ViewHelpers.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.responses;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static org.apache.jena.atlas.iterator.Iter.asStream;
+import static org.apache.jena.graph.GraphUtil.listObjects;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.vocabulary.DC.title;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.apache.jena.vocabulary.RDFS.label;
+import static org.apache.jena.vocabulary.SKOS.prefLabel;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.stream;
+import static java.util.Collections.emptyMap;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toMap;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.RdfLexicon.isManagedPredicate;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.time.Instant;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.StringJoiner;
+
+import javax.ws.rs.core.UriInfo;
+
+import org.apache.jena.graph.Graph;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.graph.impl.LiteralLabel;
+import org.apache.jena.vocabulary.DCTerms;
+
+import org.fcrepo.http.commons.api.rdf.TripleOrdering;
+import org.slf4j.Logger;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.shared.PrefixMapping;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.vocabulary.RDFS;
+
+/**
+ * General view helpers for rendering HTML responses
+ *
+ * @author awoods
+ * @author ajs6f
+ */
+public class ViewHelpers {
+
+<span class="nc" id="L69">    private static final Logger LOGGER = getLogger(ViewHelpers.class);</span>
+
+<span class="nc" id="L71">    private static ViewHelpers instance = null;</span>
+
+<span class="nc" id="L73">    private static final List&lt;Property&gt;  TITLE_PROPERTIES = asList(label, title, DCTerms.title, prefLabel);</span>
+
+    private ViewHelpers() {
+        // Exists only to defeat instantiation.
+    }
+
+    /**
+     * ViewHelpers is a singleton. Initialize or return the existing object
+     * @return an instance of ViewHelpers
+     */
+    public static ViewHelpers getInstance() {
+<span class="nc bnc" id="L84" title="All 2 branches missed.">        return instance == null ? instance = new ViewHelpers() : instance;</span>
+    }
+
+    /**
+     * Return an iterator of Triples for versions.
+     *
+     * @param graph the graph
+     * @param subject the subject
+     * @return iterator
+     */
+    public Iterator&lt;Node&gt; getVersions(final Graph graph,
+        final Node subject) {
+        // Mementos should be ordered by date so use the getOrderedVersions.
+<span class="nc" id="L97">        return getOrderedVersions(graph, subject, CONTAINS.asResource());</span>
+    }
+
+    /**
+     * Return an iterator of Triples for versions in order that
+     * they were created.
+     *
+     * @param g the graph
+     * @param subject the subject
+     * @param predicate the predicate
+     * @return iterator
+     */
+    public Iterator&lt;Node&gt; getOrderedVersions(final Graph g, final Node subject, final Resource predicate) {
+<span class="nc" id="L110">        final List&lt;Node&gt; vs = listObjects(g, subject, predicate.asNode()).toList();</span>
+<span class="nc" id="L111">        vs.sort(Comparator.comparing(v -&gt; getVersionDate(g, v)));</span>
+<span class="nc" id="L112">        return vs.iterator();</span>
+    }
+
+    /**
+     * Gets the URL of the node whose version is represented by the
+     * current node.  The current implementation assumes the URI
+     * of that node will be the same as the breadcrumb entry that
+     * precedes one with the path &quot;fcr:versions&quot;.
+     * @param uriInfo the uri info
+     * @param subject the subject
+     * @return the URL of the node
+     */
+     public String getVersionSubjectUrl(final UriInfo uriInfo, final Node subject) {
+<span class="nc" id="L125">        final Map&lt;String, String&gt; breadcrumbs = getNodeBreadcrumbs(uriInfo, subject);</span>
+<span class="nc" id="L126">        String lastUrl = null;</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">        for (final Map.Entry&lt;String, String&gt; entry : breadcrumbs.entrySet()) {</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            if (entry.getValue().equals(&quot;fcr:versions&quot;)) {</span>
+<span class="nc" id="L129">                return lastUrl;</span>
+            }
+<span class="nc" id="L131">            lastUrl = entry.getKey();</span>
+<span class="nc" id="L132">        }</span>
+<span class="nc" id="L133">        return null;</span>
+     }
+
+    /**
+     * Get the date time as the version label.
+     *
+     * @param graph the graph
+     * @param subject the subject
+     * @return the datetime in RFC 1123 format.
+     */
+    public String getVersionLabel(final Graph graph, final Node subject) {
+<span class="nc" id="L144">        final Instant datetime = getVersionDate(graph, subject);</span>
+<span class="nc" id="L145">        return MEMENTO_RFC_1123_FORMATTER.format(datetime);</span>
+    }
+
+    /**
+     * Gets a modification date of a subject from the graph
+     *
+     * @param graph the graph
+     * @param subject the subject
+     * @return the modification date if it exists
+     */
+    public Instant getVersionDate(final Graph graph, final Node subject) {
+<span class="nc" id="L156">        final String[] pathParts = subject.getURI().split(&quot;/&quot;);</span>
+<span class="nc" id="L157">        return MEMENTO_LABEL_FORMATTER.parse(pathParts[pathParts.length - 1], Instant::from);</span>
+    }
+
+    private static Optional&lt;String&gt; getValue(final Graph graph, final Node subject, final Node predicate) {
+<span class="nc" id="L161">        final Iterator&lt;Node&gt; objects = listObjects(graph, subject, predicate);</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        return Optional.ofNullable(objects.hasNext() ? objects.next().getLiteralValue().toString() : null);</span>
+    }
+
+    /**
+     * Get the canonical title of a subject from the graph
+     *
+     * @param graph the graph
+     * @param sub the subject
+     * @return canonical title of the subject in the graph
+     */
+    public String getObjectTitle(final Graph graph, final Node sub) {
+<span class="nc bnc" id="L173" title="All 2 branches missed.">        if (sub == null) {</span>
+<span class="nc" id="L174">            return &quot;&quot;;</span>
+        }
+<span class="nc" id="L176">        final Optional&lt;String&gt; title = TITLE_PROPERTIES.stream().map(Property::asNode).flatMap(p -&gt; listObjects(</span>
+<span class="nc" id="L177">                graph, sub, p).toList().stream()).filter(Node::isLiteral).map(Node::getLiteral).map(</span>
+<span class="nc" id="L178">                        LiteralLabel::toString).findFirst();</span>
+<span class="nc bnc" id="L179" title="All 4 branches missed.">        return title.orElse(sub.isURI() ? sub.getURI() : sub.isBlank() ? sub.getBlankNodeLabel() : sub.toString());</span>
+    }
+
+    /**
+     * Get the ID of a resource, this is the URI, blank node ID or just the local name. Used in resource.vsl
+     *
+     * @param res
+     *   The resource to get the ID for
+     * @return
+     *   The ID as a string.
+     */
+     public String getResourceId(final Resource res) {
+<span class="nc bnc" id="L191" title="All 2 branches missed.">         if (res == null) {</span>
+<span class="nc" id="L192">            return &quot;&quot;;</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">         } else if (res.isURIResource()) {</span>
+<span class="nc" id="L194">            return res.getURI();</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">         } else if (res.isAnon()) {</span>
+<span class="nc" id="L196">            return res.getId().getLabelString();</span>
+         } else {
+<span class="nc" id="L198">            return res.getLocalName();</span>
+         }
+     }
+
+    /**
+     * Determines whether the subject is writable
+     * true if node is writable
+     * @param graph the graph
+     * @param subject the subject
+     * @return whether the subject is writable
+     */
+    public boolean isWritable(final Graph graph, final Node subject) {
+        // XXX: always return true until we can determine a better way to control the HTML UI
+<span class="nc" id="L211">        return true;</span>
+    }
+
+    /**
+     * Determines whether the subject is of type memento:Memento.
+     *
+     * @param graph the graph
+     * @param subject the subject
+     * @return whether the subject is a versioned node
+     */
+    public boolean isVersionedNode(final Graph graph, final Node subject) {
+<span class="nc" id="L222">        return listObjects(graph, subject, RDF.type.asNode()).toList().stream().map(Node::getURI)</span>
+<span class="nc" id="L223">            .anyMatch((MEMENTO_TYPE)::equals);</span>
+    }
+
+    /**
+     * Get the string version of the object that matches the given subject and
+     * predicate
+     *
+     * @param graph the graph
+     * @param subject the subject
+     * @param predicate the predicate
+     * @param uriAsLink the boolean value of uri as link
+     * @return string version of the object
+     */
+    public String getObjectsAsString(final Graph graph,
+            final Node subject, final Resource predicate, final boolean uriAsLink) {
+<span class="nc" id="L238">        LOGGER.trace(&quot;Getting Objects as String: s:{}, p:{}, g:{}&quot;, subject, predicate, graph);</span>
+<span class="nc" id="L239">        final Iterator&lt;Node&gt; iterator = listObjects(graph, subject, predicate.asNode());</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">        if (iterator.hasNext()) {</span>
+<span class="nc" id="L241">            final Node obj = iterator.next();</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">            if (obj.isLiteral()) {</span>
+<span class="nc" id="L243">                final String lit = obj.getLiteralValue().toString();</span>
+<span class="nc bnc" id="L244" title="All 2 branches missed.">                return lit.isEmpty() ? &quot;&lt;empty&gt;&quot; : lit;</span>
+            }
+<span class="nc bnc" id="L246" title="All 2 branches missed.">            return uriAsLink ? &quot;&amp;lt;&lt;a href=\&quot;&quot; + obj.getURI() + &quot;\&quot;&gt;&quot; + obj.getURI() + &quot;&lt;/a&gt;&amp;gt;&quot; : obj.getURI();</span>
+        }
+<span class="nc" id="L248">        return &quot;&quot;;</span>
+    }
+
+    /**
+     * Returns the original resource as a URI Node if
+     * the subject represents a memento uri; otherwise it
+     * returns the subject parameter.
+     * @param subject the subject
+     * @return a URI node of the original resource.
+     */
+    public Node getOriginalResource(final Node subject) {
+<span class="nc bnc" id="L259" title="All 2 branches missed.">        if (!subject.isURI()) {</span>
+<span class="nc" id="L260">            return subject;</span>
+        }
+
+<span class="nc" id="L263">        final String subjectUri = subject.getURI();</span>
+<span class="nc" id="L264">        final int index = subjectUri.indexOf(FCR_VERSIONS);</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">        if (index &gt; 0) {</span>
+<span class="nc" id="L266">            return NodeFactory.createURI(subjectUri.substring(0, index - 1));</span>
+        } else {
+<span class="nc" id="L268">            return subject;</span>
+        }
+    }
+
+    /**
+     * Same as above but takes a string.
+     * NB: This method is currently used in fcrepo-http-api/src/main/resources/views/default.vsl
+     * @param subjectUri the URI
+     * @return a node
+     */
+    public Node getOriginalResource(final String subjectUri) {
+<span class="nc" id="L279">        return getOriginalResource(createURI(subjectUri));</span>
+    }
+
+    /**
+     * Get the number of child resources associated with the arg 'subject' as specified by the triple found in the arg
+     * 'graph' with the predicate RdfLexicon.HAS_CHILD_COUNT.
+     *
+     * @param graph   of triples
+     * @param subject for which child resources is sought
+     * @return number of child resources
+     */
+    public int getNumChildren(final Graph graph, final Node subject) {
+<span class="nc" id="L291">        LOGGER.trace(&quot;Getting number of children: s:{}, g:{}&quot;, subject, graph);</span>
+<span class="nc" id="L292">        return (int) asStream(listObjects(graph, subject, CONTAINS.asNode())).count();</span>
+    }
+
+    /**
+     * Generate url to local name breadcrumbs for a given node's tree
+     *
+     * @param uriInfo the uri info
+     * @param subject the subject
+     * @return breadcrumbs
+     */
+    public Map&lt;String, String&gt; getNodeBreadcrumbs(final UriInfo uriInfo,
+            final Node subject) {
+<span class="nc" id="L304">        final String topic = subject.getURI();</span>
+
+<span class="nc" id="L306">        LOGGER.trace(&quot;Generating breadcrumbs for subject {}&quot;, subject);</span>
+<span class="nc" id="L307">        final String baseUri = uriInfo.getBaseUri().toString();</span>
+
+<span class="nc bnc" id="L309" title="All 2 branches missed.">        if (!topic.startsWith(baseUri)) {</span>
+<span class="nc" id="L310">            LOGGER.trace(&quot;Topic wasn't part of our base URI {}&quot;, baseUri);</span>
+<span class="nc" id="L311">            return emptyMap();</span>
+        }
+
+<span class="nc" id="L314">        final String salientPath = topic.substring(baseUri.length());</span>
+<span class="nc" id="L315">        final StringJoiner cumulativePath = new StringJoiner(&quot;/&quot;);</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">        return stream(salientPath.split(&quot;/&quot;)).filter(seg -&gt; !seg.isEmpty()).collect(toMap(seg -&gt; uriInfo</span>
+<span class="nc" id="L317">                .getBaseUriBuilder().path(cumulativePath.add(seg).toString())</span>
+<span class="nc" id="L318">                .build().toString(), seg -&gt; seg, (u, v) -&gt; null, LinkedHashMap::new));</span>
+    }
+
+    /**
+     * Sort a Iterator of Triples alphabetically by its subject, predicate, and
+     * object
+     *
+     * @param model the model
+     * @param it the iterator of triples
+     * @return iterator of alphabetized triples
+     */
+    public List&lt;Triple&gt; getSortedTriples(final Model model, final Iterator&lt;Triple&gt; it) {
+<span class="nc" id="L330">        final List&lt;Triple&gt; triples = newArrayList(it);</span>
+<span class="nc" id="L331">        triples.sort(new TripleOrdering(model));</span>
+<span class="nc" id="L332">        return triples;</span>
+    }
+
+    /**
+     * Get the namespace prefix (or the namespace URI itself, if no prefix is
+     * available) from a prefix mapping
+     *
+     * @param mapping the prefix mapping
+     * @param ns the namespace
+     * @param compact the boolean value of compact
+     * @return namespace prefix
+     */
+    public String getNamespacePrefix(final PrefixMapping mapping,
+            final String ns, final boolean compact) {
+<span class="nc" id="L346">        final String nsURIPrefix = mapping.getNsURIPrefix(ns);</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">        if (nsURIPrefix == null) {</span>
+<span class="nc bnc" id="L348" title="All 2 branches missed.">            if (compact) {</span>
+<span class="nc" id="L349">                final int hashIdx = ns.lastIndexOf('#');</span>
+<span class="nc bnc" id="L350" title="All 2 branches missed.">                final int split = hashIdx &gt; 0 ? ns.substring(0, hashIdx).lastIndexOf('/') : ns.lastIndexOf('/');</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">                return split &gt; 0 ? &quot;...&quot; + ns.substring(split) : ns;</span>
+            }
+<span class="nc" id="L353">            return ns;</span>
+        }
+<span class="nc" id="L355">        return nsURIPrefix + &quot;:&quot;;</span>
+    }
+
+    /**
+     * Get a prefix preamble appropriate for a SPARQL-UPDATE query from a prefix
+     * mapping object
+     *
+     * @param mapping the prefix mapping
+     * @return prefix preamble
+     */
+    public String getPrefixPreamble(final PrefixMapping mapping) {
+<span class="nc" id="L366">        return mapping.getNsPrefixMap().entrySet().stream()</span>
+<span class="nc" id="L367">                .map(e -&gt; &quot;PREFIX &quot; + e.getKey() + &quot;: &lt;&quot; + e.getValue() + &quot;&gt;&quot;).collect(joining(&quot;\n&quot;, &quot;&quot;, &quot;\n\n&quot;));</span>
+    }
+
+    /**
+     * Determines whether the subject is kind of RDF resource
+     * @param graph the graph
+     * @param subject the subject
+     * @param namespace the namespace
+     * @param resource the resource
+     * @return whether the subject is kind of RDF resource
+     */
+    public boolean isRdfResource(final Graph graph,
+                                 final Node subject,
+                                 final String namespace,
+                                 final String resource) {
+<span class="nc" id="L382">        LOGGER.trace(&quot;Is RDF Resource? s:{}, ns:{}, r:{}, g:{}&quot;, subject, namespace, resource, graph);</span>
+<span class="nc" id="L383">        return graph.find(subject, type.asNode(),</span>
+<span class="nc" id="L384">                createResource(namespace + resource).asNode()).hasNext();</span>
+    }
+
+    /**
+     * Is the subject the repository root resource.
+     *
+     * @param graph The graph
+     * @param subject The current subject
+     * @return true if has rdf:type http://fedora.info/definitions/v4/repository#RepositoryRoot
+     */
+    public boolean isRootResource(final Graph graph, final Node subject) {
+<span class="nc" id="L395">        return graph.contains(subject, rdfType().asNode(), REPOSITORY_ROOT.asNode());</span>
+    }
+
+    /**
+     * Convert a URI string to an RDF node
+     *
+     * @param r the uri string
+     * @return RDF node representation of the given string
+     */
+    public Node asLiteralStringNode(final String r) {
+<span class="nc" id="L405">        return ResourceFactory.createPlainLiteral(r).asNode();</span>
+    }
+
+    /**
+     * Yes, we really did create a method to increment
+     * a given int. You can't do math in a velocity template.
+     *
+     * @param i the given integer
+     * @return maths
+     */
+    public int addOne(final int i) {
+<span class="nc" id="L416">        return i + 1;</span>
+    }
+
+    /**
+     * Proxying access to the RDF type static property
+     * @return RDF type property
+     */
+    public Property rdfType() {
+<span class="nc" id="L424">        return RDF.type;</span>
+    }
+
+    /**
+     * Proxying access to the RDFS domain static property
+     * @return RDFS domain property
+     */
+    public Property rdfsDomain() {
+<span class="nc" id="L432">        return RDFS.domain;</span>
+    }
+
+    /**
+     * Proxying access to the RDFS class static property
+     * @return RDFS class resource
+     */
+    public Resource rdfsClass() {
+<span class="nc" id="L440">        return RDFS.Class;</span>
+    }
+
+    /**
+     * Get the content-bearing node for the given subject
+     * @param subject the subject
+     * @return content-bearing node for the given subject
+     */
+    public static Node getContentNode(final Node subject) {
+<span class="nc bnc" id="L449" title="All 2 branches missed.">        return subject == null ? null : NodeFactory.createURI(subject.getURI().replace(&quot;/&quot; + FCR_METADATA, &quot;&quot;));</span>
+    }
+
+    /**
+     * Create a URI Node from the provided String
+     *
+     * @param uri from which a URI Node will be created
+     * @return URI Node
+     */
+    public static Node createURI(final String uri) {
+<span class="nc" id="L459">        return NodeFactory.createURI(uri);</span>
+    }
+
+    /**
+     * Transform a source string to something appropriate for HTML ids
+     * @param source the source string
+     * @return transformed source string
+     */
+    public static String parameterize(final String source) {
+<span class="nc" id="L468">        return source.toLowerCase().replaceAll(&quot;[^a-z0-9\\-_]+&quot;, &quot;_&quot;);</span>
+    }
+
+    /**
+     * Test if a Predicate is managed
+     * @param property the property
+     * @return whether the property is managed
+     */
+    public static boolean isManagedProperty(final Node property) {
+<span class="nc bnc" id="L477" title="All 4 branches missed.">        return property.isURI() &amp;&amp; isManagedPredicate.test(createProperty(property.getURI()));</span>
+    }
+
+    /**
+     * Find a key in a map and format it as a string
+     * @param input map of objects.
+     * @param key the key to locate in the map.
+     * @return the result string.
+     */
+    public static String getString(final Map&lt;String, Object&gt; input, final String key) {
+<span class="nc bnc" id="L487" title="All 2 branches missed.">        if (input.get(key) == null) {</span>
+<span class="nc" id="L488">            return &quot;&quot;;</span>
+        }
+<span class="nc" id="L490">        final var value = input.get(key);</span>
+<span class="nc" id="L491">        final var clazz = value.getClass();</span>
+        final String output;
+<span class="nc bnc" id="L493" title="All 2 branches missed.">        if (clazz == String.class) {</span>
+<span class="nc" id="L494">            output = formatAsString((String) value);</span>
+<span class="nc bnc" id="L495" title="All 2 branches missed.">        } else if (clazz == String[].class) {</span>
+<span class="nc" id="L496">            output = formatAsString((String[]) value);</span>
+<span class="nc bnc" id="L497" title="All 2 branches missed.">        } else if (clazz == Long.class) {</span>
+<span class="nc" id="L498">            output = formatAsString((Long) value);</span>
+        } else {
+<span class="nc" id="L500">            output = &quot;&quot;;</span>
+        }
+<span class="nc" id="L502">        return output;</span>
+    }
+
+    /**
+     * Format to a string and check for null values
+     * @param input a string array or null
+     * @return a string.
+     */
+    private static String formatAsString(final String[] input) {
+<span class="nc bnc" id="L511" title="All 4 branches missed.">        return (input == null || input.length == 0 ? &quot;&quot; :  String.join(&quot;, &quot;, input));</span>
+    }
+
+    /**
+     * Format a string to check for null values
+     * @param input a string or null
+     * @return a string.
+     */
+    private static String formatAsString(final String input) {
+<span class="nc bnc" id="L520" title="All 2 branches missed.">        return (input == null ? &quot;&quot; : input);</span>
+    }
+
+    private static String formatAsString(final Long input) {
+<span class="nc bnc" id="L524" title="All 2 branches missed.">        return (input == null ? &quot;&quot; : input.toString());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

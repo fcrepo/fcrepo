@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ConfigurableHierarchicalSupplier.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.api.services.functions</a> &gt; <span class="el_source">ConfigurableHierarchicalSupplier.java</span></div><h1>ConfigurableHierarchicalSupplier.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.api.services.functions;
+
+import org.springframework.stereotype.Component;
+
+import static java.util.UUID.randomUUID;
+
+import java.util.StringJoiner;
+import java.util.stream.IntStream;
+
+/**
+ * Unique value minter that creates hierarchical IDs from a UUID
+ *
+ * @author rdfloyd
+ * @author whikloj
+ */
+@Component
+public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
+
+    private static final int DEFAULT_LENGTH = 0;
+    private static final int DEFAULT_COUNT = 0;
+
+    private final int length;
+    private final int count;
+
+
+    /**
+     * Mint a hierarchical identifier with args to control length and count of the pairtree. A length or count of ZERO
+     * will return a non-hierarchical identifier.
+     *
+     * @param desiredLength the desired length of pairtree parts
+     * @param desiredCount the desired number of pairtree parts
+     */
+<span class="nc" id="L38">    public ConfigurableHierarchicalSupplier(final int desiredLength, final int desiredCount) {</span>
+<span class="nc" id="L39">        length = desiredLength;</span>
+<span class="nc" id="L40">        count = desiredCount;</span>
+<span class="nc" id="L41">    }</span>
+
+    /**
+     * Mint a unique identifier by default using defaults
+     *
+     */
+<span class="nc" id="L47">    public ConfigurableHierarchicalSupplier() {</span>
+<span class="nc" id="L48">        length = DEFAULT_LENGTH;</span>
+<span class="nc" id="L49">        count = DEFAULT_COUNT;</span>
+<span class="nc" id="L50">    }</span>
+
+    /**
+     * Mint a unique identifier as a UUID
+     *
+     * @return uuid
+     */
+    @Override
+    public String get() {
+
+<span class="nc" id="L60">        final String s = randomUUID().toString();</span>
+        final String id;
+
+<span class="nc bnc" id="L63" title="All 4 branches missed.">        if (count &gt; 0 &amp;&amp; length &gt; 0) {</span>
+<span class="nc" id="L64">            final StringJoiner joiner = new StringJoiner(&quot;/&quot;, &quot;&quot;, &quot;/&quot; + s);</span>
+
+<span class="nc" id="L66">            IntStream.rangeClosed(0, count - 1)</span>
+<span class="nc" id="L67">            .forEach(x -&gt; joiner.add(s.substring(x * length, (x + 1) * length)));</span>
+<span class="nc" id="L68">            id = joiner.toString();</span>
+<span class="nc" id="L69">        } else {</span>
+<span class="nc" id="L70">            id = s;</span>
+        }
+<span class="nc" id="L72">        return id;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

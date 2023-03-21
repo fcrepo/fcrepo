@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>Condition.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.api</a> &gt; <span class="el_source">Condition.java</span></div><h1>Condition.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.search.api;
+
+import java.util.regex.Pattern;
+
+/**
+ * A data structure representing a search condition.
+ *
+ * @author dbernstein
+ */
+public class Condition {
+<span class="nc" id="L16">    public enum Operator {</span>
+<span class="nc" id="L17">        LTE(&quot;&lt;=&quot;),</span>
+<span class="nc" id="L18">        GTE(&quot;&gt;=&quot;),</span>
+<span class="nc" id="L19">        EQ(&quot;=&quot;),</span>
+<span class="nc" id="L20">        GT(&quot;&gt;&quot;),</span>
+<span class="nc" id="L21">        LT(&quot;&lt;&quot;);</span>
+
+        private String value;
+
+<span class="nc" id="L25">        Operator(final String value) {</span>
+<span class="nc" id="L26">            this.value = value;</span>
+<span class="nc" id="L27">        }</span>
+
+        public String getStringValue() {
+<span class="nc" id="L30">            return this.value;</span>
+        }
+
+        public static Operator fromString(final String str) {
+<span class="nc bnc" id="L34" title="All 2 branches missed.">            for (final Operator o : Operator.values()) {</span>
+<span class="nc bnc" id="L35" title="All 2 branches missed.">                if (o.value.equals(str)) {</span>
+<span class="nc" id="L36">                    return o;</span>
+                }
+            }
+
+<span class="nc" id="L40">            throw new IllegalArgumentException(&quot;Value &quot; + str + &quot; not recognized.&quot;);</span>
+        }
+
+    }
+
+<span class="nc" id="L45">    public enum Field {</span>
+<span class="nc" id="L46">        FEDORA_ID,</span>
+<span class="nc" id="L47">        MODIFIED,</span>
+<span class="nc" id="L48">        CREATED,</span>
+<span class="nc" id="L49">        CONTENT_SIZE,</span>
+<span class="nc" id="L50">        MIME_TYPE,</span>
+<span class="nc" id="L51">        RDF_TYPE;</span>
+
+        @Override
+        public String toString() {
+<span class="nc" id="L55">            return super.toString().toLowerCase();</span>
+        }
+
+        public static Field fromString(final String fieldStr) throws InvalidConditionExpressionException {
+<span class="nc bnc" id="L59" title="All 2 branches missed.">            for (final var field : values()) {</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">                if (field.toString().equalsIgnoreCase(fieldStr)) {</span>
+<span class="nc" id="L61">                   return field;</span>
+                }
+            }
+
+<span class="nc" id="L65">            throw new InvalidConditionExpressionException(fieldStr + &quot; is not a valid search field&quot;);</span>
+        }
+    }
+
+    /* A regex for parsing the value of a &quot;condition&quot; query  parameter which follows the format
+     * [field_name][operation][object]
+     * The field name is composed of at least one character and can contain alpha number characters and underscores.
+     * The operation can equal &quot;=&quot;, &quot;&lt;&quot;, &quot;&gt;&quot;, &quot;&lt;=&quot; or &quot;&gt;=&quot;
+     * The object can be anything but cannot start with &gt;, &lt;, and =.
+     */
+<span class="nc" id="L75">    final static Pattern CONDITION_REGEX = Pattern.compile(&quot;([a-zA-Z0-9_]+)([&gt;&lt;=]|&lt;=|&gt;=)([^&gt;&lt;=].*)&quot;);</span>
+
+
+    private Field field;
+    private Operator operator;
+    private String object;
+
+    /**
+     * Internal constructor
+     *
+     * @param field    The search field (condition subject)
+     * @param operator The operator (condition predicate)
+     * @param object   The object (condition object)
+     */
+<span class="nc" id="L89">    private Condition(final Field field, final Operator operator, final String object) {</span>
+<span class="nc" id="L90">        this.field = field;</span>
+<span class="nc" id="L91">        this.operator = operator;</span>
+<span class="nc" id="L92">        this.object = object;</span>
+<span class="nc" id="L93">    }</span>
+
+    /**
+     * Field accessor
+     *
+     * @return the field
+     */
+    public Field getField() {
+<span class="nc" id="L101">        return field;</span>
+    }
+
+    /**
+     * Operator accessor
+     * @return the operator
+     */
+    public Operator getOperator() {
+<span class="nc" id="L109">        return operator;</span>
+    }
+
+    /**
+     * @return the object portion of the condition
+     */
+    public String getObject() {
+<span class="nc" id="L116">        return object;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L121">        return this.field.toString().toLowerCase() + operator + object;</span>
+    }
+
+    /**
+     * Parses a string expression into a Condition object.
+     * @param expression The condition as a string expression.
+     * @return The condition
+     * @throws InvalidConditionExpressionException if we can't parse the string into a Condition.
+     */
+    public static Condition fromExpression(final String expression) throws InvalidConditionExpressionException {
+<span class="nc" id="L131">        final var m = CONDITION_REGEX.matcher(expression);</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">        if (m.matches()) {</span>
+<span class="nc" id="L133">            final var field = Field.fromString(m.group(1));</span>
+<span class="nc" id="L134">            final var operation = Operator.fromString(m.group(2));</span>
+<span class="nc" id="L135">            final var object = m.group(3);</span>
+<span class="nc" id="L136">            return fromEnums(field, operation, object);</span>
+        }
+
+<span class="nc" id="L139">        throw new InvalidConditionExpressionException(expression);</span>
+    }
+
+    public static Condition fromEnums(final Field field, final Operator operator, final String expression) {
+<span class="nc" id="L143">        return new Condition(field, operator, expression);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

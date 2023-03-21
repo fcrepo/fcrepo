@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>DatabaseConfig.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">DatabaseConfig.java</span></div><h1>DatabaseConfig.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.config;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Map;
+
+import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
+
+import org.flywaydb.core.Flyway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.core.convert.converter.ConverterRegistry;
+import org.springframework.core.convert.support.DefaultConversionService;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import com.zaxxer.hikari.HikariDataSource;
+
+/**
+ * @author pwinckles
+ */
+@EnableTransactionManagement
+@Configuration
+<span class="nc" id="L40">public class DatabaseConfig extends BasePropsConfig {</span>
+
+<span class="nc" id="L42">    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);</span>
+
+    private static final String H2_FILE = &quot;fcrepo-h2&quot;;
+
+    @Value(&quot;${fcrepo.db.url:#{'jdbc:h2:'&quot; +
+            &quot; + fedoraPropsConfig.fedoraData.resolve('&quot; + H2_FILE + &quot;').toAbsolutePath().toString()&quot; +
+            &quot; + ';FILE_LOCK=SOCKET'}}&quot;)
+    private String dbUrl;
+
+    @Value(&quot;${fcrepo.db.user:}&quot;)
+    private String dbUser;
+
+    @Value(&quot;${fcrepo.db.password:}&quot;)
+    private String dbPassword;
+
+    @Value(&quot;${fcrepo.db.max.pool.size:10}&quot;)
+    private Integer maxPoolSize;
+
+    @Value(&quot;${fcrepo.db.connection.checkout.timeout:30000}&quot;)
+    private Integer checkoutTimeout;
+
+<span class="nc" id="L63">    private static final Map&lt;String, String&gt; DB_DRIVER_MAP = Map.of(</span>
+            &quot;h2&quot;, &quot;org.h2.Driver&quot;,
+            &quot;postgresql&quot;, &quot;org.postgresql.Driver&quot;,
+            &quot;mariadb&quot;, &quot;org.mariadb.jdbc.Driver&quot;,
+            &quot;mysql&quot;, &quot;com.mysql.cj.jdbc.Driver&quot;
+    );
+
+    @PostConstruct
+    public void setup() {
+<span class="nc" id="L72">        ((ConverterRegistry) DefaultConversionService.getSharedInstance())</span>
+                // Adds a converter for mapping local datetimes to instants. This is dubious and not supported
+                // by default because you must make an assumption about the timezone
+<span class="nc" id="L75">                .addConverter(new Converter&lt;LocalDateTime, Instant&gt;() {</span>
+                    @Override
+                    public Instant convert(final LocalDateTime source) {
+<span class="nc" id="L78">                        return source.toInstant(ZoneOffset.UTC);</span>
+                    }
+                });
+<span class="nc" id="L81">    }</span>
+
+    @Bean
+    public DataSource dataSource() throws Exception {
+<span class="nc" id="L85">        final var driver = identifyDbDriver();</span>
+
+<span class="nc" id="L87">        LOGGER.info(&quot;JDBC URL: {}&quot;, dbUrl);</span>
+<span class="nc" id="L88">        LOGGER.info(&quot;JDBC User: {}&quot;, dbUser);</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">        LOGGER.info(&quot;JDBC Password length: {}&quot;, dbPassword == null ? 0 : dbPassword.length());</span>
+<span class="nc" id="L90">        LOGGER.info(&quot;Using database driver: {}&quot;, driver);</span>
+
+<span class="nc" id="L92">        final var dataSource = new HikariDataSource();</span>
+<span class="nc" id="L93">        dataSource.setDriverClassName(driver);</span>
+<span class="nc" id="L94">        dataSource.setJdbcUrl(dbUrl);</span>
+<span class="nc" id="L95">        dataSource.setUsername(dbUser);</span>
+<span class="nc" id="L96">        dataSource.setPassword(dbPassword);</span>
+<span class="nc" id="L97">        dataSource.setConnectionTimeout(checkoutTimeout);</span>
+<span class="nc" id="L98">        dataSource.setMaximumPoolSize(maxPoolSize);</span>
+
+<span class="nc" id="L100">        flyway(dataSource);</span>
+
+<span class="nc" id="L102">        return dataSource;</span>
+    }
+
+    /**
+     * Get the database type in use
+     * @return database type from the connect url.
+     */
+    private String getDbType() {
+<span class="nc" id="L110">        final var parts = dbUrl.split(&quot;:&quot;);</span>
+
+<span class="nc bnc" id="L112" title="All 2 branches missed.">        if (parts.length &lt; 2) {</span>
+<span class="nc" id="L113">            throw new IllegalArgumentException(&quot;Invalid DB url: &quot; + dbUrl);</span>
+        }
+<span class="nc" id="L115">        return parts[1].toLowerCase();</span>
+    }
+
+    private String identifyDbDriver() {
+<span class="nc" id="L119">        final var driver = DB_DRIVER_MAP.get(getDbType());</span>
+
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (driver == null) {</span>
+<span class="nc" id="L122">            throw new IllegalStateException(&quot;No database driver found for: &quot; + dbUrl);</span>
+        }
+
+<span class="nc" id="L125">        return driver;</span>
+    }
+
+    @Bean
+    public DataSourceTransactionManager txManager(final DataSource dataSource) {
+<span class="nc" id="L130">        final var txManager = new DataSourceTransactionManager();</span>
+<span class="nc" id="L131">        txManager.setDataSource(dataSource);</span>
+<span class="nc" id="L132">        return txManager;</span>
+    }
+
+    @Bean
+    public TransactionTemplate txTemplate(final PlatformTransactionManager txManager) {
+<span class="nc" id="L137">        final var txDefinition = new DefaultTransactionDefinition();</span>
+<span class="nc" id="L138">        txDefinition.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);</span>
+<span class="nc" id="L139">        return new TransactionTemplate(txManager, txDefinition);</span>
+    }
+
+    @Bean
+    public Flyway flyway(final DataSource source) throws Exception {
+<span class="nc" id="L144">        LOGGER.debug(&quot;Instantiating a new flyway bean&quot;);</span>
+<span class="nc" id="L145">        return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType()).getObject();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
