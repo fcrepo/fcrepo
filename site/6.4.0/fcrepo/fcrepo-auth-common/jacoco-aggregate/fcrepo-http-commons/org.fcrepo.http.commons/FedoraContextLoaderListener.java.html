@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>FedoraContextLoaderListener.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Authorization Commons Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons</a> &gt; <span class="el_source">FedoraContextLoaderListener.java</span></div><h1>FedoraContextLoaderListener.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons;
+
+import org.springframework.beans.factory.BeanDefinitionStoreException;
+import org.springframework.web.context.ContextLoaderListener;
+
+import javax.servlet.ServletContextEvent;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * This class wraps the standard Spring ContextLoaderListener in order to catch initialization errors.
+ * 
+ * @author awoods
+ * @since 2016-06-09
+ */
+<span class="nc" id="L21">public class FedoraContextLoaderListener extends ContextLoaderListener {</span>
+
+<span class="nc" id="L23">    private static final org.slf4j.Logger LOGGER = getLogger(FedoraContextLoaderListener.class);</span>
+
+    @Override
+    public void contextInitialized(final ServletContextEvent event) {
+        try {
+<span class="nc" id="L28">            super.contextInitialized(event);</span>
+<span class="nc" id="L29">        } catch (final BeanDefinitionStoreException e) {</span>
+<span class="nc" id="L30">            final String msg = &quot;\n&quot; +</span>
+                    &quot;=====================================================================\n&quot; +
+                    &quot;=====================================================================\n&quot; +
+                    &quot;---------- FEDORA CONFIGURATION ERROR ----------\n&quot; +
+                    &quot;\n&quot; +
+                    &quot;See documentation specific to your version of Fedora\n&quot; +
+                    &quot;https://wiki.lyrasis.org/display/FEDORA6x/Application+Configuration\n&quot; +
+                    &quot;\n&quot; +
+                    &quot;=====================================================================\n&quot; +
+                    &quot;=====================================================================\n&quot;;
+<span class="nc" id="L40">            LOGGER.error(msg);</span>
+<span class="nc" id="L41">        }</span>
+
+<span class="nc" id="L43">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

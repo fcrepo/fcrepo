@@ -1,0 +1,128 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.auth.common;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">009</span><a id="line.9"></a>
+<span class="sourceLineNo">010</span><a id="line.10">import java.util.Set;</a>
+<span class="sourceLineNo">011</span><a id="line.11"></a>
+<span class="sourceLineNo">012</span><a id="line.12">import org.apache.shiro.authc.AuthenticationException;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import org.apache.shiro.authc.AuthenticationInfo;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import org.apache.shiro.authc.AuthenticationToken;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import org.apache.shiro.authc.SimpleAuthenticationInfo;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import org.apache.shiro.realm.AuthenticatingRealm;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import org.apache.shiro.subject.SimplePrincipalCollection;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">020</span><a id="line.20"></a>
+<span class="sourceLineNo">021</span><a id="line.21">/**</a>
+<span class="sourceLineNo">022</span><a id="line.22"> * @author peichman</a>
+<span class="sourceLineNo">023</span><a id="line.23"> */</a>
+<span class="sourceLineNo">024</span><a id="line.24">public class ServletContainerAuthenticatingRealm extends AuthenticatingRealm {</a>
+<span class="sourceLineNo">025</span><a id="line.25"></a>
+<span class="sourceLineNo">026</span><a id="line.26">    private static final Logger log = getLogger(ServletContainerAuthenticatingRealm.class);</a>
+<span class="sourceLineNo">027</span><a id="line.27"></a>
+<span class="sourceLineNo">028</span><a id="line.28">    @Override</a>
+<span class="sourceLineNo">029</span><a id="line.29">    public String getName() {</a>
+<span class="sourceLineNo">030</span><a id="line.30">        return "servlet container authentication";</a>
+<span class="sourceLineNo">031</span><a id="line.31">    }</a>
+<span class="sourceLineNo">032</span><a id="line.32"></a>
+<span class="sourceLineNo">033</span><a id="line.33">    @Override</a>
+<span class="sourceLineNo">034</span><a id="line.34">    protected AuthenticationInfo doGetAuthenticationInfo(final AuthenticationToken token)</a>
+<span class="sourceLineNo">035</span><a id="line.35">            throws AuthenticationException {</a>
+<span class="sourceLineNo">036</span><a id="line.36">        final ContainerAuthToken authToken = (ContainerAuthToken) token;</a>
+<span class="sourceLineNo">037</span><a id="line.37">        final SimplePrincipalCollection principals = new SimplePrincipalCollection();</a>
+<span class="sourceLineNo">038</span><a id="line.38">        log.debug("Creating principals from servlet container principal and roles");</a>
+<span class="sourceLineNo">039</span><a id="line.39">        // container-managed auth username</a>
+<span class="sourceLineNo">040</span><a id="line.40">        principals.add(authToken.getPrincipal(), getName());</a>
+<span class="sourceLineNo">041</span><a id="line.41">        // container-managed auth roles</a>
+<span class="sourceLineNo">042</span><a id="line.42">        final Set&lt;ContainerRolesPrincipal&gt; roles = authToken.getRoles();</a>
+<span class="sourceLineNo">043</span><a id="line.43">        if (!roles.isEmpty()) {</a>
+<span class="sourceLineNo">044</span><a id="line.44">            principals.addAll(roles, getName());</a>
+<span class="sourceLineNo">045</span><a id="line.45">        }</a>
+<span class="sourceLineNo">046</span><a id="line.46">        return new SimpleAuthenticationInfo(principals, ContainerAuthToken.AUTHORIZED);</a>
+<span class="sourceLineNo">047</span><a id="line.47">    }</a>
+<span class="sourceLineNo">048</span><a id="line.48"></a>
+<span class="sourceLineNo">049</span><a id="line.49">    @Override</a>
+<span class="sourceLineNo">050</span><a id="line.50">    public boolean supports(final AuthenticationToken token) {</a>
+<span class="sourceLineNo">051</span><a id="line.51">        return token instanceof ContainerAuthToken;</a>
+<span class="sourceLineNo">052</span><a id="line.52">    }</a>
+<span class="sourceLineNo">053</span><a id="line.53"></a>
+<span class="sourceLineNo">054</span><a id="line.54">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>
