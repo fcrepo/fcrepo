@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TransactionImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl</a> &gt; <span class="el_source">TransactionImpl.java</span></div><h1>TransactionImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl;
+
+import static java.util.stream.Collectors.toList;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.Phaser;
+
+import org.fcrepo.common.db.DbTransactionExecutor;
+import org.fcrepo.common.lang.CheckedRunnable;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionState;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.lock.ResourceLockManager;
+import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.services.MembershipService;
+import org.fcrepo.kernel.api.services.ReferenceService;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.search.api.SearchIndex;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * The Fedora Transaction implementation
+ *
+ * @author mohideen
+ */
+public class TransactionImpl implements Transaction {
+
+<span class="nc" id="L43">    private static final Logger log = LoggerFactory.getLogger(TransactionImpl.class);</span>
+
+    private final String id;
+
+    private final TransactionManagerImpl txManager;
+
+    private TransactionState state;
+
+<span class="nc" id="L51">    private boolean shortLived = true;</span>
+
+    private Instant expiration;
+
+<span class="nc" id="L55">    private boolean expired = false;</span>
+
+    private String baseUri;
+
+    private String userAgent;
+
+    private final Duration sessionTimeout;
+
+    private final Phaser operationPhaser;
+
+<span class="nc" id="L65">    private boolean suppressEvents = false;</span>
+
+    protected TransactionImpl(final String id,
+                              final TransactionManagerImpl txManager,
+<span class="nc" id="L69">                              final Duration sessionTimeout) {</span>
+<span class="nc bnc" id="L70" title="All 4 branches missed.">        if (id == null || id.isEmpty()) {</span>
+<span class="nc" id="L71">            throw new IllegalArgumentException(&quot;Transaction id should not be empty!&quot;);</span>
+        }
+<span class="nc" id="L73">        this.id = id;</span>
+<span class="nc" id="L74">        this.txManager = txManager;</span>
+<span class="nc" id="L75">        this.sessionTimeout = sessionTimeout;</span>
+<span class="nc" id="L76">        this.expiration = Instant.now().plus(sessionTimeout);</span>
+<span class="nc" id="L77">        this.state = TransactionState.OPEN;</span>
+<span class="nc" id="L78">        this.operationPhaser = new Phaser();</span>
+<span class="nc" id="L79">    }</span>
+
+    @Override
+    public synchronized void commit() {
+<span class="nc bnc" id="L83" title="All 2 branches missed.">        if (state == TransactionState.COMMITTED) {</span>
+<span class="nc" id="L84">            return;</span>
+        }
+<span class="nc" id="L86">        failIfNotOpen();</span>
+<span class="nc" id="L87">        failIfExpired();</span>
+
+<span class="nc" id="L89">        updateState(TransactionState.COMMITTING);</span>
+
+<span class="nc" id="L91">        log.debug(&quot;Waiting for operations in transaction {} to complete before committing&quot;, id);</span>
+
+<span class="nc" id="L93">        operationPhaser.register();</span>
+<span class="nc" id="L94">        operationPhaser.awaitAdvance(operationPhaser.arriveAndDeregister());</span>
+
+<span class="nc" id="L96">        log.debug(&quot;Committing transaction {}&quot;, id);</span>
+
+        try {
+<span class="nc bnc" id="L99" title="All 2 branches missed.">            if (isShortLived()) {</span>
+<span class="nc" id="L100">                doCommitShortLived();</span>
+            } else {
+<span class="nc" id="L102">                doCommitLongRunning();</span>
+            }
+
+<span class="nc" id="L105">            updateState(TransactionState.COMMITTED);</span>
+<span class="nc bnc" id="L106" title="All 2 branches missed.">            if (!this.suppressEvents) {</span>
+<span class="nc" id="L107">                this.getEventAccumulator().emitEvents(this, baseUri, userAgent);</span>
+            } else {
+<span class="nc" id="L109">                this.getEventAccumulator().clearEvents(this);</span>
+            }
+
+<span class="nc" id="L112">            releaseLocks();</span>
+<span class="nc" id="L113">            log.debug(&quot;Committed transaction {}&quot;, id);</span>
+<span class="nc" id="L114">        } catch (final Exception ex) {</span>
+<span class="nc" id="L115">            log.error(&quot;Failed to commit transaction: {}&quot;, id, ex);</span>
+
+            // Rollback on commit failure
+<span class="nc" id="L118">            log.info(&quot;Rolling back transaction {}&quot;, id);</span>
+<span class="nc" id="L119">            rollback();</span>
+<span class="nc" id="L120">            throw new RepositoryRuntimeException(&quot;Failed to commit transaction &quot; + id, ex);</span>
+<span class="nc" id="L121">        }</span>
+<span class="nc" id="L122">    }</span>
+
+    @Override
+    public boolean isCommitted() {
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        return state == TransactionState.COMMITTED;</span>
+    }
+
+    @Override
+    public synchronized void rollback() {
+<span class="nc bnc" id="L131" title="All 4 branches missed.">        if (state == TransactionState.ROLLEDBACK || state == TransactionState.ROLLINGBACK) {</span>
+<span class="nc" id="L132">            return;</span>
+        }
+
+<span class="nc" id="L135">        failIfCommitted();</span>
+
+<span class="nc" id="L137">        updateState(TransactionState.ROLLINGBACK);</span>
+
+<span class="nc" id="L139">        log.debug(&quot;Waiting for operations in transaction {} to complete before rolling back&quot;, id);</span>
+
+<span class="nc" id="L141">        operationPhaser.register();</span>
+<span class="nc" id="L142">        operationPhaser.awaitAdvance(operationPhaser.arriveAndDeregister());</span>
+
+<span class="nc" id="L144">        execQuietly(&quot;Failed to rollback storage in transaction &quot; + id, () -&gt; {</span>
+<span class="nc" id="L145">            this.getPersistentSession().rollback();</span>
+<span class="nc" id="L146">        });</span>
+<span class="nc" id="L147">        execQuietly(&quot;Failed to rollback index in transaction &quot; + id, () -&gt; {</span>
+<span class="nc" id="L148">            this.getContainmentIndex().rollbackTransaction(this);</span>
+<span class="nc" id="L149">        });</span>
+<span class="nc" id="L150">        execQuietly(&quot;Failed to rollback reference index in transaction &quot; + id, () -&gt; {</span>
+<span class="nc" id="L151">            this.getReferenceService().rollbackTransaction(this);</span>
+<span class="nc" id="L152">        });</span>
+<span class="nc" id="L153">        execQuietly(&quot;Failed to rollback membership index in transaction &quot; + id, () -&gt; {</span>
+<span class="nc" id="L154">            this.getMembershipService().rollbackTransaction(this);</span>
+<span class="nc" id="L155">        });</span>
+<span class="nc" id="L156">        execQuietly(&quot;Failed to rollback search index in transaction &quot; + id, () -&gt; {</span>
+<span class="nc" id="L157">            this.getSearchIndex().rollbackTransaction(this);</span>
+<span class="nc" id="L158">        });</span>
+
+<span class="nc" id="L160">        execQuietly(&quot;Failed to rollback events in transaction &quot; + id, () -&gt; {</span>
+<span class="nc" id="L161">            this.getEventAccumulator().clearEvents(this);</span>
+<span class="nc" id="L162">        });</span>
+
+<span class="nc" id="L164">        execQuietly(&quot;Failed to clear user rdf types cache in transaction &quot; + id, () -&gt; {</span>
+<span class="nc" id="L165">            this.getUserTypesCache().dropSessionCache(id);</span>
+<span class="nc" id="L166">        });</span>
+
+<span class="nc" id="L168">        updateState(TransactionState.ROLLEDBACK);</span>
+
+<span class="nc" id="L170">        releaseLocks();</span>
+<span class="nc" id="L171">    }</span>
+
+    @Override
+    public void doInTx(final Runnable runnable) {
+<span class="nc" id="L175">        operationPhaser.register();</span>
+
+        try {
+<span class="nc" id="L178">            failIfNotOpen();</span>
+<span class="nc" id="L179">            failIfExpired();</span>
+
+<span class="nc" id="L181">            runnable.run();</span>
+        } finally {
+<span class="nc" id="L183">            operationPhaser.arriveAndDeregister();</span>
+        }
+<span class="nc" id="L185">    }</span>
+
+    @Override
+    public synchronized void fail() {
+<span class="nc bnc" id="L189" title="All 2 branches missed.">        if (state != TransactionState.OPEN) {</span>
+<span class="nc" id="L190">            log.error(&quot;Transaction {} is in state {} and may not be marked as FAILED&quot;, id, state);</span>
+        } else {
+<span class="nc" id="L192">            updateState(TransactionState.FAILED);</span>
+        }
+<span class="nc" id="L194">    }</span>
+
+    @Override
+    public boolean isRolledBack() {
+<span class="nc bnc" id="L198" title="All 2 branches missed.">        return state == TransactionState.ROLLEDBACK;</span>
+    }
+
+    @Override
+    public String getId() {
+<span class="nc" id="L203">        return id;</span>
+    }
+
+    @Override
+    public void setShortLived(final boolean shortLived) {
+<span class="nc" id="L208">        this.shortLived = shortLived;</span>
+<span class="nc" id="L209">    }</span>
+
+    @Override
+    public boolean isShortLived() {
+<span class="nc" id="L213">        return this.shortLived;</span>
+    }
+
+    @Override
+    public boolean isOpenLongRunning() {
+<span class="nc bnc" id="L218" title="All 10 branches missed.">        return !this.isShortLived() &amp;&amp; !hasExpired()</span>
+                &amp;&amp; !(state == TransactionState.COMMITTED
+                || state == TransactionState.ROLLEDBACK
+                || state == TransactionState.FAILED);
+    }
+
+    @Override
+    public boolean isOpen() {
+<span class="nc bnc" id="L226" title="All 4 branches missed.">        return state == TransactionState.OPEN &amp;&amp; !hasExpired();</span>
+    }
+
+    @Override
+    public void ensureCommitting() {
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        if (state != TransactionState.COMMITTING) {</span>
+<span class="nc" id="L232">            throw new TransactionRuntimeException(</span>
+<span class="nc" id="L233">                    String.format(&quot;Transaction %s must be in state COMMITTING, but was %s&quot;, id, state));</span>
+        }
+<span class="nc" id="L235">    }</span>
+
+    @Override
+    public boolean isReadOnly() {
+<span class="nc" id="L239">        return false;</span>
+    }
+
+    @Override
+    public void expire() {
+<span class="nc" id="L244">        this.expiration = Instant.now();</span>
+<span class="nc" id="L245">        this.expired = true;</span>
+<span class="nc" id="L246">    }</span>
+
+    @Override
+    public boolean hasExpired() {
+<span class="nc bnc" id="L250" title="All 2 branches missed.">        if (this.expired) {</span>
+<span class="nc" id="L251">            return true;</span>
+        }
+<span class="nc" id="L253">        this.expired = this.expiration.isBefore(Instant.now());</span>
+<span class="nc" id="L254">        return this.expired;</span>
+    }
+
+    @Override
+    public synchronized Instant updateExpiry(final Duration amountToAdd) {
+<span class="nc" id="L259">        failIfExpired();</span>
+<span class="nc" id="L260">        failIfCommitted();</span>
+<span class="nc" id="L261">        failIfNotOpen();</span>
+<span class="nc" id="L262">        this.expiration = this.expiration.plus(amountToAdd);</span>
+<span class="nc" id="L263">        return this.expiration;</span>
+    }
+
+    @Override
+    public Instant getExpires() {
+<span class="nc" id="L268">        return this.expiration;</span>
+    }
+
+    @Override
+    public void commitIfShortLived() {
+<span class="nc bnc" id="L273" title="All 2 branches missed.">       if (this.isShortLived()) {</span>
+<span class="nc" id="L274">           this.commit();</span>
+       }
+<span class="nc" id="L276">    }</span>
+
+    @Override
+    public void refresh() {
+<span class="nc" id="L280">        updateExpiry(sessionTimeout);</span>
+<span class="nc" id="L281">    }</span>
+
+    @Override
+    public void lockResource(final FedoraId resourceId) {
+<span class="nc" id="L285">        getResourceLockManger().acquireExclusive(getId(), resourceId);</span>
+<span class="nc" id="L286">    }</span>
+
+    @Override
+    public void lockResourceNonExclusive(final FedoraId resourceId) {
+<span class="nc" id="L290">        getResourceLockManger().acquireNonExclusive(getId(), resourceId);</span>
+<span class="nc" id="L291">    }</span>
+
+    /**
+     * If you create an object with ghost nodes above it, we need to lock those paths as well to ensure
+     * no other operation alters them while the current transaction is in process.
+     *
+     * @param resourceId the resource we are creating
+     */
+    @Override
+    public void lockResourceAndGhostNodes(final FedoraId resourceId) {
+<span class="nc" id="L301">        getResourceLockManger().acquireExclusive(getId(), resourceId);</span>
+<span class="nc" id="L302">        final var resourceIdStr = resourceId.getResourceId();</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">        final String estimateParentPath = resourceIdStr.indexOf('/') &gt; -1 ?</span>
+<span class="nc" id="L304">                resourceIdStr.substring(0,resourceIdStr.lastIndexOf('/')) : resourceIdStr;</span>
+<span class="nc" id="L305">        final var actualParent = getContainmentIndex().getContainerIdByPath(this, resourceId, false);</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">        if (!estimateParentPath.equals(actualParent.getResourceId())) {</span>
+            // If the expected parent does not match the actual parent, then we have ghost nodes.
+            // Lock them too.
+<span class="nc" id="L309">            final List&lt;String&gt; ghostPaths = Arrays.stream(estimateParentPath</span>
+<span class="nc" id="L310">                    .replace(actualParent.getResourceId(), &quot;&quot;)</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">                    .split(&quot;/&quot;)).filter(a -&gt; !a.isBlank()).collect(toList());</span>
+<span class="nc" id="L312">            FedoraId tempParent = actualParent;</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">            for (final String part : ghostPaths) {</span>
+<span class="nc" id="L314">                tempParent = tempParent.resolve(part);</span>
+<span class="nc" id="L315">                getResourceLockManger().acquireExclusive(getId(), tempParent);</span>
+<span class="nc" id="L316">            }</span>
+        }
+<span class="nc" id="L318">    }</span>
+
+    @Override
+    public void releaseResourceLocksIfShortLived() {
+<span class="nc bnc" id="L322" title="All 2 branches missed.">        if (isShortLived()) {</span>
+<span class="nc" id="L323">            releaseLocks();</span>
+        }
+<span class="nc" id="L325">    }</span>
+
+    @Override
+    public void setBaseUri(final String baseUri) {
+<span class="nc" id="L329">        this.baseUri = baseUri;</span>
+<span class="nc" id="L330">    }</span>
+
+    @Override
+    public void setUserAgent(final String userAgent) {
+<span class="nc" id="L334">        this.userAgent = userAgent;</span>
+<span class="nc" id="L335">    }</span>
+
+    @Override
+    public void suppressEvents() {
+<span class="nc" id="L339">        this.suppressEvents = true;</span>
+<span class="nc" id="L340">    }</span>
+
+    private void doCommitShortLived() {
+        // short-lived txs do not write to tx tables and do not need to commit db indexes.
+<span class="nc" id="L344">        this.getPersistentSession().prepare();</span>
+<span class="nc" id="L345">        this.getPersistentSession().commit();</span>
+<span class="nc" id="L346">        this.getUserTypesCache().mergeSessionCache(id);</span>
+<span class="nc" id="L347">    }</span>
+
+    private void doCommitLongRunning() {
+<span class="nc" id="L350">        getDbTransactionExecutor().doInTxWithRetry(() -&gt; {</span>
+<span class="nc" id="L351">            this.getContainmentIndex().commitTransaction(this);</span>
+<span class="nc" id="L352">            this.getReferenceService().commitTransaction(this);</span>
+<span class="nc" id="L353">            this.getMembershipService().commitTransaction(this);</span>
+<span class="nc" id="L354">            this.getSearchIndex().commitTransaction(this);</span>
+<span class="nc" id="L355">            this.getPersistentSession().prepare();</span>
+            // The storage session must be committed last because mutable head changes cannot be rolled back.
+            // The db transaction will remain open until all changes have been written to OCFL. If the changes
+            // are large, or are going to S3, this could take some time. In which case, it is possible the
+            // db's connection timeout may need to be adjusted so that the connection is not closed while
+            // waiting for the OCFL changes to be committed.
+<span class="nc" id="L361">            this.getPersistentSession().commit();</span>
+<span class="nc" id="L362">            this.getUserTypesCache().mergeSessionCache(id);</span>
+<span class="nc" id="L363">        });</span>
+<span class="nc" id="L364">    }</span>
+
+    private void updateState(final TransactionState newState) {
+<span class="nc" id="L367">        this.state = newState;</span>
+<span class="nc" id="L368">    }</span>
+
+    private PersistentStorageSession getPersistentSession() {
+<span class="nc" id="L371">        return this.txManager.getPersistentStorageSessionManager().getSession(this);</span>
+    }
+
+    private void failIfExpired() {
+<span class="nc bnc" id="L375" title="All 2 branches missed.">        if (hasExpired()) {</span>
+<span class="nc" id="L376">            throw new TransactionClosedException(&quot;Transaction &quot; + id + &quot; expired!&quot;);</span>
+        }
+<span class="nc" id="L378">    }</span>
+
+    private void failIfCommitted() {
+<span class="nc bnc" id="L381" title="All 2 branches missed.">        if (state == TransactionState.COMMITTED) {</span>
+<span class="nc" id="L382">            throw new TransactionClosedException(</span>
+<span class="nc" id="L383">                    String.format(&quot;Transaction %s cannot be transitioned because it is already committed!&quot;, id));</span>
+        }
+<span class="nc" id="L385">    }</span>
+
+    private void failIfNotOpen() {
+<span class="nc bnc" id="L388" title="All 2 branches missed.">        if (state == TransactionState.FAILED) {</span>
+<span class="nc" id="L389">            throw new TransactionRuntimeException(</span>
+<span class="nc" id="L390">                    String.format(&quot;Transaction %s cannot be committed because it is in a failed state!&quot;, id));</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">        } else if (state != TransactionState.OPEN) {</span>
+<span class="nc" id="L392">            throw new TransactionClosedException(</span>
+<span class="nc" id="L393">                    String.format(&quot;Transaction %s cannot be committed because it is in state %s!&quot;, id, state));</span>
+        }
+<span class="nc" id="L395">    }</span>
+
+    private void releaseLocks() {
+<span class="nc" id="L398">        execQuietly(&quot;Failed to release resource locks cleanly. You may need to restart Fedora.&quot;, () -&gt; {</span>
+<span class="nc" id="L399">            getResourceLockManger().releaseAll(getId());</span>
+<span class="nc" id="L400">        });</span>
+<span class="nc" id="L401">    }</span>
+
+    /**
+     * Executes the closure, capturing all exceptions, and logging them as errors.
+     *
+     * @param failureMessage what to print if the closure fails
+     * @param callable closure to execute
+     */
+    private void execQuietly(final String failureMessage, final CheckedRunnable callable) {
+        try {
+<span class="nc" id="L411">            callable.run();</span>
+<span class="nc" id="L412">        } catch (final Exception e) {</span>
+<span class="nc" id="L413">            log.error(failureMessage, e);</span>
+<span class="nc" id="L414">        }</span>
+<span class="nc" id="L415">    }</span>
+
+    private ContainmentIndex getContainmentIndex() {
+<span class="nc" id="L418">        return this.txManager.getContainmentIndex();</span>
+    }
+
+    private EventAccumulator getEventAccumulator() {
+<span class="nc" id="L422">        return this.txManager.getEventAccumulator();</span>
+    }
+
+    private ReferenceService getReferenceService() {
+<span class="nc" id="L426">        return this.txManager.getReferenceService();</span>
+    }
+
+    private MembershipService getMembershipService() {
+<span class="nc" id="L430">        return this.txManager.getMembershipService();</span>
+    }
+
+    private SearchIndex getSearchIndex() {
+<span class="nc" id="L434">        return this.txManager.getSearchIndex();</span>
+    }
+
+    private DbTransactionExecutor getDbTransactionExecutor() {
+<span class="nc" id="L438">        return this.txManager.getDbTransactionExecutor();</span>
+    }
+
+    private ResourceLockManager getResourceLockManger() {
+<span class="nc" id="L442">        return this.txManager.getResourceLockManager();</span>
+    }
+
+    private UserTypesCache getUserTypesCache() {
+<span class="nc" id="L446">        return this.txManager.getUserTypesCache();</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L451">        return id;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

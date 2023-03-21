@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>UserUtil.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.util</a> &gt; <span class="el_source">UserUtil.java</span></div><h1>UserUtil.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.kernel.impl.util;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+
+import java.net.URI;
+
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static org.slf4j.LoggerFactory.getLogger;
+
+/**
+ * @author Daniel Bernstein
+ * @since Sep 25, 2017
+ */
+public class UserUtil {
+
+<span class="nc" id="L23">    private static final Logger LOGGER = getLogger(UserUtil.class);</span>
+
+    @VisibleForTesting
+    public static final String DEFAULT_USER_AGENT_BASE_URI = &quot;info:fedora/local-user#&quot;;
+
+    private UserUtil() {
+    }
+
+    /**
+     * Returns the user agent based on the session user id.
+     * @param sessionUserId the acting user's id for this session
+     * @param userAgentBaseUri the user agent base uri, optional
+     * @return the uri of the user agent
+     */
+    public static URI getUserURI(final String sessionUserId, final String userAgentBaseUri) {
+        // user id could be in format &lt;anonymous&gt;, remove &lt; at the beginning and the &gt; at the end in this case.
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        final String userId = (sessionUserId == null ? &quot;anonymous&quot; : sessionUserId).replaceAll(&quot;^&lt;|&gt;$&quot;, &quot;&quot;);</span>
+        try {
+<span class="nc" id="L41">            final URI uri = URI.create(userId);</span>
+            // return useId if it's an absolute URI or an opaque URI
+<span class="nc bnc" id="L43" title="All 4 branches missed.">            if (uri.isAbsolute() || uri.isOpaque()) {</span>
+<span class="nc" id="L44">                return uri;</span>
+            } else {
+<span class="nc" id="L46">                return buildDefaultURI(userId, userAgentBaseUri);</span>
+            }
+<span class="nc" id="L48">        } catch (final IllegalArgumentException e) {</span>
+<span class="nc" id="L49">            return buildDefaultURI(userId, userAgentBaseUri);</span>
+        }
+    }
+
+    /**
+     * Build default URI with the configured base uri for agent
+     * @param userId of which a URI will be created
+     * @return URI
+     */
+    private static URI buildDefaultURI(final String userId, final String userAgentBaseUri) {
+<span class="nc" id="L59">        var baseUri = userAgentBaseUri;</span>
+        // Construct the default URI for the user ID that is not a URI.
+<span class="nc bnc" id="L61" title="All 2 branches missed.">        if (isNullOrEmpty(userAgentBaseUri)) {</span>
+            // use the default local user agent base uri
+<span class="nc" id="L63">            baseUri = DEFAULT_USER_AGENT_BASE_URI;</span>
+        }
+
+<span class="nc" id="L66">        final String userAgentUri = baseUri + userId;</span>
+
+<span class="nc" id="L68">        LOGGER.trace(&quot;Default URI is created for user {}: {}&quot;, userId, userAgentUri);</span>
+<span class="nc" id="L69">        return URI.create(userAgentUri);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

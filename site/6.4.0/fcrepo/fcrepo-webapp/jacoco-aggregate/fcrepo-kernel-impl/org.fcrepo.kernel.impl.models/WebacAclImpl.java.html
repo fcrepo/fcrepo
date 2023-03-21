@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>WebacAclImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">WebacAclImpl.java</span></div><h1>WebacAclImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.WebacAcl;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+
+/**
+ * Webac Acl class
+ *
+ * @author whikloj
+ */
+public class WebacAclImpl extends ContainerImpl implements WebacAcl {
+
+    /**
+     * Constructor
+     * @param fedoraID the internal identifier
+     * @param transaction the current transactionId
+     * @param pSessionManager a session manager
+     * @param resourceFactory a resource factory instance.
+     * @param userTypesCache the user types cache
+     */
+    public WebacAclImpl(final FedoraId fedoraID,
+                        final Transaction transaction,
+                        final PersistentStorageSessionManager pSessionManager,
+                        final ResourceFactory resourceFactory,
+                        final UserTypesCache userTypesCache) {
+<span class="nc" id="L38">        super(fedoraID, transaction, pSessionManager, resourceFactory, userTypesCache);</span>
+<span class="nc" id="L39">    }</span>
+
+    @Override
+    public FedoraResource getContainer() {
+<span class="nc" id="L43">        final var originalId = FedoraId.create(getFedoraId().getBaseId());</span>
+        try {
+
+<span class="nc" id="L46">            return resourceFactory.getResource(transaction, originalId);</span>
+<span class="nc" id="L47">        } catch (final PathNotFoundException exc) {</span>
+<span class="nc" id="L48">            throw new PathNotFoundRuntimeException(exc.getMessage(), exc);</span>
+        }
+    }
+
+    @Override
+    public boolean isOriginalResource() {
+<span class="nc" id="L54">        return false;</span>
+    }
+
+    @Override
+    public boolean isAcl() {
+<span class="nc" id="L59">        return true;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractJMSPublisher.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-jms</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.jms</a> &gt; <span class="el_source">AbstractJMSPublisher.java</span></div><h1>AbstractJMSPublisher.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.jms;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.inject.Inject;
+import javax.jms.Connection;
+import javax.jms.Destination;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+
+import com.google.common.eventbus.AllowConcurrentEvents;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.fcrepo.kernel.api.observer.Event;
+import org.slf4j.Logger;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
+/**
+ * Machinery to publish JMS messages when an EventBus
+ * message is received.
+ *
+ * @author barmintor
+ * @author awoods
+ * @author acoburn
+ */
+<span class="nc" id="L36">public abstract class AbstractJMSPublisher {</span>
+
+    @Inject
+    private EventBus eventBus;
+
+    @Inject
+    private ActiveMQConnectionFactory connectionFactory;
+
+    @Inject
+    private JMSEventMessageFactory eventFactory;
+
+    private Connection connection;
+
+    protected Session jmsSession;
+
+    private MessageProducer producer;
+
+<span class="nc" id="L53">    private static final Logger LOGGER = getLogger(AbstractJMSPublisher.class);</span>
+
+    protected abstract Destination createDestination() throws JMSException;
+
+    /**
+     * When an EventBus message is received, map it to our JMS
+     * message payload and push it onto the queue.
+     *
+     * @param event the fedora event
+     * @throws JMSException if JMS exception occurred
+     */
+    @Subscribe
+    @AllowConcurrentEvents
+    public void publishJCREvent(final Event event) throws JMSException {
+<span class="nc" id="L67">        LOGGER.debug(&quot;Received an event from the internal bus. {}&quot;, event);</span>
+<span class="nc" id="L68">        final Message tm =</span>
+<span class="nc" id="L69">                eventFactory.getMessage(event, jmsSession);</span>
+<span class="nc" id="L70">        LOGGER.trace(&quot;Transformed the event to a JMS message.&quot;);</span>
+<span class="nc" id="L71">        producer.send(tm);</span>
+
+<span class="nc" id="L73">        LOGGER.debug(&quot;Put event: {} onto JMS.&quot;, tm.getJMSMessageID());</span>
+<span class="nc" id="L74">    }</span>
+
+    /**
+     * Connect to JCR Repository and JMS queue
+     *
+     * @throws JMSException if JMS Exception occurred
+     */
+    @PostConstruct
+    public void acquireConnections() throws JMSException {
+<span class="nc" id="L83">        LOGGER.debug(&quot;Initializing: {}&quot;, this.getClass().getCanonicalName());</span>
+
+<span class="nc" id="L85">        connection = connectionFactory.createConnection();</span>
+<span class="nc" id="L86">        connection.start();</span>
+<span class="nc" id="L87">        jmsSession = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);</span>
+<span class="nc" id="L88">        producer = jmsSession.createProducer(createDestination());</span>
+<span class="nc" id="L89">        eventBus.register(this);</span>
+<span class="nc" id="L90">    }</span>
+
+    /**
+     * Close external connections
+     *
+     * @throws JMSException if JMS exception occurred
+     */
+    @PreDestroy
+    public void releaseConnections() throws JMSException {
+<span class="nc" id="L99">        LOGGER.debug(&quot;Tearing down: {}&quot;, this.getClass().getCanonicalName());</span>
+
+<span class="nc" id="L101">        producer.close();</span>
+<span class="nc" id="L102">        jmsSession.close();</span>
+<span class="nc" id="L103">        connection.close();</span>
+<span class="nc" id="L104">        eventBus.unregister(this);</span>
+<span class="nc" id="L105">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

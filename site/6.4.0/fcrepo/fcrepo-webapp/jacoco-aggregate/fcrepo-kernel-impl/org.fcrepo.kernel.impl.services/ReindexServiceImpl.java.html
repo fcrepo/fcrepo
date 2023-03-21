@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ReindexServiceImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">ReindexServiceImpl.java</span></div><h1>ReindexServiceImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.ReindexResourceOperationFactory;
+import org.fcrepo.kernel.api.services.ReindexService;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.springframework.stereotype.Component;
+
+import javax.inject.Inject;
+
+/**
+ * Implementation of {@link org.fcrepo.kernel.api.services.ReindexService}
+ *
+ * @author dbernstein
+ */
+@Component
+<span class="nc" id="L24">public class ReindexServiceImpl extends AbstractService implements ReindexService {</span>
+
+    @Inject
+    private TransactionManager transactionManager;
+
+    @Inject
+    private PersistentStorageSessionManager persistentStorageSessionManager;
+
+    @Inject
+    private ReindexResourceOperationFactory resourceOperationFactory;
+
+    @Override
+    public void reindexByFedoraId(final Transaction transaction, final String principal, final FedoraId fedoraId) {
+<span class="nc" id="L37">        final var tx = transactionManager.get(transaction.getId());</span>
+<span class="nc" id="L38">        final var psession = persistentStorageSessionManager.getSession(transaction);</span>
+<span class="nc" id="L39">        final var operation = resourceOperationFactory.create(transaction, fedoraId)</span>
+<span class="nc" id="L40">                .userPrincipal(principal).build();</span>
+<span class="nc" id="L41">        tx.lockResource(fedoraId);</span>
+
+<span class="nc" id="L43">        psession.persist(operation);</span>
+<span class="nc" id="L44">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>OcflPersistenceConfig.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-ocfl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">OcflPersistenceConfig.java</span></div><h1>OcflPersistenceConfig.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.persistence.ocfl.impl;
+
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createS3Repository;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.concurrent.TimeUnit;
+
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
+import org.fcrepo.config.MetricsConfig;
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.config.Storage;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.validation.ObjectValidator;
+import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
+import org.fcrepo.storage.ocfl.cache.Cache;
+import org.fcrepo.storage.ocfl.cache.CaffeineCache;
+import org.fcrepo.storage.ocfl.cache.NoOpCache;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+import com.github.benmanes.caffeine.cache.Caffeine;
+
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+
+/**
+ * A Configuration for OCFL dependencies
+ *
+ * @author dbernstein
+ * @since 6.0.0
+ */
+@Configuration
+<span class="nc" id="L51">public class OcflPersistenceConfig {</span>
+
+    @Inject
+    private OcflPropsConfig ocflPropsConfig;
+
+    @Inject
+    private MetricsConfig metricsConfig;
+
+    @Inject
+    private MeterRegistry meterRegistry;
+
+    @Inject
+    private DataSource dataSource;
+
+    /**
+     * Create an OCFL Repository
+     * @return the repository
+     */
+    @Bean
+    public MutableOcflRepository repository() throws IOException {
+<span class="nc bnc" id="L71" title="All 2 branches missed.">        if (ocflPropsConfig.getStorage() == Storage.OCFL_S3) {</span>
+<span class="nc" id="L72">            return createS3Repository(</span>
+                    dataSource,
+<span class="nc" id="L74">                    s3Client(),</span>
+<span class="nc" id="L75">                    ocflPropsConfig.getOcflS3Bucket(),</span>
+<span class="nc" id="L76">                    ocflPropsConfig.getOcflS3Prefix(),</span>
+<span class="nc" id="L77">                    ocflPropsConfig.getOcflTemp(),</span>
+<span class="nc" id="L78">                    ocflPropsConfig.getDefaultDigestAlgorithm(),</span>
+<span class="nc" id="L79">                    ocflPropsConfig.isOcflS3DbEnabled(),</span>
+<span class="nc" id="L80">                    ocflPropsConfig.isOcflUpgradeOnWrite(),</span>
+<span class="nc" id="L81">                    ocflPropsConfig.verifyInventory());</span>
+        } else {
+<span class="nc" id="L83">            return createFilesystemRepository(ocflPropsConfig.getOcflRepoRoot(), ocflPropsConfig.getOcflTemp(),</span>
+<span class="nc" id="L84">                    ocflPropsConfig.getDefaultDigestAlgorithm(), ocflPropsConfig.isOcflUpgradeOnWrite(),</span>
+<span class="nc" id="L85">                    ocflPropsConfig.verifyInventory());</span>
+        }
+    }
+
+    @Bean
+    public OcflObjectSessionFactory ocflObjectSessionFactory() throws IOException {
+<span class="nc" id="L91">        final var objectMapper = OcflPersistentStorageUtils.objectMapper();</span>
+
+<span class="nc" id="L93">        final var factory = new DefaultOcflObjectSessionFactory(repository(),</span>
+<span class="nc" id="L94">                ocflPropsConfig.getFedoraOcflStaging(),</span>
+                objectMapper,
+<span class="nc" id="L96">                createCache(&quot;resourceHeadersCache&quot;),</span>
+<span class="nc" id="L97">                createCache(&quot;rootIdCache&quot;),</span>
+<span class="nc" id="L98">                commitType(),</span>
+                &quot;Authored by Fedora 6&quot;,
+                &quot;fedoraAdmin&quot;,
+                &quot;info:fedora/fedoraAdmin&quot;);
+<span class="nc" id="L102">        factory.useUnsafeWrite(ocflPropsConfig.isUnsafeWriteEnabled());</span>
+<span class="nc" id="L103">        return factory;</span>
+    }
+
+    @Bean
+    public ObjectValidator objectValidator() throws IOException {
+<span class="nc" id="L108">        final var objectMapper = OcflPersistentStorageUtils.objectMapper();</span>
+<span class="nc" id="L109">        return new ObjectValidator(repository(), objectMapper.readerFor(ResourceHeaders.class));</span>
+    }
+
+    private CommitType commitType() {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        if (ocflPropsConfig.isAutoVersioningEnabled()) {</span>
+<span class="nc" id="L114">            return CommitType.NEW_VERSION;</span>
+        }
+<span class="nc" id="L116">        return CommitType.UNVERSIONED;</span>
+    }
+
+    private S3Client s3Client() {
+<span class="nc" id="L120">        final var builder = S3Client.builder();</span>
+
+<span class="nc bnc" id="L122" title="All 2 branches missed.">        if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {</span>
+<span class="nc" id="L123">            builder.region(Region.of(ocflPropsConfig.getAwsRegion()));</span>
+        }
+
+<span class="nc bnc" id="L126" title="All 2 branches missed.">        if (StringUtils.isNotBlank(ocflPropsConfig.getS3Endpoint())) {</span>
+<span class="nc" id="L127">            builder.endpointOverride(URI.create(ocflPropsConfig.getS3Endpoint()));</span>
+        }
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">        if (ocflPropsConfig.isPathStyleAccessEnabled()) {</span>
+<span class="nc" id="L131">            builder.serviceConfiguration(config -&gt; config.pathStyleAccessEnabled(true));</span>
+        }
+
+<span class="nc bnc" id="L134" title="All 2 branches missed.">        if (StringUtils.isNoneBlank(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())) {</span>
+<span class="nc" id="L135">            builder.credentialsProvider(StaticCredentialsProvider.create(</span>
+<span class="nc" id="L136">                    AwsBasicCredentials.create(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())));</span>
+        }
+
+        // May want to do additional HTTP client configuration, connection pool, etc
+
+<span class="nc" id="L141">        return builder.build();</span>
+    }
+
+    private &lt;K, V&gt; Cache&lt;K, V&gt; createCache(final String metricName) {
+<span class="nc bnc" id="L145" title="All 2 branches missed.">        if (ocflPropsConfig.isResourceHeadersCacheEnabled()) {</span>
+<span class="nc" id="L146">            final var builder = Caffeine.newBuilder();</span>
+
+<span class="nc bnc" id="L148" title="All 2 branches missed.">            if (metricsConfig.isMetricsEnabled()) {</span>
+<span class="nc" id="L149">                builder.recordStats();</span>
+            }
+
+<span class="nc" id="L152">            final var cache = builder</span>
+<span class="nc" id="L153">                    .maximumSize(ocflPropsConfig.getResourceHeadersCacheMaxSize())</span>
+<span class="nc" id="L154">                    .expireAfterAccess(ocflPropsConfig.getResourceHeadersCacheExpireAfterSeconds(), TimeUnit.SECONDS)</span>
+<span class="nc" id="L155">                    .build();</span>
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">            if (metricsConfig.isMetricsEnabled()) {</span>
+<span class="nc" id="L158">                CaffeineCacheMetrics.monitor(meterRegistry, cache, metricName);</span>
+            }
+
+<span class="nc" id="L161">            return new CaffeineCache&lt;&gt;(cache);</span>
+        }
+
+<span class="nc" id="L164">        return new NoOpCache&lt;&gt;();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

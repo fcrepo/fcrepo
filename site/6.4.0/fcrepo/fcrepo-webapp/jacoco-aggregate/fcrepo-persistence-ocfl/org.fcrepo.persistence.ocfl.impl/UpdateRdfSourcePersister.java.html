@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>UpdateRdfSourcePersister.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-ocfl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">UpdateRdfSourcePersister.java</span></div><h1>UpdateRdfSourcePersister.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.persistence.ocfl.impl;
+
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
+
+/**
+ * This class implements the persistence of an existing RDFSource
+ *
+ * @author dbernstein
+ * @since 6.0.0
+ */
+class UpdateRdfSourcePersister extends AbstractRdfSourcePersister {
+
+<span class="nc" id="L26">    private static final Logger log = LoggerFactory.getLogger(UpdateRdfSourcePersister.class);</span>
+
+    /**
+     * Constructor
+     * @param index The FedoraToOcflObjectIndex
+     */
+    protected UpdateRdfSourcePersister(final FedoraToOcflObjectIndex index) {
+<span class="nc" id="L33">        super(RdfSourceOperation.class, UPDATE, index);</span>
+<span class="nc" id="L34">    }</span>
+
+    @Override
+    public void persist(final OcflPersistentStorageSession session, final ResourceOperation operation)
+            throws PersistentStorageException {
+<span class="nc" id="L39">        final var resourceId = operation.getResourceId();</span>
+<span class="nc" id="L40">        log.debug(&quot;persisting {} to {}&quot;, resourceId, session);</span>
+
+<span class="nc" id="L42">        final var fedoraOcflMapping = getMapping(operation.getTransaction(), resourceId);</span>
+<span class="nc" id="L43">        final var ocflId = fedoraOcflMapping.getOcflObjectId();</span>
+<span class="nc" id="L44">        final OcflObjectSession objSession = session.findOrCreateSession(ocflId);</span>
+<span class="nc" id="L45">        persistRDF(objSession, operation, fedoraOcflMapping.getRootObjectIdentifier(), false);</span>
+<span class="nc" id="L46">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

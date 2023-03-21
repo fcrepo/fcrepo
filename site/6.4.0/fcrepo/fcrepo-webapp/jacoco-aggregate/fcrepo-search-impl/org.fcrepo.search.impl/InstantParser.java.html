@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>InstantParser.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-search-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.search.impl</a> &gt; <span class="el_source">InstantParser.java</span></div><h1>InstantParser.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.search.impl;
+
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.time.format.DateTimeFormatter.ISO_DATE_TIME;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
+
+/**
+ * A utility class for parsing a variety of different date/time formats into an Instant.
+ *
+ * @author dbernstein
+ */
+public class InstantParser {
+
+<span class="nc" id="L27">    private static final List&lt;DateTimeFormatter&gt; VALID_DATE_FORMATS = new ArrayList&lt;&gt;();</span>
+
+    static {
+<span class="nc" id="L30">        VALID_DATE_FORMATS.add(ISO_DATE_TIME);</span>
+<span class="nc" id="L31">        VALID_DATE_FORMATS.add(ISO_OFFSET_DATE_TIME);</span>
+<span class="nc" id="L32">        VALID_DATE_FORMATS.add(RFC_1123_DATE_TIME);</span>
+<span class="nc" id="L33">        final var zoneId = ZoneOffset.UTC;</span>
+<span class="nc" id="L34">        VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern(&quot;yyyy-MM-dd&quot;)</span>
+<span class="nc" id="L35">                .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));</span>
+<span class="nc" id="L36">        VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern(&quot;yyyyMMdd&quot;)</span>
+<span class="nc" id="L37">                .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));</span>
+<span class="nc" id="L38">        VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern(&quot;yyyy-MM-dd HH:mm:ss&quot;)</span>
+<span class="nc" id="L39">                .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));</span>
+<span class="nc" id="L40">        VALID_DATE_FORMATS.add(new DateTimeFormatterBuilder().appendPattern(&quot;yyyyMMdd HH:mm:ss&quot;)</span>
+<span class="nc" id="L41">                .parseDefaulting(ChronoField.NANO_OF_DAY, 0).toFormatter().withZone(zoneId));</span>
+<span class="nc" id="L42">    }</span>
+
+    private InstantParser() { }
+
+    /**
+     * Parse a datestring into an instant.  If timezone or time information is missing, UTC is assumed.
+     *
+     * @param dateString The date string
+     * @return an instant
+     */
+    public static Instant parse(final String dateString) {
+<span class="nc bnc" id="L53" title="All 2 branches missed.">        for (final DateTimeFormatter formatter : VALID_DATE_FORMATS) {</span>
+            try {
+<span class="nc" id="L55">                final var temporalAccessor = formatter.parse(dateString);</span>
+<span class="nc" id="L56">                return Instant.from(temporalAccessor);</span>
+<span class="nc" id="L57">            } catch (final Exception e) {</span>
+                //ignore failures - if no date string is parsable, an error is thrown below
+            }
+<span class="nc" id="L60">        }</span>
+<span class="nc" id="L61">        throw new IllegalArgumentException(&quot;Invalid date format: \&quot;&quot; + dateString + &quot;\&quot;&quot;);</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

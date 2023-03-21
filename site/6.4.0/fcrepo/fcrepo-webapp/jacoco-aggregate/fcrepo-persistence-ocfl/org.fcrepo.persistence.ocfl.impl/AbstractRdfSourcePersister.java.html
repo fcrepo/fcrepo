@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractRdfSourcePersister.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-ocfl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">AbstractRdfSourcePersister.java</span></div><h1>AbstractRdfSourcePersister.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.persistence.ocfl.impl;
+
+import org.apache.jena.riot.system.StreamRDF;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperationType;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+import org.fcrepo.persistence.common.ResourceHeadersImpl;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
+import static java.lang.String.format;
+import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
+
+/**
+ * This class implements the persistence of a new RDFSource
+ *
+ * @author dbernstein
+ * @since 6.0.0
+ */
+abstract class AbstractRdfSourcePersister extends AbstractPersister {
+
+<span class="nc" id="L36">    private static final Logger log = LoggerFactory.getLogger(AbstractRdfSourcePersister.class);</span>
+
+    /**
+     * Constructor
+     */
+    protected AbstractRdfSourcePersister(final Class&lt;? extends ResourceOperation&gt; resourceOperation,
+                                         final ResourceOperationType resourceOperationType,
+                                         final FedoraToOcflObjectIndex index) {
+<span class="nc" id="L44">        super(resourceOperation, resourceOperationType, index);</span>
+<span class="nc" id="L45">    }</span>
+
+    /**
+     * Persists the RDF using the specified operation and session.
+     * @param objectSession The object session.
+     * @param operation The operation
+     * @param rootId The fedora root object identifier tha maps to the OCFL object root.
+     * @param isArchivalPart indicates if the resource is an AG part resource, ignored on update
+     * @throws PersistentStorageException
+     */
+    protected void persistRDF(final OcflObjectSession objectSession,
+                              final ResourceOperation operation,
+                              final FedoraId rootId,
+                              final boolean isArchivalPart) throws PersistentStorageException {
+
+<span class="nc" id="L60">        final RdfSourceOperation rdfSourceOp = (RdfSourceOperation)operation;</span>
+<span class="nc" id="L61">        log.debug(&quot;persisting RDFSource ({}) to OCFL&quot;, operation.getResourceId());</span>
+
+<span class="nc" id="L63">        final var headers = createHeaders(</span>
+                objectSession,
+                rdfSourceOp,
+<span class="nc" id="L66">                operation.getResourceId().equals(rootId),</span>
+<span class="nc bnc" id="L67" title="All 2 branches missed.">                isArchivalPart ? rootId : null);</span>
+
+<span class="nc" id="L69">        writeRdf(objectSession, headers, rdfSourceOp.getTriples());</span>
+<span class="nc" id="L70">    }</span>
+
+    /**
+     * Constructs a ResourceHeaders object populated with the properties provided by the
+     * operation, and merged with existing properties if appropriate.
+     *
+     * @param objSession the object session
+     * @param operation the operation being persisted
+     * @param objectRoot indicates this is the object root
+     * @param archivalGroupId for AG parts, the id of the containg AG, otherwise null
+     * @return populated resource headers
+     */
+    private ResourceHeadersImpl createHeaders(final OcflObjectSession objSession,
+                                          final RdfSourceOperation operation,
+                                          final boolean objectRoot,
+                                          final FedoraId archivalGroupId) throws PersistentStorageException {
+<span class="nc" id="L86">        final var headers = createCommonHeaders(objSession, operation, objectRoot, archivalGroupId);</span>
+<span class="nc" id="L87">        overrideRelaxedProperties(headers, operation);</span>
+<span class="nc" id="L88">        return headers;</span>
+    }
+
+    /**
+     * Overrides generated creation and modification headers with the values
+     * provided in the operation if they are present. They should only be present
+     * if the server is in relaxed mode for handling server managed triples
+     *
+     * @param headers the resource headers
+     * @param operation the operation
+     */
+    private void overrideRelaxedProperties(final ResourceHeadersImpl headers, final RdfSourceOperation operation) {
+        // Override relaxed properties if provided
+<span class="nc bnc" id="L101" title="All 2 branches missed.">        if (operation.getLastModifiedBy() != null) {</span>
+<span class="nc" id="L102">            headers.setLastModifiedBy(operation.getLastModifiedBy());</span>
+        }
+<span class="nc bnc" id="L104" title="All 2 branches missed.">        if (operation.getLastModifiedDate() != null) {</span>
+<span class="nc" id="L105">            headers.setLastModifiedDate(operation.getLastModifiedDate());</span>
+        }
+<span class="nc bnc" id="L107" title="All 2 branches missed.">        if (operation.getCreatedBy() != null) {</span>
+<span class="nc" id="L108">            headers.setCreatedBy(operation.getCreatedBy());</span>
+        }
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        if (operation.getCreatedDate() != null) {</span>
+<span class="nc" id="L111">            headers.setCreatedDate(operation.getCreatedDate());</span>
+        }
+<span class="nc" id="L113">    }</span>
+
+    /**
+     * Writes an RDFStream to a contentPath within an ocfl object.
+     *
+     * @param session The object session
+     * @param triples The triples
+     * @throws PersistentStorageException on write failure
+     */
+    private void writeRdf(final OcflObjectSession session,
+                          final ResourceHeadersImpl headers,
+                          final RdfStream triples) throws PersistentStorageException {
+<span class="nc" id="L125">        try (final var os = new ByteArrayOutputStream()) {</span>
+<span class="nc" id="L126">            final StreamRDF streamRDF = getWriterStream(os, OcflPersistentStorageUtils.getRdfFormat().getLang());</span>
+<span class="nc" id="L127">            streamRDF.start();</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">            if (triples != null) {</span>
+<span class="nc" id="L129">                triples.forEach(streamRDF::triple);</span>
+            }
+<span class="nc" id="L131">            streamRDF.finish();</span>
+
+<span class="nc" id="L133">            final var is = new ByteArrayInputStream(os.toByteArray());</span>
+<span class="nc" id="L134">            session.writeResource(new ResourceHeadersAdapter(headers).asStorageHeaders(), is);</span>
+<span class="nc" id="L135">            log.debug(&quot;wrote {} to {}&quot;, headers.getId().getFullId(), session.sessionId());</span>
+<span class="nc" id="L136">        } catch (final IOException ex) {</span>
+<span class="nc" id="L137">            throw new PersistentStorageException(</span>
+<span class="nc" id="L138">                    format(&quot;failed to write %s in %s&quot;, headers.getId().getFullId(), session.sessionId()), ex);</span>
+<span class="nc" id="L139">        }</span>
+<span class="nc" id="L140">    }</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,854 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>MembershipIndexManager.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.services</a> &gt; <span class="el_source">MembershipIndexManager.java</span></div><h1>MembershipIndexManager.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.services;
+
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.Spliterator;
+import java.util.Spliterators;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
+
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.sql.DataSource;
+
+import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.slf4j.Logger;
+import org.springframework.jdbc.core.RowCallbackHandler;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Manager for the membership index
+ *
+ * @author bbpennel
+ */
+@Component
+<span class="nc" id="L50">public class MembershipIndexManager {</span>
+<span class="nc" id="L51">    private static final Logger log = getLogger(MembershipIndexManager.class);</span>
+
+<span class="nc" id="L53">    private static final Timestamp NO_END_TIMESTAMP = Timestamp.from(MembershipServiceImpl.NO_END_INSTANT);</span>
+<span class="nc" id="L54">    private static final Timestamp NO_START_TIMESTAMP = Timestamp.from(Instant.parse(&quot;1000-01-01T00:00:00.000Z&quot;));</span>
+
+    private static final String ADD_OPERATION = &quot;add&quot;;
+    private static final String DELETE_OPERATION = &quot;delete&quot;;
+    private static final String FORCE_FLAG = &quot;force&quot;;
+
+    private static final String TX_ID_PARAM = &quot;txId&quot;;
+    private static final String SUBJECT_ID_PARAM = &quot;subjectId&quot;;
+    private static final String NO_END_TIME_PARAM = &quot;noEndTime&quot;;
+    private static final String ADD_OP_PARAM = &quot;addOp&quot;;
+    private static final String DELETE_OP_PARAM = &quot;deleteOp&quot;;
+    private static final String MEMENTO_TIME_PARAM = &quot;mementoTime&quot;;
+    private static final String PROPERTY_PARAM = &quot;property&quot;;
+    private static final String TARGET_ID_PARAM = &quot;targetId&quot;;
+    private static final String SOURCE_ID_PARAM = &quot;sourceId&quot;;
+    private static final String PROXY_ID_PARAM = &quot;proxyId&quot;;
+    private static final String START_TIME_PARAM = &quot;startTime&quot;;
+    private static final String END_TIME_PARAM = &quot;endTime&quot;;
+    private static final String LAST_UPDATED_PARAM = &quot;lastUpdated&quot;;
+    private static final String OPERATION_PARAM = &quot;operation&quot;;
+    private static final String FORCE_PARAM = &quot;forceFlag&quot;;
+    private static final String LIMIT_PARAM = &quot;limit&quot;;
+    private static final String OFFSET_PARAM = &quot;offSet&quot;;
+
+    private static final String SELECT_ALL_MEMBERSHIP = &quot;SELECT * FROM membership&quot;;
+
+    private static final String SELECT_ALL_OPERATIONS = &quot;SELECT * FROM membership_tx_operations&quot;;
+
+    private static final String SELECT_MEMBERSHIP_IN_TX =
+            &quot;SELECT property, object_id&quot; +
+            &quot; FROM membership m&quot; +
+            &quot; WHERE subject_id = :subjectId&quot; +
+                &quot; AND end_time = :noEndTime&quot; +
+                &quot; AND NOT EXISTS (&quot; +
+                    &quot; SELECT 1&quot; +
+                    &quot; FROM membership_tx_operations mto&quot; +
+                    &quot; WHERE mto.subject_id = :subjectId&quot; +
+                        &quot; AND mto.source_id = m.source_id&quot; +
+                        &quot; AND mto.object_id = m.object_id&quot; +
+                        &quot; AND mto.tx_id = :txId&quot; +
+                        &quot; AND mto.operation = :deleteOp)&quot; +
+            &quot; UNION&quot; +
+            &quot; SELECT property, object_id&quot; +
+            &quot; FROM membership_tx_operations&quot; +
+            &quot; WHERE subject_id = :subjectId&quot; +
+                &quot; AND tx_id = :txId&quot; +
+                &quot; AND end_time = :noEndTime&quot; +
+                &quot; AND operation = :addOp&quot; +
+            &quot; ORDER BY property, object_id&quot; +
+            &quot; LIMIT :limit OFFSET :offSet&quot;;
+
+    private static final String DIRECT_SELECT_MEMBERSHIP =
+            &quot;SELECT property, object_id&quot; +
+            &quot; FROM membership&quot; +
+            &quot; WHERE subject_id = :subjectId&quot; +
+                &quot; AND end_time = :noEndTime&quot; +
+            &quot; ORDER BY property, object_id&quot; +
+            &quot; LIMIT :limit OFFSET :offSet&quot;;
+
+    private static final String SELECT_MEMBERSHIP_MEMENTO_IN_TX =
+            &quot;SELECT property, object_id&quot; +
+            &quot; FROM membership m&quot; +
+            &quot; WHERE m.subject_id = :subjectId&quot; +
+                &quot; AND m.start_time &lt;= :mementoTime&quot; +
+                &quot; AND m.end_time &gt; :mementoTime&quot; +
+                &quot; AND NOT EXISTS (&quot; +
+                    &quot; SELECT 1&quot; +
+                    &quot; FROM membership_tx_operations mto&quot; +
+                    &quot; WHERE mto.subject_id = :subjectId&quot; +
+                        &quot; AND mto.source_id = m.source_id&quot; +
+                        &quot; AND mto.property = m.property&quot; +
+                        &quot; AND mto.object_id = m.object_id&quot; +
+                        &quot; AND mto.end_time &lt;= :mementoTime&quot; +
+                        &quot; AND mto.tx_id = :txId&quot; +
+                        &quot; AND mto.operation = :deleteOp)&quot; +
+            &quot; UNION&quot; +
+            &quot; SELECT property, object_id&quot; +
+            &quot; FROM membership_tx_operations&quot; +
+            &quot; WHERE subject_id = :subjectId&quot; +
+                &quot; AND tx_id = :txId&quot; +
+                &quot; AND start_time &lt;= :mementoTime&quot; +
+                &quot; AND end_time &gt; :mementoTime&quot; +
+                &quot; AND operation = :addOp&quot; +
+            &quot; ORDER BY property, object_id&quot; +
+            &quot; LIMIT :limit OFFSET :offSet&quot;;
+
+    private static final String DIRECT_SELECT_MEMBERSHIP_MEMENTO =
+            &quot;SELECT property, object_id&quot; +
+            &quot; FROM membership&quot; +
+            &quot; WHERE subject_id = :subjectId&quot; +
+                &quot; AND start_time &lt;= :mementoTime&quot; +
+                &quot; AND end_time &gt; :mementoTime&quot; +
+            &quot; ORDER BY property, object_id&quot; +
+            &quot; LIMIT :limit OFFSET :offSet&quot;;
+
+    private static final String SELECT_LAST_UPDATED =
+            &quot;SELECT max(last_updated) as last_updated&quot; +
+            &quot; FROM membership&quot; +
+            &quot; WHERE subject_id = :subjectId&quot;;
+
+    // For mementos, use the start_time instead of last_updated as the
+    // end_time reflects when the next version starts
+    private static final String SELECT_LAST_UPDATED_MEMENTO =
+            &quot;SELECT max(start_time)&quot; +
+            &quot; FROM membership&quot; +
+            &quot; WHERE subject_id = :subjectId&quot; +
+                &quot; AND start_time &lt;= :mementoTime&quot; +
+                &quot; AND end_time &gt; :mementoTime&quot;;
+
+    private static final String SELECT_LAST_UPDATED_IN_TX =
+            &quot;SELECT max(combined.updated) as last_updated&quot; +
+            &quot; FROM (&quot; +
+                &quot; SELECT max(last_updated) as updated&quot; +
+                &quot; FROM membership m&quot; +
+                &quot; WHERE subject_id = :subjectId&quot; +
+                    &quot; AND NOT EXISTS (&quot; +
+                        &quot; SELECT 1&quot; +
+                        &quot; FROM membership_tx_operations mto&quot; +
+                        &quot; WHERE mto.subject_id = :subjectId&quot; +
+                            &quot; AND mto.source_id = m.source_id&quot; +
+                            &quot; AND mto.object_id = m.object_id&quot; +
+                            &quot; AND mto.tx_id = :txId&quot; +
+                            &quot; AND mto.operation = :deleteOp)&quot; +
+                &quot; UNION&quot; +
+                &quot; SELECT max(last_updated) as updated&quot; +
+                &quot; FROM membership_tx_operations&quot; +
+                &quot; WHERE subject_id = :subjectId&quot; +
+                    &quot; AND tx_id = :txId&quot; +
+            &quot;) combined&quot;;
+
+    private static final String INSERT_MEMBERSHIP_IN_TX =
+            &quot;INSERT INTO membership_tx_operations (subject_id, property, object_id, source_id,&quot; +
+                    &quot; proxy_id, start_time, end_time, last_updated, tx_id, operation)&quot; +
+            &quot; VALUES (:subjectId, :property, :targetId, :sourceId,&quot; +
+                    &quot; :proxyId, :startTime, :endTime, :lastUpdated, :txId, :operation)&quot;;
+
+    private static final String DIRECT_INSERT_MEMBERSHIP =
+            &quot;INSERT INTO membership (subject_id, property, object_id, source_id,&quot; +
+                    &quot; proxy_id, start_time, end_time, last_updated)&quot; +
+            &quot; VALUES (:subjectId, :property, :targetId, :sourceId,&quot; +
+                    &quot; :proxyId, :startTime, :endTime, :lastUpdated)&quot;;
+
+    private static final String END_EXISTING_MEMBERSHIP =
+            &quot;INSERT INTO membership_tx_operations (subject_id, property, object_id, source_id,&quot; +
+                    &quot; proxy_id, start_time, end_time, last_updated, tx_id, operation)&quot; +
+            &quot; SELECT m.subject_id, m.property, m.object_id, m.source_id, m.proxy_id, m.start_time,&quot; +
+                    &quot; :endTime, :endTime, :txId, :deleteOp&quot; +
+            &quot; FROM membership m&quot; +
+            &quot; WHERE m.source_id = :sourceId&quot; +
+                &quot; AND m.proxy_id = :proxyId&quot; +
+                &quot; AND m.end_time = :noEndTime&quot;;
+
+    private static final String DIRECT_END_EXISTING_MEMBERSHIP =
+            &quot;UPDATE membership SET end_time = :endTime, last_updated = :endTime&quot; +
+            &quot; WHERE source_id = :sourceId&quot; +
+                &quot; AND proxy_id = :proxyId&quot; +
+                &quot; AND end_time = :noEndTime&quot;;
+
+    private static final String CLEAR_FOR_PROXY_IN_TX =
+            &quot;DELETE FROM membership_tx_operations&quot; +
+            &quot; WHERE source_id = :sourceId&quot; +
+                &quot; AND tx_id = :txId&quot; +
+                &quot; AND proxy_id = :proxyId&quot; +
+                &quot; AND force_flag IS NULL&quot;;
+
+    private static final String CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX =
+            &quot;DELETE FROM membership_tx_operations&quot; +
+            &quot; WHERE source_id = :sourceId&quot; +
+                &quot; AND tx_id = :txId&quot; +
+                &quot; AND operation = :addOp&quot;;
+
+    // Add &quot;delete&quot; entries for all existing membership from the given source, if not already deleted
+    private static final String END_EXISTING_FOR_SOURCE =
+            &quot;INSERT INTO membership_tx_operations (subject_id, property, object_id, source_id,&quot; +
+                    &quot; proxy_id, start_time, end_time, last_updated, tx_id, operation)&quot; +
+            &quot; SELECT subject_id, property, object_id, source_id,&quot; +
+                    &quot; proxy_id, start_time, :endTime, :endTime, :txId, :deleteOp&quot; +
+            &quot; FROM membership m&quot; +
+            &quot; WHERE source_id = :sourceId&quot; +
+                &quot; AND end_time = :noEndTime&quot; +
+                &quot; AND NOT EXISTS (&quot; +
+                    &quot; SELECT TRUE&quot; +
+                    &quot; FROM membership_tx_operations mtx&quot; +
+                    &quot; WHERE mtx.subject_id = m.subject_id&quot; +
+                        &quot; AND mtx.property = m.property&quot; +
+                        &quot; AND mtx.object_id = m.object_id&quot; +
+                        &quot; AND mtx.source_id = m.source_id&quot; +
+                        &quot; AND mtx.proxy_id = m.proxy_id&quot; +
+                        &quot; AND mtx.operation = :deleteOp&quot; +
+                    &quot;)&quot;;
+
+    private static final String DIRECT_END_EXISTING_FOR_SOURCE =
+            &quot;UPDATE membership SET end_time = :endTime, last_updated = :endTime&quot; +
+                    &quot; WHERE source_id = :sourceId&quot; +
+                    &quot; AND end_time = :noEndTime&quot;;
+
+    private static final String DELETE_EXISTING_FOR_SOURCE_AFTER =
+            &quot;INSERT INTO membership_tx_operations(subject_id, property, object_id, source_id,&quot; +
+                    &quot; proxy_id, start_time, end_time, last_updated, tx_id, operation, force_flag)&quot; +
+            &quot; SELECT subject_id, property, object_id, source_id, proxy_id, start_time, end_time,&quot; +
+                    &quot; last_updated, :txId, :deleteOp, :forceFlag&quot; +
+            &quot; FROM membership m&quot; +
+            &quot; WHERE m.source_id = :sourceId&quot; +
+                &quot; AND (m.start_time &gt;= :startTime&quot; +
+                &quot; OR m.end_time &gt;= :startTime)&quot;;
+
+    private static final String DIRECT_DELETE_EXISTING_FOR_SOURCE_AFTER =
+            &quot;DELETE FROM membership&quot; +
+                    &quot; WHERE source_id = :sourceId&quot; +
+                    &quot; AND (start_time &gt;= :startTime&quot; +
+                    &quot; OR end_time &gt;= :startTime)&quot;;
+
+    private static final String DELETE_EXISTING_FOR_PROXY_AFTER =
+            &quot;INSERT INTO membership_tx_operations(subject_id, property, object_id, source_id,&quot; +
+                    &quot; proxy_id, start_time, end_time, last_updated, tx_id, operation, force_flag)&quot; +
+            &quot; SELECT subject_id, property, object_id, source_id, proxy_id, start_time, end_time,&quot; +
+                    &quot; last_updated, :txId, :deleteOp, :forceFlag&quot; +
+            &quot; FROM membership m&quot; +
+            &quot; WHERE m.proxy_id = :proxyId&quot; +
+                &quot; AND (m.start_time &gt;= :startTime&quot; +
+                &quot; OR m.end_time &gt;= :startTime)&quot;;
+
+    private static final String DIRECT_DELETE_EXISTING_FOR_PROXY_AFTER =
+            &quot;UPDATE membership SET end_time = :endTime, last_updated = :endTime&quot; +
+            &quot; WHERE proxy_id = :proxyId&quot; +
+                &quot; AND (start_time &gt;= :endTime&quot; +
+                &quot; OR end_time &gt;= :endTime)&quot;;
+
+    private static final String PURGE_ALL_REFERENCES_MEMBERSHIP =
+            &quot;DELETE from membership&quot; +
+            &quot; where source_id = :targetId&quot; +
+                &quot; OR subject_id = :targetId&quot; +
+                &quot; OR object_id = :targetId&quot;;
+
+    private static final String PURGE_ALL_REFERENCES_TRANSACTION =
+            &quot;DELETE from membership_tx_operations&quot; +
+            &quot; WHERE tx_id = :txId&quot; +
+                &quot; AND (source_id = :targetId&quot; +
+                &quot; OR subject_id = :targetId&quot; +
+                &quot; OR object_id = :targetId)&quot;;
+
+    private static final String COMMIT_DELETES =
+            &quot;DELETE from membership&quot; +
+            &quot; WHERE EXISTS (&quot; +
+                &quot; SELECT TRUE&quot; +
+                &quot; FROM membership_tx_operations mto&quot; +
+                &quot; WHERE mto.tx_id = :txId&quot; +
+                    &quot; AND mto.operation = :deleteOp&quot; +
+                    &quot; AND mto.force_flag = :forceFlag&quot; +
+                    &quot; AND membership.source_id = mto.source_id&quot; +
+                    &quot; AND membership.proxy_id = mto.proxy_id&quot; +
+                    &quot; AND membership.subject_id = mto.subject_id&quot; +
+                    &quot; AND membership.property = mto.property&quot; +
+                    &quot; AND membership.object_id = mto.object_id&quot; +
+                &quot; )&quot;;
+
+    private static final String COMMIT_ENDS_H2 =
+            &quot;UPDATE membership m&quot; +
+            &quot; SET end_time = (&quot; +
+                &quot; SELECT mto.end_time&quot; +
+                &quot; FROM membership_tx_operations mto&quot; +
+                &quot; WHERE mto.tx_id = :txId&quot; +
+                    &quot; AND m.source_id = mto.source_id&quot; +
+                    &quot; AND m.proxy_id = mto.proxy_id&quot; +
+                    &quot; AND m.subject_id = mto.subject_id&quot; +
+                    &quot; AND m.property = mto.property&quot; +
+                    &quot; AND m.object_id = mto.object_id&quot; +
+                    &quot; AND mto.operation = :deleteOp&quot; +
+                &quot; ),&quot; +
+                &quot; last_updated = (&quot; +
+                    &quot; SELECT mto.end_time&quot; +
+                    &quot; FROM membership_tx_operations mto&quot; +
+                    &quot; WHERE mto.tx_id = :txId&quot; +
+                        &quot; AND m.source_id = mto.source_id&quot; +
+                        &quot; AND m.proxy_id = mto.proxy_id&quot; +
+                        &quot; AND m.subject_id = mto.subject_id&quot; +
+                        &quot; AND m.property = mto.property&quot; +
+                        &quot; AND m.object_id = mto.object_id&quot; +
+                        &quot; AND mto.operation = :deleteOp&quot; +
+                    &quot; )&quot; +
+            &quot; WHERE EXISTS (&quot; +
+                &quot;SELECT TRUE&quot; +
+                &quot; FROM membership_tx_operations mto&quot; +
+                &quot; WHERE mto.tx_id = :txId&quot; +
+                    &quot; AND mto.operation = :deleteOp&quot; +
+                    &quot; AND m.source_id = mto.source_id&quot; +
+                    &quot; AND m.proxy_id = mto.proxy_id&quot; +
+                    &quot; AND m.subject_id = mto.subject_id&quot; +
+                    &quot; AND m.property = mto.property&quot; +
+                    &quot; AND m.object_id = mto.object_id&quot; +
+                &quot; )&quot;;
+
+    private static final String COMMIT_ENDS_POSTGRES =
+            &quot;UPDATE membership&quot; +
+            &quot; SET end_time = mto.end_time, last_updated = mto.end_time&quot; +
+            &quot; FROM membership_tx_operations mto&quot; +
+            &quot; WHERE mto.tx_id = :txId&quot; +
+                &quot; AND mto.operation = :deleteOp&quot; +
+                &quot; AND membership.source_id = mto.source_id&quot; +
+                &quot; AND membership.proxy_id = mto.proxy_id&quot; +
+                &quot; AND membership.subject_id = mto.subject_id&quot; +
+                &quot; AND membership.property = mto.property&quot; +
+                &quot; AND membership.object_id = mto.object_id&quot;;
+
+    private static final String COMMIT_ENDS_MYSQL =
+            &quot;UPDATE membership m&quot; +
+            &quot; INNER JOIN membership_tx_operations mto ON&quot; +
+                &quot; m.source_id = mto.source_id&quot; +
+                &quot; AND m.proxy_id = mto.proxy_id&quot; +
+                &quot; AND m.subject_id = mto.subject_id&quot; +
+                &quot; AND m.property = mto.property&quot; +
+                &quot; AND m.object_id = mto.object_id&quot; +
+            &quot; SET m.end_time = mto.end_time, m.last_updated = mto.end_time&quot; +
+            &quot; WHERE mto.tx_id = :txId&quot; +
+                &quot; AND mto.operation = :deleteOp&quot;;
+
+<span class="nc" id="L370">    private static final Map&lt;DbPlatform, String&gt; COMMIT_ENDS_MAP = Map.of(</span>
+            DbPlatform.MYSQL, COMMIT_ENDS_MYSQL,
+            DbPlatform.MARIADB, COMMIT_ENDS_MYSQL,
+            DbPlatform.POSTGRESQL, COMMIT_ENDS_POSTGRES,
+            DbPlatform.H2, COMMIT_ENDS_H2
+    );
+
+    // Transfer all &quot;add&quot; operations from tx to committed membership, unless the entry already exists
+    private static final String COMMIT_ADDS =
+            &quot;INSERT INTO membership&quot; +
+            &quot; (subject_id, property, object_id, source_id, proxy_id, start_time, end_time, last_updated)&quot; +
+            &quot; SELECT subject_id, property, object_id, source_id, proxy_id, start_time, end_time, last_updated&quot; +
+            &quot; FROM membership_tx_operations mto&quot; +
+            &quot; WHERE mto.tx_id = :txId&quot; +
+                &quot; AND mto.operation = :addOp&quot; +
+                &quot; AND NOT EXISTS (&quot; +
+                    &quot; SELECT TRUE&quot; +
+                    &quot; FROM membership m&quot; +
+                    &quot; WHERE m.source_id = mto.source_id&quot; +
+                        &quot; AND m.proxy_id = mto.proxy_id&quot; +
+                        &quot; AND m.subject_id = mto.subject_id&quot; +
+                        &quot; AND m.property = mto.property&quot; +
+                        &quot; AND m.object_id = mto.object_id&quot; +
+                        &quot; AND m.start_time = mto.start_time&quot; +
+                        &quot; AND m.end_time = mto.end_time&quot; +
+                &quot; )&quot;;
+
+    private static final String DELETE_TRANSACTION =
+            &quot;DELETE FROM membership_tx_operations&quot; +
+            &quot; WHERE tx_id = :txId&quot;;
+
+    private static final String TRUNCATE_MEMBERSHIP = &quot;TRUNCATE TABLE membership&quot;;
+
+    private static final String TRUNCATE_MEMBERSHIP_TX = &quot;TRUNCATE TABLE membership_tx_operations&quot;;
+
+    @Inject
+    private DataSource dataSource;
+
+    private NamedParameterJdbcTemplate jdbcTemplate;
+
+    private DbPlatform dbPlatform;
+
+    private static final int MEMBERSHIP_LIMIT = 50000;
+
+    @PostConstruct
+    public void setUp() {
+<span class="nc" id="L416">        jdbcTemplate = new NamedParameterJdbcTemplate(getDataSource());</span>
+<span class="nc" id="L417">        dbPlatform = DbPlatform.fromDataSource(dataSource);</span>
+<span class="nc" id="L418">    }</span>
+
+    /**
+     * End a membership from the child of a Direct/IndirectContainer, setting an end time if committed,
+     * or clearing from the current tx if it was newly added.
+     *
+     * @param tx transaction
+     * @param sourceId ID of the direct/indirect container whose membership should be ended
+     * @param proxyId ID of the proxy producing this membership, when applicable
+     * @param endTime the time the resource was deleted, generally its last modified
+     */
+    public void endMembershipFromChild(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
+            final Instant endTime) {
+<span class="nc" id="L431">        tx.doInTx(() -&gt; {</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">            if (!tx.isShortLived()) {</span>
+<span class="nc" id="L433">                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+<span class="nc" id="L434">                parameterSource.addValue(TX_ID_PARAM, tx.getId());</span>
+<span class="nc" id="L435">                parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());</span>
+<span class="nc" id="L436">                parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());</span>
+
+<span class="nc" id="L438">                final int affected = jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);</span>
+
+                // If no rows were deleted, then assume we need to delete permanent entry
+<span class="nc bnc" id="L441" title="All 2 branches missed.">                if (affected == 0) {</span>
+<span class="nc" id="L442">                    final MapSqlParameterSource parameterSource2 = new MapSqlParameterSource();</span>
+<span class="nc" id="L443">                    parameterSource2.addValue(TX_ID_PARAM, tx.getId());</span>
+<span class="nc" id="L444">                    parameterSource2.addValue(SOURCE_ID_PARAM, sourceId.getFullId());</span>
+<span class="nc" id="L445">                    parameterSource2.addValue(PROXY_ID_PARAM, proxyId.getFullId());</span>
+<span class="nc" id="L446">                    parameterSource2.addValue(END_TIME_PARAM, formatInstant(endTime));</span>
+<span class="nc" id="L447">                    parameterSource2.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);</span>
+<span class="nc" id="L448">                    parameterSource2.addValue(DELETE_OP_PARAM, DELETE_OPERATION);</span>
+<span class="nc" id="L449">                    jdbcTemplate.update(END_EXISTING_MEMBERSHIP, parameterSource2);</span>
+                }
+<span class="nc" id="L451">            } else {</span>
+<span class="nc" id="L452">                final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+<span class="nc" id="L453">                parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());</span>
+<span class="nc" id="L454">                parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());</span>
+<span class="nc" id="L455">                parameterSource.addValue(END_TIME_PARAM, formatInstant(endTime));</span>
+<span class="nc" id="L456">                parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);</span>
+<span class="nc" id="L457">                jdbcTemplate.update(DIRECT_END_EXISTING_MEMBERSHIP, parameterSource);</span>
+            }
+<span class="nc" id="L459">        });</span>
+<span class="nc" id="L460">    }</span>
+
+    public void deleteMembershipForProxyAfter(final Transaction tx,
+                                              final FedoraId sourceId,
+                                              final FedoraId proxyId,
+                                              final Instant afterTime) {
+<span class="nc" id="L466">        tx.doInTx(() -&gt; {</span>
+<span class="nc bnc" id="L467" title="All 2 branches missed.">            final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);</span>
+
+<span class="nc bnc" id="L469" title="All 2 branches missed.">            if (!tx.isShortLived()) {</span>
+                // Clear all membership added in this transaction
+<span class="nc" id="L471">                final var parameterSource = Map.of(</span>
+<span class="nc" id="L472">                        TX_ID_PARAM, tx.getId(),</span>
+<span class="nc" id="L473">                        SOURCE_ID_PARAM, sourceId.getFullId(),</span>
+<span class="nc" id="L474">                        PROXY_ID_PARAM, proxyId.getFullId(),</span>
+                        OPERATION_PARAM, ADD_OPERATION);
+
+<span class="nc" id="L477">                jdbcTemplate.update(CLEAR_FOR_PROXY_IN_TX, parameterSource);</span>
+
+                // Delete all existing membership entries that start after or end after the given timestamp
+<span class="nc" id="L480">                final Map&lt;String, Object&gt; parameterSource2 = Map.of(</span>
+<span class="nc" id="L481">                        TX_ID_PARAM, tx.getId(),</span>
+<span class="nc" id="L482">                        PROXY_ID_PARAM, proxyId.getFullId(),</span>
+                        START_TIME_PARAM, afterTimestamp,
+                        FORCE_PARAM, FORCE_FLAG,
+                        DELETE_OP_PARAM, DELETE_OPERATION);
+<span class="nc" id="L486">                jdbcTemplate.update(DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource2);</span>
+<span class="nc" id="L487">            } else {</span>
+<span class="nc" id="L488">                final Map&lt;String, Object&gt; parameterSource = Map.of(</span>
+<span class="nc" id="L489">                        PROXY_ID_PARAM, proxyId.getFullId(),</span>
+                        END_TIME_PARAM, afterTimestamp);
+<span class="nc" id="L491">                jdbcTemplate.update(DIRECT_DELETE_EXISTING_FOR_PROXY_AFTER, parameterSource);</span>
+            }
+<span class="nc" id="L493">        });</span>
+<span class="nc" id="L494">    }</span>
+
+    /**
+     * End all membership properties resulting from the specified source container
+     * @param tx transaction
+     * @param sourceId ID of the direct/indirect container whose membership should be ended
+     * @param endTime the time the resource was deleted, generally its last modified
+     */
+    public void endMembershipForSource(final Transaction tx, final FedoraId sourceId, final Instant endTime) {
+<span class="nc" id="L503">        tx.doInTx(() -&gt; {</span>
+<span class="nc bnc" id="L504" title="All 2 branches missed.">            if (!tx.isShortLived()) {</span>
+<span class="nc" id="L505">                final Map&lt;String, Object&gt; parameterSource = Map.of(</span>
+<span class="nc" id="L506">                        TX_ID_PARAM, tx.getId(),</span>
+<span class="nc" id="L507">                        SOURCE_ID_PARAM, sourceId.getFullId(),</span>
+                        ADD_OP_PARAM, ADD_OPERATION);
+
+<span class="nc" id="L510">                jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);</span>
+
+<span class="nc" id="L512">                final Map&lt;String, Object&gt; parameterSource2 = Map.of(</span>
+<span class="nc" id="L513">                        TX_ID_PARAM, tx.getId(),</span>
+<span class="nc" id="L514">                        SOURCE_ID_PARAM, sourceId.getFullId(),</span>
+<span class="nc" id="L515">                        END_TIME_PARAM, formatInstant(endTime),</span>
+                        NO_END_TIME_PARAM, NO_END_TIMESTAMP,
+                        DELETE_OP_PARAM, DELETE_OPERATION);
+<span class="nc" id="L518">                jdbcTemplate.update(END_EXISTING_FOR_SOURCE, parameterSource2);</span>
+<span class="nc" id="L519">            } else {</span>
+<span class="nc" id="L520">                final Map&lt;String, Object&gt; parameterSource = Map.of(</span>
+<span class="nc" id="L521">                        SOURCE_ID_PARAM, sourceId.getFullId(),</span>
+<span class="nc" id="L522">                        END_TIME_PARAM, formatInstant(endTime),</span>
+                        NO_END_TIME_PARAM, NO_END_TIMESTAMP);
+<span class="nc" id="L524">                jdbcTemplate.update(DIRECT_END_EXISTING_FOR_SOURCE, parameterSource);</span>
+            }
+<span class="nc" id="L526">        });</span>
+<span class="nc" id="L527">    }</span>
+
+    /**
+     * Delete membership entries that are active at or after the given timestamp for the specified source
+     * @param tx transaction
+     * @param sourceId ID of the direct/indirect container
+     * @param afterTime time at or after which membership should be removed
+     */
+    public void deleteMembershipForSourceAfter(final Transaction tx, final FedoraId sourceId, final Instant afterTime) {
+<span class="nc" id="L536">        tx.doInTx(() -&gt; {</span>
+<span class="nc bnc" id="L537" title="All 2 branches missed.">            final var afterTimestamp = afterTime == null ? NO_START_TIMESTAMP : formatInstant(afterTime);</span>
+
+<span class="nc bnc" id="L539" title="All 2 branches missed.">            if (!tx.isShortLived()) {</span>
+                // Clear all membership added in this transaction
+<span class="nc" id="L541">                final Map&lt;String, Object&gt; parameterSource = Map.of(</span>
+<span class="nc" id="L542">                        TX_ID_PARAM, tx.getId(),</span>
+<span class="nc" id="L543">                        SOURCE_ID_PARAM, sourceId.getFullId(),</span>
+                        ADD_OP_PARAM, ADD_OPERATION);
+
+<span class="nc" id="L546">                jdbcTemplate.update(CLEAR_ALL_ADDED_FOR_SOURCE_IN_TX, parameterSource);</span>
+
+                // Delete all existing membership entries that start after or end after the given timestamp
+<span class="nc" id="L549">                final Map&lt;String, Object&gt; parameterSource2 = Map.of(</span>
+<span class="nc" id="L550">                        TX_ID_PARAM, tx.getId(),</span>
+<span class="nc" id="L551">                        SOURCE_ID_PARAM, sourceId.getFullId(),</span>
+                        START_TIME_PARAM, afterTimestamp,
+                        FORCE_PARAM, FORCE_FLAG,
+                        DELETE_OP_PARAM, DELETE_OPERATION);
+<span class="nc" id="L555">                jdbcTemplate.update(DELETE_EXISTING_FOR_SOURCE_AFTER, parameterSource2);</span>
+<span class="nc" id="L556">            } else {</span>
+<span class="nc" id="L557">                final Map&lt;String, Object&gt; parameterSource = Map.of(</span>
+<span class="nc" id="L558">                        SOURCE_ID_PARAM, sourceId.getFullId(),</span>
+                        START_TIME_PARAM, afterTimestamp);
+<span class="nc" id="L560">                jdbcTemplate.update(DIRECT_DELETE_EXISTING_FOR_SOURCE_AFTER, parameterSource);</span>
+            }
+<span class="nc" id="L562">        });</span>
+<span class="nc" id="L563">    }</span>
+
+    /**
+     * Clean up any references to the target id, in transactions and outside
+     * @param txId transaction id
+     * @param targetId identifier of the resource to cleanup membership references for
+     */
+    public void deleteMembershipReferences(final String txId, final FedoraId targetId) {
+<span class="nc" id="L571">        final Map&lt;String, Object&gt; parameterSource = Map.of(</span>
+<span class="nc" id="L572">                TARGET_ID_PARAM, targetId.getFullId(),</span>
+                TX_ID_PARAM, txId);
+
+<span class="nc" id="L575">        jdbcTemplate.update(PURGE_ALL_REFERENCES_TRANSACTION, parameterSource);</span>
+<span class="nc" id="L576">        jdbcTemplate.update(PURGE_ALL_REFERENCES_MEMBERSHIP, parameterSource);</span>
+<span class="nc" id="L577">    }</span>
+
+    /**
+     * Add new membership property to the index, clearing any delete
+     * operations for the property if necessary.
+     * @param tx transaction
+     * @param sourceId ID of the direct/indirect container which produced the membership
+     * @param proxyId ID of the proxy producing this membership, when applicable
+     * @param membership membership triple
+     * @param startTime time the membership triple was added
+     */
+    public void addMembership(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
+            final Triple membership, final Instant startTime) {
+<span class="nc bnc" id="L590" title="All 2 branches missed.">        if (membership == null) {</span>
+<span class="nc" id="L591">            return;</span>
+        }
+<span class="nc" id="L593">        addMembership(tx, sourceId, proxyId, membership, startTime, null);</span>
+<span class="nc" id="L594">    }</span>
+
+    /**
+     * Add new membership property to the index
+     * @param tx transaction
+     * @param sourceId ID of the direct/indirect container which produced the membership
+     * @param proxyId ID of the proxy producing this membership, when applicable
+     * @param membership membership triple
+     * @param startTime time the membership triple was added
+     * @param endTime time the membership triple ends, or never if not provided
+     */
+    public void addMembership(final Transaction tx, final FedoraId sourceId, final FedoraId proxyId,
+            final Triple membership, final Instant startTime, final Instant endTime) {
+<span class="nc" id="L607">        tx.doInTx(() -&gt; {</span>
+            final Timestamp endTimestamp;
+            final Timestamp lastUpdated;
+<span class="nc" id="L610">            final Timestamp startTimestamp = formatInstant(startTime);</span>
+<span class="nc bnc" id="L611" title="All 2 branches missed.">            if (endTime == null) {</span>
+<span class="nc" id="L612">                endTimestamp = NO_END_TIMESTAMP;</span>
+<span class="nc" id="L613">                lastUpdated = startTimestamp;</span>
+            } else {
+<span class="nc" id="L615">                endTimestamp = formatInstant(endTime);</span>
+<span class="nc" id="L616">                lastUpdated = endTimestamp;</span>
+            }
+            // Add the new membership operation
+<span class="nc" id="L619">            final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+<span class="nc" id="L620">            parameterSource.addValue(SUBJECT_ID_PARAM, membership.getSubject().getURI());</span>
+<span class="nc" id="L621">            parameterSource.addValue(PROPERTY_PARAM, membership.getPredicate().getURI());</span>
+<span class="nc" id="L622">            parameterSource.addValue(TARGET_ID_PARAM, membership.getObject().getURI());</span>
+<span class="nc" id="L623">            parameterSource.addValue(SOURCE_ID_PARAM, sourceId.getFullId());</span>
+<span class="nc" id="L624">            parameterSource.addValue(PROXY_ID_PARAM, proxyId.getFullId());</span>
+<span class="nc" id="L625">            parameterSource.addValue(START_TIME_PARAM, startTimestamp);</span>
+<span class="nc" id="L626">            parameterSource.addValue(END_TIME_PARAM, endTimestamp);</span>
+<span class="nc" id="L627">            parameterSource.addValue(LAST_UPDATED_PARAM, lastUpdated);</span>
+
+<span class="nc bnc" id="L629" title="All 2 branches missed.">            if (!tx.isShortLived()) {</span>
+<span class="nc" id="L630">                parameterSource.addValue(TX_ID_PARAM, tx.getId());</span>
+<span class="nc" id="L631">                parameterSource.addValue(OPERATION_PARAM, ADD_OPERATION);</span>
+<span class="nc" id="L632">                jdbcTemplate.update(INSERT_MEMBERSHIP_IN_TX, parameterSource);</span>
+            } else {
+<span class="nc" id="L634">                jdbcTemplate.update(DIRECT_INSERT_MEMBERSHIP, parameterSource);</span>
+            }
+<span class="nc" id="L636">        });</span>
+<span class="nc" id="L637">    }</span>
+
+    /**
+     * Get a stream of membership triples with
+     * @param tx transaction from which membership will be retrieved, or null for no transaction
+     * @param subjectId ID of the subject
+     * @return Stream of membership triples
+     */
+    public Stream&lt;Triple&gt; getMembership(final Transaction tx, final FedoraId subjectId) {
+<span class="nc" id="L646">        final Node subjectNode = NodeFactory.createURI(subjectId.getBaseId());</span>
+
+<span class="nc" id="L648">        final RowMapper&lt;Triple&gt; membershipMapper = (rs, rowNum) -&gt;</span>
+<span class="nc" id="L649">                Triple.create(subjectNode,</span>
+<span class="nc" id="L650">                        NodeFactory.createURI(rs.getString(&quot;property&quot;)),</span>
+<span class="nc" id="L651">                        NodeFactory.createURI(rs.getString(&quot;object_id&quot;)));</span>
+
+<span class="nc" id="L653">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+        final String query;
+
+<span class="nc bnc" id="L656" title="All 2 branches missed.">        if (subjectId.isMemento()) {</span>
+<span class="nc" id="L657">            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getBaseId());</span>
+<span class="nc" id="L658">            parameterSource.addValue(MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()));</span>
+        } else {
+<span class="nc" id="L660">            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());</span>
+<span class="nc" id="L661">            parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);</span>
+        }
+
+<span class="nc bnc" id="L664" title="All 2 branches missed.">        if (tx.isOpenLongRunning()) {</span>
+<span class="nc" id="L665">            parameterSource.addValue(TX_ID_PARAM, tx.getId());</span>
+
+<span class="nc bnc" id="L667" title="All 2 branches missed.">            if (subjectId.isMemento()) {</span>
+<span class="nc" id="L668">                query = SELECT_MEMBERSHIP_MEMENTO_IN_TX;</span>
+            } else {
+<span class="nc" id="L670">                query = SELECT_MEMBERSHIP_IN_TX;</span>
+            }
+        } else {
+<span class="nc bnc" id="L673" title="All 2 branches missed.">            if (subjectId.isMemento()) {</span>
+<span class="nc" id="L674">                query = DIRECT_SELECT_MEMBERSHIP_MEMENTO;</span>
+            } else {
+<span class="nc" id="L676">                query = DIRECT_SELECT_MEMBERSHIP;</span>
+            }
+        }
+
+<span class="nc" id="L680">        return StreamSupport.stream(new MembershipIterator(query, parameterSource, membershipMapper), false);</span>
+    }
+
+    public Instant getLastUpdated(final Transaction transaction, final FedoraId subjectId) {
+<span class="nc" id="L684">        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();</span>
+
+<span class="nc" id="L686">        parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);</span>
+        final String lastUpdatedQuery;
+<span class="nc bnc" id="L688" title="All 2 branches missed.">        if (subjectId.isMemento()) {</span>
+<span class="nc" id="L689">            lastUpdatedQuery = SELECT_LAST_UPDATED_MEMENTO;</span>
+<span class="nc" id="L690">            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getBaseId());</span>
+<span class="nc" id="L691">            parameterSource.addValue(MEMENTO_TIME_PARAM, formatInstant(subjectId.getMementoInstant()));</span>
+<span class="nc bnc" id="L692" title="All 2 branches missed.">        } else if (transaction.isOpenLongRunning()) {</span>
+<span class="nc" id="L693">            lastUpdatedQuery = SELECT_LAST_UPDATED_IN_TX;</span>
+<span class="nc" id="L694">            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());</span>
+<span class="nc" id="L695">            parameterSource.addValue(TX_ID_PARAM, transaction.getId());</span>
+<span class="nc" id="L696">            parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);</span>
+        } else {
+<span class="nc" id="L698">            lastUpdatedQuery = SELECT_LAST_UPDATED;</span>
+<span class="nc" id="L699">            parameterSource.addValue(SUBJECT_ID_PARAM, subjectId.getFullId());</span>
+        }
+
+<span class="nc" id="L702">        final var updated = jdbcTemplate.queryForObject(lastUpdatedQuery, parameterSource, Timestamp.class);</span>
+<span class="nc bnc" id="L703" title="All 2 branches missed.">        if (updated != null) {</span>
+<span class="nc" id="L704">            return updated.toInstant();</span>
+        }
+<span class="nc" id="L706">        return null;</span>
+    }
+
+    /**
+     * Perform a commit of operations stored in the specified transaction
+     * @param tx transaction
+     */
+    public void commitTransaction(final Transaction tx) {
+<span class="nc bnc" id="L714" title="All 2 branches missed.">        if (!tx.isShortLived()) {</span>
+<span class="nc" id="L715">            tx.ensureCommitting();</span>
+<span class="nc" id="L716">            final Map&lt;String, String&gt; parameterSource = Map.of(</span>
+<span class="nc" id="L717">                    TX_ID_PARAM, tx.getId(),</span>
+                    ADD_OP_PARAM, ADD_OPERATION,
+                    DELETE_OP_PARAM, DELETE_OPERATION,
+                    FORCE_PARAM, FORCE_FLAG);
+
+<span class="nc" id="L722">            jdbcTemplate.update(COMMIT_DELETES, parameterSource);</span>
+<span class="nc" id="L723">            final int ends = jdbcTemplate.update(COMMIT_ENDS_MAP.get(this.dbPlatform), parameterSource);</span>
+<span class="nc" id="L724">            final int adds = jdbcTemplate.update(COMMIT_ADDS, parameterSource);</span>
+<span class="nc" id="L725">            final int cleaned = jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);</span>
+
+<span class="nc" id="L727">            log.debug(&quot;Completed commit, {} ended, {} adds, {} operations&quot;, ends, adds, cleaned);</span>
+        }
+<span class="nc" id="L729">    }</span>
+
+    /**
+     * Delete all entries related to a transaction
+     * @param tx transaction
+     */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void deleteTransaction(final Transaction tx) {
+<span class="nc bnc" id="L737" title="All 2 branches missed.">        if (!tx.isShortLived()) {</span>
+<span class="nc" id="L738">            final Map&lt;String, String&gt; parameterSource = Map.of(TX_ID_PARAM, tx.getId());</span>
+<span class="nc" id="L739">            jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);</span>
+        }
+<span class="nc" id="L741">    }</span>
+
+    /**
+     * Format an instant to a timestamp without milliseconds, due to precision
+     * issues with memento datetimes.
+     * @param instant the instant
+     * @return a Timestamp
+     */
+    private Timestamp formatInstant(final Instant instant) {
+<span class="nc" id="L750">        final var timestamp = Timestamp.from(instant);</span>
+<span class="nc" id="L751">        timestamp.setNanos(0);</span>
+<span class="nc" id="L752">        return timestamp;</span>
+    }
+
+    /**
+     * Clear all entries from the index
+     */
+    public void clearIndex() {
+<span class="nc" id="L759">        jdbcTemplate.update(TRUNCATE_MEMBERSHIP, Map.of());</span>
+<span class="nc" id="L760">        jdbcTemplate.update(TRUNCATE_MEMBERSHIP_TX, Map.of());</span>
+<span class="nc" id="L761">    }</span>
+
+    /**
+     * Log all membership entries, for debugging usage only
+     */
+    protected void logMembership() {
+<span class="nc" id="L767">        log.info(&quot;source_id, proxy_id, subject_id, property, object_id, start_time, end_time, last_updated&quot;);</span>
+<span class="nc" id="L768">        jdbcTemplate.query(SELECT_ALL_MEMBERSHIP, new RowCallbackHandler() {</span>
+            @Override
+            public void processRow(final ResultSet rs) throws SQLException {
+<span class="nc" id="L771">                log.info(&quot;{}, {}, {}, {}, {}, {}, {}, {}&quot;,</span>
+<span class="nc" id="L772">                        rs.getString(&quot;source_id&quot;), rs.getString(&quot;proxy_id&quot;), rs.getString(&quot;subject_id&quot;),</span>
+<span class="nc" id="L773">                        rs.getString(&quot;property&quot;), rs.getString(&quot;object_id&quot;), rs.getTimestamp(&quot;start_time&quot;),</span>
+<span class="nc" id="L774">                        rs.getTimestamp(&quot;end_time&quot;), rs.getTimestamp(&quot;last_updated&quot;));</span>
+<span class="nc" id="L775">            }</span>
+        });
+<span class="nc" id="L777">    }</span>
+
+    /**
+     * Log all membership operations, for debugging usage only
+     */
+    protected void logOperations() {
+<span class="nc" id="L783">        log.info(&quot;source_id, proxy_id, subject_id, property, object_id, start_time, end_time,&quot;</span>
+                + &quot; last_updated, tx_id, operation, force_flag&quot;);
+<span class="nc" id="L785">        jdbcTemplate.query(SELECT_ALL_OPERATIONS, new RowCallbackHandler() {</span>
+            @Override
+            public void processRow(final ResultSet rs) throws SQLException {
+<span class="nc" id="L788">                log.info(&quot;{}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}&quot;,</span>
+<span class="nc" id="L789">                        rs.getString(&quot;source_id&quot;), rs.getString(&quot;proxy_id&quot;), rs.getString(&quot;subject_id&quot;),</span>
+<span class="nc" id="L790">                        rs.getString(&quot;property&quot;), rs.getString(&quot;object_id&quot;), rs.getTimestamp(&quot;start_time&quot;),</span>
+<span class="nc" id="L791">                        rs.getTimestamp(&quot;end_time&quot;), rs.getTimestamp(&quot;last_updated&quot;), rs.getString(&quot;tx_id&quot;),</span>
+<span class="nc" id="L792">                        rs.getString(&quot;operation&quot;), rs.getString(&quot;force_flag&quot;));</span>
+<span class="nc" id="L793">            }</span>
+        });
+<span class="nc" id="L795">    }</span>
+
+    /**
+     * Set the JDBC datastore.
+     * @param dataSource the dataStore.
+     */
+    public void setDataSource(final DataSource dataSource) {
+<span class="nc" id="L802">        this.dataSource = dataSource;</span>
+<span class="nc" id="L803">    }</span>
+
+    /**
+     * Get the JDBC datastore.
+     * @return the dataStore.
+     */
+    public DataSource getDataSource() {
+<span class="nc" id="L810">        return dataSource;</span>
+    }
+
+    /**
+     * Private class to back a stream with a paged DB query.
+     *
+     * If this needs to be run in parallel we will have to override trySplit() and determine a good method to split on.
+     */
+    private class MembershipIterator extends Spliterators.AbstractSpliterator&lt;Triple&gt; {
+<span class="nc" id="L819">        final Queue&lt;Triple&gt; children = new ConcurrentLinkedQueue&lt;&gt;();</span>
+<span class="nc" id="L820">        int numOffsets = 0;</span>
+        final String queryToUse;
+        final MapSqlParameterSource parameterSource;
+        final RowMapper&lt;Triple&gt; rowMapper;
+
+        public MembershipIterator(final String query, final MapSqlParameterSource parameters,
+<span class="nc" id="L826">                                  final RowMapper&lt;Triple&gt; mapper) {</span>
+<span class="nc" id="L827">            super(Long.MAX_VALUE, Spliterator.ORDERED);</span>
+<span class="nc" id="L828">            queryToUse = query;</span>
+<span class="nc" id="L829">            parameterSource = parameters;</span>
+<span class="nc" id="L830">            rowMapper = mapper;</span>
+<span class="nc" id="L831">            parameterSource.addValue(ADD_OP_PARAM, ADD_OPERATION);</span>
+<span class="nc" id="L832">            parameterSource.addValue(DELETE_OP_PARAM, DELETE_OPERATION);</span>
+<span class="nc" id="L833">            parameterSource.addValue(LIMIT_PARAM, MEMBERSHIP_LIMIT);</span>
+<span class="nc" id="L834">        }</span>
+
+        @Override
+        public boolean tryAdvance(final Consumer&lt;? super Triple&gt; action) {
+            try {
+<span class="nc" id="L839">                action.accept(children.remove());</span>
+<span class="nc" id="L840">            } catch (final NoSuchElementException e) {</span>
+<span class="nc" id="L841">                parameterSource.addValue(OFFSET_PARAM, numOffsets * MEMBERSHIP_LIMIT);</span>
+<span class="nc" id="L842">                numOffsets += 1;</span>
+<span class="nc" id="L843">                children.addAll(jdbcTemplate.query(queryToUse, parameterSource, rowMapper));</span>
+<span class="nc bnc" id="L844" title="All 2 branches missed.">                if (children.size() == 0) {</span>
+                    // no more elements.
+<span class="nc" id="L846">                    return false;</span>
+                }
+<span class="nc" id="L848">                action.accept(children.remove());</span>
+<span class="nc" id="L849">            }</span>
+<span class="nc" id="L850">            return true;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceLockImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.lock</a> &gt; <span class="el_source">ResourceLockImpl.java</span></div><h1>ResourceLockImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.lock;
+
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.lock.ResourceLock;
+import org.fcrepo.kernel.api.lock.ResourceLockType;
+
+import java.util.Objects;
+
+/**
+ * Simple implementation of the complex lock.
+ * @author whikloj
+ */
+public class ResourceLockImpl implements ResourceLock {
+
+    private final String transactionId;
+    private final ResourceLockType resourceLockType;
+    private final FedoraId resourceId;
+
+<span class="nc" id="L24">    ResourceLockImpl(final ResourceLockType resourceLock, final String txId, final FedoraId id) {</span>
+<span class="nc" id="L25">        resourceLockType = resourceLock;</span>
+<span class="nc" id="L26">        transactionId = txId;</span>
+<span class="nc" id="L27">        resourceId = id;</span>
+<span class="nc" id="L28">    }</span>
+
+    ResourceLockImpl(final String lockType, final String txId, final FedoraId resourceId) {
+<span class="nc" id="L31">        this(ResourceLockType.fromString(lockType), txId, resourceId);</span>
+<span class="nc" id="L32">    }</span>
+
+    @Override
+    public FedoraId getResourceId() {
+<span class="nc" id="L36">        return resourceId;</span>
+    }
+
+    @Override
+    public boolean hasResource(final FedoraId resourceId) {
+<span class="nc" id="L41">        return this.resourceId.equals(resourceId);</span>
+    }
+
+    @Override
+    public ResourceLockType getLockType() {
+<span class="nc" id="L46">        return resourceLockType;</span>
+    }
+
+    @Override
+    public boolean hasLockType(final ResourceLockType lockType) {
+<span class="nc" id="L51">        return resourceLockType.equals(lockType);</span>
+    }
+
+    @Override
+    public boolean isAdequate(final ResourceLockType lockType) {
+<span class="nc bnc" id="L56" title="All 4 branches missed.">        return this.resourceLockType == ResourceLockType.EXCLUSIVE || lockType == ResourceLockType.NONEXCLUSIVE;</span>
+    }
+
+    @Override
+    public String getTransactionId() {
+<span class="nc" id="L61">        return transactionId;</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L66">        return String.format(&quot;type: %s, txId: %s, resource: %s&quot;, resourceLockType, transactionId,</span>
+                resourceId);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (this == o) {</span>
+<span class="nc" id="L73">            return true;</span>
+        }
+<span class="nc bnc" id="L75" title="All 4 branches missed.">        if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L76">            return false;</span>
+        }
+<span class="nc" id="L78">        final ResourceLockImpl that = (ResourceLockImpl) o;</span>
+<span class="nc bnc" id="L79" title="All 4 branches missed.">        return transactionId.equals(that.transactionId) &amp;&amp; resourceId.equals(that.resourceId);</span>
+    }
+
+    @Override
+    public int hashCode() {
+<span class="nc" id="L84">        return Objects.hash(transactionId, resourceId);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

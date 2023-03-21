@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>OcflPersistentStorageUtils.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-persistence-ocfl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.persistence.ocfl.impl</a> &gt; <span class="el_source">OcflPersistentStorageUtils.java</span></div><h1>OcflPersistentStorageUtils.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.persistence.ocfl.impl;
+
+import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
+import static org.apache.jena.riot.RDFFormat.NTRIPLES;
+
+import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.Consumer;
+
+import javax.sql.DataSource;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import edu.wisc.library.ocfl.api.DigestAlgorithmRegistry;
+import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import edu.wisc.library.ocfl.api.model.DigestAlgorithm;
+import edu.wisc.library.ocfl.api.model.OcflVersion;
+import edu.wisc.library.ocfl.aws.OcflS3Client;
+import edu.wisc.library.ocfl.core.OcflRepositoryBuilder;
+import edu.wisc.library.ocfl.core.extension.storage.layout.config.HashedNTupleLayoutConfig;
+import edu.wisc.library.ocfl.core.path.constraint.ContentPathConstraints;
+import edu.wisc.library.ocfl.core.path.mapper.LogicalPathMappers;
+import edu.wisc.library.ocfl.core.storage.OcflStorageBuilder;
+import org.apache.commons.lang3.SystemUtils;
+import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
+import org.apache.jena.riot.RDFFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.s3.S3Client;
+
+/**
+ * A set of utility functions for supporting OCFL persistence activities.
+ *
+ * @author dbernstein
+ * @since 6.0.0
+ */
+public class OcflPersistentStorageUtils {
+
+<span class="nc" id="L47">    private static final Logger log = LoggerFactory.getLogger(OcflPersistentStorageUtils.class);</span>
+
+    private OcflPersistentStorageUtils() {
+    }
+
+    /**
+     * The version of OCFL the repository is configured to use.
+     */
+<span class="nc" id="L55">    private static final OcflVersion OCFL_VERSION = OcflVersion.OCFL_1_1;</span>
+
+    /**
+     * The default RDF on disk format
+     * TODO Make this value configurable
+     */
+<span class="nc" id="L61">    private static RDFFormat DEFAULT_RDF_FORMAT = NTRIPLES;</span>
+
+    /**
+     * @return the RDF Format. By default NTRIPLES are returned.
+     */
+    public static RDFFormat getRdfFormat() {
+<span class="nc" id="L67">        return DEFAULT_RDF_FORMAT;</span>
+    }
+
+    /**
+     * @return the RDF file extension.
+     */
+    public static String getRDFFileExtension() {
+<span class="nc" id="L74">        return &quot;.&quot; + DEFAULT_RDF_FORMAT.getLang().getFileExtensions().get(0);</span>
+    }
+
+    /**
+     * Create a new ocfl repository backed by the filesystem
+     * @param ocflStorageRootDir The ocfl storage root directory
+     * @param ocflWorkDir The ocfl work directory
+     * @param algorithm the algorithm for the OCFL repository
+     * @param ocflUpgradeOnWrite true if we want to write new versions on older objects.
+     * @param verifyInventory true if we should verify the inventory
+     * @return the repository
+     */
+    public static MutableOcflRepository createFilesystemRepository(final Path ocflStorageRootDir,
+                                                                   final Path ocflWorkDir,
+                                                                   final org.fcrepo.config.DigestAlgorithm algorithm,
+                                                                   final boolean ocflUpgradeOnWrite,
+                                                                   final boolean verifyInventory)
+            throws IOException {
+<span class="nc" id="L92">        createDirectories(ocflStorageRootDir);</span>
+
+<span class="nc" id="L94">        final var storage = OcflStorageBuilder.builder()</span>
+<span class="nc" id="L95">                                              .verifyInventoryDigest(verifyInventory)</span>
+<span class="nc" id="L96">                                              .fileSystem(ocflStorageRootDir).build();</span>
+
+<span class="nc" id="L98">        return createRepository(ocflWorkDir, builder -&gt; {</span>
+<span class="nc" id="L99">            builder.storage(storage);</span>
+<span class="nc" id="L100">        }, algorithm, ocflUpgradeOnWrite);</span>
+    }
+
+    /**
+     * Create a new ocfl repository backed by s3
+     *
+     * @param dataSource the datasource to keep inventories in and use as a lock
+     * @param s3Client aws s3 client
+     * @param bucket the bucket to store objects in
+     * @param prefix the prefix within the bucket to store objects under
+     * @param ocflWorkDir the local directory to stage objects in
+     * @param algorithm the algorithm for the OCFL repository
+     * @param withDb true if the ocfl client should use a db
+     * @param ocflUpgradeOnWrite true if we want to write new versions on older objects.
+     * @param verifyInventory true if we should verify the ocfl inventory
+     * @return the repository
+     */
+    public static MutableOcflRepository createS3Repository(final DataSource dataSource,
+                                                           final S3Client s3Client,
+                                                           final String bucket,
+                                                           final String prefix,
+                                                           final Path ocflWorkDir,
+                                                           final org.fcrepo.config.DigestAlgorithm algorithm,
+                                                           final boolean withDb,
+                                                           final boolean ocflUpgradeOnWrite,
+                                                           final boolean verifyInventory)
+            throws IOException {
+<span class="nc" id="L127">        createDirectories(ocflWorkDir);</span>
+
+<span class="nc" id="L129">        final var storage = OcflStorageBuilder.builder()</span>
+<span class="nc" id="L130">            .verifyInventoryDigest(verifyInventory)</span>
+<span class="nc" id="L131">            .cloud(OcflS3Client.builder()</span>
+<span class="nc" id="L132">                .s3Client(s3Client)</span>
+<span class="nc" id="L133">                .bucket(bucket)</span>
+<span class="nc" id="L134">                .repoPrefix(prefix)</span>
+<span class="nc" id="L135">                .build())</span>
+<span class="nc" id="L136">                .build();</span>
+
+<span class="nc" id="L138">        return createRepository(ocflWorkDir, builder -&gt; {</span>
+<span class="nc" id="L139">            builder.contentPathConstraints(ContentPathConstraints.cloud())</span>
+<span class="nc" id="L140">                    .storage(storage);</span>
+
+<span class="nc bnc" id="L142" title="All 2 branches missed.">            if (withDb) {</span>
+<span class="nc" id="L143">                builder.objectDetailsDb(db -&gt; db.dataSource(dataSource));</span>
+            }
+
+<span class="nc" id="L146">        }, algorithm, ocflUpgradeOnWrite);</span>
+    }
+
+    private static MutableOcflRepository createRepository(final Path ocflWorkDir,
+                                                          final Consumer&lt;OcflRepositoryBuilder&gt; configurer,
+                                                          final org.fcrepo.config.DigestAlgorithm algorithm,
+                                                          final boolean ocflUpgradeOnWrite)
+            throws IOException {
+<span class="nc" id="L154">        createDirectories(ocflWorkDir);</span>
+
+<span class="nc" id="L156">        final DigestAlgorithm ocflDigestAlg = translateFedoraDigestToOcfl(algorithm);</span>
+<span class="nc bnc" id="L157" title="All 2 branches missed.">        if (ocflDigestAlg == null) {</span>
+<span class="nc" id="L158">            throw new UnsupportedDigestAlgorithmException(</span>
+                    &quot;Unable to map Fedora default digest algorithm &quot; + algorithm + &quot; into OCFL&quot;);
+        }
+
+<span class="nc bnc" id="L162" title="All 2 branches missed.">        final var logicalPathMapper = SystemUtils.IS_OS_WINDOWS ?</span>
+<span class="nc" id="L163">                LogicalPathMappers.percentEncodingWindowsMapper() : LogicalPathMappers.percentEncodingLinuxMapper();</span>
+
+<span class="nc" id="L165">        final var builder = new OcflRepositoryBuilder()</span>
+<span class="nc" id="L166">                .defaultLayoutConfig(new HashedNTupleLayoutConfig())</span>
+<span class="nc" id="L167">                .ocflConfig(config -&gt; config.setDefaultDigestAlgorithm(ocflDigestAlg)</span>
+<span class="nc" id="L168">                        .setOcflVersion(OCFL_VERSION)</span>
+<span class="nc" id="L169">                        .setUpgradeObjectsOnWrite(ocflUpgradeOnWrite))</span>
+<span class="nc" id="L170">                .logicalPathMapper(logicalPathMapper)</span>
+<span class="nc" id="L171">                .workDir(ocflWorkDir);</span>
+
+<span class="nc" id="L173">        configurer.accept(builder);</span>
+
+<span class="nc" id="L175">        return builder.buildMutable();</span>
+    }
+
+    /**
+     * @return new object mapper with default config
+     */
+    public static ObjectMapper objectMapper() {
+<span class="nc" id="L182">        return new ObjectMapper()</span>
+<span class="nc" id="L183">                .configure(WRITE_DATES_AS_TIMESTAMPS, false)</span>
+<span class="nc" id="L184">                .registerModule(new JavaTimeModule())</span>
+<span class="nc" id="L185">                .setSerializationInclusion(JsonInclude.Include.NON_NULL);</span>
+    }
+
+    /**
+     * Translates the provided fedora digest algorithm enum into a OCFL client digest algorithm
+     *
+     * @param fcrepoAlg fedora digest algorithm
+     * @return OCFL client DigestAlgorithm, or null if no match could be made
+     */
+    public static DigestAlgorithm translateFedoraDigestToOcfl(final org.fcrepo.config.DigestAlgorithm fcrepoAlg) {
+<span class="nc" id="L195">        return fcrepoAlg.getAliases().stream()</span>
+<span class="nc" id="L196">                .map(alias -&gt; DigestAlgorithmRegistry.getAlgorithm(alias))</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">                .filter(alg -&gt; alg != null)</span>
+<span class="nc" id="L198">                .findFirst()</span>
+<span class="nc" id="L199">                .orElse(null);</span>
+    }
+
+    private static Path createDirectories(final Path path) throws IOException {
+        try {
+<span class="nc" id="L204">            return Files.createDirectories(path);</span>
+<span class="nc" id="L205">        } catch (final FileAlreadyExistsException e) {</span>
+            // Ignore. This only happens with the path is a symlink
+<span class="nc" id="L207">            return path;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>AuthPropsConfig.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-configs</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.config</a> &gt; <span class="el_source">AuthPropsConfig.java</span></div><h1>AuthPropsConfig.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+
+package org.fcrepo.config;
+
+import java.nio.file.Path;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+/**
+ * Auth related configuration properties
+ *
+ * @author pwinckles
+ */
+@Configuration
+<span class="nc" id="L21">public class AuthPropsConfig extends BasePropsConfig {</span>
+
+    public static final String FCREPO_AUTH_ENABLED = &quot;fcrepo.auth.enabled&quot;;
+    public static final String FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED = &quot;fcrepo.auth.principal.header.enabled&quot;;
+    private static final String FCREPO_AUTH_PRINCIPAL_HEADER_NAME = &quot;fcrepo.auth.principal.header.name&quot;;
+    private static final String FCREPO_AUTH_PRINCIPAL_HEADER_SEPARATOR = &quot;fcrepo.auth.principal.header.separator&quot;;
+    public static final String FCREPO_AUTH_PRINCIPAL_ROLES_ENABLED = &quot;fcrepo.auth.principal.roles.enabled&quot;;
+    private static final String FCREPO_AUTH_PRINCIPAL_ROLES_LIST = &quot;fcrepo.auth.principal.roles.list&quot;;
+    public static final String FCREPO_AUTH_PRINCIPAL_DELEGATE_ENABLED = &quot;fcrepo.auth.principal.delegate.enabled&quot;;
+    private static final String FCREPO_GROUP_AGENT_BASE_URI = &quot;fcrepo.auth.webac.groupAgent.baseUri&quot;;
+    private static final String FCREPO_USER_AGENT_BASE_URI = &quot;fcrepo.auth.webac.userAgent.baseUri&quot;;
+    private static final String FCREPO_ROOT_AUTH_ACL = &quot;fcrepo.auth.webac.authorization&quot;;
+
+    @Value(&quot;${&quot; + FCREPO_ROOT_AUTH_ACL + &quot;:#{null}}&quot;)
+    private Path rootAuthAclPath;
+
+    @Value(&quot;${&quot; + FCREPO_USER_AGENT_BASE_URI + &quot;:#{null}}&quot;)
+    private String userAgentBaseUri;
+    @Value(&quot;${&quot; + FCREPO_GROUP_AGENT_BASE_URI + &quot;:#{null}}&quot;)
+    private String groupAgentBaseUri;
+
+    @Value(&quot;${&quot; + FCREPO_AUTH_PRINCIPAL_DELEGATE_ENABLED + &quot;:true}&quot;)
+    private boolean authPrincipalDelegateEnabled;
+
+    @Value(&quot;${&quot; + FCREPO_AUTH_PRINCIPAL_HEADER_ENABLED + &quot;:false}&quot;)
+    private boolean authPrincipalHeaderEnabled;
+    @Value(&quot;${&quot; + FCREPO_AUTH_PRINCIPAL_HEADER_NAME + &quot;:some-header}&quot;)
+    private String authPrincipalHeaderName;
+    @Value(&quot;${&quot; + FCREPO_AUTH_PRINCIPAL_HEADER_SEPARATOR + &quot;:,}&quot;)
+    private String authPrincipalHeaderSeparator;
+
+    @Value(&quot;${&quot; + FCREPO_AUTH_PRINCIPAL_ROLES_ENABLED + &quot;:false}&quot;)
+    private boolean authPrincipalRolesEnabled;
+    @Value(&quot;#{'${&quot; + FCREPO_AUTH_PRINCIPAL_ROLES_LIST + &quot;:tomcat-role-1,tomcat-role-2}'.split(',')}&quot;)
+    private List&lt;String&gt; authPrincipalRolesList;
+
+    /**
+     * @return the path to the root auth acl to use instead of the default
+     */
+    public Path getRootAuthAclPath() {
+<span class="nc" id="L61">        return rootAuthAclPath;</span>
+    }
+
+    /**
+     * @param rootAuthAclPath path to custom root auth acl
+     */
+    public void setRootAuthAclPath(final Path rootAuthAclPath) {
+<span class="nc" id="L68">        this.rootAuthAclPath = rootAuthAclPath;</span>
+<span class="nc" id="L69">    }</span>
+
+    /**
+     * @return the user agent base uri, if specified
+     */
+    public String getUserAgentBaseUri() {
+<span class="nc" id="L75">        return userAgentBaseUri;</span>
+    }
+
+    /**
+     * @return the user agent base uri, if specified
+     */
+    public String getGroupAgentBaseUri() {
+<span class="nc" id="L82">        return groupAgentBaseUri;</span>
+    }
+
+    /**
+     * @return the header name for the auth principal header provider
+     */
+    public String getAuthPrincipalHeaderName() {
+<span class="nc" id="L89">        return authPrincipalHeaderName;</span>
+    }
+
+    /**
+     * @return the separator for the auth principal header provider
+     */
+    public String getAuthPrincipalHeaderSeparator() {
+<span class="nc" id="L96">        return authPrincipalHeaderSeparator;</span>
+    }
+
+    /**
+     * @return the list of auth roles
+     */
+    public List&lt;String&gt; getAuthPrincipalRolesList() {
+<span class="nc" id="L103">        return authPrincipalRolesList;</span>
+    }
+
+    /**
+     * @return header principal provider enabled
+     */
+    public boolean isAuthPrincipalHeaderEnabled() {
+<span class="nc" id="L110">        return authPrincipalHeaderEnabled;</span>
+    }
+
+    /**
+     * @return roles principal provider enabled
+     */
+    public boolean isAuthPrincipalRolesEnabled() {
+<span class="nc" id="L117">        return authPrincipalRolesEnabled;</span>
+    }
+
+    /**
+     * @return delegate principal provider enabled
+     */
+    public boolean isAuthPrincipalDelegateEnabled() {
+<span class="nc" id="L124">        return authPrincipalDelegateEnabled;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

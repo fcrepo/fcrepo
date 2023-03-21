@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>ResourceFactoryImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">ResourceFactoryImpl.java</span></div><h1>ResourceFactoryImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_WEBAC_ACL_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.time.Instant;
+import java.util.stream.Stream;
+
+import javax.inject.Inject;
+
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.ResourceTypeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.persistence.api.PersistentStorageSession;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
+/**
+ * Implementation of ResourceFactory interface.
+ *
+ * @author whikloj
+ * @since 2019-09-23
+ */
+@Component
+<span class="nc" id="L50">public class ResourceFactoryImpl implements ResourceFactory {</span>
+
+<span class="nc" id="L52">    private static final Logger LOGGER = getLogger(ResourceFactoryImpl.class);</span>
+
+    @Inject
+    private PersistentStorageSessionManager persistentStorageSessionManager;
+
+    @Autowired
+    @Qualifier(&quot;containmentIndex&quot;)
+    private ContainmentIndex containmentIndex;
+
+    @Inject
+    private UserTypesCache userTypesCache;
+
+    @Override
+    public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
+            throws PathNotFoundException {
+<span class="nc" id="L67">        return instantiateResource(transaction, fedoraID);</span>
+    }
+
+    @Override
+    public &lt;T extends FedoraResource&gt; T getResource(final Transaction transaction, final FedoraId identifier,
+                                                    final Class&lt;T&gt; clazz) throws PathNotFoundException {
+<span class="nc" id="L73">        return clazz.cast(getResource(transaction, identifier));</span>
+    }
+
+
+    @Override
+    public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId) {
+<span class="nc" id="L79">        final String containerId = containmentIndex.getContainedBy(transaction, resourceId);</span>
+<span class="nc bnc" id="L80" title="All 2 branches missed.">        if (containerId == null) {</span>
+<span class="nc" id="L81">            return null;</span>
+        }
+        try {
+<span class="nc" id="L84">            return getResource(transaction, FedoraId.create(containerId));</span>
+<span class="nc" id="L85">        } catch (final PathNotFoundException exc) {</span>
+<span class="nc" id="L86">            return null;</span>
+        }
+    }
+
+    /**
+     * Returns the appropriate FedoraResource class for an object based on the provided headers
+     *
+     * @param headers headers for the resource being constructed
+     * @return FedoraResource class
+     */
+    private Class&lt;? extends FedoraResourceImpl&gt; getClassForTypes(final ResourceHeaders headers) {
+<span class="nc" id="L97">        final var ixModel = headers.getInteractionModel();</span>
+<span class="nc bnc" id="L98" title="All 4 branches missed.">        if (BASIC_CONTAINER.getURI().equals(ixModel) || INDIRECT_CONTAINER.getURI().equals(ixModel)</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">                || DIRECT_CONTAINER.getURI().equals(ixModel)) {</span>
+<span class="nc" id="L100">            return ContainerImpl.class;</span>
+        }
+<span class="nc bnc" id="L102" title="All 2 branches missed.">        if (NON_RDF_SOURCE.getURI().equals(ixModel)) {</span>
+<span class="nc" id="L103">            return BinaryImpl.class;</span>
+        }
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        if (FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI.equals(ixModel)) {</span>
+<span class="nc" id="L106">            return NonRdfSourceDescriptionImpl.class;</span>
+        }
+<span class="nc bnc" id="L108" title="All 2 branches missed.">        if (FEDORA_WEBAC_ACL_URI.equals(ixModel)) {</span>
+<span class="nc" id="L109">            return WebacAclImpl.class;</span>
+        }
+        // TODO add the rest of the types
+<span class="nc" id="L112">        throw new ResourceTypeException(&quot;Could not identify the resource type for interaction model &quot; + ixModel);</span>
+    }
+
+    /**
+     * Instantiates a new FedoraResource object of the given class.
+     *
+     * @param transaction the transaction id
+     * @param identifier    identifier for the new instance
+     * @return new FedoraResource instance
+     * @throws PathNotFoundException
+     */
+    private FedoraResource instantiateResource(final Transaction transaction,
+                                               final FedoraId identifier)
+            throws PathNotFoundException {
+        try {
+            // For descriptions and ACLs we need the actual endpoint.
+<span class="nc" id="L128">            final var psSession = getSession(transaction);</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">            final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;</span>
+
+<span class="nc" id="L131">            final ResourceHeaders headers = psSession.getHeaders(identifier, versionDateTime);</span>
+
+            // Determine the appropriate class from headers
+<span class="nc" id="L134">            final var createClass = getClassForTypes(headers);</span>
+
+            // Retrieve standard constructor
+<span class="nc" id="L137">            final var constructor = createClass.getConstructor(</span>
+                    FedoraId.class,
+                    Transaction.class,
+                    PersistentStorageSessionManager.class,
+                    ResourceFactory.class,
+                    UserTypesCache.class);
+
+            // If identifier is to a TimeMap we need to avoid creating a original resource with a Timemap FedoraId
+<span class="nc bnc" id="L145" title="All 2 branches missed.">            final var instantiationId = identifier.isTimemap() ?</span>
+<span class="nc" id="L146">                    FedoraId.create(identifier.getResourceId()) : identifier;</span>
+
+<span class="nc" id="L148">            final var rescImpl = constructor.newInstance(instantiationId, transaction,</span>
+                    persistentStorageSessionManager, this, userTypesCache);
+<span class="nc" id="L150">            populateResourceHeaders(rescImpl, headers, versionDateTime);</span>
+
+<span class="nc bnc" id="L152" title="All 2 branches missed.">            if (headers.isDeleted()) {</span>
+<span class="nc" id="L153">                final var rootId = FedoraId.create(identifier.getBaseId());</span>
+<span class="nc" id="L154">                final var tombstone = new TombstoneImpl(rootId, transaction, persistentStorageSessionManager,</span>
+                        this, rescImpl);
+<span class="nc" id="L156">                tombstone.setLastModifiedDate(headers.getLastModifiedDate());</span>
+<span class="nc" id="L157">                return tombstone;</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">            } else if (identifier.isTimemap()) {</span>
+                // If identifier is a TimeMap, now we can return the virtual resource.
+<span class="nc" id="L160">                return rescImpl.getTimeMap();</span>
+            }
+<span class="nc" id="L162">            return rescImpl;</span>
+<span class="nc" id="L163">        } catch (final SecurityException | ReflectiveOperationException e) {</span>
+<span class="nc" id="L164">            throw new RepositoryRuntimeException(&quot;Unable to construct object&quot;, e);</span>
+<span class="nc" id="L165">        } catch (final PersistentItemNotFoundException e) {</span>
+<span class="nc" id="L166">            throw new PathNotFoundException(e.getMessage(), e);</span>
+<span class="nc" id="L167">        } catch (final PersistentStorageException e) {</span>
+<span class="nc" id="L168">            throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    private void populateResourceHeaders(final FedoraResourceImpl resc,
+                                         final ResourceHeaders headers, final Instant version) {
+<span class="nc" id="L174">        resc.setCreatedBy(headers.getCreatedBy());</span>
+<span class="nc" id="L175">        resc.setCreatedDate(headers.getCreatedDate());</span>
+<span class="nc" id="L176">        resc.setLastModifiedBy(headers.getLastModifiedBy());</span>
+<span class="nc" id="L177">        resc.setLastModifiedDate(headers.getLastModifiedDate());</span>
+<span class="nc" id="L178">        resc.setParentId(headers.getParent());</span>
+<span class="nc" id="L179">        resc.setArchivalGroupId(headers.getArchivalGroupId());</span>
+<span class="nc" id="L180">        resc.setEtag(headers.getStateToken());</span>
+<span class="nc" id="L181">        resc.setStateToken(headers.getStateToken());</span>
+<span class="nc" id="L182">        resc.setIsArchivalGroup(headers.isArchivalGroup());</span>
+<span class="nc" id="L183">        resc.setInteractionModel(headers.getInteractionModel());</span>
+
+        // If there's a version, then it's a memento
+<span class="nc bnc" id="L186" title="All 2 branches missed.">        if (version != null) {</span>
+<span class="nc" id="L187">            resc.setIsMemento(true);</span>
+<span class="nc" id="L188">            resc.setMementoDatetime(version);</span>
+        }
+
+<span class="nc bnc" id="L191" title="All 2 branches missed.">        if (resc instanceof Binary) {</span>
+<span class="nc" id="L192">            final var binary = (BinaryImpl) resc;</span>
+<span class="nc" id="L193">            binary.setContentSize(headers.getContentSize());</span>
+<span class="nc" id="L194">            binary.setExternalHandling(headers.getExternalHandling());</span>
+<span class="nc" id="L195">            binary.setExternalUrl(headers.getExternalUrl());</span>
+<span class="nc" id="L196">            binary.setDigests(headers.getDigests());</span>
+<span class="nc" id="L197">            binary.setFilename(headers.getFilename());</span>
+<span class="nc" id="L198">            binary.setMimeType(headers.getMimeType());</span>
+        }
+<span class="nc" id="L200">    }</span>
+
+    /**
+     * Get a session for this interaction.
+     *
+     * @param transaction The supplied transaction.
+     * @return a storage session.
+     */
+    private PersistentStorageSession getSession(final Transaction transaction) {
+        final PersistentStorageSession session;
+<span class="nc bnc" id="L210" title="All 4 branches missed.">        if (transaction.isReadOnly() || !transaction.isOpen()) {</span>
+<span class="nc" id="L211">            session = persistentStorageSessionManager.getReadOnlySession();</span>
+        } else {
+<span class="nc" id="L213">            session = persistentStorageSessionManager.getSession(transaction);</span>
+        }
+<span class="nc" id="L215">        return session;</span>
+    }
+
+    @Override
+    public Stream&lt;FedoraResource&gt; getChildren(final Transaction transaction, final FedoraId resourceId) {
+<span class="nc" id="L220">        return containmentIndex.getContains(transaction, resourceId)</span>
+<span class="nc" id="L221">            .map(childId -&gt; {</span>
+                try {
+<span class="nc" id="L223">                    return getResource(transaction, FedoraId.create(childId));</span>
+<span class="nc" id="L224">                } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L225">                    throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+                }
+            });
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

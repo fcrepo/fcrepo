@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>BinaryImpl.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository Deployable Web Application</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-kernel-impl</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.kernel.impl.models</a> &gt; <span class="el_source">BinaryImpl.java</span></div><h1>BinaryImpl.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.kernel.impl.models;
+
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.cache.UserTypesCache;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
+
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Collection;
+import java.util.List;
+
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
+
+
+/**
+ * Implementation of a Non-RDF resource.
+ *
+ * @author bbpennel
+ */
+public class BinaryImpl extends FedoraResourceImpl implements Binary {
+
+<span class="nc" id="L42">    private static final URI FEDORA_BINARY_URI = URI.create(FEDORA_BINARY.getURI());</span>
+
+    private String externalHandling;
+
+    private String externalUrl;
+
+    private Long contentSize;
+
+    private String filename;
+
+    private String mimeType;
+
+    private Collection&lt;URI&gt; digests;
+
+    /**
+     * Construct the binary
+     *
+     * @param fedoraID fedora identifier
+     * @param transaction transaction
+     * @param pSessionManager session manager
+     * @param resourceFactory resource factory
+     * @param userTypesCache the user types cache
+     */
+    public BinaryImpl(final FedoraId fedoraID,
+                      final Transaction transaction,
+                      final PersistentStorageSessionManager pSessionManager,
+                      final ResourceFactory resourceFactory,
+                      final UserTypesCache userTypesCache) {
+<span class="nc" id="L70">        super(fedoraID, transaction, pSessionManager, resourceFactory, userTypesCache);</span>
+<span class="nc" id="L71">    }</span>
+
+    @Override
+    public InputStream getContent() {
+        try {
+<span class="nc bnc" id="L76" title="All 4 branches missed.">            if (isProxy() || isRedirect()) {</span>
+                // non-external streams are already buffered
+<span class="nc" id="L78">                return new BufferedInputStream(URI.create(getExternalURL()).toURL().openStream());</span>
+            } else {
+<span class="nc" id="L80">                return getSession().getBinaryContent(getFedoraId().asResourceId(), getMementoDatetime());</span>
+            }
+<span class="nc" id="L82">        } catch (final PersistentItemNotFoundException e) {</span>
+<span class="nc" id="L83">            throw new ItemNotFoundException(&quot;Unable to find content for &quot; + getId()</span>
+<span class="nc" id="L84">                    + &quot; version &quot; + getMementoDatetime(), e);</span>
+<span class="nc" id="L85">        } catch (final PersistentStorageException | IOException e) {</span>
+<span class="nc" id="L86">            throw new RepositoryRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    @Override
+    public long getContentSize() {
+<span class="nc" id="L92">        return contentSize;</span>
+    }
+
+    @Override
+    public Collection&lt;URI&gt; getContentDigests() {
+<span class="nc bnc" id="L97" title="All 2 branches missed.">        if (digests == null) {</span>
+<span class="nc" id="L98">            return null;</span>
+        }
+<span class="nc" id="L100">        return digests;</span>
+    }
+
+    @Override
+    public Boolean isProxy() {
+<span class="nc" id="L105">        return PROXY.equals(externalHandling);</span>
+    }
+
+    @Override
+    public Boolean isRedirect() {
+<span class="nc" id="L110">        return ExternalContent.REDIRECT.equals(externalHandling);</span>
+    }
+
+    @Override
+    public String getExternalURL() {
+<span class="nc" id="L115">        return externalUrl;</span>
+    }
+
+    @Override
+    public String getMimeType() {
+<span class="nc" id="L120">        return mimeType;</span>
+    }
+
+    @Override
+    public String getFilename() {
+<span class="nc" id="L125">        return filename;</span>
+    }
+
+    @Override
+    public FedoraResource getDescription() {
+        try {
+<span class="nc" id="L131">            final FedoraId descId = getFedoraId().asDescription();</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">            if (this.isMemento()) {</span>
+<span class="nc" id="L133">                final var descIdAsMemento = descId.asMemento(getMementoDatetime());</span>
+<span class="nc" id="L134">                return resourceFactory.getResource(transaction, descIdAsMemento);</span>
+            }
+<span class="nc" id="L136">            return resourceFactory.getResource(transaction, descId);</span>
+<span class="nc" id="L137">        } catch (final PathNotFoundException e) {</span>
+<span class="nc" id="L138">            throw new PathNotFoundRuntimeException(e.getMessage(), e);</span>
+        }
+    }
+
+    /**
+     * @param externalHandling the externalHandling to set
+     */
+    protected void setExternalHandling(final String externalHandling) {
+<span class="nc" id="L146">        this.externalHandling = externalHandling;</span>
+<span class="nc" id="L147">    }</span>
+
+    /**
+     * @param externalUrl the externalUrl to set
+     */
+    protected void setExternalUrl(final String externalUrl) {
+<span class="nc" id="L153">        this.externalUrl = externalUrl;</span>
+<span class="nc" id="L154">    }</span>
+
+    /**
+     * @param contentSize the contentSize to set
+     */
+    protected void setContentSize(final Long contentSize) {
+<span class="nc" id="L160">        this.contentSize = contentSize;</span>
+<span class="nc" id="L161">    }</span>
+
+    /**
+     * @param filename the filename to set
+     */
+    protected void setFilename(final String filename) {
+<span class="nc" id="L167">        this.filename = filename;</span>
+<span class="nc" id="L168">    }</span>
+
+    /**
+     * @param mimeType the mimeType to set
+     */
+    protected void setMimeType(final String mimeType) {
+<span class="nc" id="L174">        this.mimeType = mimeType;</span>
+<span class="nc" id="L175">    }</span>
+
+    /**
+     * @param digests the digests to set
+     */
+    protected void setDigests(final Collection&lt;URI&gt; digests) {
+<span class="nc" id="L181">        this.digests = digests;</span>
+<span class="nc" id="L182">    }</span>
+
+    @Override
+    public List&lt;URI&gt; getSystemTypes(final boolean forRdf) {
+<span class="nc" id="L186">        var types = resolveSystemTypes(forRdf);</span>
+
+<span class="nc bnc" id="L188" title="All 2 branches missed.">        if (types == null) {</span>
+<span class="nc" id="L189">            types = super.getSystemTypes(forRdf);</span>
+            // Add fedora:Binary type.
+<span class="nc" id="L191">            types.add(FEDORA_BINARY_URI);</span>
+        }
+
+<span class="nc" id="L194">        return types;</span>
+    }
+
+    @Override
+    public RdfStream getTriples() {
+<span class="nc" id="L199">        return getDescription().getTriples();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
