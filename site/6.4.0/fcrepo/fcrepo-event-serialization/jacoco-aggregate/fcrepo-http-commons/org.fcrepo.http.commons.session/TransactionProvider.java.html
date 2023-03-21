@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>TransactionProvider.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Event Serialization</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-http-commons</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.http.commons.session</a> &gt; <span class="el_source">TransactionProvider.java</span></div><h1>TransactionProvider.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.http.commons.session;
+
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.glassfish.hk2.api.Factory;
+import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
+import org.slf4j.Logger;
+
+/**
+ * Provide a fedora tranasction within the current request context
+ *
+ * @author awoods
+ */
+public class TransactionProvider implements Factory&lt;Transaction&gt; {
+
+<span class="nc" id="L33">    private static final Logger LOGGER = getLogger(TransactionProvider.class);</span>
+
+    private final TransactionManager txManager;
+
+    private final HttpServletRequest request;
+
+    private final Pattern txIdPattern;
+
+    private final URI baseUri;
+
+    private final String jmsBaseUrl;
+
+    /**
+     * Create a new transaction provider for a request
+     * @param txManager the transaction manager
+     * @param request the request
+     * @param baseUri base uri for the application
+     * @param jmsBaseUrl base url to use for jms, optional
+     */
+    public TransactionProvider(final TransactionManager txManager,
+                               final HttpServletRequest request,
+                               final URI baseUri,
+<span class="nc" id="L55">                               final String jmsBaseUrl) {</span>
+<span class="nc" id="L56">        this.txManager = txManager;</span>
+<span class="nc" id="L57">        this.request = request;</span>
+<span class="nc" id="L58">        this.txIdPattern = Pattern.compile(&quot;(^|&quot; + baseUri + TX_PREFIX + &quot;)([0-9a-f\\-]+)$&quot;);</span>
+<span class="nc" id="L59">        this.baseUri = baseUri;</span>
+<span class="nc" id="L60">        this.jmsBaseUrl = jmsBaseUrl;</span>
+<span class="nc" id="L61">    }</span>
+
+    @Override
+    public Transaction provide() {
+<span class="nc" id="L65">        final Transaction transaction = getTransactionForRequest();</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (!transaction.isShortLived()) {</span>
+<span class="nc" id="L67">            transaction.refresh();</span>
+        }
+<span class="nc" id="L69">        LOGGER.trace(&quot;Providing new transaction {}&quot;, transaction.getId());</span>
+<span class="nc" id="L70">        return transaction;</span>
+    }
+
+    @Override
+    public void dispose(final Transaction transaction) {
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (transaction.isShortLived()) {</span>
+<span class="nc" id="L76">            LOGGER.trace(&quot;Disposing transaction {}&quot;, transaction.getId());</span>
+<span class="nc" id="L77">            transaction.expire();</span>
+        }
+<span class="nc" id="L79">    }</span>
+
+    /**
+     * Returns the transaction for the Request. If the request has ATOMIC_ID_HEADER header,
+     * the transaction corresponding to that ID is returned, otherwise, a new transaction is
+     * created.
+     *
+     * @return the transaction for the request
+     */
+    public Transaction getTransactionForRequest() {
+<span class="nc" id="L89">        String txId = null;</span>
+        // Transaction id either comes from header or is the path
+<span class="nc" id="L91">        String txUri = request.getHeader(ATOMIC_ID_HEADER);</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">        if (!StringUtils.isEmpty(txUri)) {</span>
+<span class="nc" id="L93">            final Matcher txMatcher = txIdPattern.matcher(txUri);</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">            if (txMatcher.matches()) {</span>
+<span class="nc" id="L95">                txId = txMatcher.group(2);</span>
+            } else {
+<span class="nc" id="L97">                throw new TransactionRuntimeException(&quot;Invalid transaction id&quot;);</span>
+            }
+<span class="nc" id="L99">        } else {</span>
+<span class="nc" id="L100">            txUri = request.getPathInfo();</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">            if (txUri != null) {</span>
+<span class="nc" id="L102">                final Matcher txMatcher = txIdPattern.matcher(txUri);</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">                if (txMatcher.matches()) {</span>
+<span class="nc" id="L104">                    txId = txMatcher.group(2);</span>
+                }
+            }
+        }
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">        if (!StringUtils.isEmpty(txId)) {</span>
+<span class="nc" id="L110">            return txManager.get(txId);</span>
+        } else {
+<span class="nc" id="L112">            final var transaction = txManager.create();</span>
+<span class="nc" id="L113">            transaction.setUserAgent(request.getHeader(&quot;user-agent&quot;));</span>
+<span class="nc" id="L114">            transaction.setBaseUri(resolveBaseUri());</span>
+<span class="nc" id="L115">            return transaction;</span>
+        }
+    }
+
+    private String resolveBaseUri() {
+<span class="nc" id="L120">        final String baseURL = getBaseUrlProperty();</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">        if (baseURL.length() &gt; 0) {</span>
+<span class="nc" id="L122">            return baseURL;</span>
+        }
+<span class="nc" id="L124">        return baseUri.toString();</span>
+    }
+
+    /**
+     * Produce a baseURL for JMS events using the system property fcrepo.jms.baseUrl of the form http[s]://host[:port],
+     * if it exists.
+     *
+     * @return String the base Url
+     */
+    private String getBaseUrlProperty() {
+<span class="nc bnc" id="L134" title="All 4 branches missed.">        if (StringUtils.isNotBlank(jmsBaseUrl) &amp;&amp; jmsBaseUrl.startsWith(&quot;http&quot;)) {</span>
+<span class="nc" id="L135">            final URI propBaseUri = URI.create(jmsBaseUrl);</span>
+<span class="nc bnc" id="L136" title="All 2 branches missed.">            if (propBaseUri.getPort() &lt; 0) {</span>
+<span class="nc" id="L137">                return JerseyUriBuilder.fromUri(baseUri).port(-1).uri(propBaseUri).toString();</span>
+            }
+<span class="nc" id="L139">            return JerseyUriBuilder.fromUri(baseUri).uri(propBaseUri).toString();</span>
+        }
+<span class="nc" id="L141">        return &quot;&quot;;</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>
