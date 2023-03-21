@@ -1,0 +1,226 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.http.api;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import static javax.ws.rs.core.HttpHeaders.ALLOW;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import static javax.ws.rs.core.HttpHeaders.LINK;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;</a>
+<span class="sourceLineNo">013</span><a id="line.13">import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;</a>
+<span class="sourceLineNo">014</span><a id="line.14">import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_WITH_CHARSET;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;</a>
+<span class="sourceLineNo">020</span><a id="line.20">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">021</span><a id="line.21"></a>
+<span class="sourceLineNo">022</span><a id="line.22">import javax.inject.Inject;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import javax.ws.rs.DELETE;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import javax.ws.rs.GET;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import javax.ws.rs.HEAD;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import javax.ws.rs.NotFoundException;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import javax.ws.rs.OPTIONS;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import javax.ws.rs.POST;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import javax.ws.rs.PUT;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import javax.ws.rs.Path;</a>
+<span class="sourceLineNo">031</span><a id="line.31">import javax.ws.rs.PathParam;</a>
+<span class="sourceLineNo">032</span><a id="line.32">import javax.ws.rs.Produces;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import javax.ws.rs.core.Link;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import javax.ws.rs.core.Response;</a>
+<span class="sourceLineNo">035</span><a id="line.35"></a>
+<span class="sourceLineNo">036</span><a id="line.36">import org.fcrepo.http.commons.domain.PATCH;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import org.fcrepo.http.commons.responses.HtmlTemplate;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import org.fcrepo.http.commons.responses.RdfNamespacedStream;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import org.fcrepo.kernel.api.RdfStream;</a>
+<span class="sourceLineNo">040</span><a id="line.40">import org.fcrepo.kernel.api.models.Binary;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import org.fcrepo.kernel.api.services.FixityService;</a>
+<span class="sourceLineNo">042</span><a id="line.42"></a>
+<span class="sourceLineNo">043</span><a id="line.43">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">044</span><a id="line.44">import org.springframework.context.annotation.Scope;</a>
+<span class="sourceLineNo">045</span><a id="line.45"></a>
+<span class="sourceLineNo">046</span><a id="line.46">import com.google.common.annotations.VisibleForTesting;</a>
+<span class="sourceLineNo">047</span><a id="line.47"></a>
+<span class="sourceLineNo">048</span><a id="line.48">import io.micrometer.core.annotation.Timed;</a>
+<span class="sourceLineNo">049</span><a id="line.49"></a>
+<span class="sourceLineNo">050</span><a id="line.50">/**</a>
+<span class="sourceLineNo">051</span><a id="line.51"> * Run a fixity check on a path</a>
+<span class="sourceLineNo">052</span><a id="line.52"> *</a>
+<span class="sourceLineNo">053</span><a id="line.53"> * @author ajs6f</a>
+<span class="sourceLineNo">054</span><a id="line.54"> * @since Jun 12, 2013</a>
+<span class="sourceLineNo">055</span><a id="line.55"> */</a>
+<span class="sourceLineNo">056</span><a id="line.56">@Timed</a>
+<span class="sourceLineNo">057</span><a id="line.57">@Scope("request")</a>
+<span class="sourceLineNo">058</span><a id="line.58">@Path("/{path: .*}/fcr:fixity")</a>
+<span class="sourceLineNo">059</span><a id="line.59">public class FedoraFixity extends ContentExposingResource {</a>
+<span class="sourceLineNo">060</span><a id="line.60"></a>
+<span class="sourceLineNo">061</span><a id="line.61">    private static final Logger LOGGER = getLogger(FedoraFixity.class);</a>
+<span class="sourceLineNo">062</span><a id="line.62"></a>
+<span class="sourceLineNo">063</span><a id="line.63">    private static final String OPTIONS_VALUES = "OPTIONS, GET";</a>
+<span class="sourceLineNo">064</span><a id="line.64"></a>
+<span class="sourceLineNo">065</span><a id="line.65">    @PathParam("path") protected String externalPath;</a>
+<span class="sourceLineNo">066</span><a id="line.66"></a>
+<span class="sourceLineNo">067</span><a id="line.67">    @Inject private FixityService fixityService;</a>
+<span class="sourceLineNo">068</span><a id="line.68"></a>
+<span class="sourceLineNo">069</span><a id="line.69">    /**</a>
+<span class="sourceLineNo">070</span><a id="line.70">     * Default JAX-RS entry point</a>
+<span class="sourceLineNo">071</span><a id="line.71">     */</a>
+<span class="sourceLineNo">072</span><a id="line.72">    public FedoraFixity() {</a>
+<span class="sourceLineNo">073</span><a id="line.73">        super();</a>
+<span class="sourceLineNo">074</span><a id="line.74">    }</a>
+<span class="sourceLineNo">075</span><a id="line.75"></a>
+<span class="sourceLineNo">076</span><a id="line.76">    /**</a>
+<span class="sourceLineNo">077</span><a id="line.77">     * Create a new FedoraNodes instance for a given path</a>
+<span class="sourceLineNo">078</span><a id="line.78">     * @param externalPath the external path</a>
+<span class="sourceLineNo">079</span><a id="line.79">     */</a>
+<span class="sourceLineNo">080</span><a id="line.80">    @VisibleForTesting</a>
+<span class="sourceLineNo">081</span><a id="line.81">    public FedoraFixity(final String externalPath) {</a>
+<span class="sourceLineNo">082</span><a id="line.82">        this.externalPath = externalPath;</a>
+<span class="sourceLineNo">083</span><a id="line.83">    }</a>
+<span class="sourceLineNo">084</span><a id="line.84"></a>
+<span class="sourceLineNo">085</span><a id="line.85">    /**</a>
+<span class="sourceLineNo">086</span><a id="line.86">     * Get the results of a fixity check for a path</a>
+<span class="sourceLineNo">087</span><a id="line.87">     *</a>
+<span class="sourceLineNo">088</span><a id="line.88">     * GET /path/to/some/datastream/fcr:fixity</a>
+<span class="sourceLineNo">089</span><a id="line.89">     *</a>
+<span class="sourceLineNo">090</span><a id="line.90">     * @return datastream fixity in the given format</a>
+<span class="sourceLineNo">091</span><a id="line.91">     */</a>
+<span class="sourceLineNo">092</span><a id="line.92">    @GET</a>
+<span class="sourceLineNo">093</span><a id="line.93">    @HtmlTemplate(value = "fcr:fixity")</a>
+<span class="sourceLineNo">094</span><a id="line.94">    @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8", N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET,</a>
+<span class="sourceLineNo">095</span><a id="line.95">            RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET, TEXT_HTML_WITH_CHARSET, "*/*"})</a>
+<span class="sourceLineNo">096</span><a id="line.96">    public RdfNamespacedStream getDatastreamFixity() {</a>
+<span class="sourceLineNo">097</span><a id="line.97"></a>
+<span class="sourceLineNo">098</span><a id="line.98">        if (!(resource() instanceof Binary)) {</a>
+<span class="sourceLineNo">099</span><a id="line.99">            throw new NotFoundException("Error: Resource at " + resource().getFedoraId().getFullIdPath() + " is not a" +</a>
+<span class="sourceLineNo">100</span><a id="line.100">                    " binary");</a>
+<span class="sourceLineNo">101</span><a id="line.101">        }</a>
+<span class="sourceLineNo">102</span><a id="line.102"></a>
+<span class="sourceLineNo">103</span><a id="line.103">        final Link.Builder resourceLink = Link.fromUri(RESOURCE.getURI()).rel("type");</a>
+<span class="sourceLineNo">104</span><a id="line.104">        servletResponse.addHeader(LINK, resourceLink.build().toString());</a>
+<span class="sourceLineNo">105</span><a id="line.105">        final Link.Builder rdfSourceLink = Link.fromUri(RDF_SOURCE.getURI()).rel("type");</a>
+<span class="sourceLineNo">106</span><a id="line.106">        servletResponse.addHeader(LINK, rdfSourceLink.build().toString());</a>
+<span class="sourceLineNo">107</span><a id="line.107"></a>
+<span class="sourceLineNo">108</span><a id="line.108">        final Binary binaryResource = (Binary) resource();</a>
+<span class="sourceLineNo">109</span><a id="line.109">        LOGGER.info("Get fixity for '{}'", externalPath);</a>
+<span class="sourceLineNo">110</span><a id="line.110"></a>
+<span class="sourceLineNo">111</span><a id="line.111">        final RdfStream rdfStream = httpRdfService.bodyToExternalStream(getUri(binaryResource).toString(),</a>
+<span class="sourceLineNo">112</span><a id="line.112">                fixityService.checkFixity(binaryResource), identifierConverter());</a>
+<span class="sourceLineNo">113</span><a id="line.113">        return new RdfNamespacedStream(rdfStream, namespaceRegistry.getNamespaces());</a>
+<span class="sourceLineNo">114</span><a id="line.114">    }</a>
+<span class="sourceLineNo">115</span><a id="line.115"></a>
+<span class="sourceLineNo">116</span><a id="line.116">    @Override</a>
+<span class="sourceLineNo">117</span><a id="line.117">    protected String externalPath() {</a>
+<span class="sourceLineNo">118</span><a id="line.118">        return externalPath;</a>
+<span class="sourceLineNo">119</span><a id="line.119">    }</a>
+<span class="sourceLineNo">120</span><a id="line.120"></a>
+<span class="sourceLineNo">121</span><a id="line.121">    @OPTIONS</a>
+<span class="sourceLineNo">122</span><a id="line.122">    public Response options() {</a>
+<span class="sourceLineNo">123</span><a id="line.123">        return Response.ok().header(ALLOW, OPTIONS_VALUES).build();</a>
+<span class="sourceLineNo">124</span><a id="line.124">    }</a>
+<span class="sourceLineNo">125</span><a id="line.125">    /*</a>
+<span class="sourceLineNo">126</span><a id="line.126">     * These methods are disallowed, but need to exist here or the path gets caught by the FedoraLdp path matcher.</a>
+<span class="sourceLineNo">127</span><a id="line.127">     */</a>
+<span class="sourceLineNo">128</span><a id="line.128">    @HEAD</a>
+<span class="sourceLineNo">129</span><a id="line.129">    public Response get() {</a>
+<span class="sourceLineNo">130</span><a id="line.130">        return methodNotAllowed();</a>
+<span class="sourceLineNo">131</span><a id="line.131">    }</a>
+<span class="sourceLineNo">132</span><a id="line.132">    @POST</a>
+<span class="sourceLineNo">133</span><a id="line.133">    public Response post() {</a>
+<span class="sourceLineNo">134</span><a id="line.134">        return methodNotAllowed();</a>
+<span class="sourceLineNo">135</span><a id="line.135">    }</a>
+<span class="sourceLineNo">136</span><a id="line.136">    @PUT</a>
+<span class="sourceLineNo">137</span><a id="line.137">    public Response put() {</a>
+<span class="sourceLineNo">138</span><a id="line.138">        return methodNotAllowed();</a>
+<span class="sourceLineNo">139</span><a id="line.139">    }</a>
+<span class="sourceLineNo">140</span><a id="line.140">    @PATCH</a>
+<span class="sourceLineNo">141</span><a id="line.141">    public Response patch() {</a>
+<span class="sourceLineNo">142</span><a id="line.142">        return methodNotAllowed();</a>
+<span class="sourceLineNo">143</span><a id="line.143">    }</a>
+<span class="sourceLineNo">144</span><a id="line.144">    @DELETE</a>
+<span class="sourceLineNo">145</span><a id="line.145">    public Response delete() {</a>
+<span class="sourceLineNo">146</span><a id="line.146">        return methodNotAllowed();</a>
+<span class="sourceLineNo">147</span><a id="line.147">    }</a>
+<span class="sourceLineNo">148</span><a id="line.148"></a>
+<span class="sourceLineNo">149</span><a id="line.149">    private Response methodNotAllowed() {</a>
+<span class="sourceLineNo">150</span><a id="line.150">        return Response.status(Response.Status.METHOD_NOT_ALLOWED).header(ALLOW, OPTIONS_VALUES).build();</a>
+<span class="sourceLineNo">151</span><a id="line.151">    }</a>
+<span class="sourceLineNo">152</span><a id="line.152">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

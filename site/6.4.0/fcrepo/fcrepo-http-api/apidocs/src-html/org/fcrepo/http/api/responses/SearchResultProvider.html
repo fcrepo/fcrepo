@@ -1,0 +1,238 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+<title>Source code</title>
+<link rel="stylesheet" type="text/css" href="../../../../../../stylesheet.css" title="Style">
+</head>
+<body>
+<main role="main">
+<div class="sourceContainer">
+<pre><span class="sourceLineNo">001</span><a id="line.1">/*</a>
+<span class="sourceLineNo">002</span><a id="line.2"> * The contents of this file are subject to the license and copyright</a>
+<span class="sourceLineNo">003</span><a id="line.3"> * detailed in the LICENSE and NOTICE files at the root of the source</a>
+<span class="sourceLineNo">004</span><a id="line.4"> * tree.</a>
+<span class="sourceLineNo">005</span><a id="line.5"> */</a>
+<span class="sourceLineNo">006</span><a id="line.6">package org.fcrepo.http.api.responses;</a>
+<span class="sourceLineNo">007</span><a id="line.7"></a>
+<span class="sourceLineNo">008</span><a id="line.8">import org.apache.velocity.Template;</a>
+<span class="sourceLineNo">009</span><a id="line.9">import org.apache.velocity.VelocityContext;</a>
+<span class="sourceLineNo">010</span><a id="line.10">import org.apache.velocity.app.VelocityEngine;</a>
+<span class="sourceLineNo">011</span><a id="line.11">import org.apache.velocity.context.Context;</a>
+<span class="sourceLineNo">012</span><a id="line.12">import org.apache.velocity.tools.generic.EscapeTool;</a>
+<span class="sourceLineNo">013</span><a id="line.13"></a>
+<span class="sourceLineNo">014</span><a id="line.14">import org.fcrepo.config.FedoraPropsConfig;</a>
+<span class="sourceLineNo">015</span><a id="line.15">import org.fcrepo.http.api.FedoraSearch;</a>
+<span class="sourceLineNo">016</span><a id="line.16">import org.fcrepo.http.commons.responses.ViewHelpers;</a>
+<span class="sourceLineNo">017</span><a id="line.17">import org.fcrepo.search.api.Condition;</a>
+<span class="sourceLineNo">018</span><a id="line.18">import org.fcrepo.search.api.SearchResult;</a>
+<span class="sourceLineNo">019</span><a id="line.19">import org.slf4j.Logger;</a>
+<span class="sourceLineNo">020</span><a id="line.20"></a>
+<span class="sourceLineNo">021</span><a id="line.21">import java.io.IOException;</a>
+<span class="sourceLineNo">022</span><a id="line.22">import java.io.InputStream;</a>
+<span class="sourceLineNo">023</span><a id="line.23">import java.io.OutputStream;</a>
+<span class="sourceLineNo">024</span><a id="line.24">import java.io.PrintWriter;</a>
+<span class="sourceLineNo">025</span><a id="line.25">import java.lang.annotation.Annotation;</a>
+<span class="sourceLineNo">026</span><a id="line.26">import java.lang.reflect.Type;</a>
+<span class="sourceLineNo">027</span><a id="line.27">import java.net.URL;</a>
+<span class="sourceLineNo">028</span><a id="line.28">import java.nio.charset.StandardCharsets;</a>
+<span class="sourceLineNo">029</span><a id="line.29">import java.util.Arrays;</a>
+<span class="sourceLineNo">030</span><a id="line.30">import java.util.Properties;</a>
+<span class="sourceLineNo">031</span><a id="line.31"></a>
+<span class="sourceLineNo">032</span><a id="line.32">import javax.annotation.PostConstruct;</a>
+<span class="sourceLineNo">033</span><a id="line.33">import javax.inject.Inject;</a>
+<span class="sourceLineNo">034</span><a id="line.34">import javax.servlet.http.HttpServletRequest;</a>
+<span class="sourceLineNo">035</span><a id="line.35">import javax.ws.rs.Produces;</a>
+<span class="sourceLineNo">036</span><a id="line.36">import javax.ws.rs.WebApplicationException;</a>
+<span class="sourceLineNo">037</span><a id="line.37">import javax.ws.rs.core.MediaType;</a>
+<span class="sourceLineNo">038</span><a id="line.38">import javax.ws.rs.core.MultivaluedMap;</a>
+<span class="sourceLineNo">039</span><a id="line.39">import javax.ws.rs.core.UriInfo;</a>
+<span class="sourceLineNo">040</span><a id="line.40">import javax.ws.rs.ext.MessageBodyWriter;</a>
+<span class="sourceLineNo">041</span><a id="line.41">import javax.ws.rs.ext.Provider;</a>
+<span class="sourceLineNo">042</span><a id="line.42"></a>
+<span class="sourceLineNo">043</span><a id="line.43">import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_HTML_WITH_CHARSET;</a>
+<span class="sourceLineNo">044</span><a id="line.44">import static org.slf4j.LoggerFactory.getLogger;</a>
+<span class="sourceLineNo">045</span><a id="line.45"></a>
+<span class="sourceLineNo">046</span><a id="line.46">/**</a>
+<span class="sourceLineNo">047</span><a id="line.47"> * HTML writer for search results</a>
+<span class="sourceLineNo">048</span><a id="line.48"> *</a>
+<span class="sourceLineNo">049</span><a id="line.49"> * @author awoods</a>
+<span class="sourceLineNo">050</span><a id="line.50"> * @since 2020-08-04</a>
+<span class="sourceLineNo">051</span><a id="line.51"> */</a>
+<span class="sourceLineNo">052</span><a id="line.52">@Provider</a>
+<span class="sourceLineNo">053</span><a id="line.53">@Produces({TEXT_HTML_WITH_CHARSET})</a>
+<span class="sourceLineNo">054</span><a id="line.54">public class SearchResultProvider implements MessageBodyWriter&lt;SearchResult&gt; {</a>
+<span class="sourceLineNo">055</span><a id="line.55"></a>
+<span class="sourceLineNo">056</span><a id="line.56">    @Inject</a>
+<span class="sourceLineNo">057</span><a id="line.57">    UriInfo uriInfo;</a>
+<span class="sourceLineNo">058</span><a id="line.58"></a>
+<span class="sourceLineNo">059</span><a id="line.59">    @Inject</a>
+<span class="sourceLineNo">060</span><a id="line.60">    HttpServletRequest request;</a>
+<span class="sourceLineNo">061</span><a id="line.61"></a>
+<span class="sourceLineNo">062</span><a id="line.62">    @Inject</a>
+<span class="sourceLineNo">063</span><a id="line.63">    private FedoraPropsConfig fedoraPropsConfig;</a>
+<span class="sourceLineNo">064</span><a id="line.64"></a>
+<span class="sourceLineNo">065</span><a id="line.65">    private static final EscapeTool escapeTool = new EscapeTool();</a>
+<span class="sourceLineNo">066</span><a id="line.66"></a>
+<span class="sourceLineNo">067</span><a id="line.67">    private final VelocityEngine velocity = new VelocityEngine();</a>
+<span class="sourceLineNo">068</span><a id="line.68"></a>
+<span class="sourceLineNo">069</span><a id="line.69">    // Location in the classpath where Velocity templates are to be found.</a>
+<span class="sourceLineNo">070</span><a id="line.70">    private static final String templatesLocation = "/views";</a>
+<span class="sourceLineNo">071</span><a id="line.71"></a>
+<span class="sourceLineNo">072</span><a id="line.72">    private static final String templateFilenameExtension = ".vsl";</a>
+<span class="sourceLineNo">073</span><a id="line.73"></a>
+<span class="sourceLineNo">074</span><a id="line.74">    private static final String velocityPropertiesLocation = "/velocity.properties";</a>
+<span class="sourceLineNo">075</span><a id="line.75"></a>
+<span class="sourceLineNo">076</span><a id="line.76">    private static final ViewHelpers VIEW_HELPERS = ViewHelpers.getInstance();</a>
+<span class="sourceLineNo">077</span><a id="line.77"></a>
+<span class="sourceLineNo">078</span><a id="line.78">    private static final Logger LOGGER = getLogger(SearchResultProvider.class);</a>
+<span class="sourceLineNo">079</span><a id="line.79"></a>
+<span class="sourceLineNo">080</span><a id="line.80">    @PostConstruct</a>
+<span class="sourceLineNo">081</span><a id="line.81">    void init() throws IOException {</a>
+<span class="sourceLineNo">082</span><a id="line.82">        LOGGER.trace("Velocity engine initializing...");</a>
+<span class="sourceLineNo">083</span><a id="line.83">        final Properties properties = new Properties();</a>
+<span class="sourceLineNo">084</span><a id="line.84">        final var velocityLog = fedoraPropsConfig.getVelocityLog().toString();</a>
+<span class="sourceLineNo">085</span><a id="line.85">        LOGGER.debug("Setting Velocity runtime log: {}", velocityLog);</a>
+<span class="sourceLineNo">086</span><a id="line.86">        properties.setProperty("runtime.log", velocityLog);</a>
+<span class="sourceLineNo">087</span><a id="line.87"></a>
+<span class="sourceLineNo">088</span><a id="line.88">        final URL propertiesUrl = getClass().getResource(velocityPropertiesLocation);</a>
+<span class="sourceLineNo">089</span><a id="line.89"></a>
+<span class="sourceLineNo">090</span><a id="line.90">        LOGGER.debug("Using Velocity configuration from {}", propertiesUrl);</a>
+<span class="sourceLineNo">091</span><a id="line.91">        try (final InputStream propertiesStream = propertiesUrl.openStream()) {</a>
+<span class="sourceLineNo">092</span><a id="line.92">            properties.load(propertiesStream);</a>
+<span class="sourceLineNo">093</span><a id="line.93">        }</a>
+<span class="sourceLineNo">094</span><a id="line.94">        velocity.init(properties);</a>
+<span class="sourceLineNo">095</span><a id="line.95">        LOGGER.trace("Velocity engine initialized.");</a>
+<span class="sourceLineNo">096</span><a id="line.96">    }</a>
+<span class="sourceLineNo">097</span><a id="line.97"></a>
+<span class="sourceLineNo">098</span><a id="line.98">    @Override</a>
+<span class="sourceLineNo">099</span><a id="line.99">    public boolean isWriteable(final Class&lt;?&gt; type,</a>
+<span class="sourceLineNo">100</span><a id="line.100">                               final Type genericType,</a>
+<span class="sourceLineNo">101</span><a id="line.101">                               final Annotation[] annotations,</a>
+<span class="sourceLineNo">102</span><a id="line.102">                               final MediaType mediaType) {</a>
+<span class="sourceLineNo">103</span><a id="line.103">        return SearchResult.class.isAssignableFrom(type);</a>
+<span class="sourceLineNo">104</span><a id="line.104">    }</a>
+<span class="sourceLineNo">105</span><a id="line.105"></a>
+<span class="sourceLineNo">106</span><a id="line.106">    @Override</a>
+<span class="sourceLineNo">107</span><a id="line.107">    public long getSize(final SearchResult result,</a>
+<span class="sourceLineNo">108</span><a id="line.108">                        final Class&lt;?&gt; type,</a>
+<span class="sourceLineNo">109</span><a id="line.109">                        final Type genericType,</a>
+<span class="sourceLineNo">110</span><a id="line.110">                        final Annotation[] annotations,</a>
+<span class="sourceLineNo">111</span><a id="line.111">                        final MediaType mediaType) {</a>
+<span class="sourceLineNo">112</span><a id="line.112">        return -1;</a>
+<span class="sourceLineNo">113</span><a id="line.113">    }</a>
+<span class="sourceLineNo">114</span><a id="line.114"></a>
+<span class="sourceLineNo">115</span><a id="line.115">    @Override</a>
+<span class="sourceLineNo">116</span><a id="line.116">    public void writeTo(final SearchResult result,</a>
+<span class="sourceLineNo">117</span><a id="line.117">                        final Class&lt;?&gt; type,</a>
+<span class="sourceLineNo">118</span><a id="line.118">                        final Type genericType,</a>
+<span class="sourceLineNo">119</span><a id="line.119">                        final Annotation[] annotations,</a>
+<span class="sourceLineNo">120</span><a id="line.120">                        final MediaType mediaType,</a>
+<span class="sourceLineNo">121</span><a id="line.121">                        final MultivaluedMap&lt;String, Object&gt; httpHeaders,</a>
+<span class="sourceLineNo">122</span><a id="line.122">                        final OutputStream entityStream)</a>
+<span class="sourceLineNo">123</span><a id="line.123">            throws WebApplicationException {</a>
+<span class="sourceLineNo">124</span><a id="line.124"></a>
+<span class="sourceLineNo">125</span><a id="line.125">        final Template template = velocity.getTemplate(getTemplateLocation("search"));</a>
+<span class="sourceLineNo">126</span><a id="line.126"></a>
+<span class="sourceLineNo">127</span><a id="line.127">        final Context context;</a>
+<span class="sourceLineNo">128</span><a id="line.128">        context = getContext();</a>
+<span class="sourceLineNo">129</span><a id="line.129">        context.put("searchResults", result);</a>
+<span class="sourceLineNo">130</span><a id="line.130"></a>
+<span class="sourceLineNo">131</span><a id="line.131">        // The contract of MessageBodyWriter&lt;T&gt; is _not_ to close the stream after writing to it</a>
+<span class="sourceLineNo">132</span><a id="line.132">        final PrintWriter writer = new PrintWriter(entityStream, false, StandardCharsets.UTF_8);</a>
+<span class="sourceLineNo">133</span><a id="line.133">        template.merge(context, writer);</a>
+<span class="sourceLineNo">134</span><a id="line.134">        writer.flush();</a>
+<span class="sourceLineNo">135</span><a id="line.135">    }</a>
+<span class="sourceLineNo">136</span><a id="line.136"></a>
+<span class="sourceLineNo">137</span><a id="line.137">    private Context getContext() {</a>
+<span class="sourceLineNo">138</span><a id="line.138"></a>
+<span class="sourceLineNo">139</span><a id="line.139">        final Context context = new VelocityContext();</a>
+<span class="sourceLineNo">140</span><a id="line.140">        final String[] baseUrl = uriInfo.getBaseUri().getPath().split("/");</a>
+<span class="sourceLineNo">141</span><a id="line.141">        if (baseUrl.length &gt; 0) {</a>
+<span class="sourceLineNo">142</span><a id="line.142">            final String staticBaseUrl = String.join("/", Arrays.copyOf(baseUrl, baseUrl.length - 1));</a>
+<span class="sourceLineNo">143</span><a id="line.143">            context.put("staticBaseUrl", staticBaseUrl);</a>
+<span class="sourceLineNo">144</span><a id="line.144">        } else {</a>
+<span class="sourceLineNo">145</span><a id="line.145">            context.put("staticBaseUrl", "/");</a>
+<span class="sourceLineNo">146</span><a id="line.146">        }</a>
+<span class="sourceLineNo">147</span><a id="line.147">        final var searchPage = uriInfo.getBaseUriBuilder().clone().path(FedoraSearch.class).toString();</a>
+<span class="sourceLineNo">148</span><a id="line.148">        context.put("searchPage", searchPage);</a>
+<span class="sourceLineNo">149</span><a id="line.149">        context.put("fields",</a>
+<span class="sourceLineNo">150</span><a id="line.150">                Arrays.stream(Condition.Field.values()).map(Condition.Field::toString).toArray(String[]::new));</a>
+<span class="sourceLineNo">151</span><a id="line.151">        context.put("operators", Arrays.stream(Condition.Operator.values()).map(Condition.Operator::getStringValue)</a>
+<span class="sourceLineNo">152</span><a id="line.152">                .toArray(String[]::new));</a>
+<span class="sourceLineNo">153</span><a id="line.153">        context.put("isOriginalResource", null);</a>
+<span class="sourceLineNo">154</span><a id="line.154">        context.put("helpers", VIEW_HELPERS);</a>
+<span class="sourceLineNo">155</span><a id="line.155">        context.put("esc", escapeTool);</a>
+<span class="sourceLineNo">156</span><a id="line.156">        context.put("uriInfo", uriInfo);</a>
+<span class="sourceLineNo">157</span><a id="line.157">        return context;</a>
+<span class="sourceLineNo">158</span><a id="line.158">    }</a>
+<span class="sourceLineNo">159</span><a id="line.159"></a>
+<span class="sourceLineNo">160</span><a id="line.160">    private static String getTemplateLocation(final String templateName) {</a>
+<span class="sourceLineNo">161</span><a id="line.161">        return templatesLocation + "/" + templateName.replace(':', '-') + templateFilenameExtension;</a>
+<span class="sourceLineNo">162</span><a id="line.162">    }</a>
+<span class="sourceLineNo">163</span><a id="line.163"></a>
+<span class="sourceLineNo">164</span><a id="line.164">}</a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre>
+</div>
+</main>
+</body>
+</html>

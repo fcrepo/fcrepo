@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../jacoco-resources/report.gif" type="image/gif"/><title>RepositoryStatsByMimeTypeResults.java</title><link rel="stylesheet" href="../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../index.html" class="el_report">Fedora Repository HTTP API Module</a> &gt; <a href="../index.html" class="el_bundle">fcrepo-stats-api</a> &gt; <a href="index.source.html" class="el_package">org.fcrepo.stats.api</a> &gt; <span class="el_source">RepositoryStatsByMimeTypeResults.java</span></div><h1>RepositoryStatsByMimeTypeResults.java</h1><pre class="source lang-java linenums">/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
+package org.fcrepo.stats.api;
+
+import static com.fasterxml.jackson.annotation.JsonProperty.Access.READ_ONLY;
+import static org.apache.commons.lang3.ObjectUtils.isEmpty;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+/**
+ * A repository stats object for binary results by mime type.
+ * @author dbernstein
+ */
+<span class="nc" id="L21">public class RepositoryStatsByMimeTypeResults {</span>
+
+<span class="nc" id="L23">    @JsonProperty(&quot;mime_types&quot;)</span>
+    private List&lt;MimeTypeStatsResult&gt; mimeTypes = new ArrayList&lt;&gt;();
+
+    public List&lt;MimeTypeStatsResult&gt; getMimeTypes() {
+<span class="nc" id="L27">        return mimeTypes;</span>
+    }
+
+    public void setMimeTypes(final List&lt;MimeTypeStatsResult&gt; mimeTypes) {
+<span class="nc" id="L31">        this.mimeTypes = mimeTypes;</span>
+<span class="nc" id="L32">    }</span>
+
+    @JsonProperty(value = &quot;resource_count&quot;, access = READ_ONLY)
+    public Long getResourceCount() {
+<span class="nc bnc" id="L36" title="All 2 branches missed.">        return isEmpty(this.mimeTypes) ? 0 :</span>
+<span class="nc" id="L37">                this.mimeTypes.stream().mapToLong(x -&gt; x.getResourceCount()).sum();</span>
+    }
+
+    @JsonProperty(value = &quot;byte_count&quot;, access = READ_ONLY)
+    public Long getByteCount() {
+<span class="nc bnc" id="L42" title="All 2 branches missed.">        return isEmpty(this.mimeTypes) ? 0 :</span>
+<span class="nc" id="L43">                this.mimeTypes.stream().mapToLong(x -&gt; x.getByteCount()).sum();</span>
+    }
+
+    @Override
+    public String toString() {
+<span class="nc" id="L48">        return ToStringBuilder.reflectionToString(this).toString();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

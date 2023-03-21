@@ -1,0 +1,4 @@
+org.fcrepo.http.api
+org.fcrepo.http.api.responses
+org.fcrepo.http.api.services
+org.fcrepo.http.api.url
