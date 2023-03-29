@@ -360,13 +360,14 @@ public class FedoraLdp extends ContentExposingResource {
             final Instant mementoDatetime = Instant.from(MEMENTO_RFC_1123_FORMATTER.parse(datetimeHeader));
             final FedoraResource memento = resource.findMementoByDatetime(mementoDatetime);
             final Response builder;
+            boolean isRedirect = false;
             if (memento != null) {
-                builder =
-                    status(FOUND).header(LOCATION, getUri(memento)).build();
+                isRedirect = true;
+                builder = status(FOUND).header(LOCATION, getUri(memento)).build();
             } else {
                 builder = status(NOT_ACCEPTABLE).build();
             }
-            addResourceHttpHeaders(resource, inlineDisposition);
+            addResourceHttpHeaders(resource, inlineDisposition, isRedirect);
             setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource);
             return builder;
         } catch (final DateTimeParseException e) {
@@ -780,7 +781,13 @@ public class FedoraLdp extends ContentExposingResource {
 
     @Override
     protected void addResourceHttpHeaders(final FedoraResource resource, final boolean dispositionInline) {
-        super.addResourceHttpHeaders(resource, dispositionInline);
+        addResourceHttpHeaders(resource, dispositionInline, false);
+    }
+
+    protected void addResourceHttpHeaders(final FedoraResource resource,
+                                          final boolean dispositionInline,
+                                          final boolean isRedirect) {
+        super.addResourceHttpHeaders(resource, dispositionInline, isRedirect);
 
         if (!transaction().isShortLived()) {
             final String canonical = identifierConverter().toExternalId(resource.getFedoraId().getFullId())
