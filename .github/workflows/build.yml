@@ -19,9 +19,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        # JDK 17  build testing. Allowed to fail as marked experimental
-        java: ['11', '17']
+        java: ['11']
         experimental: [false]
+        # JDK 17  build testing. Allowed to fail as marked experimental
         include:
           - java: 17
             os: ubuntu-latest
@@ -30,17 +30,13 @@ jobs:
     - name: Git support longpaths
       run: git config --global core.longpaths true
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
+        distribution: 'temurin'
         java-version: ${{ matrix.java }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
+        cache: 'maven'
     - name: Build with Maven
       run: mvn -B -U clean install
   postgres-itest:
@@ -67,17 +63,13 @@ jobs:
     - name: Git support longpaths
       run: git config --global core.longpaths true
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
+        distribution: 'temurin'
         java-version: ${{ matrix.java }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
+        cache: 'maven'
     - name: Build with Maven
       run: mvn -B -U -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
   mariadb-itest:
@@ -105,17 +97,13 @@ jobs:
     - name: Git support longpaths
       run: git config --global core.longpaths true
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
+        distribution: 'temurin'
         java-version: ${{ matrix.java }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
+        cache: 'maven'
     - name: Build with Maven
       run: mvn -B -U -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
   mysql-itest:
@@ -143,17 +131,13 @@ jobs:
     - name: Git support longpaths
       run: git config --global core.longpaths true
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v2
       with:
+        distribution: 'temurin'
         java-version: ${{ matrix.java }}
-    - name: Cache Maven packages
-      uses: actions/cache@v2
-      with:
-        path: ~/.m2
-        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-        restore-keys: ${{ runner.os }}-m2
+        cache: 'maven'
     - name: Build with Maven
       run: mvn -B -U -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
   deploy:
@@ -164,10 +148,11 @@ jobs:
       - name: Git support longpaths
         run: git config --global core.longpaths true
       - name: Checkout fcrepo
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Set up JDK 11
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
+          distribution: 'temurin'
           java-version: 11
           server-id: sonatype-nexus-snapshots
           server-username: MAVEN_USERNAME
@@ -182,7 +167,7 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       - name: Checkout fcrepo-docker
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: fcrepo-exts/fcrepo-docker
           path: fcrepo-docker
