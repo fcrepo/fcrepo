@@ -12,9 +12,9 @@
 
 
 <body class="fcrepo_root">
-<div id="main" resource="$topic.getURI()">
-
+<div id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
+
 <div class="container">
     <div class="row">
         <div class="col-md-12">
@@ -37,7 +37,7 @@
 
         <div id="accordion">
         ## output triples for the topic node
-            <div class="panel panel-default"> 
+            <div class="panel panel-default">
                 <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($topic.getURI())_triples">
                     <h4 class="panel-title ctitle">Properties</h4>
                 </div>

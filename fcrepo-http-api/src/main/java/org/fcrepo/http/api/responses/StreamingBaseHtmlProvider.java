@@ -258,6 +258,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         context.put("esc", escapeTool);
         context.put("rdf", model.getGraph());
 
+        context.put("fedoraProps", fedoraPropsConfig);
         context.put("model", model);
         context.put("subjects", model.listSubjects());
         context.put("nodeany", ANY);

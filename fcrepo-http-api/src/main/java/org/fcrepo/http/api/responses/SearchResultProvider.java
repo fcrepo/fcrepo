@@ -154,6 +154,7 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
         context.put("helpers", VIEW_HELPERS);
         context.put("esc", escapeTool);
         context.put("uriInfo", uriInfo);
+        context.put("fedoraProps", fedoraPropsConfig);
         return context;
     }
 
