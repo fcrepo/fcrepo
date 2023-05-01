@@ -199,6 +199,81 @@ public class WebACRecipesIT extends AbstractResourceIT {
     }
 
     @Test
+    public void txScenarioCommit() throws IOException {
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-tx-authorization.ttl"));
+
+        final Optional<String> idFromHeader;
+        final var txObj = "/rest/fcr:tx";
+        final var method = postObjMethod(txObj);
+        setAuth(method, "testUser");
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("User 'testUser' can create " + txObj, SC_CREATED, getStatus(response));
+            idFromHeader = getHeader(response, "Location").stream().findFirst();
+        }
+
+        // get the tx uuid from the path
+        final var txId = idFromHeader.map(location -> location.substring(location.lastIndexOf("/")))
+                                     .orElseThrow();
+
+        final var updatedObj = txObj + txId;
+
+        final var getTx = getObjMethod(updatedObj);
+        setAuth(getTx, "testUser");
+        try (final CloseableHttpResponse response = execute(getTx)) {
+            assertEquals("User 'testUser' can get " + updatedObj, SC_NO_CONTENT, getStatus(response));
+        }
+
+        // test post against the transaction uuid as well
+        final var postMethod = postObjMethod(updatedObj);
+        setAuth(postMethod, "testUser");
+        try (final CloseableHttpResponse response = execute(postMethod)) {
+            assertEquals("User 'testUser' can update " + updatedObj, SC_NO_CONTENT, getStatus(response));
+        }
+
+        final var putMethod = putObjMethod(updatedObj);
+        setAuth(putMethod, "testUser");
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals("User 'testUser' can commit " + updatedObj, SC_NO_CONTENT, getStatus(response));
+        }
+    }
+
+    @Test
+    public void txScenarioRollback() throws Exception {
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-tx-authorization.ttl"));
+
+        final Optional<String> idFromHeader;
+        final var txObj = "/rest/fcr:tx";
+        final var method = postObjMethod(txObj);
+        setAuth(method, "testUser");
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("User 'testUser' can create " + txObj, SC_CREATED, getStatus(response));
+            idFromHeader = getHeader(response, "Location").stream().findFirst();
+        }
+
+        // get the tx uuid from the path
+        final var txId = idFromHeader.map(location -> location.substring(location.lastIndexOf("/")))
+                                     .orElseThrow();
+
+        final var delObj = txObj + txId;
+        final var closeTx = deleteObjMethod(delObj);
+        setAuth(closeTx, "testUser");
+        try (final CloseableHttpResponse response = execute(closeTx)) {
+            assertEquals("User 'testUser' can delete " + delObj, SC_NO_CONTENT, getStatus(response));
+        }
+    }
+
+    @Test
+    public void txScenarioUnauthenticated() throws Exception {
+        authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-tx-authorization.ttl"));
+
+        final var txObj = "/rest/fcr:tx";
+        final var method = postObjMethod(txObj);
+        try (final CloseableHttpResponse response = execute(method)) {
+            assertEquals("Unauthenticated user cannot create " + txObj, SC_FORBIDDEN, getStatus(response));
+        }
+    }
+
+    @Test
     public void scenario1() throws IOException {
         final String testObj = ingestObj("/rest/webacl_box1");
 
@@ -448,7 +523,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
      *  5. Allow(400) on PATCH with empty SPARQL content.
      *  6. Deny(403) on PATCH with non-SPARQL content.
      *
-     * @throws IOException thrown from injestObj() or *ObjMethod() calls
+     * @throws IOException thrown from ingestObj() or *ObjMethod() calls
      */
     @Test
     public void scenario18Test1() throws IOException {
@@ -2408,13 +2483,6 @@ public class WebACRecipesIT extends AbstractResourceIT {
         okPatch.setHeader("Content-type", "application/sparql-update");
         okPatch.setEntity(patchEntity);
         assertEquals(HttpStatus.SC_NO_CONTENT, getStatus(okPatch));
-    }
-
-    @Test
-    public void testAuthenticatedUserCanCreateTransaction() {
-        final HttpPost txnCreatePost = postObjMethod("rest/fcr:tx");
-        setAuth(txnCreatePost, "testUser92");
-        assertEquals(SC_CREATED, getStatus(txnCreatePost));
     }
 
     @Test

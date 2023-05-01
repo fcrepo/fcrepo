@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -329,8 +330,11 @@ public class WebACFilter extends RequestContextFilter {
 
     private boolean isAuthorized(final Subject currentUser, final HttpServletRequest httpRequest) throws IOException {
         final String requestURL = httpRequest.getRequestURL().toString();
+
+        final var txOrUuid = Pattern.compile(FCR_TX + "(/?|/[0-9a-f\\-]+/?)$");
+        final boolean isTxEndpoint = txOrUuid.matcher(requestURL).find();
+
         final boolean isAcl = requestURL.endsWith(FCR_ACL);
-        final boolean isTxEndpoint = requestURL.endsWith(FCR_TX) || requestURL.endsWith(FCR_TX + "/");
         final URI requestURI = URI.create(requestURL);
         log.debug("Request URI is {}", requestURI);
         final FedoraResource resource = resource(httpRequest);
@@ -405,11 +409,6 @@ public class WebACFilter extends RequestContextFilter {
                 }
             }
         case "POST":
-            if (isTxEndpoint && currentUser.isAuthenticated()) {
-                final String currentUsername = ((Principal) currentUser.getPrincipal()).getName();
-                log.debug("POST allowed to transaction endpoint for authenticated user {}", currentUsername);
-                return true;
-            }
             if (currentUser.isPermitted(toWrite)) {
                 if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                     log.debug("POST denied, not authorized to write to membershipRelation");
@@ -453,6 +452,14 @@ public class WebACFilter extends RequestContextFilter {
                     log.debug("DELETE prohibited without {} permission", toControl);
                     return false;
                 }
+            } else if (isTxEndpoint) {
+                if (currentUser.isPermitted(toWrite)) {
+                    log.debug("DELETE allowed by {} permission", toWrite);
+                    return true;
+                } else {
+                    log.debug("DELETE prohibited without {} permission", toWrite);
+                    return false;
+                }
             } else {
                 if (!isAuthorizedForMembershipResource(httpRequest, currentUser, resource, container)) {
                     log.debug("DELETE denied, not authorized to write to membershipRelation");
@@ -468,7 +475,6 @@ public class WebACFilter extends RequestContextFilter {
                 return false;
             }
         case "PATCH":
-
             if (isAcl) {
                 if (currentUser.isPermitted(toControl)) {
                     log.debug("PATCH allowed by {} permission", toControl);
@@ -753,7 +759,7 @@ public class WebACFilter extends RequestContextFilter {
      */
     private static boolean isBinaryOrDescription(final FedoraResource resource) {
         // Tombstone are the only known resource with a null interaction model.
-        return resource.getInteractionModel() != null && (
+        return resource != null && resource.getInteractionModel() != null && (
                 resource.getInteractionModel().equals(NON_RDF_SOURCE.toString()) ||
                 resource.getInteractionModel().equals(FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI));
     }
