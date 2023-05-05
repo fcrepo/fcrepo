@@ -591,12 +591,18 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         addResourceHttpHeaders(resource, false);
     }
 
+    protected void addResourceHttpHeaders(final FedoraResource resource, final boolean dispositionInline) {
+        addResourceHttpHeaders(resource, dispositionInline, false);
+    }
+
     /**
      * Add any resource-specific headers to the response
      * @param resource the resource
      * @param dispositionInline whether to return a binary as Content-Disposition inline
      */
-    protected void addResourceHttpHeaders(final FedoraResource resource, final boolean dispositionInline) {
+    protected void addResourceHttpHeaders(final FedoraResource resource,
+                                          final boolean dispositionInline,
+                                          final boolean isRedirect) {
         if (resource instanceof Binary) {
             final Binary binary = (Binary)resource;
 
@@ -625,7 +631,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
             servletResponse.addHeader(CONTENT_TYPE, binary.getMimeType());
             // Returning content-length > 0 causes the client to wait for additional data before following the redirect.
-            if (!binary.isRedirect()) {
+            // final var responseIsRedirect = servletResponse.getStatus() >= 300 && servletResponse.getStatus() < 400;
+            if (!binary.isRedirect() && !isRedirect) {
                 servletResponse.addHeader(CONTENT_LENGTH, String.valueOf(binary.getContentSize()));
             }
             servletResponse.addHeader("Accept-Ranges", "bytes");

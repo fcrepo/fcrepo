@@ -183,13 +183,14 @@ public class FedoraVersioning extends ContentExposingResource {
             versionLinks.add(Link.fromUri(parentUri).rel("original").build());
             versionLinks.add(Link.fromUri(parentUri).rel("timegate").build());
             // So we don't collect the children twice, store them in an array.
-            final FedoraResource[] children = theTimeMap.getChildren().toArray(FedoraResource[]::new);
+            final FedoraResource[] children = theTimeMap.getChildren()
+                                                        .filter(FedoraResource::isMemento)
+                                                        .toArray(FedoraResource[]::new);
 
             Arrays.stream(children).forEach(t -> {
                 final URI childUri = getUri(t);
                 versionLinks.add(Link.fromUri(childUri).rel("memento")
-                                     .param("datetime",
-                        MEMENTO_RFC_1123_FORMATTER.format(t.getMementoDatetime()))
+                                     .param("datetime", MEMENTO_RFC_1123_FORMATTER.format(t.getMementoDatetime()))
                                      .build());
             });
             // Based on the dates of the above mementos, add the range to the below link.
