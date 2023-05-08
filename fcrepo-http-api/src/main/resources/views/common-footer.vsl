@@ -1,0 +1,9 @@
+<footer class="navbar navbar-default" style="margin-bottom: 0px; margin-top: 40px" role="navigation">
+  <ul class="nav navbar-nav">
+    <li><a href="https://fedora-repository.atlassian.net/issues/">Issue Tracker</a></li>
+    <li><a href="https://wiki.lyrasis.org/display/FF">Wiki</a></li>
+    <li><a href="https://wiki.lyrasis.org/display/FF/Documentation">REST API Documentation</a></li>
+    <li><a href="http://fedora.info">Ontologies and Specifications</a></li>
+  </ul>
+  <p class="navbar-text pull-right">Release: <span id="version">$fedoraVersion</span> | Commit <span id="commit">$fedoraCommit</span></p>
+</footer>

@@ -48,6 +48,7 @@ import javax.ws.rs.ext.Provider;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.config.SystemInfoConfig;
 import org.fcrepo.http.api.FedoraLdp;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
@@ -105,6 +106,9 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     @Inject
     private FedoraPropsConfig fedoraPropsConfig;
+
+    @Inject
+    private SystemInfoConfig systemInfoConfig;
 
     private boolean autoVersioningEnabled;
 
@@ -265,6 +269,8 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
         context.put("topic", subject);
         context.put("originalResource", VIEW_HELPERS.getOriginalResource(subject));
         context.put("uriInfo", uriInfo);
+        context.put("fedoraCommit", systemInfoConfig.getGitCommit());
+        context.put("fedoraVersion", systemInfoConfig.getImplementationVersion());
         return context;
     }
 
