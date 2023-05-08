@@ -18,7 +18,7 @@ public class SystemInfoConfig extends BasePropsConfig {
 
     public static final String GIT_COMMIT = "git.commit.id.abbrev";
 
-    @Value("${" + GIT_COMMIT + ":#{null}}")
+    @Value("${" + GIT_COMMIT + ":}")
     private String gitCommit;
 
     public String getGitCommit() {
@@ -26,6 +26,7 @@ public class SystemInfoConfig extends BasePropsConfig {
     }
 
     public String getImplementationVersion() {
-        return SystemInfoConfig.class.getPackage().getImplementationVersion();
+        final var version = SystemInfoConfig.class.getPackage().getImplementationVersion();
+        return version != null ? version : "";
     }
 }
