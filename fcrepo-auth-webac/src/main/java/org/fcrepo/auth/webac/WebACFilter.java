@@ -212,42 +212,42 @@ public class WebACFilter extends RequestContextFilter {
         final String requestUrl = httpRequest.getRequestURL().toString();
         try {
             FedoraId.create(identifierConverter(httpRequest).toInternalId(requestUrl));
+
+            // add the request URI to the list of URIs to retrieve the ACLs for
+            addURIToAuthorize(httpRequest, URI.create(requestUrl));
+
+            if (currentUser.isAuthenticated()) {
+                log.debug("User is authenticated");
+                if (currentUser.hasRole(FEDORA_ADMIN_ROLE)) {
+                    log.debug("User has fedoraAdmin role");
+                } else if (currentUser.hasRole(FEDORA_USER_ROLE)) {
+                    log.debug("User has fedoraUser role");
+                    // non-admins are subject to permission checks
+                    if (!isAuthorized(currentUser, httpRequest)) {
+                        // if the user is not authorized, set response to forbidden
+                        response.sendError(SC_FORBIDDEN);
+                        return;
+                    }
+                } else {
+                    log.debug("User has no recognized servlet container role");
+                    // missing a container role, return forbidden
+                    response.sendError(SC_FORBIDDEN);
+                    return;
+                }
+            } else {
+                log.debug("User is NOT authenticated");
+                // anonymous users are subject to permission checks
+                if (!isAuthorized(getFoafAgentSubject(), httpRequest)) {
+                    // if anonymous user is not authorized, set response to forbidden
+                    response.sendError(SC_FORBIDDEN);
+                    return;
+                }
+            }
         } catch (final InvalidResourceIdentifierException e) {
             printException(response, SC_BAD_REQUEST, e);
             return;
         } catch (final IllegalArgumentException e) {
             // No Fedora request path provided, so just continue along.
-        }
-
-        // add the request URI to the list of URIs to retrieve the ACLs for
-        addURIToAuthorize(httpRequest, URI.create(requestUrl));
-
-        if (currentUser.isAuthenticated()) {
-            log.debug("User is authenticated");
-            if (currentUser.hasRole(FEDORA_ADMIN_ROLE)) {
-                log.debug("User has fedoraAdmin role");
-            } else if (currentUser.hasRole(FEDORA_USER_ROLE)) {
-                log.debug("User has fedoraUser role");
-                // non-admins are subject to permission checks
-                if (!isAuthorized(currentUser, httpRequest)) {
-                    // if the user is not authorized, set response to forbidden
-                    response.sendError(SC_FORBIDDEN);
-                    return;
-                }
-            } else {
-                log.debug("User has no recognized servlet container role");
-                // missing a container role, return forbidden
-                response.sendError(SC_FORBIDDEN);
-                return;
-            }
-        } else {
-            log.debug("User is NOT authenticated");
-            // anonymous users are subject to permission checks
-            if (!isAuthorized(getFoafAgentSubject(), httpRequest)) {
-                // if anonymous user is not authorized, set response to forbidden
-                response.sendError(SC_FORBIDDEN);
-                return;
-            }
         }
 
         // proceed to the next filter
