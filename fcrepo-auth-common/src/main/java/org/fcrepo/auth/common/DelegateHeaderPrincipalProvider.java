@@ -7,6 +7,7 @@ package org.fcrepo.auth.common;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.io.Serializable;
 import java.security.Principal;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider
     private static final String SEP = "no-separator";
     protected static final String DELEGATE_HEADER = "On-Behalf-Of";
 
-    public static class DelegatedHeaderPrincipal implements Principal {
+    public static class DelegatedHeaderPrincipal implements Principal, Serializable {
 
         private final String name;
 
