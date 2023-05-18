@@ -50,6 +50,7 @@
             #end
         </div>
     </div>
+    #parse("views/common-footer.vsl")
 </div>
 </body>
 </html>

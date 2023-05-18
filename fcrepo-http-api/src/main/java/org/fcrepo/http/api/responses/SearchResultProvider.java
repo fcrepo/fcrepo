@@ -12,6 +12,7 @@ import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.generic.EscapeTool;
 
 import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.SystemInfoConfig;
 import org.fcrepo.http.api.FedoraSearch;
 import org.fcrepo.http.commons.responses.ViewHelpers;
 import org.fcrepo.search.api.Condition;
@@ -61,6 +62,9 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
 
     @Inject
     private FedoraPropsConfig fedoraPropsConfig;
+
+    @Inject
+    private SystemInfoConfig systemInfoConfig;
 
     private static final EscapeTool escapeTool = new EscapeTool();
 
@@ -155,6 +159,8 @@ public class SearchResultProvider implements MessageBodyWriter<SearchResult> {
         context.put("esc", escapeTool);
         context.put("uriInfo", uriInfo);
         context.put("fedoraProps", fedoraPropsConfig);
+        context.put("fedoraCommit", systemInfoConfig.getGitCommit());
+        context.put("fedoraVersion", systemInfoConfig.getImplementationVersion());
         return context;
     }
 

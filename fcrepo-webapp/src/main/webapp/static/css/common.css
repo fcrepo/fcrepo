@@ -2,10 +2,6 @@
     display: none;
 }
 
-body {
-    padding-bottom: 40px;
-}
-
 .fcrepo_binary #action_create {
     display: none;
 }

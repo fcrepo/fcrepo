@@ -5,7 +5,6 @@
 #set( $title = $helpers.getObjectTitle($rdf, $topic) )
 #set( $contentNode = $helpers.getContentNode($topic) )
 
-
 #parse("views/common.vsl")
 <html>
 <head>
@@ -14,14 +13,11 @@
     #parse("views/common-head.vsl")
 </head>
 
-
 <body class="fcrepo_binary">
 <div  id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
 
-
     <div class="row">
-
         <div class="col-md-12">
             #parse("views/common-breadcrumb.vsl")
         </div>
@@ -50,13 +46,9 @@
                     #triples($contentNode)
                 </div>
             </div>
-
         </div>
-
-
     </div>
-
-
+    #parse("views/common-footer.vsl")
 </div>
 </body>
 </html>

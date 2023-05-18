@@ -23,7 +23,8 @@ import org.springframework.context.annotation.PropertySources;
 @PropertySources({
         @PropertySource(value = BasePropsConfig.DEFAULT_FCREPO_CONFIG_FILE_PROP_SOURCE,
                 ignoreResourceNotFound = true),
-        @PropertySource(value = BasePropsConfig.FCREPO_CONFIG_FILE_PROP_SOURCE, ignoreResourceNotFound = true)
+        @PropertySource(value = BasePropsConfig.FCREPO_CONFIG_FILE_PROP_SOURCE, ignoreResourceNotFound = true),
+        @PropertySource(value = BasePropsConfig.GIT_PROPERTIES, ignoreResourceNotFound = true)
 })
 abstract class BasePropsConfig {
 
@@ -32,6 +33,7 @@ abstract class BasePropsConfig {
     public static final String DEFAULT_FCREPO_CONFIG_FILE_PROP_SOURCE =
             "file:${" + FCREPO_HOME_PROPERTY + ":" + DEFAULT_FCREPO_HOME_VALUE + "}/config/fcrepo.properties";
     public static final String FCREPO_CONFIG_FILE_PROP_SOURCE = "file:${fcrepo.config.file}";
+    public static final String GIT_PROPERTIES = "classpath:git.properties";
 
     protected Path createDirectories(final Path path) throws IOException {
         try {
