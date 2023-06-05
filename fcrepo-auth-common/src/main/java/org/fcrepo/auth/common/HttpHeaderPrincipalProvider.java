@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.io.Serializable;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.Set;
@@ -25,7 +26,7 @@ import java.util.Set;
  */
 public class HttpHeaderPrincipalProvider extends AbstractPrincipalProvider {
 
-    public static class HttpHeaderPrincipal implements Principal {
+    public static class HttpHeaderPrincipal implements Principal, Serializable {
 
         private final String name;
 
