@@ -5,15 +5,17 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
 import org.slf4j.Logger;
 
+import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
 import static javax.ws.rs.core.Response.status;
-import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -25,10 +27,14 @@ public class ConcurrentUpdateExceptionMapper implements
 
     private static final Logger LOGGER = getLogger(ConcurrentUpdateExceptionMapper.class);
 
+    @Inject
+    private FedoraPropsConfig config;
+
     @Override
     public Response toResponse(final ConcurrentUpdateException e) {
         debugException(this, e, LOGGER);
-        return status(Response.Status.CONFLICT).entity(e.getMessage()).type(TEXT_PLAIN_WITH_CHARSET).build();
+        return status(Response.Status.CONFLICT).entity(e.getResponseBody(config.includeTransactionOnConflict()))
+                                               .type(RDFMediaType.APPLICATION_JSON_TYPE).build();
     }
 
 }
