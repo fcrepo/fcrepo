@@ -7,6 +7,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.domain.RDFMediaType;
+import org.fcrepo.http.commons.responses.ConcurrentExceptionResponse;
 import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
 import org.slf4j.Logger;
 
@@ -33,8 +34,9 @@ public class ConcurrentUpdateExceptionMapper implements
     @Override
     public Response toResponse(final ConcurrentUpdateException e) {
         debugException(this, e, LOGGER);
-        return status(Response.Status.CONFLICT).entity(e.getResponseBody(config.includeTransactionOnConflict()))
-                                               .type(RDFMediaType.APPLICATION_JSON_TYPE).build();
+        return status(Response.Status.CONFLICT)
+            .entity(new ConcurrentExceptionResponse(e, config.includeTransactionOnConflict()))
+            .type(RDFMediaType.APPLICATION_JSON_TYPE).build();
     }
 
 }

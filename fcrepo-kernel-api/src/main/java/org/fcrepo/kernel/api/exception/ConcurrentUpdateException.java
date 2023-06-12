@@ -5,9 +5,6 @@
  */
 package org.fcrepo.kernel.api.exception;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * This exception indicates that a resource could not be modified because it is currently being modified by another
  * transaction.
@@ -38,15 +35,15 @@ public class ConcurrentUpdateException extends RepositoryRuntimeException {
         this.existingTx = existingTx;
     }
 
-    public Map<String, String> getResponseBody(final boolean includeTxId) {
-        final var response = new HashMap<String, String>();
-        response.put("message", String.format(HTTP_MESSAGE, resource));
-        if (includeTxId) {
-            response.put("existingTransactionId", existingTx);
-            response.put("conflictingTransactionId", conflictingTx);
-        }
-
-        return response;
+    public String getResponseMessage() {
+        return String.format(HTTP_MESSAGE, resource);
     }
 
+    public String getExistingTransactionId() {
+        return existingTx;
+    }
+
+    public String getConflictingTransactionId() {
+        return conflictingTx;
+    }
 }
