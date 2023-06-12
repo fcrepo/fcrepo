@@ -26,15 +26,10 @@ public class ConcurrentExceptionResponse {
     /**
      * Response for {@link org.fcrepo.kernel.api.exception.ConcurrentUpdateException}
      *
-     * @param e the exception to map
-     * @param includeTransactions whether transaction ids should be included
+     * @param message the exception message
      */
-    public ConcurrentExceptionResponse(final ConcurrentUpdateException e, final boolean includeTransactions) {
-        this.message = e.getResponseMessage();
-        if (includeTransactions) {
-            this.existingTransactionId = e.getExistingTransactionId();
-            this.conflictingTransactionId = e.getConflictingTransactionId();
-        }
+    public ConcurrentExceptionResponse(final String message) {
+        this.message = message;
     }
 
     public String getMessage() {
@@ -47,5 +42,13 @@ public class ConcurrentExceptionResponse {
 
     public String getConflictingTransactionId() {
         return conflictingTransactionId;
+    }
+
+    public void setExistingTransactionId(final String existingTransactionId) {
+        this.existingTransactionId = existingTransactionId;
+    }
+
+    public void setConflictingTransactionId(final String conflictingTransactionId) {
+        this.conflictingTransactionId = conflictingTransactionId;
     }
 }
