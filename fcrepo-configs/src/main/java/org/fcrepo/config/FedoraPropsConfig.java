@@ -429,4 +429,11 @@ public class FedoraPropsConfig extends BasePropsConfig {
         return includeTransactionOnConflict;
     }
 
+    /**
+     * @param includeTransactionOnConflict if transaction ids should be included in conflict error responses
+     */
+    public void setIncludeTransactionOnConflict(final boolean includeTransactionOnConflict) {
+        this.includeTransactionOnConflict = includeTransactionOnConflict;
+    }
+
 }

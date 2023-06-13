@@ -986,6 +986,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
     @Test
     public void concurrentSparqlUpdatesShouldNotBeAllowed() throws Exception {
+        propsConfig.setIncludeTransactionOnConflict(true);
         final var containerId = getRandomUniqueId();
 
         putContainer(containerId, null);
@@ -1001,6 +1002,7 @@ public class TransactionsIT extends AbstractResourceIT {
         final var response = getResource(containerId, null);
         assertTrue("title should have been updated", response.contains("new title"));
         assertFalse("concurrent update should not have been applied", response.contains("concurrent update!"));
+        propsConfig.setIncludeTransactionOnConflict(false);
     }
 
     @Test
@@ -1200,7 +1202,11 @@ public class TransactionsIT extends AbstractResourceIT {
         } catch (final HttpResponseException e) {
             assertEquals(CONFLICT.getStatusCode(), e.getStatusCode());
             assertTrue("concurrent update exception",
-                    e.getReasonPhrase().contains("updated by another transaction"));
+                       e.getReasonPhrase().contains("updated by another transaction"));
+            assertEquals("transaction id in response", propsConfig.includeTransactionOnConflict(),
+                         e.getReasonPhrase().contains("existingTransactionId"));
+            assertEquals("transaction id in response", propsConfig.includeTransactionOnConflict(),
+                         e.getReasonPhrase().contains("conflictingTransactionId"));
         }
     }
 
