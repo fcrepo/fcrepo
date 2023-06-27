@@ -75,8 +75,14 @@ public class FedoraTombstones extends ContentExposingResource {
             // If the resource is not deleted there is no tombstone.
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+
+        final Tombstone tombstone = (Tombstone) resource;
+        final var deletedResource = tombstone.getDeletedObject();
+        if (deletedResource.getArchivalGroupId().isPresent()) {
+            return Response.status(Response.Status.METHOD_NOT_ALLOWED).build();
+        }
+
         try {
-            final Tombstone tombstone = (Tombstone) resource;
             LOGGER.info("Delete tombstone: {}", resource.getFedoraId());
             doInDbTxWithRetry(() -> {
                 purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());
