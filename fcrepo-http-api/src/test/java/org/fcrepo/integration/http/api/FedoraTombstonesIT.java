@@ -168,13 +168,13 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
         assertEquals(GONE.getStatusCode(), getStatus(get5));
 
         final HttpDelete purgeGrandchild = new HttpDelete(grandchildPath + "/" + FCR_TOMBSTONE);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(purgeGrandchild));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(purgeGrandchild));
 
         final HttpGet get6 = new HttpGet(grandchildPath);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(get6));
+        assertEquals(GONE.getStatusCode(), getStatus(get6));
 
         final HttpDelete purgeChild = new HttpDelete(childPath + "/" + FCR_TOMBSTONE);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(purgeChild));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(purgeChild));
 
         final HttpGet get7 = new HttpGet(agPath);
         assertEquals(OK.getStatusCode(), getStatus(get7));

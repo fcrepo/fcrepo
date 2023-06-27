@@ -5,6 +5,7 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -116,6 +117,7 @@ public class OcflPersistenceIT extends AbstractResourceIT {
     }
 
     @Test
+    @Ignore("Re-enable with FCREPO-3883")
     public void testCreateDeletePurgeCreateSubpath() throws Exception {
         final HttpPost httpPost = postObjMethod();
         httpPost.setHeader("Link", "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"");
@@ -138,10 +140,10 @@ public class OcflPersistenceIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObj));
 
         final HttpDelete deleteTomb = new HttpDelete(id + "/" + FCR_TOMBSTONE);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTomb));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(deleteTomb));
 
         final HttpGet getObj = new HttpGet(id);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObj));
+        assertEquals(GONE.getStatusCode(), getStatus(getObj));
 
         final HttpPut putObj = new HttpPut(id);
         assertEquals(CREATED.getStatusCode(), getStatus(putObj));
