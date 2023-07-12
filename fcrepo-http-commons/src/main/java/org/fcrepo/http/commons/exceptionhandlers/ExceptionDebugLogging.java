@@ -28,8 +28,7 @@ public interface ExceptionDebugLogging {
         if (!logger.isDebugEnabled()) {
             return;
         }
-        logger.debug("{} intercepted exception:{} \n", context.getClass()
-                .getSimpleName(), error);
+        logger.debug("{} intercepted exception:", context.getClass().getSimpleName(), error);
         logger.trace(error.getMessage(), error);
     }
 }

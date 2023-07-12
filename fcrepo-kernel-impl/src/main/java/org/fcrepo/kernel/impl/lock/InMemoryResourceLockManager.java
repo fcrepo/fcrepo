@@ -87,9 +87,7 @@ public class InMemoryResourceLockManager implements ResourceLockManager {
                     // 2. We need a non-exclusive lock, but another tx holds an exclusive lock
                     if ((lockType == EXCLUSIVE && !lock.getTransactionId().equals(txId))
                             || lock.hasLockType(EXCLUSIVE)) {
-                        throw new ConcurrentUpdateException(
-                                String.format("Cannot update %s because it is being updated by another transaction.",
-                                        resourceId.getResourceId()));
+                        throw new ConcurrentUpdateException(resourceId.getResourceId(), txId, lock.getTransactionId());
                     }
                 }
             }
