@@ -384,6 +384,14 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
+    protected FedoraResource resource(final boolean canReturnTombstone) {
+        if (fedoraResource == null) {
+            fedoraResource = getResourceFromPath(externalPath(), canReturnTombstone);
+        }
+
+        return fedoraResource;
+    }
+
     protected FedoraResource resource() {
         if (fedoraResource == null) {
             fedoraResource = getResourceFromPath(externalPath());
@@ -1029,6 +1037,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return the fedora resource at the external path
      */
     private FedoraResource getResourceFromPath(final String externalPath) {
+        return getResourceFromPath(externalPath, false);
+    }
+
+    /**
+     * Get the FedoraResource for the resource at the external path
+     * @param externalPath the external path
+     * @param canReturnTombstone if tombstones can be returned
+     * @return the fedora resource at the external path
+     */
+    private FedoraResource getResourceFromPath(final String externalPath, final boolean canReturnTombstone) {
         final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
 
         try {
@@ -1041,7 +1059,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 originalResource = fedoraResource;
             }
 
-            if (originalResource instanceof Tombstone) {
+            if (originalResource instanceof Tombstone && !canReturnTombstone) {
                 final String tombstoneUri = identifierConverter().toExternalId(
                             originalResource.getFedoraId().asTombstone().getFullId());
                 throw new TombstoneException(fedoraResource, tombstoneUri);
