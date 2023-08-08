@@ -161,6 +161,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
+    public static final String HTTP_HEADER_OVERWRITE_TOMBSTONE = "Overwrite-Tombstone";
+
     private static final String FCR_PREFIX = "fcr:";
     private static final Set<String> ALLOWED_FCR_PARTS = Set.of(FCR_METADATA, FCR_ACL);
 
