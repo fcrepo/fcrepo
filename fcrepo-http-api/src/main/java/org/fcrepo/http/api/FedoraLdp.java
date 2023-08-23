@@ -107,6 +107,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.config.DigestAlgorithm;
@@ -476,13 +477,18 @@ public class FedoraLdp extends ContentExposingResource {
                     throw new ClientErrorException("An If-Match header is required", 428);
                 }
 
-                final String resInteractionModel = resource().getInteractionModel();
+                var resource = resource(overwriteTombstone);
+                if (resource instanceof Tombstone) {
+                    resource = ((Tombstone) resource).getDeletedObject();
+                }
+
+                final String resInteractionModel = resource.getInteractionModel();
                 if (StringUtils.isNoneBlank(resInteractionModel, interactionModel) &&
                         !Objects.equals(resInteractionModel, interactionModel)) {
                     throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
                             + " to " + interactionModel + " is not allowed!");
                 }
-                evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
+                evaluateRequestPreconditions(request, servletResponse, resource, transaction);
             }
 
             if (isGhostNode(transaction(), fedoraId)) {
@@ -490,7 +496,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
 
             if (!resourceExists && fedoraId.isDescription()) {
-                // Can't PUT a description to a non-existant binary.
+                // Can't PUT a description to a non-existent binary.
                 final String message;
                 if (fedoraId.asBaseId().isRepositoryRoot()) {
                     message = "The root of the repository is not a binary, so /" + FCR_METADATA + " does not exist.";
