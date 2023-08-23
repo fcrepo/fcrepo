@@ -507,11 +507,10 @@ public class FedoraLdp extends ContentExposingResource {
             }
 
             final var providedContentType = getSimpleContentType(requestContentType);
-
             final var created = new AtomicBoolean(false);
 
-                if ((resourceExists && resource() instanceof Binary) ||
-                        (!resourceExists && isBinary(interactionModel,
+            if ((resourceExists && (isBinaryTombstone(overwriteTombstone) || resource() instanceof Binary)) ||
+                    (!resourceExists && isBinary(interactionModel,
                                 providedContentType,
                                 requestBodyStream != null && providedContentType != null,
                                 extContent != null))) {
@@ -536,7 +535,7 @@ public class FedoraLdp extends ContentExposingResource {
                     }
 
                     doInDbTx(() -> {
-                        if (resourceExists) {
+                        if (resourceExists && !(resource() instanceof Tombstone)) {
                             replaceBinariesService.perform(transaction,
                                     getUserPrincipal(),
                                     fedoraId,
@@ -567,11 +566,8 @@ public class FedoraLdp extends ContentExposingResource {
                             contentType, identifierConverter(), hasLenientPreferHeader());
 
                     doInDbTxWithRetry(() -> {
-                        if (resourceExists) {
-                            replacePropertiesService.perform(transaction,
-                                    getUserPrincipal(),
-                                    fedoraId,
-                                    model);
+                        if (resourceExists && !(resource() instanceof Tombstone)) {
+                            replacePropertiesService.perform(transaction, getUserPrincipal(), fedoraId, model);
                         } else {
                             createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model);
                             created.set(true);
@@ -586,6 +582,20 @@ public class FedoraLdp extends ContentExposingResource {
         } finally {
             transaction.releaseResourceLocksIfShortLived();
         }
+    }
+
+    /**
+     * @param overwriteTombstone the value of the Overwrite-Tombstone Header
+     * @return if the resource for this request is the tombstone of a Binary
+     */
+    private boolean isBinaryTombstone(final boolean overwriteTombstone) {
+        final var resource = resource(overwriteTombstone);
+        if (resource instanceof Tombstone) {
+            final var deletedObj = ((Tombstone) resource).getDeletedObject();
+            return deletedObj instanceof Binary;
+        }
+
+        return false;
     }
 
     /**
