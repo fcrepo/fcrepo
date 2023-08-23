@@ -428,6 +428,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param ifMatch the if-match value
      * @param rawLinks the raw link values
      * @param digest the digest header
+     * @param overwriteTombstoneRaw the Overwrite-Tombstone header
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
@@ -441,11 +442,13 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam(CONTENT_DISPOSITION) final String contentDispositionRaw,
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> rawLinks,
-            @HeaderParam("Digest") final String digest)
+            @HeaderParam("Digest") final String digest,
+            @HeaderParam(HTTP_HEADER_OVERWRITE_TOMBSTONE) final String overwriteTombstoneRaw)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
                    PathNotFoundException {
         LOGGER.info("PUT to create resource with ID: {}", externalPath());
 
+        final var overwriteTombstone = Boolean.parseBoolean(overwriteTombstoneRaw);
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             handleRequestDisallowedOnMemento();
 
