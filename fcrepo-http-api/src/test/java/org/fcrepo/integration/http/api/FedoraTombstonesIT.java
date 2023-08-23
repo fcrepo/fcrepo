@@ -5,6 +5,8 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static org.fcrepo.http.api.ContentExposingResource.HTTP_HEADER_OVERWRITE_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.junit.Assert.assertEquals;
 
@@ -208,4 +210,33 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(new HttpPut(uri + "/" + getRandomUniqueId() + "/" +
                 getRandomUniqueId())));
     }
+
+    @Test
+    public void testOverwriteTombstoneInteractionModel() throws Exception {
+        final HttpPost post = postObjMethod();
+        post.setHeader("Link", "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"");
+        final String parent;
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            parent = getLocation(response);
+        }
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(parent)));
+
+        final HttpPost postChild = new HttpPost(parent);
+        final String id;
+        try (final CloseableHttpResponse response = execute(postChild)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            id = getLocation(response);
+        }
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(id)));
+
+        final HttpDelete delete = new HttpDelete(id);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+
+        final HttpPut put = new HttpPut(id);
+        put.setHeader(LINK, NON_RDF_SOURCE_LINK_HEADER);
+        put.addHeader(HTTP_HEADER_OVERWRITE_TOMBSTONE, "true");
+        assertEquals(CONFLICT.getStatusCode(), getStatus(put));
+    }
+
 }
