@@ -623,21 +623,6 @@
               </rules>
             </configuration>
           </execution>
-          <execution>
-            <id>enforce-victims-rule</id>
-            <goals>
-              <goal>enforce</goal>
-            </goals>
-            <configuration>
-              <rules>
-                <rule implementation="com.redhat.victims.VictimsRule">
-                  <metadata>fatal</metadata>
-                  <fingerprint>fatal</fingerprint>
-                  <updates>daily</updates>
-                </rule>
-              </rules>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
     </plugins>

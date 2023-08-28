@@ -24,6 +24,7 @@ import static javax.jcr.NamespaceRegistry.PREFIX_EMPTY;
 import static javax.jcr.NamespaceRegistry.PREFIX_JCR;
 import static javax.jcr.NamespaceRegistry.PREFIX_MIX;
 import static javax.jcr.NamespaceRegistry.PREFIX_NT;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,7 @@ import javax.jcr.Session;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.slf4j.Logger;
 
 /**
  * Tools for working with the JCR Namespace Registry
@@ -46,6 +48,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
  * @since May 13, 2013
  */
 public final class NamespaceTools {
+    private static final Logger LOGGER = getLogger(NamespaceTools.class);
 
     private NamespaceTools() {
     }
@@ -110,15 +113,35 @@ public final class NamespaceTools {
     public static Map<String, String> getNamespaces(final Session session) {
         final NamespaceRegistry registry = getNamespaceRegistry(session);
         final Map<String, String> namespaces = new HashMap<>();
+        final Predicate<String> badPrefix = prefix -> {
+            try {
+                final String uri = registry.getURI(prefix);
+                if (uri == null) {
+                    return true;
+                }
+                final boolean isBad = uri.matches(".*/tx:........-....-....-....-............/.*");
+                if (isBad) {
+                    LOGGER.debug("Omitting prefix " + prefix + " <" + uri + "> from list of RDF namespaces");
+                }
+                return isBad;
+            } catch (final NamespaceException e) {
+                return true;
+            } catch (final RepositoryException e) {
+                throw new RepositoryRuntimeException(e);
+            }
+        };
 
         try {
-            stream(registry.getPrefixes()).filter(internalPrefix.negate()).forEach(x -> {
-                try {
-                    namespaces.put(x, registry.getURI(x));
-                } catch (final RepositoryException e) {
-                    throw new RepositoryRuntimeException(e);
-                }
-            });
+            stream(registry.getPrefixes())
+                    .filter(internalPrefix.negate())
+                    .filter(badPrefix.negate())
+                    .forEach(x -> {
+                        try {
+                            namespaces.put(x, registry.getURI(x));
+                        } catch (final RepositoryException e) {
+                            throw new RepositoryRuntimeException(e);
+                        }
+                    });
         } catch (final RepositoryException e) {
             throw new RepositoryRuntimeException(e);
         }
