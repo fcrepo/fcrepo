@@ -60,6 +60,9 @@ public class DatabaseConfig extends BasePropsConfig {
     @Value("${fcrepo.db.connection.checkout.timeout:30000}")
     private Integer checkoutTimeout;
 
+    @Value("${fcrepo.db.connection.initializationFail.timeout:1}")
+    private Integer initializeFailTimeout;
+
     private static final Map<String, String> DB_DRIVER_MAP = Map.of(
             "h2", "org.h2.Driver",
             "postgresql", "org.postgresql.Driver",
@@ -96,6 +99,7 @@ public class DatabaseConfig extends BasePropsConfig {
         dataSource.setPassword(dbPassword);
         dataSource.setConnectionTimeout(checkoutTimeout);
         dataSource.setMaximumPoolSize(maxPoolSize);
+        dataSource.setInitializationFailTimeout(initializeFailTimeout);
 
         flyway(dataSource);
 
