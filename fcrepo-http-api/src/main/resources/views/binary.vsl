@@ -46,6 +46,32 @@
                     #triples($contentNode)
                 </div>
             </div>
+
+            ## output other nodes
+
+            <h2>Other Resources</h2>
+            <div class="panel-group" id="accordion">
+            #foreach($subject in $model.listSubjects())
+                #if( $subject != $topic )
+                    #set( $subUri = #$helpers.getResourceId($subject) )
+                    <div class="panel panel-default" resource="$subUri">
+                        <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subUri)_triples" >
+                            #if( $subject.getURI() && $subject.getURI().startsWith("http") )
+                                <h3 class="ctitle panel-title"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
+                            #else
+                                <h3 class="ctitle panel-title">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</h3>
+                            #end
+                        </div>
+                        <div class="panel-collapse collapse"  id="$helpers.parameterize($subUri)_triples">
+                            <div class="panel-body">
+                                #triples($subject.asNode())
+                            </div>
+                        </div>
+                    </div>
+                #end
+            #end
+            </div>
+
         </div>
     </div>
     #parse("views/common-footer.vsl")
