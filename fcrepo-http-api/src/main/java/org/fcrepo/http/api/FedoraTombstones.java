@@ -113,7 +113,20 @@ public class FedoraTombstones extends ContentExposingResource {
 
     @OPTIONS
     public Response options() {
-        return Response.ok().header(ALLOW, "DELETE").build();
+        final var resource = resource();
+        if (!(resource instanceof Tombstone)) {
+            // If the resource is not deleted there is no tombstone.
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        final var response = Response.ok().allow();
+        final Tombstone tombstone = (Tombstone) resource;
+        final var deletedResource = tombstone.getDeletedObject();
+        if (deletedResource.getArchivalGroupId().isEmpty()) {
+            response.allow("DELETE");
+        }
+
+        return response.build();
     }
 
     @Override
