@@ -1487,10 +1487,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Check it is gone
         final HttpGet getDeletedContainer = getObjMethod(id);
         assertEquals(GONE.getStatusCode(), getStatus(getDeletedContainer));
-        // Check the timemap is GONE
+        // Check the timemap still exist
         final HttpGet getDeletedTimemap = getObjMethod(id + "/" + FCR_VERSIONS);
-        assertEquals(GONE.getStatusCode(), getStatus(getDeletedTimemap));
-        // Check the memento is GONE
+        assertEquals(OK.getStatusCode(), getStatus(getDeletedTimemap));
+        // Because the two versions (creation and deletion) occur in the same second, we have a single memento.
         final HttpGet getDeletedMemento = new HttpGet(mementos.get(0));
         assertEquals(GONE.getStatusCode(), getStatus(getDeletedMemento));
     }

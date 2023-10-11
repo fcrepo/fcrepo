@@ -27,6 +27,7 @@ import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.TimeMap;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,14 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
         var createdDate = resource.getCreatedDate();
         var lastModifiedBy = resource.getLastModifiedBy();
         var lastModifiedDate = resource.getLastModifiedDate();
+
+        if (createdDate == null && resource.getOriginalResource() instanceof Tombstone) {
+            final var deletedResource = ((Tombstone)resource.getOriginalResource()).getDeletedObject();
+            createdBy = deletedResource.getCreatedBy();
+            createdDate = deletedResource.getCreatedDate();
+            lastModifiedBy = deletedResource.getLastModifiedBy();
+            lastModifiedDate = deletedResource.getLastModifiedDate();
+        }
 
         if (describedResource instanceof Binary) {
             final Binary binary = (Binary) describedResource;

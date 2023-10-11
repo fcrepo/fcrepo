@@ -14,6 +14,7 @@ import org.fcrepo.kernel.api.exception.CannotCreateMementoException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
+import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
@@ -242,5 +243,17 @@ public class FedoraVersioning extends ContentExposingResource {
     @Override
     protected String externalPath() {
         return externalPath;
+    }
+
+    @Override
+    protected FedoraResource resource() {
+        FedoraResource fedoraResource;
+        try {
+            fedoraResource = super.resource();
+        } catch (TombstoneException e) {
+            // We return timemaps for deleted resources, so get the original resource from the Tombstone exception.
+            fedoraResource = e.getFedoraResource().getOriginalResource();
+        }
+        return fedoraResource;
     }
 }
