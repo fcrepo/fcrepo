@@ -941,8 +941,8 @@ public class FedoraLdp extends ContentExposingResource {
         }
         if (!isBlank(slug)) {
             pid = slug;
-        } else if (pidMinter != null) {
-            pid = pidMinter.get();
+        //} else if (pidMinter != null) {
+        //    pid = pidMinter.get();
         } else {
             pid = defaultPidMinter.get();
         }

@@ -59,7 +59,6 @@ public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
 
         final String s = randomUUID().toString();
         final String id;
-
         if (count > 0 && length > 0) {
             final StringJoiner joiner = new StringJoiner("/", "", "/" + s);
 
