@@ -540,7 +540,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource.isMemento()) {
             options = "GET,HEAD,OPTIONS";
         } else if (resource instanceof TimeMap) {
-            options = "POST,HEAD,GET,OPTIONS";
+            options = (resource.getOriginalResource() instanceof Tombstone ? "HEAD,GET,OPTIONS" :
+                    "POST,HEAD,GET,OPTIONS");
             addAcceptPostHeader();
         } else if (resource instanceof Binary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";

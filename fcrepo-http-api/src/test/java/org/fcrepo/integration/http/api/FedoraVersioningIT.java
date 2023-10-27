@@ -71,6 +71,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -1631,6 +1632,41 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Assert they are all the same
         confirmResponseBodyNTriplesAreEqual(originalTriples, mementoTriples);
         confirmResponseBodyNTriplesAreEqual(updatedTriples, mementoTriples);
+    }
+
+    @Test
+    public void testPostToDeletedTimemap() throws Exception {
+        final String location;
+        try (final var response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            location = getLocation(response);
+        }
+        final var timemap = location + "/" + FCR_VERSIONS;
+        // Timemap exists and accepts POSTs
+        final var preAccept = List.of("POST","HEAD","GET","OPTIONS").toArray();
+        try (final var response = execute(new HttpGet(timemap))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final var responseAccept = Arrays.stream(response.getFirstHeader("Allow").getValue().split(","))
+                    .map(String::trim).toArray();
+            // Assert the Allow header methods.
+            assertArrayEquals(responseAccept, preAccept);
+        }
+
+        assertEquals(CREATED.getStatusCode(), getStatus(new HttpPost(timemap)));
+        // Delete the resource
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(location)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(location)));
+        // After deleting the timemap is still accessible
+        final var postAccept = List.of("HEAD","GET","OPTIONS").toArray();
+        try (final var response = execute(new HttpGet(timemap))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final var responseAccept = Arrays.stream(response.getFirstHeader("Allow").getValue().split(","))
+                    .map(String::trim).toArray();
+            // Assert the Allow header methods.
+            assertArrayEquals(responseAccept, postAccept);
+        }
+        // But you can't POST
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpPost(timemap)));
     }
 
     private void createVersionedExternalBinaryMemento(final String rescId, final String handling,

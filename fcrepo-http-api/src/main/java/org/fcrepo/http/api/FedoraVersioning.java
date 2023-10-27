@@ -169,7 +169,13 @@ public class FedoraVersioning extends ContentExposingResource {
         TEXT_HTML_WITH_CHARSET, APPLICATION_LINK_FORMAT })
     public Response getVersionList(@HeaderParam("Accept") final String acceptValue) throws IOException {
 
-        final FedoraResource theTimeMap = resource().getTimeMap();
+        FedoraResource theTimeMap;
+        try {
+            theTimeMap = resource().getTimeMap();
+        } catch (TombstoneException e) {
+            // We return timemaps for deleted resources, so get the original resource from the Tombstone exception.
+            theTimeMap = e.getFedoraResource().getOriginalResource().getTimeMap();
+        }
         checkCacheControlHeaders(request, servletResponse, theTimeMap, transaction());
 
         LOGGER.debug("GET resource '{}'", externalPath());
@@ -243,17 +249,5 @@ public class FedoraVersioning extends ContentExposingResource {
     @Override
     protected String externalPath() {
         return externalPath;
-    }
-
-    @Override
-    protected FedoraResource resource() {
-        FedoraResource fedoraResource;
-        try {
-            fedoraResource = super.resource();
-        } catch (TombstoneException e) {
-            // We return timemaps for deleted resources, so get the original resource from the Tombstone exception.
-            fedoraResource = e.getFedoraResource().getOriginalResource();
-        }
-        return fedoraResource;
     }
 }
