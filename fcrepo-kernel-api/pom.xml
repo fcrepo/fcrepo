@@ -16,7 +16,7 @@
       com.google.common.*,
       org.apache.jena.*,
       org.apache.commons.codec.binary,
-
+      javax.inject,
       *
     </osgi.import.packages>
     <osgi.export.packages>
@@ -63,6 +63,10 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
     </dependency>
 
     <!-- test gear -->

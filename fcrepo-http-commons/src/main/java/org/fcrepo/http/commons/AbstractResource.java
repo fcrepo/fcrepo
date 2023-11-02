@@ -60,7 +60,7 @@ public class AbstractResource {
 
     // Mint non-hierarchical identifiers. To force pairtree creation as default, use
     //  ConfigurableHierarchicalSupplier(int length, count) instead.
-    //protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
-    protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier(2, 4);
+    protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
+    //protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier(2, 4);
 
 }

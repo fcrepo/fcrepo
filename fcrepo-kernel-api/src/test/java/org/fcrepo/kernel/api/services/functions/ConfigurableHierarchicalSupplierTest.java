@@ -6,6 +6,8 @@
 package org.fcrepo.kernel.api.services.functions;
 
 import static org.junit.Assert.assertEquals;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.junit.Before;;
 
 import org.junit.Test;
 
@@ -18,6 +20,12 @@ import org.junit.Test;
  */
 public class ConfigurableHierarchicalSupplierTest {
 
+    private FedoraPropsConfig fedoraPropsConfig;
+
+    @Before
+    public void setUp() {
+        fedoraPropsConfig = new FedoraPropsConfig();
+    }
 
     @Test
     public void testGet() {
@@ -30,7 +38,7 @@ public class ConfigurableHierarchicalSupplierTest {
 
     @Test
     public void testGetIdNoPairtree() {
-        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier(0, 0);
+        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
         final String id = defaultPidMinter.get();
         // With (desiredLength,desiredCount=0), check to see that id contains 1 part and no slashes
         final int parts = (id.split("/").length);
@@ -39,7 +47,9 @@ public class ConfigurableHierarchicalSupplierTest {
 
     @Test
     public void testGetIdPairtreeParams() {
-        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier(2, 4);
+        fedoraPropsConfig.setFcrepoPidMinterLength(2);
+        fedoraPropsConfig.setFcrepoPidMinterCount(4);
+        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
         final String id = defaultPidMinter.get();
         // With (desiredLength > 0 && desiredCount > 0) check to see that id contains (count + 1) parts
         final int parts = (id.split("/").length);

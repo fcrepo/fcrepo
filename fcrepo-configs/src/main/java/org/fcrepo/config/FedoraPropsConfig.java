@@ -138,6 +138,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.banner.enabled:true}")
     private boolean bannerEnabled;
 
+    @Value("${fcrepo.pid.minter.length:0}")
+    private int fcrepoPidMinterLength;
+
+    @Value("${fcrepo.pid.minter.count:0}")
+    private int fcrepoPidMinterCount;
+
 
     @PostConstruct
     private void postConstruct() throws IOException {
@@ -412,5 +418,34 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public boolean getBannerEnabled() {
         return bannerEnabled;
     }
+
+    /**
+     * @return length of pid minter
+     */
+    public int getFcrepoPidMinterLength() {
+        return fcrepoPidMinterLength;
+    }
+
+    /**
+     * @param length PID Minter length
+     */
+    public void setFcrepoPidMinterLength(final int length) {
+        this.fcrepoPidMinterLength = length;
+    }
+
+    /**
+     * @return count of separaters for pid minter
+     */
+    public int getFcrepoPidMinterCount() {
+        return fcrepoPidMinterCount;
+    }
+
+    /**
+     * @param count PID Minter count
+     */
+    public void setFcrepoPidMinterCount(final int count) {
+        this.fcrepoPidMinterCount = count;
+    }
+
 
 }
