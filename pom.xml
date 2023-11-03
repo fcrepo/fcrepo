@@ -23,7 +23,7 @@
     <project_name>fcrepo4</project_name>
     <project_organization>fcrepo4</project_organization>
     <!-- Dependency version properties -->
-    <activemq.version>5.15.5</activemq.version>
+    <activemq.version>5.15.16</activemq.version>
     <commons-codec.version>1.11</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-io.version>2.6</commons-io.version>
