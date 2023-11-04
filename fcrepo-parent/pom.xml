@@ -23,7 +23,7 @@
     <project.copyrightYear>2015</project.copyrightYear>
     <!-- scm, site distribution names -->
     <project_name>${project.artifactId}</project_name>
-    <project_organization>fcrepo4</project_organization>
+    <project_organization>fcrepo</project_organization>
     <!-- OSGi -->
     <osgi.import.packages />
     <osgi.private.packages />
@@ -543,11 +543,11 @@
     <snapshotRepository>
       <id>sonatype-nexus-snapshots</id>
       <name>Sonatype Nexus Shapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+      <url>https://${sonatype.host}/content/repositories/snapshots/</url>
     </snapshotRepository>
     <repository>
       <id>sonatype-nexus-staging</id>
-      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+      <url>https://${sonatype.host}/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
 
