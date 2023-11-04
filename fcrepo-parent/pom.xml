@@ -66,6 +66,7 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
+    <sonatype.host>s01.oss.sonatype.org</sonatype.host>
   </properties>
 
   <build>
@@ -455,7 +456,7 @@
     <pluginRepository>
       <id>sonatype-nexus-snapshots</id>
       <name>Sonatype Nexus Snapshots</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+      <url>https://${sonatype.host}/content/repositories/snapshots</url>
       <releases>
         <enabled>false</enabled>
       </releases>
@@ -467,7 +468,7 @@
     <pluginRepository>
       <id>sonatype-nexus-staging</id>
       <name>Nexus Release Repository</name>
-      <url>https://oss.sonatype.org/content/repositories/releases</url>
+      <url>https://${sonatype.host}/content/repositories/releases</url>
       <releases>
         <enabled>true</enabled>
       </releases>
