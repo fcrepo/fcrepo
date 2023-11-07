@@ -24,7 +24,7 @@
     <project_organization>fcrepo</project_organization>
     <fcrepo-storage-ocfl.version>6.4.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
-    <activemq.version>5.16.3</activemq.version>
+    <activemq.version>5.16.7</activemq.version>
     <aws.version>2.17.50</aws.version>
     <caffeine.version>3.0.4</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
