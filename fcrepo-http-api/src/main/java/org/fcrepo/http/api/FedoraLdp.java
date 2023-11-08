@@ -468,6 +468,7 @@ public class FedoraLdp extends ContentExposingResource {
 
             final String interactionModel = checkInteractionModel(links);
 
+            FedoraResource resource = null;
             final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
             final boolean resourceExists = doesResourceExist(transaction, fedoraId, true);
 
@@ -477,7 +478,7 @@ public class FedoraLdp extends ContentExposingResource {
                     throw new ClientErrorException("An If-Match header is required", 428);
                 }
 
-                var resource = resource(overwriteTombstone);
+                resource = resource(overwriteTombstone);
                 if (resource instanceof Tombstone) {
                     resource = ((Tombstone) resource).getDeletedObject();
                 }
@@ -509,7 +510,7 @@ public class FedoraLdp extends ContentExposingResource {
             final var providedContentType = getSimpleContentType(requestContentType);
             final var created = new AtomicBoolean(false);
 
-            if ((resourceExists && (isBinaryTombstone(overwriteTombstone) || resource() instanceof Binary)) ||
+            if ((resourceExists && resource instanceof Binary) ||
                     (!resourceExists && isBinary(interactionModel,
                                 providedContentType,
                                 requestBodyStream != null && providedContentType != null,
@@ -582,20 +583,6 @@ public class FedoraLdp extends ContentExposingResource {
         } finally {
             transaction.releaseResourceLocksIfShortLived();
         }
-    }
-
-    /**
-     * @param overwriteTombstone the value of the Overwrite-Tombstone Header
-     * @return if the resource for this request is the tombstone of a Binary
-     */
-    private boolean isBinaryTombstone(final boolean overwriteTombstone) {
-        final var resource = resource(overwriteTombstone);
-        if (resource instanceof Tombstone) {
-            final var deletedObj = ((Tombstone) resource).getDeletedObject();
-            return deletedObj instanceof Binary;
-        }
-
-        return false;
     }
 
     /**
