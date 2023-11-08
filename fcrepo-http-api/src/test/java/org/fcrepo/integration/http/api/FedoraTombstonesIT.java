@@ -32,6 +32,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
@@ -114,14 +115,30 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
             tombstoneUri = getTombstoneLink(res);
         }
 
+        final var expectedAllowed = "DELETE";
+        final HttpOptions optionsTombstone = new HttpOptions(tombstoneUri.getUri());
+        try (final var response = execute(optionsTombstone)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(expectedAllowed, response.getFirstHeader("Allow").getValue());
+        }
+
         final HttpGet getTombstone = new HttpGet(tombstoneUri.getUri());
-        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(getTombstone));
+        try (final var response = execute(getTombstone)) {
+            assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(expectedAllowed, response.getFirstHeader("Allow").getValue());
+        }
 
         final HttpPut putTombstone = new HttpPut(tombstoneUri.getUri());
-        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(putTombstone));
+        try (final var response = execute(putTombstone)) {
+            assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(expectedAllowed, response.getFirstHeader("Allow").getValue());
+        }
 
         final HttpPost postTombstone = new HttpPost(tombstoneUri.getUri());
-        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(postTombstone));
+        try (final var response = execute(postTombstone)) {
+            assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertEquals(expectedAllowed, response.getFirstHeader("Allow").getValue());
+        }
 
         final HttpDelete deleteTombstone = new HttpDelete(tombstoneUri.getUri());
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTombstone));
