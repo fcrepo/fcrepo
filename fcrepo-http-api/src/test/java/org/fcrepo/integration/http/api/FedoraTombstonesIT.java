@@ -9,6 +9,7 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.http.api.ContentExposingResource.HTTP_HEADER_OVERWRITE_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
@@ -142,6 +143,73 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
 
         final HttpDelete deleteTombstone = new HttpDelete(tombstoneUri.getUri());
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTombstone));
+    }
+
+    @Test
+    public void testArchiveGroupDisallowedMethods() throws Exception {
+        final HttpPost post = postObjMethod();
+        post.setHeader(LINK, "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"");
+        final String agPath;
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            agPath = getLocation(response);
+        }
+
+        final HttpGet getAg = new HttpGet(agPath);
+        assertEquals(OK.getStatusCode(), getStatus(getAg));
+
+        final HttpPost postChild = new HttpPost(agPath);
+        final String childPath;
+        try (final CloseableHttpResponse response = execute(postChild)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            childPath = getLocation(response);
+        }
+
+        final HttpGet getChild = new HttpGet(childPath);
+        assertEquals(OK.getStatusCode(), getStatus(getChild));
+
+        final HttpDelete deleteChild = new HttpDelete(childPath);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteChild));
+
+        final HttpGet getChild2 = new HttpGet(childPath);
+        final Link tombstoneUri;
+        try (final CloseableHttpResponse res = execute(getChild2)) {
+            assertEquals(GONE.getStatusCode(), getStatus(res));
+            tombstoneUri = getTombstoneLink(res);
+        }
+
+        final HttpOptions optionsTombstone = new HttpOptions(tombstoneUri.getUri());
+        try (final var response = execute(optionsTombstone)) {
+            assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertTrue(response.getFirstHeader("Allow").getValue().isEmpty());
+        }
+
+        final HttpGet getTombstone = new HttpGet(tombstoneUri.getUri());
+        try (final var response = execute(getTombstone)) {
+            assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertTrue(response.getFirstHeader("Allow").getValue().isEmpty());
+        }
+
+        final HttpPut putTombstone = new HttpPut(tombstoneUri.getUri());
+        try (final var response = execute(putTombstone)) {
+            assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertTrue(response.getFirstHeader("Allow").getValue().isEmpty());
+        }
+
+        final HttpPost postTombstone = new HttpPost(tombstoneUri.getUri());
+        try (final var response = execute(postTombstone)) {
+            assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), response.getStatusLine().getStatusCode());
+            assertTrue(response.getFirstHeader("Allow").getValue().isEmpty());
+        }
+
+        final HttpDelete deleteTombstone = new HttpDelete(tombstoneUri.getUri());
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(deleteTombstone));
+
+        final HttpDelete deleteAg = new HttpDelete(agPath);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteAg));
+
+        final HttpDelete deleteAgTombstone = new HttpDelete(agPath + "/" + FCR_TOMBSTONE);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteAgTombstone));
     }
 
     @Test
