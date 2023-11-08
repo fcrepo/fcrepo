@@ -27,7 +27,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import static javax.ws.rs.core.HttpHeaders.ALLOW;
 import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -79,7 +78,7 @@ public class FedoraTombstones extends ContentExposingResource {
         final Tombstone tombstone = (Tombstone) resource;
         final var deletedResource = tombstone.getDeletedObject();
         if (deletedResource.getArchivalGroupId().isPresent()) {
-            return Response.status(Response.Status.METHOD_NOT_ALLOWED).build();
+            return Response.status(Response.Status.METHOD_NOT_ALLOWED).allow().build();
         }
 
         try {
@@ -145,6 +144,15 @@ public class FedoraTombstones extends ContentExposingResource {
     }
 
     private Response methodNotAllowed() {
-        return Response.status(Response.Status.METHOD_NOT_ALLOWED).header(ALLOW, "DELETE").build();
+        final var response = Response.status(Response.Status.METHOD_NOT_ALLOWED).allow();
+        final var resource = resource();
+        if (resource instanceof Tombstone) {
+            final var deleted = ((Tombstone) resource).getDeletedObject();
+            if (deleted.getArchivalGroupId().isEmpty()) {
+                response.allow("DELETE");
+            }
+        }
+
+        return response.build();
     }
 }
