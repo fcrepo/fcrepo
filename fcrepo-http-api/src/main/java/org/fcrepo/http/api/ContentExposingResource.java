@@ -393,10 +393,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected FedoraResource resource() {
-        if (fedoraResource == null) {
-            fedoraResource = getResourceFromPath(externalPath());
-        }
-        return fedoraResource;
+        return resource(false);
     }
 
     protected FedoraResource reloadResource() {
