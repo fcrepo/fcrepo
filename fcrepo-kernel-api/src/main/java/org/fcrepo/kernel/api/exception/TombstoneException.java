@@ -24,7 +24,11 @@ public class TombstoneException extends RepositoryRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
-    private final String uri;
+    private final String tombstoneUri;
+
+    private final String timemapUri;
+
+    private final FedoraResource fedoraResource;
 
     private static DateTimeFormatter isoFormatter = ISO_INSTANT.withZone(UTC);
 
@@ -33,26 +37,43 @@ public class TombstoneException extends RepositoryRuntimeException {
      * @param resource the fedora resource
      */
     public TombstoneException(final FedoraResource resource) {
-        this(resource, null);
+        this(resource, null, null);
     }
 
     /**
      * Create a new tombstone exception with a URI to the tombstone resource
      * @param resource the fedora resource
      * @param tombstoneUri the uri to the tombstone resource for the Link header.
+     * @param timemapUri the uri to the resource's timemap for a Link header.
      */
-    public TombstoneException(final FedoraResource resource, final String tombstoneUri) {
+    public TombstoneException(final FedoraResource resource, final String tombstoneUri, final String timemapUri) {
         super("Discovered tombstone resource at " + resource.getFedoraId().getFullIdPath() +
                 (Objects.nonNull(resource.getLastModifiedDate()) ? ", departed at: " +
                 isoFormatter.format(resource.getLastModifiedDate()) : ""));
-        this.uri = tombstoneUri;
+        this.tombstoneUri = tombstoneUri;
+        this.timemapUri = timemapUri;
+        this.fedoraResource = resource;
     }
 
     /**
      * Get a URI to the tombstone resource
      * @return the URI to the tombstone resource
      */
-    public String getURI() {
-        return uri;
+    public String getTombstoneURI() {
+        return tombstoneUri;
+    }
+
+    /**
+     * @return the timemap URI
+     */
+    public String getTimemapUri() {
+        return timemapUri;
+    }
+
+    /**
+     * @return the original resource of the tombstone.
+     */
+    public FedoraResource getFedoraResource() {
+        return fedoraResource;
     }
 }

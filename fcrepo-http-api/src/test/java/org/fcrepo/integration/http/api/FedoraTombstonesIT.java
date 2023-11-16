@@ -5,7 +5,11 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.junit.Assert.assertEquals;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -22,7 +26,10 @@ import javax.ws.rs.core.Link;
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.Charsets;
 import org.apache.http.HttpEntity;
@@ -30,10 +37,14 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
+import org.apache.jena.graph.Node;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -57,6 +68,11 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(req)) {
             return getTombstoneLink(response);
         }
+    }
+
+    private Instant convertMementoToDate(final String mementoUri) {
+        final String[] splits = mementoUri.split(FCR_VERSIONS + "/");
+        return Instant.from(MEMENTO_LABEL_FORMATTER.parse(splits[1]));
     }
 
     @Test
@@ -207,5 +223,58 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(new HttpPut(uri + "/" + getRandomUniqueId())));
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(new HttpPut(uri + "/" + getRandomUniqueId() + "/" +
                 getRandomUniqueId())));
+    }
+
+    @Test
+    public void testTimeMapVisibleOnTombstone() throws Exception {
+        final String uri;
+        try (final var response = execute(postObjMethod())) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            uri = getLocation(response);
+        }
+        final var timemapUri = uri + "/" + FCR_VERSIONS;
+        TimeUnit.SECONDS.sleep(1);
+        final var patchReq = new HttpPatch(uri);
+        patchReq.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patchReq.setEntity(new StringEntity("INSERT DATA { <> <http://purl.org/dc/elements/1.1/title> \"This is a title\" }"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patchReq));
+        TimeUnit.SECONDS.sleep(1);
+        final var patchReq1 = new HttpPatch(uri);
+        patchReq1.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patchReq1.setEntity(new StringEntity("INSERT DATA { <> <http://purl.org/dc/elements/1.1/description> \"This is a description\" }"));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patchReq1));
+        // Object should have 3 versions.
+        TimeUnit.SECONDS.sleep(1);
+        // Delete the object, now it has 4 versions.
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(uri)));
+        try (final var response = execute(new HttpGet(uri))) {
+            // Assert it is gone.
+            assertEquals(GONE.getStatusCode(), getStatus(response));
+            // Assert the timemap link header is returned
+            checkForLinkHeader(response, timemapUri, "timemap");
+        }
+        final ArrayList<String> mementos = new ArrayList<>();
+        try (final var response = execute(new HttpGet(timemapUri))) {
+            // Assert the timemap is accessible
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            try (final CloseableDataset dataset = getDataset(response)) {
+                final DatasetGraph graph = dataset.asDatasetGraph();
+                final var iter = graph.find(Node.ANY, Node.ANY, CONTAINS.asNode(), Node.ANY);
+                while (iter.hasNext()) {
+                    final var memento = iter.next().getObject().getURI();
+                    mementos.add(memento);
+                }
+                assertEquals(4, mementos.size(), 0);
+            }
+        }
+        final Node subjectNode = createResource(uri).asNode();
+        // Sort the mementos by datetime.
+        mementos.sort((e1, e2) -> convertMementoToDate(e1).compareTo(convertMementoToDate(e2)));
+        // The other mementos should return 200 OK.
+        for (var foo = 0; foo < mementos.size() - 1; foo += 1) {
+            assertEquals(OK.getStatusCode(), getStatus(new HttpGet(mementos.get(foo))));
+        }
+        // The last is the deleted, which returns the 410 Gone.
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(mementos.get(mementos.size() - 1))));
     }
 }

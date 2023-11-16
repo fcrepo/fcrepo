@@ -6,13 +6,14 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import org.fcrepo.kernel.api.exception.TombstoneException;
-
 import org.slf4j.Logger;
 
+import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
+import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.status;
@@ -35,8 +36,11 @@ public class TombstoneExceptionMapper implements
         final Response.ResponseBuilder response = status(GONE)
                 .entity(e.getMessage());
 
-        if (e.getURI() != null) {
-            response.link(e.getURI(), "hasTombstone");
+        if (e.getTombstoneURI() != null) {
+            response.link(e.getTombstoneURI(), "hasTombstone");
+        }
+        if (e.getTimemapUri() != null) {
+            response.header(LINK, Link.fromUri(e.getTimemapUri()).rel("timemap").build().toString());
         }
 
         return response.type(TEXT_PLAIN_TYPE).build();
