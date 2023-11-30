@@ -81,9 +81,18 @@ public class IndexBuilderImpl implements IndexBuilder {
     }
 
     private void rebuild() {
-        LOGGER.info("Initiating index rebuild. This may take a while. Progress will be logged periodically.");
+        final String logMessage;
+        if (fedoraPropsConfig.isRebuildContinue()) {
+            logMessage = "Initiating partial index rebuild. This will add missing objects to the index.";
+        } else {
+            logMessage = "Initiating index rebuild.";
+        }
+        LOGGER.info(logMessage + " This may take a while. Progress will be logged periodically.");
 
-        reindexService.reset();
+        if (!fedoraPropsConfig.isRebuildContinue()) {
+            LOGGER.debug("Clearing all indexes");
+            reindexService.reset();
+        }
 
         try (var objectIds = ocflRepository.listObjectIds()) {
             final ReindexManager reindexManager = new ReindexManager(objectIds,
@@ -101,14 +110,24 @@ public class IndexBuilderImpl implements IndexBuilder {
             final var endTime = Instant.now();
             final var count = reindexManager.getCompletedCount();
             final var errors = reindexManager.getErrorCount();
-            LOGGER.info("Index rebuild completed {} objects successfully and {} objects had errors in {} ",
-                    count, errors, getDurationMessage(Duration.between(startTime, endTime)));
+            final var skipped = reindexManager.getSkippedCount();
+            if (fedoraPropsConfig.isRebuildContinue()) {
+                LOGGER.info(
+                    "Index rebuild completed {} objects successfully, {} objects skipped and {} objects had errors " +
+                    "in {} ", count, skipped, errors, getDurationMessage(Duration.between(startTime, endTime))
+                );
+            } else {
+                LOGGER.info(
+                    "Index rebuild completed {} objects successfully and {} objects had errors in {} ",
+                    count, errors, getDurationMessage(Duration.between(startTime, endTime))
+                );
+            }
         }
     }
 
     private boolean shouldRebuild() {
         final var repoRoot = getRepoRootMapping();
-        if (fedoraPropsConfig.isRebuildOnStart()) {
+        if (fedoraPropsConfig.isRebuildOnStart() || fedoraPropsConfig.isRebuildContinue()) {
             return true;
         } else if (repoRoot == null) {
             return true;
@@ -135,7 +154,7 @@ public class IndexBuilderImpl implements IndexBuilder {
             message = String.format("%d mins, ", duration.toMinutesPart()) + message;
         }
         if (duration.getSeconds() > 3600) {
-            message = String.format("%d hours, ", duration.getSeconds() / 3600) + message;
+            message = String.format("%d hours, ", duration.toHoursPart()) + message;
         }
         return message;
     }

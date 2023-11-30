@@ -35,6 +35,8 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.fcrepo.persistence.api.exceptions.ObjectExistsInOcflIndexException;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidQueryException;
@@ -113,6 +115,21 @@ public class ReindexService {
                 final var headers = new ResourceHeadersAdapter(storageHeaders);
 
                 final var fedoraId = headers.getId();
+
+                if (config.isRebuildContinue()) {
+                    try {
+                        ocflIndex.getMapping(tx, fedoraId);
+                        // We got the mapping, so we can skip this resource.
+                        throw new ObjectExistsInOcflIndexException(
+                                String.format("Skipping indexing of %s in transaction %s, because" +
+                                " it already exists in the index.", fedoraId, tx.getId())
+                        );
+                    } catch (FedoraOcflMappingNotFoundException e) {
+                        LOGGER.debug("Indexing object {} in transaction {}, because it does not yet exist in the " +
+                                "index.", fedoraId, tx.getId());
+                    }
+                }
+
                 fedoraIds.add(fedoraId);
                 if (headers.isArchivalGroup() || headers.isObjectRoot()) {
                     rootId.set(fedoraId);

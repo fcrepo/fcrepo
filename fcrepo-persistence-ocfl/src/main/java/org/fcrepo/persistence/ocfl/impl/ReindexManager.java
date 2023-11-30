@@ -44,6 +44,8 @@ public class ReindexManager {
 
     private final AtomicInteger errorCount;
 
+    private final AtomicInteger skipCount;
+
     private final ReindexService reindexService;
 
     private final long batchSize;
@@ -79,6 +81,7 @@ public class ReindexManager {
         workers = new ArrayList<>();
         completedCount = new AtomicInteger(0);
         errorCount = new AtomicInteger(0);
+        skipCount = new AtomicInteger(0);
 
         final var workerCount = config.getReindexingThreads();
 
@@ -144,10 +147,12 @@ public class ReindexManager {
      * Update the master list of reindexing states.
      * @param batchSuccessful how many items were completed successfully in the last batch.
      * @param batchErrors how many items had an error in the last batch.
+     * @param batchSkipped how many items were skipped in the last batch.
      */
-    public void updateComplete(final int batchSuccessful, final int batchErrors) {
+    public void updateComplete(final int batchSuccessful, final int batchErrors, final int batchSkipped) {
         completedCount.addAndGet(batchSuccessful);
         errorCount.addAndGet(batchErrors);
+        skipCount.addAndGet(batchSkipped);
     }
 
     /**
@@ -162,6 +167,13 @@ public class ReindexManager {
      */
     public int getErrorCount() {
         return errorCount.get();
+    }
+
+    /**
+     * @return the count of items skipped in this run.
+     */
+    public int getSkippedCount() {
+        return skipCount.get();
     }
 
     /**
@@ -190,10 +202,11 @@ public class ReindexManager {
                     TimeUnit.SECONDS.sleep(REPORTING_INTERVAL_SECS);
                     final var complete = completedCount.get();
                     final var errored = errorCount.get();
+                    final var skipped = skipCount.get();
                     final var now = Instant.now();
                     final var duration = Duration.between(startTime, now);
-                    LOGGER.info("Index rebuild progress: Complete: {}; Errored: {}; Time: {}; Rate: {}/s",
-                            complete, errored, getDurationMessage(duration),
+                    LOGGER.info("Index rebuild progress: Complete: {}; Errored: {}; Skipped: {}, Time: {}; Rate: {}/s",
+                            complete, errored, skipped, getDurationMessage(duration),
                             (complete + errored) / duration.getSeconds());
                 }
             } catch (final InterruptedException e) {

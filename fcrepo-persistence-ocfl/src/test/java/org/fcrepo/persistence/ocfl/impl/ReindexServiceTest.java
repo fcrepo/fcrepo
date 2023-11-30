@@ -5,6 +5,8 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
@@ -19,8 +21,10 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 import edu.wisc.library.ocfl.api.OcflRepository;
@@ -30,6 +34,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.storage.ocfl.exception.ValidationException;
@@ -39,6 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 /**
@@ -87,7 +93,14 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
         when(propsConfig.getReindexingThreads()).thenReturn(2L);
         when(fedoraConfig.isRebuildValidation()).thenReturn(true);
-        reindexManager = new ReindexManager(repository.listObjectIds(),
+        reindexManager = getReindexManager();
+    }
+
+    /**
+     * @return Get a new ReindexManager.
+     */
+    private ReindexManager getReindexManager() {
+        return new ReindexManager(repository.listObjectIds(),
                 reindexService, propsConfig, txManager, new DbTransactionExecutor());
     }
 
@@ -128,6 +141,78 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
 
         verify(transaction, times(2)).commit();
+        verify(searchIndex).doSearch(any(SearchParameters.class));
+    }
+
+    @Test
+    public void testRebuildWithContinue() throws Exception {
+        final var session = persistentStorageSessionManager.getSession(transaction);
+
+        final int numberContainers = 25;
+        final Map<String, FedoraId> result = new HashMap<>();
+        for (int i = 0; i < numberContainers; i++) {
+            final var id = UUID.randomUUID().toString();
+            final FedoraId containerId = FedoraId.create(id);
+            result.put(id, containerId);
+            createResource(session, containerId, false);
+        }
+
+        session.prepare();
+        session.commit();
+
+        for (final var idMap : result.entrySet()) {
+            assertHasOcflId(idMap.getKey(), idMap.getValue());
+        }
+
+        ocflIndex.reset();
+
+        for (final var idMap : result.entrySet()) {
+            assertDoesNotHaveOcflId(idMap.getValue());
+        }
+
+        // Fail the validation on a random object.
+        final var random = new Random();
+        final var idList = new ArrayList<>(result.values());
+        final var randomId = idList.get(random.nextInt(idList.size()));
+        doThrow(ValidationException.create(List.of("validation errors")))
+                .when(objectValidator).validate(randomId.getFullId(), false);
+
+        reindexManager.start();
+        reindexManager.shutdown();
+
+        final Map<String, FedoraId> missingResults = new HashMap<>();
+
+        for (final var idMap : result.entrySet()) {
+            try {
+                assertHasOcflId(idMap.getKey(), idMap.getValue());
+            } catch (final FedoraOcflMappingNotFoundException e) {
+                missingResults.put(idMap.getKey(), idMap.getValue());
+            }
+        }
+
+        assertThat(missingResults.size(), greaterThan(0));
+
+        // Clear the exception
+        Mockito.reset(objectValidator);
+
+        // Rerun the reindex with continue set.
+        when(fedoraConfig.isRebuildContinue()).thenReturn(true);
+        // Get a new ReindexManager to regenerate the worker threads.
+        reindexManager = getReindexManager();
+        reindexManager.start();
+        reindexManager.shutdown();
+
+        // Assert all the results are indexed.
+        for (final var idMap : result.entrySet()) {
+            assertHasOcflId(idMap.getKey(), idMap.getValue());
+        }
+
+        verify(containmentIndex, times(numberContainers)).addContainedBy(any(Transaction.class),
+                eq(FedoraId.getRepositoryRootId()), any(FedoraId.class), any(Instant.class), isNull());
+        verify(searchIndex, times(numberContainers))
+                .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
+
+        verify(transaction, times(numberContainers + 1)).commit();
         verify(searchIndex).doSearch(any(SearchParameters.class));
     }
 

@@ -41,6 +41,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_REBUILD_VALIDATION = "fcrepo.rebuild.validation";
     private static final String FCREPO_REBUILD_VALIDATION_FIXITY = "fcrepo.rebuild.validation.fixity";
     private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
+    private static final String FCREPO_REBUILD_CONTINUE = "fcrepo.rebuild.continue";
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
     private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
     private static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
@@ -100,6 +101,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("${" + FCREPO_REBUILD_ON_START + ":false}")
     private boolean rebuildOnStart;
+
+    @Value("${" + FCREPO_REBUILD_CONTINUE + ":false}")
+    private boolean rebuildContinue;
 
     @Value("${" + FCREPO_JMS_BASEURL + ":#{null}}")
     private String jmsBaseUrl;
@@ -311,6 +315,20 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public void setRebuildOnStart(final boolean rebuildOnStart) {
         this.rebuildOnStart = rebuildOnStart;
+    }
+
+    /**
+     * @return true if we should run a rebuild to add those resources missing from the indexes.
+     */
+    public boolean isRebuildContinue() {
+        return rebuildContinue;
+    }
+
+    /**
+     * @param rebuildContinue A boolean flag indicating whether or not to continue a rebuild on start
+     */
+    public void setRebuildContinue(final boolean rebuildContinue) {
+        this.rebuildContinue = rebuildContinue;
     }
 
     /**
