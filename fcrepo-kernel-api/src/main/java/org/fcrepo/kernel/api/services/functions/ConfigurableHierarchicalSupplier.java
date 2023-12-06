@@ -22,9 +22,6 @@ import org.fcrepo.config.FedoraPropsConfig;
 @Component
 public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
 
-    private final int length;
-    private final int count;
-
     @Inject
     protected FedoraPropsConfig fedoraPropsConfig;
 
@@ -32,10 +29,7 @@ public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
      * Mint a unique identifier by default using defaults or
      * if set, use the length and count from fedora properties
      */
-    @Inject
     public ConfigurableHierarchicalSupplier() {
-        length = fedoraPropsConfig.getFcrepoPidMinterLength();
-        count = fedoraPropsConfig.getFcrepoPidMinterCount();
     }
 
     /**
@@ -45,11 +39,12 @@ public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
      */
     @Override
     public String get() {
-        //final int length = fedoraPropsConfig.getFcrepoPidMinterLength();
-        //final int count = fedoraPropsConfig.getFcrepoPidMinterCount();
-
         final String s = randomUUID().toString();
         final String id;
+
+        final int length = fedoraPropsConfig.getFcrepoPidMinterLength();
+        final int count = fedoraPropsConfig.getFcrepoPidMinterCount();
+
         if (count > 0 && length > 0) {
             final StringJoiner joiner = new StringJoiner("/", "", "/" + s);
 

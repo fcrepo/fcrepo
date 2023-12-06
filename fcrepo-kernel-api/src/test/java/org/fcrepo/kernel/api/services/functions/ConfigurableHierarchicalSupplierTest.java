@@ -6,10 +6,13 @@
 package org.fcrepo.kernel.api.services.functions;
 
 import static org.junit.Assert.assertEquals;
-import org.fcrepo.config.FedoraPropsConfig;
-import org.junit.Before;;
-
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.test.context.TestPropertySource;
+
 
 /**
  * <p>
@@ -18,14 +21,14 @@ import org.junit.Test;
  *
  * @author rdfloyd
  */
-public class ConfigurableHierarchicalSupplierTest {
-
-    private FedoraPropsConfig fedoraPropsConfig;
-
-    @Before
-    public void setUp() {
-        fedoraPropsConfig = new FedoraPropsConfig();
-    }
+@SpringBootTest
+@SpringBootConfiguration
+@RunWith(SpringJUnit4ClassRunner.class)
+@TestPropertySource(properties = {
+    "fcrepo.pid.minter.length=2",
+    "fcrepo.pid.minter.count=4"
+})
+public abstract class ConfigurableHierarchicalSupplierTest {
 
     @Test
     public void testGet() {
@@ -47,8 +50,6 @@ public class ConfigurableHierarchicalSupplierTest {
 
     @Test
     public void testGetIdPairtreeParams() {
-        fedoraPropsConfig.setFcrepoPidMinterLength(2);
-        fedoraPropsConfig.setFcrepoPidMinterCount(4);
         final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
         final String id = defaultPidMinter.get();
         // With (desiredLength > 0 && desiredCount > 0) check to see that id contains (count + 1) parts
