@@ -56,7 +56,7 @@
     <jetty.version>9.4.44.v20210927</jetty.version>
     <jgroups.version>5.1.9.Final</jgroups.version>
     <jsonld.version>0.13.3</jsonld.version>
-    <logback.version>1.2.6</logback.version>
+    <logback.version>1.2.13</logback.version>
     <micrometer.version>1.7.4</micrometer.version>
     <netty.version>4.1.68.Final</netty.version>
     <ocfl-java.version>1.5.0</ocfl-java.version>
