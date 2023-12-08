@@ -58,7 +58,6 @@ public class AbstractResource {
     @Optional
     protected Supplier<String> pidMinter;
 
-    @Inject
     protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
 
 }

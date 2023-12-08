@@ -6,13 +6,12 @@
 package org.fcrepo.kernel.api.services.functions;
 
 import static org.junit.Assert.assertEquals;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 import org.junit.Test;
+import org.junit.Before;
 import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.test.context.TestPropertySource;
-
+import org.mockito.junit.MockitoJUnitRunner;
+import org.fcrepo.config.FedoraPropsConfig;;
 
 /**
  * <p>
@@ -21,22 +20,19 @@ import org.springframework.test.context.TestPropertySource;
  *
  * @author rdfloyd
  */
-@SpringBootTest
-@SpringBootConfiguration
-@RunWith(SpringJUnit4ClassRunner.class)
-@TestPropertySource(properties = {
-    "fcrepo.pid.minter.length=2",
-    "fcrepo.pid.minter.count=4"
-})
-public abstract class ConfigurableHierarchicalSupplierTest {
+@RunWith(MockitoJUnitRunner.Silent.class)
+public class ConfigurableHierarchicalSupplierTest {
 
-    @Test
-    public void testGet() {
-        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
-        final String id = defaultPidMinter.get();
-        // No pairtrees is default; with no args check to see that id contains just the 1 pid part
-        final int parts = (id.split("/").length);
-        assertEquals(1, parts);
+    private final FedoraPropsConfig propsConfig = new FedoraPropsConfig();
+
+    private final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
+
+    @Before
+    public void setUp() {
+        // Need to set the defaults
+        propsConfig.setFcrepoPidMinterLength(0);
+        propsConfig.setFcrepoPidMinterCount(0);
+        setField(defaultPidMinter, "fedoraPropsConfig", propsConfig);
     }
 
     @Test
@@ -50,6 +46,9 @@ public abstract class ConfigurableHierarchicalSupplierTest {
 
     @Test
     public void testGetIdPairtreeParams() {
+        // Alter the settings for this test.
+        propsConfig.setFcrepoPidMinterLength(2);
+        propsConfig.setFcrepoPidMinterCount(4);
         final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
         final String id = defaultPidMinter.get();
         // With (desiredLength > 0 && desiredCount > 0) check to see that id contains (count + 1) parts
