@@ -37,7 +37,6 @@ public class ConfigurableHierarchicalSupplierTest {
 
     @Test
     public void testGetIdNoPairtree() {
-        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
         final String id = defaultPidMinter.get();
         // With (desiredLength,desiredCount=0), check to see that id contains 1 part and no slashes
         final int parts = (id.split("/").length);
@@ -49,7 +48,6 @@ public class ConfigurableHierarchicalSupplierTest {
         // Alter the settings for this test.
         propsConfig.setFcrepoPidMinterLength(2);
         propsConfig.setFcrepoPidMinterCount(4);
-        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
         final String id = defaultPidMinter.get();
         // With (desiredLength > 0 && desiredCount > 0) check to see that id contains (count + 1) parts
         final int parts = (id.split("/").length);
