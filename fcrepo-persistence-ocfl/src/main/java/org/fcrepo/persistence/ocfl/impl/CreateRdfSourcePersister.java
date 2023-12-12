@@ -64,6 +64,9 @@ class CreateRdfSourcePersister extends AbstractRdfSourcePersister {
                 }
             }
             rootObjectId = resourceId;
+        } else if (isArchivalPart && resourceId.equals(archivalGroupId.get())) {
+            throw new PersistentItemConflictException("Changing from an ArchivalGroup to an Atomic resource is not " +
+                                                      "permitted");
         } else {
             rootObjectId = archivalGroupId.orElseGet(resourceId::asBaseId);
         }
