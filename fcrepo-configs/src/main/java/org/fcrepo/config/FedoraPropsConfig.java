@@ -47,6 +47,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
     public static final String FCREPO_JMS_ENABLED = "fcrepo.jms.enabled";
     private static final String FCREPO_EVENT_THREADS = "fcrepo.event.threads";
+    public static final String FCREPO_TRANSACTION_ON_CONFLICT = "fcrepo.response.include.transaction";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String LOG_DIR_DEFAULT_VALUE = "logs";
@@ -137,6 +138,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("${fcrepo.banner.enabled:true}")
     private boolean bannerEnabled;
+
+    @Value("${" + FCREPO_TRANSACTION_ON_CONFLICT + ":false}")
+    private boolean includeTransactionOnConflict;
 
 
     @PostConstruct
@@ -416,6 +420,20 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public boolean getBannerEnabled() {
         return bannerEnabled;
+    }
+
+    /**
+     * @return if transaction ids should be included in conflict error responses
+     */
+    public boolean includeTransactionOnConflict() {
+        return includeTransactionOnConflict;
+    }
+
+    /**
+     * @param includeTransactionOnConflict if transaction ids should be included in conflict error responses
+     */
+    public void setIncludeTransactionOnConflict(final boolean includeTransactionOnConflict) {
+        this.includeTransactionOnConflict = includeTransactionOnConflict;
     }
 
 }

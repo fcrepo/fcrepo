@@ -14,6 +14,7 @@ import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.sql.DataSource;
 
+import com.zaxxer.hikari.HikariConfig;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,11 +55,14 @@ public class DatabaseConfig extends BasePropsConfig {
     @Value("${fcrepo.db.password:}")
     private String dbPassword;
 
-    @Value("${fcrepo.db.max.pool.size:10}")
+    @Value("${fcrepo.db.max.pool.size:#{null}}")
     private Integer maxPoolSize;
 
-    @Value("${fcrepo.db.connection.checkout.timeout:30000}")
+    @Value("${fcrepo.db.connection.checkout.timeout:#{null}}")
     private Integer checkoutTimeout;
+
+    @Value("${fcrepo.db.custom.properties:#{null}}")
+    private String customDbProperties;
 
     private static final Map<String, String> DB_DRIVER_MAP = Map.of(
             "h2", "org.h2.Driver",
@@ -78,6 +82,7 @@ public class DatabaseConfig extends BasePropsConfig {
                         return source.toInstant(ZoneOffset.UTC);
                     }
                 });
+
     }
 
     @Bean
@@ -89,13 +94,39 @@ public class DatabaseConfig extends BasePropsConfig {
         LOGGER.info("JDBC Password length: {}", dbPassword == null ? 0 : dbPassword.length());
         LOGGER.info("Using database driver: {}", driver);
 
-        final var dataSource = new HikariDataSource();
-        dataSource.setDriverClassName(driver);
-        dataSource.setJdbcUrl(dbUrl);
-        dataSource.setUsername(dbUser);
-        dataSource.setPassword(dbPassword);
-        dataSource.setConnectionTimeout(checkoutTimeout);
-        dataSource.setMaximumPoolSize(maxPoolSize);
+        final HikariConfig config;
+        if (customDbProperties != null) {
+            config = new HikariConfig(customDbProperties);
+            LOGGER.info("Using an external configuration file for Hikari: {}", customDbProperties);
+        } else {
+            config = new HikariConfig();
+        }
+        if (checkoutTimeout != null) {
+            if (config.getConnectionTimeout() != 30000) {
+                LOGGER.warn(
+                        "Overriding HikariCP connectionTimeout setting in file from {} to {} ",
+                        config.getConnectionTimeout(),
+                        checkoutTimeout
+                );
+            }
+            config.setConnectionTimeout(checkoutTimeout);
+        }
+        if (maxPoolSize != null) {
+            if (config.getMaximumPoolSize() != 10) {
+                LOGGER.warn(
+                        "Overriding HikariCP maximumPoolSize setting in file from {} to {} ",
+                        config.getMaximumPoolSize(),
+                        maxPoolSize
+                );
+            }
+            config.setMaximumPoolSize(maxPoolSize);
+        }
+        config.setDriverClassName(driver);
+        config.setJdbcUrl(dbUrl);
+        config.setUsername(dbUser);
+        config.setPassword(dbPassword);
+
+        final var dataSource = new HikariDataSource(config);
 
         flyway(dataSource);
 
