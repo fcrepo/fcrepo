@@ -414,4 +414,24 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
         assertEquals(CREATED.getStatusCode(), getStatus(put));
     }
 
+    @Test
+    public void testOverwriteArchiveGroupWithoutAGLink() throws IOException {
+        final var agHeader = "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"";
+        final HttpPost post = postObjMethod();
+        post.setHeader(LINK, agHeader);
+        final String parent;
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            parent = getLocation(response);
+        }
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(parent)));
+
+        final HttpDelete delete = new HttpDelete(parent);
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
+
+        final HttpPut put = new HttpPut(parent);
+        put.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
+        put.addHeader(HTTP_HEADER_OVERWRITE_TOMBSTONE, "true");
+        assertEquals(CONFLICT.getStatusCode(), getStatus(put));
+    }
 }
