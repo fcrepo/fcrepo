@@ -51,7 +51,8 @@ class CreateRdfSourcePersister extends AbstractRdfSourcePersister {
         final FedoraId rootObjectId;
 
         if (archivalGroup) {
-            //if archival group, ensure that there are no archival group ancestors
+            // if archival group, ensure that there are no archival group ancestors
+            // unless this is the root and is overwriting a tombstone of an archive group
             if (isArchivalPart) {
                 final var ancestorId = archivalGroupId.get();
                 final var headers = session.getHeaders(ancestorId, null);
