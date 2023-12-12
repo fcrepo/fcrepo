@@ -47,13 +47,21 @@ class CreateRdfSourcePersister extends AbstractRdfSourcePersister {
         final boolean archivalGroup = createResourceOp.isArchivalGroup();
 
         final var archivalGroupId = findArchivalGroupInAncestry(resourceId, session);
+        boolean isArchivalPart = archivalGroupId.isPresent();
         final FedoraId rootObjectId;
 
         if (archivalGroup) {
             //if archival group, ensure that there are no archival group ancestors
-            if (archivalGroupId.isPresent()) {
-                throw new PersistentItemConflictException("Nesting an ArchivalGroup within an ArchivalGroup is not " +
+            if (isArchivalPart) {
+                final var ancestorId = archivalGroupId.get();
+                final var headers = session.getHeaders(ancestorId, null);
+                if (headers.isDeleted() && ancestorId.equals(resourceId)) {
+                    isArchivalPart = false;
+                } else {
+                    throw new PersistentItemConflictException(
+                        "Nesting an ArchivalGroup within an ArchivalGroup is not " +
                         "permitted");
+                }
             }
             rootObjectId = resourceId;
         } else {
@@ -62,7 +70,7 @@ class CreateRdfSourcePersister extends AbstractRdfSourcePersister {
 
         final String ocflObjectId = mapToOcflId(operation.getTransaction(), rootObjectId);
         final OcflObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
-        persistRDF(ocflObjectSession, operation, rootObjectId.asBaseId(), archivalGroupId.isPresent());
+        persistRDF(ocflObjectSession, operation, rootObjectId.asBaseId(), isArchivalPart);
         ocflIndex.addMapping(operation.getTransaction(), resourceId.asResourceId(), rootObjectId.asBaseId(),
                 ocflObjectId);
     }
