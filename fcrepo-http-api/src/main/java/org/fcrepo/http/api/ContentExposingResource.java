@@ -101,6 +101,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.PreconditionException;
@@ -263,13 +264,28 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return {@link RdfStream}
      */
     private RdfStream getResourceTriples(final int limit, final FedoraResource resource) {
-
         final LdpPreferTag ldpPreferences = getLdpPreferTag();
 
         final List<Stream<Triple>> embedStreams = new ArrayList<>();
 
-        embedStreams.add(resourceTripleService.getResourceTriples(
-                transaction(), resource, ldpPreferences, limit));
+        try {
+            embedStreams.add(resourceTripleService.getResourceTriples(
+                    transaction(), resource, ldpPreferences, limit));
+        } catch (ItemNotFoundException e) {
+            if (resource instanceof Tombstone && ((Tombstone) resource).getDeletedObject().isMemento()) {
+                // There is a version created when the object is deleted.
+                // This memento has no content file so an ItemNotFound is thrown. Generate a new 410 Gone response.
+                final var orig_resource = ((Tombstone) resource).getDeletedObject();
+                final var timeMap = identifierConverter().toExternalId(
+                        orig_resource.getFedoraId().asTimemap().toString()
+                );
+                final var tombstone = identifierConverter().toExternalId(
+                        resource.getFedoraId().asTombstone().toString()
+                );
+                throw new TombstoneException(orig_resource, tombstone, timeMap);
+            }
+            throw e;
+        }
 
         // Embed the children of this object
         if (ldpPreferences.displayEmbed()) {
@@ -384,7 +400,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected FedoraResource resource() {
         if (fedoraResource == null) {
-            fedoraResource = getResourceFromPath(externalPath());
+            try {
+                fedoraResource = getResourceFromPath(externalPath());
+            } catch (TombstoneException e) {
+                // We now want to display Mementos for a deleted object, so catch the Tombstone exception.
+                fedoraResource = e.getFedoraResource();
+                if (! fedoraResource.isMemento()) {
+                    // Rethrow the exception if we are not requesting a Memento.
+                    throw e;
+                }
+            }
         }
         return fedoraResource;
     }
@@ -515,7 +540,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         if (resource.isMemento()) {
             options = "GET,HEAD,OPTIONS";
         } else if (resource instanceof TimeMap) {
-            options = "POST,HEAD,GET,OPTIONS";
+            options = (resource.getOriginalResource() instanceof Tombstone ? "HEAD,GET,OPTIONS" :
+                    "POST,HEAD,GET,OPTIONS");
             addAcceptPostHeader();
         } else if (resource instanceof Binary) {
             options = "DELETE,HEAD,GET,PUT,OPTIONS";
@@ -700,7 +726,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addHeader("ETag", etag.toString());
         }
 
-        if (!resource.getStateToken().isEmpty()) {
+        if (resource.getStateToken() != null && !resource.getStateToken().isEmpty()) {
             //State Tokens, while not used for caching per se,  nevertheless belong
             //here since we can conveniently reuse the value of the etag for
             //our state token
@@ -1042,7 +1068,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             if (originalResource instanceof Tombstone) {
                 final String tombstoneUri = identifierConverter().toExternalId(
                             originalResource.getFedoraId().asTombstone().getFullId());
-                throw new TombstoneException(fedoraResource, tombstoneUri);
+                final String timemapUri = identifierConverter().toExternalId(
+                        originalResource.getTimeMap().getFedoraId().getFullId());
+                throw new TombstoneException(fedoraResource, tombstoneUri, timemapUri);
             }
 
             return fedoraResource;

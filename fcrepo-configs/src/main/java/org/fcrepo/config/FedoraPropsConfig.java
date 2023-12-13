@@ -47,6 +47,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
     public static final String FCREPO_JMS_ENABLED = "fcrepo.jms.enabled";
     private static final String FCREPO_EVENT_THREADS = "fcrepo.event.threads";
+    public static final String FCREPO_TRANSACTION_ON_CONFLICT = "fcrepo.response.include.transaction";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String LOG_DIR_DEFAULT_VALUE = "logs";
@@ -144,9 +145,18 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.pid.minter.count:0}")
     private int fcrepoPidMinterCount;
 
+    @Value("${" + FCREPO_TRANSACTION_ON_CONFLICT + ":false}")
+    private boolean includeTransactionOnConflict;
+
+
 
     @PostConstruct
     private void postConstruct() throws IOException {
+        LOGGER.info("Fedora is an open source project supported entirely by it's users. To continue the " +
+                "on-going maintenance of the software and ensure Fedora is meeting the needs of the " +
+                "community, we are working to gather information on current installations. We strongly " +
+                "encourage all users to register their instance in the DuraSpace Community Supported " +
+                "Program Registry hosted by LYRASIS at https://registry.lyrasis.org/");
         LOGGER.info("Fedora home: {}", fedoraHome);
         LOGGER.debug("Fedora home data: {}", fedoraData);
         try {
@@ -447,5 +457,19 @@ public class FedoraPropsConfig extends BasePropsConfig {
         this.fcrepoPidMinterCount = count;
     }
 
+
+    /**
+     * @return if transaction ids should be included in conflict error responses
+     */
+    public boolean includeTransactionOnConflict() {
+        return includeTransactionOnConflict;
+    }
+
+    /**
+     * @param includeTransactionOnConflict if transaction ids should be included in conflict error responses
+     */
+    public void setIncludeTransactionOnConflict(final boolean includeTransactionOnConflict) {
+        this.includeTransactionOnConflict = includeTransactionOnConflict;
+    }
 
 }

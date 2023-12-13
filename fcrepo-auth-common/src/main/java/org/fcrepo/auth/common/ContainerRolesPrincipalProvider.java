@@ -9,6 +9,7 @@ import static java.util.Collections.emptySet;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.io.Serializable;
 import java.security.Principal;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,7 +32,7 @@ public class ContainerRolesPrincipalProvider extends AbstractPrincipalProvider {
     /**
      * @author Kevin S. Clarke
      */
-    public static class ContainerRolesPrincipal implements Principal {
+    public static class ContainerRolesPrincipal implements Principal, Serializable {
 
         private final String name;
 

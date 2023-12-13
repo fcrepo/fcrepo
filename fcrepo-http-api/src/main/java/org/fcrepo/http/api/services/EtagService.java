@@ -52,8 +52,9 @@ public class EtagService {
     public String getRdfResourceEtag(final Transaction transaction, final FedoraResource resource,
                                      final LdpTriplePreferences prefers,
                                      final Collection<MediaType> acceptableMediaTypes) {
+        final String stateToken = (resource.getStateToken() != null ? resource.getStateToken() : "");
         // Start etag based on the current state of the fedora resource, using the state token
-        final StringBuilder etag = new StringBuilder(resource.getStateToken());
+        final StringBuilder etag = new StringBuilder(stateToken);
 
         // Factor in the requested mimetype(s)
         final String mimetype = acceptableMediaTypes.stream()

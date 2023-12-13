@@ -24,7 +24,7 @@
     <project_organization>fcrepo</project_organization>
     <fcrepo-storage-ocfl.version>6.4.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
-    <activemq.version>5.16.3</activemq.version>
+    <activemq.version>5.16.7</activemq.version>
     <aws.version>2.17.50</aws.version>
     <caffeine.version>3.0.4</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
@@ -34,8 +34,8 @@
     <failsafe.version>2.4.4</failsafe.version>
     <flyway.version>8.5.5</flyway.version>
     <flyway.test.version>7.0.0</flyway.test.version>
-    <guava.version>31.0.1-jre</guava.version>
-    <h2database.version>2.1.210</h2database.version>
+    <guava.version>32.0.0-jre</guava.version>
+    <h2database.version>2.2.220</h2database.version>
     <hikari.version>5.0.0</hikari.version>
     <hk2.version>2.6.1</hk2.version>
     <htmlunit.version>2.53.0</htmlunit.version>
@@ -48,15 +48,15 @@
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.core.version>2.3.0.1</jaxb.core.version>
     <jaxb.impl.version>2.3.1</jaxb.impl.version>
-    <jackson2.version>2.13.2</jackson2.version>
-    <jackson2.databind.version>2.13.4.1</jackson2.databind.version>
+    <jackson2.version>2.15.0</jackson2.version>
+    <jackson2.databind.version>2.15.0</jackson2.databind.version>
     <jboss-logging.version>3.4.2.Final</jboss-logging.version>
     <jena.version>4.2.0</jena.version>
     <jersey.version>2.35</jersey.version>
     <jetty.version>9.4.44.v20210927</jetty.version>
     <jgroups.version>5.1.9.Final</jgroups.version>
     <jsonld.version>0.13.3</jsonld.version>
-    <logback.version>1.2.6</logback.version>
+    <logback.version>1.2.13</logback.version>
     <micrometer.version>1.7.4</micrometer.version>
     <netty.version>4.1.68.Final</netty.version>
     <ocfl-java.version>1.5.0</ocfl-java.version>
@@ -64,12 +64,12 @@
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>1.10.0</shiro.version>
     <slf4j.version>1.7.32</slf4j.version>
-    <spring.version>5.3.20</spring.version>
+    <spring.version>5.3.27</spring.version>
     <xerces.version>2.12.2</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
-    <postgresql.version>42.4.1</postgresql.version>
+    <postgresql.version>42.4.3</postgresql.version>
     <mysql.version>8.0.28</mysql.version>
     <mariadb.version>2.7.4</mariadb.version>
     <!-- test gear -->

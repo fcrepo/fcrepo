@@ -17,14 +17,20 @@ import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.ext.ExceptionMapper;
+import java.net.URI;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.GONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
@@ -64,21 +70,33 @@ public class TombstoneExceptionMapperTest {
     @Test
     public void testExceptionWithUri() {
         final String tombstone = idConverter.toExternalId(fedoraId.asTombstone().getFullId());
-        final Response response = testObj.toResponse(new TombstoneException(mockResource, tombstone));
+        final String timemap = idConverter.toExternalId(fedoraId.resolve(FCR_VERSIONS).getFullId());
+        final Response response = testObj.toResponse(new TombstoneException(mockResource, tombstone, timemap));
         assertEquals(GONE.getStatusCode(), response.getStatus());
         assertTombstone(response, fedoraId.getFullIdPath(), tombstone);
+        final List<Link> links = Arrays.stream(response.getHeaderString(LINK).split(",")).map(Link::valueOf)
+                .collect(Collectors.toList());
+        assertLinkHeaderExists(links, timemap, "timemap");
     }
 
     private void assertTombstone(final Response response, final String tombstoneAt, final String tombstoneUri) {
         if (tombstoneUri == null) {
             assertNull(response.getHeaderString(LINK));
         } else {
-            final Link link = Link.valueOf(response.getHeaderString(LINK));
-            assertEquals(tombstoneUri, link.getUri().toString());
-            assertEquals("hasTombstone", link.getRel());
+            final List<Link> links = Arrays.stream(response.getHeaderString(LINK).split(",")).map(Link::valueOf)
+                    .collect(Collectors.toList());
+
+            assertLinkHeaderExists(links, tombstoneUri, "hasTombstone");
         }
         final String expectedString = "Discovered tombstone resource at " + tombstoneAt + ", departed at: " +
                 ISO_INSTANT.withZone(UTC).format(deleteTime);
         assertEquals(expectedString, response.getEntity().toString());
+    }
+
+    private void assertLinkHeaderExists(final List<Link> links, final String uri, final String rel) {
+        final URI uriUri = URI.create(uri);
+        if (links.stream().noneMatch(l -> l.getUri().equals(uriUri) && l.getRel().equals(rel))) {
+            fail(String.format("Did not find expected Link header with uri (%s) and rel (%s)", uri, rel));
+        }
     }
 }
