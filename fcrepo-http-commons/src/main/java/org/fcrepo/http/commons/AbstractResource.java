@@ -58,8 +58,6 @@ public class AbstractResource {
     @Optional
     protected Supplier<String> pidMinter;
 
-    // Mint non-hierarchical identifiers. To force pairtree creation as default, use
-    //  ConfigurableHierarchicalSupplier(int length, count) instead.
     protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
 
 }

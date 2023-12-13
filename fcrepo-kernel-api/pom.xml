@@ -16,7 +16,7 @@
       com.google.common.*,
       org.apache.jena.*,
       org.apache.commons.codec.binary,
-
+      javax.inject,
       *
     </osgi.import.packages>
     <osgi.export.packages>
@@ -64,6 +64,10 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
     </dependency>
+    <dependency>
+      <groupId>javax</groupId>
+      <artifactId>javaee-api</artifactId>
+    </dependency>
 
     <!-- test gear -->
     <dependency>
@@ -79,5 +83,11 @@
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
   </dependencies>
 </project>

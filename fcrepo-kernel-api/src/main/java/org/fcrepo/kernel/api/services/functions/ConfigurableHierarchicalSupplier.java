@@ -8,9 +8,10 @@ package org.fcrepo.kernel.api.services.functions;
 import org.springframework.stereotype.Component;
 
 import static java.util.UUID.randomUUID;
-
+import javax.inject.Inject;
 import java.util.StringJoiner;
 import java.util.stream.IntStream;
+import org.fcrepo.config.FedoraPropsConfig;
 
 /**
  * Unique value minter that creates hierarchical IDs from a UUID
@@ -21,32 +22,14 @@ import java.util.stream.IntStream;
 @Component
 public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
 
-    private static final int DEFAULT_LENGTH = 0;
-    private static final int DEFAULT_COUNT = 0;
-
-    private final int length;
-    private final int count;
-
+    @Inject
+    protected FedoraPropsConfig fedoraPropsConfig;
 
     /**
-     * Mint a hierarchical identifier with args to control length and count of the pairtree. A length or count of ZERO
-     * will return a non-hierarchical identifier.
-     *
-     * @param desiredLength the desired length of pairtree parts
-     * @param desiredCount the desired number of pairtree parts
-     */
-    public ConfigurableHierarchicalSupplier(final int desiredLength, final int desiredCount) {
-        length = desiredLength;
-        count = desiredCount;
-    }
-
-    /**
-     * Mint a unique identifier by default using defaults
-     *
+     * Mint a unique identifier by default using defaults or
+     * if set, use the length and count from fedora properties
      */
     public ConfigurableHierarchicalSupplier() {
-        length = DEFAULT_LENGTH;
-        count = DEFAULT_COUNT;
     }
 
     /**
@@ -56,9 +39,11 @@ public class ConfigurableHierarchicalSupplier implements UniqueValueSupplier {
      */
     @Override
     public String get() {
-
         final String s = randomUUID().toString();
         final String id;
+
+        final int length = fedoraPropsConfig.getFcrepoPidMinterLength();
+        final int count = fedoraPropsConfig.getFcrepoPidMinterCount();
 
         if (count > 0 && length > 0) {
             final StringJoiner joiner = new StringJoiner("/", "", "/" + s);

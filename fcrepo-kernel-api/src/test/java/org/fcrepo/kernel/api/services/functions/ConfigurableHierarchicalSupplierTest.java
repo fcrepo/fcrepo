@@ -6,8 +6,12 @@
 package org.fcrepo.kernel.api.services.functions;
 
 import static org.junit.Assert.assertEquals;
-
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 import org.junit.Test;
+import org.junit.Before;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.fcrepo.config.FedoraPropsConfig;;
 
 /**
  * <p>
@@ -16,21 +20,23 @@ import org.junit.Test;
  *
  * @author rdfloyd
  */
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class ConfigurableHierarchicalSupplierTest {
 
+    private final FedoraPropsConfig propsConfig = new FedoraPropsConfig();
 
-    @Test
-    public void testGet() {
-        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
-        final String id = defaultPidMinter.get();
-        // No pairtrees is default; with no args check to see that id contains just the 1 pid part
-        final int parts = (id.split("/").length);
-        assertEquals(1, parts);
+    private final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
+
+    @Before
+    public void setUp() {
+        // Need to set the defaults
+        propsConfig.setFcrepoPidMinterLength(0);
+        propsConfig.setFcrepoPidMinterCount(0);
+        setField(defaultPidMinter, "fedoraPropsConfig", propsConfig);
     }
 
     @Test
     public void testGetIdNoPairtree() {
-        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier(0, 0);
         final String id = defaultPidMinter.get();
         // With (desiredLength,desiredCount=0), check to see that id contains 1 part and no slashes
         final int parts = (id.split("/").length);
@@ -39,7 +45,9 @@ public class ConfigurableHierarchicalSupplierTest {
 
     @Test
     public void testGetIdPairtreeParams() {
-        final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier(2, 4);
+        // Alter the settings for this test.
+        propsConfig.setFcrepoPidMinterLength(2);
+        propsConfig.setFcrepoPidMinterCount(4);
         final String id = defaultPidMinter.get();
         // With (desiredLength > 0 && desiredCount > 0) check to see that id contains (count + 1) parts
         final int parts = (id.split("/").length);
