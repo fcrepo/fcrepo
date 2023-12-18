@@ -469,6 +469,7 @@ public class FedoraLdp extends ContentExposingResource {
             final String interactionModel = checkInteractionModel(links);
 
             FedoraResource resource = null;
+            final var isTombstoneOverwrite = new AtomicBoolean(false);
             final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
             final boolean resourceExists = doesResourceExist(transaction, fedoraId, true);
 
@@ -480,6 +481,7 @@ public class FedoraLdp extends ContentExposingResource {
 
                 resource = resource(overwriteTombstone);
                 if (resource instanceof Tombstone) {
+                    isTombstoneOverwrite.set(true);
                     resource = ((Tombstone) resource).getDeletedObject();
                 }
 
@@ -570,7 +572,8 @@ public class FedoraLdp extends ContentExposingResource {
                         if (resourceExists && !(resource() instanceof Tombstone)) {
                             replacePropertiesService.perform(transaction, getUserPrincipal(), fedoraId, model);
                         } else {
-                            createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model);
+                            createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model,
+                                                          isTombstoneOverwrite.get());
                             created.set(true);
                         }
                         transaction.commitIfShortLived();
