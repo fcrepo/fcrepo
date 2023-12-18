@@ -40,6 +40,11 @@ public interface CreateResourceService {
                  String contentType, String filename, long contentSize, List<String> linkHeaders,
                  Collection<URI> digest, InputStream requestBody, ExternalContent externalContent);
 
+    default void perform(Transaction tx, String userPrincipal, FedoraId fedoraId,
+                         List<String> linkHeaders, Model model) {
+        perform(tx, userPrincipal, fedoraId, linkHeaders, model, false);
+    }
+
     /**
      * Create a new RdfSource resource.
      *
@@ -48,8 +53,9 @@ public interface CreateResourceService {
      * @param fedoraId The internal identifier of the resource
      * @param linkHeaders The original LINK headers or null if none.
      * @param model The request body RDF as a Model
+     * @param isOverwrite if the new resource is overwriting a tombstone
      */
     void perform(Transaction tx, String userPrincipal, FedoraId fedoraId,
-            List<String> linkHeaders, Model model);
+            List<String> linkHeaders, Model model, boolean isOverwrite);
 
 }
