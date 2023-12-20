@@ -5,10 +5,20 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import org.fcrepo.kernel.api.operations.RdfSourceOperation;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.OverwriteTombstoneOperation;
 
 /**
  * @author mikejritter
  */
-public interface OverwriteRdfTombstoneOperation extends RdfSourceOperation, OverwriteTombstoneOperation {
+public class OverwriteRdfTombstoneOperation extends CreateRdfSourceOperationImpl
+    implements OverwriteTombstoneOperation {
+
+    protected OverwriteRdfTombstoneOperation(final Transaction transaction, final FedoraId rescId,
+                                             final String interactionModel, final RdfStream triples) {
+        super(transaction, rescId, interactionModel, triples);
+    }
+
 }
