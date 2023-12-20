@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Persistence for overwriting tombstones of an RDFSource
+ *
  * @author mikejritter
  */
 public class OverwriteRdfTombstonePersister extends AbstractRdfSourcePersister {
@@ -39,18 +41,15 @@ public class OverwriteRdfTombstonePersister extends AbstractRdfSourcePersister {
         final var resourceId = operation.getResourceId();
         log.debug("persisting {} to {}", resourceId, session);
 
-        final CreateResourceOperation createResourceOp = ((CreateResourceOperation)operation);
-        final boolean archivalGroup = createResourceOp.isArchivalGroup();
+        final OverwriteTombstoneOperation overwriteTombstoneOp = ((OverwriteTombstoneOperation) operation);
+        final boolean archivalGroup = overwriteTombstoneOp.isArchivalGroup();
 
         final var headers = session.getHeaders(resourceId, null);
         final FedoraId rootObjectId;
-
-        // Need to check interaction model preconditions:
-        //   - original is ArchivalGroup && create op is not ArchivalGroup -> 409
-        //   - original is AtomicResource && create op is ArchivalGroup -> 409
+        // Check to make sure the interaction model hasn't changed from an ArchivalGroup or Atomic Resource
         if (archivalGroup) {
             if (!headers.isArchivalGroup()) {
-                throw new PersistentItemConflictException("Changing from an Atomic Resource to an Archival Group is " +
+                throw new PersistentItemConflictException("Changing from an Atomic Resource to an ArchivalGroup is " +
                                                           "not permitted");
             }
 
