@@ -3,15 +3,12 @@
  * detailed in the LICENSE and NOTICE files at the root of the source
  * tree.
  */
-package org.fcrepo.kernel.impl.operations;
+package org.fcrepo.kernel.api.operations;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.OVERWRITE_TOMBSTONE;
 
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperationType;
-
 /**
- * OverwriteTombstoneOperation -- a special case of a Create operation
+ * Operation for overwriting the tombstone of an existing resource
  *
  * @author mikejritter
  */
