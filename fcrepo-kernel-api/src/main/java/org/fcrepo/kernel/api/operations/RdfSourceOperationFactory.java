@@ -32,22 +32,6 @@ public interface RdfSourceOperationFactory extends ResourceOperationFactory {
                                                   ServerManagedPropsMode serverManagedPropsMode);
 
     /**
-     * Get a builder for an operation to create an RDF source
-     *
-     * @param transaction the transaction
-     * @param rescId id of the resource targeted by the operation
-     * @param interactionModel interaction model for the resource being created
-     * @param serverManagedPropsMode server managed props mode
-     * @param isOverwrite if a tombstone is being overwritten
-     * @return new builder
-     */
-    CreateRdfSourceOperationBuilder createBuilder(Transaction transaction,
-                                                  FedoraId rescId,
-                                                  String interactionModel,
-                                                  ServerManagedPropsMode serverManagedPropsMode,
-                                                  boolean isOverwrite);
-
-    /**
      * Get a builder for an operation to update an RDF source
      *
      * @param transaction the transaction

@@ -93,7 +93,7 @@ public class CreateRdfSourceOperationBuilderTest {
         calendar.setTime(Date.from(MODIFIED_INSTANT));
         Modified_xsddatetime = new XSDDateTime(calendar);
         builder = new CreateRdfSourceOperationBuilderImpl(tx, RESOURCE_ID, RDF_SOURCE.toString(),
-                ServerManagedPropsMode.STRICT, false);
+                ServerManagedPropsMode.STRICT);
         model = ModelFactory.createDefaultModel();
         model.add(
                 ResourceFactory.createResource(RESOURCE_ID.getResourceId()),
@@ -214,7 +214,7 @@ public class CreateRdfSourceOperationBuilderTest {
 
     private RdfSourceOperation buildOperationWithRelaxProperties(final Model model) {
         builder = new CreateRdfSourceOperationBuilderImpl(tx, RESOURCE_ID, RDF_SOURCE.toString(),
-                ServerManagedPropsMode.RELAXED, false);
+                ServerManagedPropsMode.RELAXED);
         return builder.relaxedProperties(model).build();
     }
 

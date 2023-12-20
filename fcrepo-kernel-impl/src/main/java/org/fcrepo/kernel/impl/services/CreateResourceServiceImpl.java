@@ -179,13 +179,13 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
         ensureValidDirectContainer(fedoraId, interactionModel, model);
 
         final RdfSourceOperation createOp = rdfSourceOperationFactory
-                .createBuilder(tx, fedoraId, interactionModel, fedoraPropsConfig.getServerManagedPropsMode(),
-                               isOverwrite)
+                .createBuilder(tx, fedoraId, interactionModel, fedoraPropsConfig.getServerManagedPropsMode())
                 .parentId(parentId)
                 .triples(stream)
                 .relaxedProperties(model)
                 .archivalGroup(rdfTypes.contains(ARCHIVAL_GROUP.getURI()))
                 .userPrincipal(userPrincipal)
+                .isOverwrite(isOverwrite)
                 .build();
 
         lockParent(tx, pSession, parentId);

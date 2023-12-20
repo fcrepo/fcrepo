@@ -42,4 +42,10 @@ public interface CreateRdfSourceOperationBuilder extends RdfSourceOperationBuild
      */
     CreateRdfSourceOperationBuilder archivalGroup(boolean flag);
 
+    /**
+     * @param isOverwrite flag indicating if this resource is a tombstone and is being overwritten
+     * @return this builder
+     */
+    CreateRdfSourceOperationBuilder isOverwrite(boolean isOverwrite);
+
 }

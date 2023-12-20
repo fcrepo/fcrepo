@@ -33,21 +33,18 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
      * @param transaction the transaction
      * @param resourceId the internal identifier.
      * @param interactionModel interaction model
-     * @param isOverwrite overwrite tombstone
      * @param serverManagedPropsMode server managed props mode
      */
     public CreateRdfSourceOperationBuilderImpl(final Transaction transaction, final FedoraId resourceId,
                                                final String interactionModel,
-                                               final ServerManagedPropsMode serverManagedPropsMode,
-                                               final boolean isOverwrite) {
+                                               final ServerManagedPropsMode serverManagedPropsMode) {
         super(transaction, resourceId, interactionModel, serverManagedPropsMode);
-        this.isOverwrite = isOverwrite;
     }
 
     @Override
     public CreateRdfSourceOperation build() {
         final var operation =
-            isOverwrite ? new OverwriteRdfTombstoneOperationImpl(transaction, rescId, interactionModel, tripleStream)
+            isOverwrite ? new OverwriteRdfTombstoneOperation(transaction, rescId, interactionModel, tripleStream)
                         : new CreateRdfSourceOperationImpl(transaction, rescId, interactionModel, tripleStream);
         operation.setParentId(parentId);
         operation.setUserPrincipal(userPrincipal);
@@ -86,6 +83,12 @@ public class CreateRdfSourceOperationBuilderImpl extends AbstractRdfSourceOperat
     @Override
     public CreateRdfSourceOperationBuilder archivalGroup(final boolean flag) {
         this.archivalGroup = flag;
+        return this;
+    }
+
+    @Override
+    public CreateRdfSourceOperationBuilder isOverwrite(final boolean isOverwrite) {
+        this.isOverwrite = isOverwrite;
         return this;
     }
 

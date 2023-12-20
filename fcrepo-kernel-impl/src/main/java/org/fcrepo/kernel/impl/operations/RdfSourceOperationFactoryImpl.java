@@ -27,16 +27,7 @@ public class RdfSourceOperationFactoryImpl implements RdfSourceOperationFactory 
                                                          final FedoraId rescId,
                                                          final String interactionModel,
                                                          final ServerManagedPropsMode serverManagedPropsMode) {
-        return createBuilder(transaction, rescId, interactionModel, serverManagedPropsMode, false);
-    }
-
-    @Override
-    public CreateRdfSourceOperationBuilder createBuilder(final Transaction transaction, final FedoraId rescId,
-                                                         final String interactionModel,
-                                                         final ServerManagedPropsMode serverManagedPropsMode,
-                                                         final boolean isOverwrite) {
-        return new CreateRdfSourceOperationBuilderImpl(transaction, rescId, interactionModel, serverManagedPropsMode,
-                                                       isOverwrite);
+        return new CreateRdfSourceOperationBuilderImpl(transaction, rescId, interactionModel, serverManagedPropsMode);
     }
 
     @Override
