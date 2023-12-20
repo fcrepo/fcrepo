@@ -6,7 +6,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.OverwriteTombstoneOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
@@ -45,6 +45,13 @@ public class OverwriteRdfTombstonePersister extends AbstractRdfSourcePersister {
         final boolean archivalGroup = overwriteTombstoneOp.isArchivalGroup();
 
         final var headers = session.getHeaders(resourceId, null);
+        if (headers == null) {
+            throw new PersistentStorageException("Cannot overwrite tombstone of non-existent resource");
+        } else if (!headers.isDeleted()) {
+            throw new PersistentStorageException("Cannot overwrite tombstone of non-deleted resource");
+        }
+
+
         final FedoraId rootObjectId;
         // Check to make sure the interaction model hasn't changed from an ArchivalGroup or Atomic Resource
         if (archivalGroup) {
