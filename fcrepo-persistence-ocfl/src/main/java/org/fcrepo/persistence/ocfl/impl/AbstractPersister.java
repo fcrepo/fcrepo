@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Optional;
 
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.OVERWRITE_TOMBSTONE;
 
 /**
  * A base abstract persister class
@@ -125,7 +126,7 @@ abstract class AbstractPersister implements Persister {
         final var now = Instant.now();
 
         final ResourceHeadersImpl headers;
-        if (CREATE.equals(operation.getType())) {
+        if (CREATE.equals(operation.getType()) || OVERWRITE_TOMBSTONE.equals(operation.getType())) {
             final var createOperation = (CreateResourceOperation) operation;
             headers = ResourceHeaderUtils.newResourceHeaders(
                     createOperation.getParentId(),
