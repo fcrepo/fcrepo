@@ -394,7 +394,7 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testOverwriteArchiveGroupTombstone() throws IOException {
+    public void testOverwriteArchivalGroupTombstone() throws IOException {
         final var agHeader = "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"";
         final HttpPost post = postObjMethod();
         post.setHeader(LINK, agHeader);
@@ -415,7 +415,7 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testOverwriteArchiveGroupWithoutAGLink() throws IOException {
+    public void testOverwriteArchivalGroupInteractionModel() throws IOException {
         final var agHeader = "<http://fedora.info/definitions/v4/repository#ArchivalGroup>;rel=\"type\"";
         final HttpPost post = postObjMethod();
         post.setHeader(LINK, agHeader);
