@@ -47,34 +47,22 @@ class CreateRdfSourcePersister extends AbstractRdfSourcePersister {
         final boolean archivalGroup = createResourceOp.isArchivalGroup();
 
         final var archivalGroupId = findArchivalGroupInAncestry(resourceId, session);
-        boolean isArchivalPart = archivalGroupId.isPresent();
         final FedoraId rootObjectId;
 
         if (archivalGroup) {
             // if archival group, ensure that there are no archival group ancestors
-            // unless this is the root and is overwriting a tombstone of an archive group
-            if (isArchivalPart) {
-                final var ancestorId = archivalGroupId.get();
-                final var headers = session.getHeaders(ancestorId, null);
-                if (headers.isDeleted() && ancestorId.equals(resourceId)) {
-                    isArchivalPart = false;
-                } else {
-                    throw new PersistentItemConflictException(
-                        "Nesting an ArchivalGroup within an ArchivalGroup is not " +
+            if (archivalGroupId.isPresent()) {
+                throw new PersistentItemConflictException("Nesting an ArchivalGroup within an ArchivalGroup is not " +
                         "permitted");
-                }
             }
             rootObjectId = resourceId;
-        } else if (isArchivalPart && resourceId.equals(archivalGroupId.get())) {
-            throw new PersistentItemConflictException("Changing from an ArchivalGroup to an Atomic resource is not " +
-                                                      "permitted");
         } else {
             rootObjectId = archivalGroupId.orElseGet(resourceId::asBaseId);
         }
 
         final String ocflObjectId = mapToOcflId(operation.getTransaction(), rootObjectId);
         final OcflObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
-        persistRDF(ocflObjectSession, operation, rootObjectId.asBaseId(), isArchivalPart);
+        persistRDF(ocflObjectSession, operation, rootObjectId.asBaseId(), archivalGroupId.isPresent());
         ocflIndex.addMapping(operation.getTransaction(), resourceId.asResourceId(), rootObjectId.asBaseId(),
                 ocflObjectId);
     }
