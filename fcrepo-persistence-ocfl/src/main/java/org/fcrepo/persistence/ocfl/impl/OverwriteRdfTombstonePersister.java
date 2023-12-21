@@ -70,7 +70,8 @@ public class OverwriteRdfTombstonePersister extends AbstractRdfSourcePersister {
 
         final String ocflObjectId = mapToOcflId(operation.getTransaction(), rootObjectId);
         final OcflObjectSession ocflObjectSession = session.findOrCreateSession(ocflObjectId);
-        persistRDF(ocflObjectSession, operation, rootObjectId.asBaseId(), false);
+
+        persistRDF(ocflObjectSession, operation, rootObjectId.asBaseId(), headers.getArchivalGroupId() != null);
         ocflIndex.addMapping(operation.getTransaction(), resourceId.asResourceId(), rootObjectId.asBaseId(),
                              ocflObjectId);
     }

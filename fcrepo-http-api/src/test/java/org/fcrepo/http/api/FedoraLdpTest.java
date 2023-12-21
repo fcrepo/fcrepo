@@ -73,7 +73,6 @@ import java.net.URI;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -965,7 +964,7 @@ public class FedoraLdpTest {
                 eq(mockTransaction),
                 anyString(),
                 eq(pathId),
-                eq(Collections.emptyList()),
+                eq(null),
                 any(Model.class),
                 eq(false));
     }
