@@ -11,6 +11,7 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.api.operations.ResourceOperationType;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
+import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
@@ -46,7 +47,7 @@ public class OverwriteRdfTombstonePersister extends AbstractRdfSourcePersister {
 
         final var headers = session.getHeaders(resourceId, null);
         if (headers == null) {
-            throw new PersistentStorageException("Cannot overwrite tombstone of non-existent resource");
+            throw new PersistentItemNotFoundException("Resource does not exist");
         } else if (!headers.isDeleted()) {
             throw new PersistentStorageException("Cannot overwrite tombstone of non-deleted resource");
         }
