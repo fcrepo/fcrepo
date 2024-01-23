@@ -64,7 +64,7 @@
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>1.13.0</shiro.version>
     <slf4j.version>1.7.32</slf4j.version>
-    <spring.version>5.3.27</spring.version>
+    <spring.version>6.0.15</spring.version>
     <xerces.version>2.12.2</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
