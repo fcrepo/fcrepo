@@ -59,6 +59,7 @@ public class ResourceOperationEventBuilder implements EventBuilder {
     private static EventType mapOperationToEventType(final ResourceOperation operation) {
         switch (operation.getType()) {
             case CREATE:
+            case OVERWRITE_TOMBSTONE:
                 return EventType.RESOURCE_CREATION;
             case UPDATE:
             case UPDATE_HEADERS:

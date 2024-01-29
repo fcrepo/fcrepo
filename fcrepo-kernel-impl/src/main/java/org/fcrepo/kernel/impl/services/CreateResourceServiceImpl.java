@@ -163,7 +163,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
 
     @Override
     public void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
-            final List<String> linkHeaders, final Model model) {
+            final List<String> linkHeaders, final Model model, final boolean isOverwrite) {
         final PersistentStorageSession pSession = this.psManager.getSession(tx);
         checkAclLinkHeader(linkHeaders);
         // Locate a containment parent of fedoraId, if exists.
@@ -185,6 +185,7 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                 .relaxedProperties(model)
                 .archivalGroup(rdfTypes.contains(ARCHIVAL_GROUP.getURI()))
                 .userPrincipal(userPrincipal)
+                .isOverwrite(isOverwrite)
                 .build();
 
         lockParent(tx, pSession, parentId);

@@ -50,7 +50,7 @@ class CreateRdfSourcePersister extends AbstractRdfSourcePersister {
         final FedoraId rootObjectId;
 
         if (archivalGroup) {
-            //if archival group, ensure that there are no archival group ancestors
+            // if archival group, ensure that there are no archival group ancestors
             if (archivalGroupId.isPresent()) {
                 throw new PersistentItemConflictException("Nesting an ArchivalGroup within an ArchivalGroup is not " +
                         "permitted");

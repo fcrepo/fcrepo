@@ -27,7 +27,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Response;
 
-import static javax.ws.rs.core.HttpHeaders.ALLOW;
 import static javax.ws.rs.core.Response.noContent;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -75,8 +74,14 @@ public class FedoraTombstones extends ContentExposingResource {
             // If the resource is not deleted there is no tombstone.
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+
+        final Tombstone tombstone = (Tombstone) resource;
+        final var deletedResource = tombstone.getDeletedObject();
+        if (deletedResource.getArchivalGroupId().isPresent()) {
+            return Response.status(Response.Status.METHOD_NOT_ALLOWED).allow().build();
+        }
+
         try {
-            final Tombstone tombstone = (Tombstone) resource;
             LOGGER.info("Delete tombstone: {}", resource.getFedoraId());
             doInDbTxWithRetry(() -> {
                 purgeResourceService.perform(transaction(), tombstone.getDeletedObject(), getUserPrincipal());
@@ -107,7 +112,20 @@ public class FedoraTombstones extends ContentExposingResource {
 
     @OPTIONS
     public Response options() {
-        return Response.ok().header(ALLOW, "DELETE").build();
+        final var resource = resource();
+        if (!(resource instanceof Tombstone)) {
+            // If the resource is not deleted there is no tombstone.
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        final var response = Response.ok().allow();
+        final Tombstone tombstone = (Tombstone) resource;
+        final var deletedResource = tombstone.getDeletedObject();
+        if (deletedResource.getArchivalGroupId().isEmpty()) {
+            response.allow("DELETE");
+        }
+
+        return response.build();
     }
 
     @Override
@@ -126,6 +144,15 @@ public class FedoraTombstones extends ContentExposingResource {
     }
 
     private Response methodNotAllowed() {
-        return Response.status(Response.Status.METHOD_NOT_ALLOWED).header(ALLOW, "DELETE").build();
+        final var response = Response.status(Response.Status.METHOD_NOT_ALLOWED).allow();
+        final var resource = resource();
+        if (resource instanceof Tombstone) {
+            final var deleted = ((Tombstone) resource).getDeletedObject();
+            if (deleted.getArchivalGroupId().isEmpty()) {
+                response.allow("DELETE");
+            }
+        }
+
+        return response.build();
     }
 }

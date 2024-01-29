@@ -162,6 +162,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     static final String HTTP_HEADER_ACCEPT_PATCH = "Accept-Patch";
 
+    public static final String HTTP_HEADER_OVERWRITE_TOMBSTONE = "Overwrite-Tombstone";
+
     private static final String FCR_PREFIX = "fcr:";
     private static final Set<String> ALLOWED_FCR_PARTS = Set.of(FCR_METADATA, FCR_ACL);
 
@@ -398,10 +400,10 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
-    protected FedoraResource resource() {
+    protected FedoraResource resource(final boolean canReturnTombstone) {
         if (fedoraResource == null) {
             try {
-                fedoraResource = getResourceFromPath(externalPath());
+                fedoraResource = getResourceFromPath(externalPath(), canReturnTombstone);
             } catch (TombstoneException e) {
                 // We now want to display Mementos for a deleted object, so catch the Tombstone exception.
                 fedoraResource = e.getFedoraResource();
@@ -411,7 +413,12 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 }
             }
         }
+
         return fedoraResource;
+    }
+
+    protected FedoraResource resource() {
+        return resource(false);
     }
 
     protected FedoraResource reloadResource() {
@@ -1053,6 +1060,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return the fedora resource at the external path
      */
     private FedoraResource getResourceFromPath(final String externalPath) {
+        return getResourceFromPath(externalPath, false);
+    }
+
+    /**
+     * Get the FedoraResource for the resource at the external path
+     * @param externalPath the external path
+     * @param canReturnTombstone if tombstones can be returned
+     * @return the fedora resource at the external path
+     */
+    private FedoraResource getResourceFromPath(final String externalPath, final boolean canReturnTombstone) {
         final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
 
         try {
@@ -1065,7 +1082,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 originalResource = fedoraResource;
             }
 
-            if (originalResource instanceof Tombstone) {
+            if (originalResource instanceof Tombstone && !canReturnTombstone) {
                 final String tombstoneUri = identifierConverter().toExternalId(
                             originalResource.getFedoraId().asTombstone().getFullId());
                 final String timemapUri = identifierConverter().toExternalId(

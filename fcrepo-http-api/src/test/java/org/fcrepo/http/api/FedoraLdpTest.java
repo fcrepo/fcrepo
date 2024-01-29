@@ -939,7 +939,7 @@ public class FedoraLdpTest {
         when(resourceFactory.getResource(mockTransaction, FedoraId.create("some/path"))).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(null, emptyStream,
-                null, null, null, null);
+                null, null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
@@ -947,7 +947,7 @@ public class FedoraLdpTest {
     @Test(expected = CannotCreateResourceException.class)
     public void testPutNewObjectLdpr() throws Exception {
         testObj.createOrReplaceObjectRdf(null, null, null, null,
-                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
+                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null, null);
     }
 
     @Test
@@ -957,15 +957,16 @@ public class FedoraLdpTest {
         when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
+                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
         verify(createResourceService).perform(
                 eq(mockTransaction),
                 anyString(),
                 eq(pathId),
-                isNull(),
-                any(Model.class));
+                eq(null),
+                any(Model.class),
+                eq(false));
     }
 
     @Test
@@ -976,14 +977,13 @@ public class FedoraLdpTest {
         when(resourceFactory.getResource(mockTransaction, FedoraId.create("some/path"))).thenReturn(mockObject);
 
         final Response actual = testObj.createOrReplaceObjectRdf(TEXT_PLAIN_TYPE,
-                toInputStream("xyz", UTF_8), null, null, nonRDFSourceLink, null);
+                toInputStream("xyz", UTF_8), null, null, nonRDFSourceLink, null, null);
 
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
     @Test
     public void testPutReplaceRdfObject() throws Exception {
-
         setField(testObj, "externalPath", "some/path");
         final Container mockObject = (Container)setResource(Container.class);
         when(mockRequest.getMethod()).thenReturn("PUT");
@@ -991,7 +991,7 @@ public class FedoraLdpTest {
         when(resourceHelper.doesResourceExist(mockTransaction, pathId, true)).thenReturn(true);
 
         final Response actual = testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
+                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null, null);
 
         assertEquals(NO_CONTENT.getStatusCode(), actual.getStatus());
         verify(replacePropertiesService).perform(eq(mockTransaction), anyString(), eq(pathId),
@@ -1006,7 +1006,7 @@ public class FedoraLdpTest {
         when(resourceHelper.doesResourceExist(mockTransaction, pathId, true)).thenReturn(true);
 
         testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null);
+                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null, null);
 
     }
 

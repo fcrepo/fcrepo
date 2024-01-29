@@ -5,6 +5,8 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static org.fcrepo.http.api.ContentExposingResource.HTTP_HEADER_OVERWRITE_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -138,12 +140,13 @@ public class OcflPersistenceIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObj));
 
         final HttpDelete deleteTomb = new HttpDelete(id + "/" + FCR_TOMBSTONE);
-        assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTomb));
+        assertEquals(METHOD_NOT_ALLOWED.getStatusCode(), getStatus(deleteTomb));
 
         final HttpGet getObj = new HttpGet(id);
-        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObj));
+        assertEquals(GONE.getStatusCode(), getStatus(getObj));
 
         final HttpPut putObj = new HttpPut(id);
+        putObj.addHeader(HTTP_HEADER_OVERWRITE_TOMBSTONE, "true");
         assertEquals(CREATED.getStatusCode(), getStatus(putObj));
     }
 

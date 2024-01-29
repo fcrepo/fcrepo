@@ -107,6 +107,7 @@ import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.ExternalContent;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.services.FixityService;
 import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.config.DigestAlgorithm;
@@ -428,6 +429,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @param ifMatch the if-match value
      * @param rawLinks the raw link values
      * @param digest the digest header
+     * @param overwriteTombstoneRaw the Overwrite-Tombstone header
      * @return 204
      * @throws InvalidChecksumException if invalid checksum exception occurred
      * @throws MalformedRdfException if malformed rdf exception occurred
@@ -441,11 +443,13 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam(CONTENT_DISPOSITION) final String contentDispositionRaw,
             @HeaderParam("If-Match") final String ifMatch,
             @HeaderParam(LINK) final List<String> rawLinks,
-            @HeaderParam("Digest") final String digest)
+            @HeaderParam("Digest") final String digest,
+            @HeaderParam(HTTP_HEADER_OVERWRITE_TOMBSTONE) final String overwriteTombstoneRaw)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
                    PathNotFoundException {
         LOGGER.info("PUT to create resource with ID: {}", externalPath());
 
+        final var overwriteTombstone = Boolean.parseBoolean(overwriteTombstoneRaw);
         if (externalPath.contains("/" + FedoraTypes.FCR_VERSIONS)) {
             handleRequestDisallowedOnMemento();
 
@@ -464,6 +468,8 @@ public class FedoraLdp extends ContentExposingResource {
 
             final String interactionModel = checkInteractionModel(links);
 
+            FedoraResource resource = null;
+            final var isTombstoneOverwrite = new AtomicBoolean(false);
             final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath());
             final boolean resourceExists = doesResourceExist(transaction, fedoraId, true);
 
@@ -473,13 +479,19 @@ public class FedoraLdp extends ContentExposingResource {
                     throw new ClientErrorException("An If-Match header is required", 428);
                 }
 
-                final String resInteractionModel = resource().getInteractionModel();
+                resource = resource(overwriteTombstone);
+                if (resource instanceof Tombstone) {
+                    isTombstoneOverwrite.set(true);
+                    resource = ((Tombstone) resource).getDeletedObject();
+                }
+
+                final String resInteractionModel = resource.getInteractionModel();
                 if (StringUtils.isNoneBlank(resInteractionModel, interactionModel) &&
                         !Objects.equals(resInteractionModel, interactionModel)) {
                     throw new InteractionModelViolationException("Changing the interaction model " + resInteractionModel
                             + " to " + interactionModel + " is not allowed!");
                 }
-                evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
+                evaluateRequestPreconditions(request, servletResponse, resource, transaction);
             }
 
             if (isGhostNode(transaction(), fedoraId)) {
@@ -487,7 +499,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
 
             if (!resourceExists && fedoraId.isDescription()) {
-                // Can't PUT a description to a non-existant binary.
+                // Can't PUT a description to a non-existent binary.
                 final String message;
                 if (fedoraId.asBaseId().isRepositoryRoot()) {
                     message = "The root of the repository is not a binary, so /" + FCR_METADATA + " does not exist.";
@@ -498,11 +510,10 @@ public class FedoraLdp extends ContentExposingResource {
             }
 
             final var providedContentType = getSimpleContentType(requestContentType);
-
             final var created = new AtomicBoolean(false);
 
-                if ((resourceExists && resource() instanceof Binary) ||
-                        (!resourceExists && isBinary(interactionModel,
+            if ((resourceExists && resource instanceof Binary) ||
+                    (!resourceExists && isBinary(interactionModel,
                                 providedContentType,
                                 requestBodyStream != null && providedContentType != null,
                                 extContent != null))) {
@@ -527,7 +538,7 @@ public class FedoraLdp extends ContentExposingResource {
                     }
 
                     doInDbTx(() -> {
-                        if (resourceExists) {
+                        if (resourceExists && !(resource() instanceof Tombstone)) {
                             replaceBinariesService.perform(transaction,
                                     getUserPrincipal(),
                                     fedoraId,
@@ -558,13 +569,11 @@ public class FedoraLdp extends ContentExposingResource {
                             contentType, identifierConverter(), hasLenientPreferHeader());
 
                     doInDbTxWithRetry(() -> {
-                        if (resourceExists) {
-                            replacePropertiesService.perform(transaction,
-                                    getUserPrincipal(),
-                                    fedoraId,
-                                    model);
+                        if (resourceExists && !(resource() instanceof Tombstone)) {
+                            replacePropertiesService.perform(transaction, getUserPrincipal(), fedoraId, model);
                         } else {
-                            createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model);
+                            createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model,
+                                                          isTombstoneOverwrite.get());
                             created.set(true);
                         }
                         transaction.commitIfShortLived();

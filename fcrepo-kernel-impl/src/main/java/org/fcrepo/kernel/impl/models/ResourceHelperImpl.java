@@ -67,7 +67,7 @@ public class ResourceHelperImpl implements ResourceHelper {
             final PersistentStorageSession psSession = getSession(transaction);
 
             try {
-                // Resource ID for metadata or ACL contains their individual endopoints (ie. fcr:metadata, fcr:acl)
+                // Resource ID for metadata or ACL contains their individual endpoints (ie. fcr:metadata, fcr:acl)
                 final ResourceHeaders headers = psSession.getHeaders(fedoraId, fedoraId.getMementoInstant());
                 return !headers.isDeleted();
             } catch (final PersistentItemNotFoundException e) {
