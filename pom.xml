@@ -28,7 +28,7 @@
     <aws.version>2.17.50</aws.version>
     <caffeine.version>3.0.4</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
-    <commons-collections.version>3.2.2</commons-collections.version>
+    <commons-collections.version>4.4</commons-collections.version>
     <commons-io.version>2.11.0</commons-io.version>
     <commons-lang.version>3.12.0</commons-lang.version>
     <failsafe.version>2.4.4</failsafe.version>
@@ -67,7 +67,7 @@
     <spring.version>5.3.27</spring.version>
     <xerces.version>2.12.2</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
-    <velocity.version>1.7</velocity.version>
+    <velocity.version>2.3</velocity.version>
     <!-- JCBC dependencies -->
     <postgresql.version>42.4.3</postgresql.version>
     <mysql.version>8.0.28</mysql.version>
@@ -215,6 +215,11 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-collections4</artifactId>
+        <version>${commons-collections.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.jena</groupId>
         <artifactId>apache-jena-libs</artifactId>
         <version>${jena.version}</version>
@@ -274,7 +279,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.velocity</groupId>
-        <artifactId>velocity</artifactId>
+        <artifactId>velocity-engine-core</artifactId>
         <version>${velocity.version}</version>
         <exclusions>
           <exclusion>
