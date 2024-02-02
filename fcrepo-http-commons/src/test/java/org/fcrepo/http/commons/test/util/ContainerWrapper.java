@@ -13,8 +13,8 @@ import java.util.Collection;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
 
 import com.google.common.base.Strings;
 import org.fcrepo.http.commons.webxml.WebAppConfig;

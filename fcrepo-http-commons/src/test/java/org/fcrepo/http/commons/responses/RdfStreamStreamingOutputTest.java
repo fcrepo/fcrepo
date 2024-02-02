@@ -7,7 +7,7 @@ package org.fcrepo.http.commons.responses;
 
 import static java.util.stream.Stream.of;
 import static com.google.common.util.concurrent.Futures.addCallback;
-import static javax.ws.rs.core.MediaType.valueOf;
+import static jakarta.ws.rs.core.MediaType.valueOf;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -30,8 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.MoreExecutors;

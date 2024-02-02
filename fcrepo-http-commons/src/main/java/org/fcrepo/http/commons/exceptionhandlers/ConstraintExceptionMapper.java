@@ -8,9 +8,9 @@ package org.fcrepo.http.commons.exceptionhandlers;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 
 import javax.servlet.ServletContext;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.ExceptionMapper;
 
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 

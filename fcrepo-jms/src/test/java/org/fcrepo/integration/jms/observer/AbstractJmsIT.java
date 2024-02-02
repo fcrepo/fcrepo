@@ -40,7 +40,7 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 
 import org.fcrepo.event.serialization.JsonLDEventMessage;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;

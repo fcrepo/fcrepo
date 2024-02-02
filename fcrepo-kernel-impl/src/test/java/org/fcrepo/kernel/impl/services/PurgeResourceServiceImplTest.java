@@ -5,7 +5,8 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -15,7 +16,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import java.util.List;
 import java.util.Optional;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
@@ -35,18 +36,23 @@ import org.fcrepo.kernel.impl.operations.PurgeResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.github.benmanes.caffeine.cache.Cache;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * PurgeResourceServiceTest
@@ -56,8 +62,10 @@ import com.github.benmanes.caffeine.cache.Cache;
  * @author dbernstein
  * @author whikloj
  */
-@RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration("/containmentIndexTest.xml")
+@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@SpringJUnitConfig(locations = "/containmentIndexTest.xml")
 public class PurgeResourceServiceImplTest {
 
     private static final String USER = "fedoraAdmin";
@@ -70,7 +78,7 @@ public class PurgeResourceServiceImplTest {
     @Mock
     private PersistentStorageSession pSession;
 
-    @Inject
+    @Autowired
     private ContainmentIndex containmentIndex;
 
     @Mock
@@ -117,7 +125,7 @@ public class PurgeResourceServiceImplTest {
     private static final FedoraId RESOURCE_ACL_ID = RESOURCE_ID.resolve("fcr:acl");
     private static final String TX_ID = "tx-1234";
 
-    @Before
+    @BeforeEach
     public void setup() {
         MockitoAnnotations.openMocks(this);
         tx = TestTransactionHelper.mockTransaction(TX_ID, false);
@@ -187,10 +195,10 @@ public class PurgeResourceServiceImplTest {
         verifyResourceOperation(RESOURCE_ACL_ID, operationCaptor, pSession);
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void testBinaryDescriptionPurge() throws Exception {
         when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_ID);
-        service.perform(tx, binaryDesc, USER);
+        assertThrows(RepositoryRuntimeException.class, () -> service.perform(tx, binaryDesc, USER));
     }
 
     @Test

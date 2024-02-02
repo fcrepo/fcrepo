@@ -5,9 +5,10 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -34,11 +35,13 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.search.api.SearchIndex;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * <p>
@@ -47,7 +50,8 @@ import org.mockito.junit.MockitoJUnitRunner;
  *
  * @author mohideen
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionImplTest {
 
     private TransactionImpl testTx;
@@ -82,7 +86,7 @@ public class TransactionImplTest {
     @Mock
     private UserTypesCache userTypesCache;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testTx = new TransactionImpl("123", txManager, Duration.ofMillis(180000));
         when(pssManager.getSession(testTx)).thenReturn(psSession);
@@ -133,31 +137,31 @@ public class TransactionImplTest {
         verify(psSession, never()).commit();
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testCommitExpired() throws Exception {
         testTx.expire();
         try {
-            testTx.commit();
+            assertThrows(TransactionClosedException.class, () -> testTx.commit());
         } finally {
             verify(psSession, never()).commit();
         }
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testCommitRolledbackTx() throws Exception {
         testTx.rollback();
         try {
-            testTx.commit();
+            assertThrows(TransactionClosedException.class, () -> testTx.commit());
         } finally {
             verify(psSession, never()).commit();
         }
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void testEnsureRollbackOnFailedCommit() throws Exception {
         doThrow(new PersistentStorageException("Failed")).when(psSession).commit();
         try {
-            testTx.commit();
+            assertThrows(RepositoryRuntimeException.class, () ->testTx.commit());
         } finally {
             verify(psSession).commit();
             verify(psSession).rollback();
@@ -198,11 +202,11 @@ public class TransactionImplTest {
         verifyRollback();
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testRollbackCommited() throws Exception {
         testTx.commit();
         try {
-            testTx.rollback();
+            assertThrows(TransactionClosedException.class, () -> testTx.rollback());
         } finally {
             verify(psSession, never()).rollback();
         }
@@ -228,12 +232,12 @@ public class TransactionImplTest {
         assertTrue(testTx.getExpires().isAfter(previousExpiry));
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testUpdateExpiryOnExpired() {
         testTx.expire();
         final Instant previousExpiry = testTx.getExpires();
         try {
-            testTx.updateExpiry(Duration.ofSeconds(1));
+            assertThrows(TransactionClosedException.class, () ->testTx.updateExpiry(Duration.ofSeconds(1)));
         } finally {
             assertEquals(testTx.getExpires(), previousExpiry);
         }
@@ -246,12 +250,12 @@ public class TransactionImplTest {
         assertTrue(testTx.getExpires().isAfter(previousExpiry));
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testRefreshOnExpired() {
         testTx.expire();
         final Instant previousExpiry = testTx.getExpires();
         try {
-            testTx.refresh();
+            assertThrows(TransactionClosedException.class, () ->testTx.refresh());
         } finally {
             assertEquals(testTx.getExpires(), previousExpiry);
         }
@@ -262,12 +266,12 @@ public class TransactionImplTest {
         assertTrue(testTx.getExpires().isAfter(Instant.now()));
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void operationsShouldFailWhenTxNotOpen() {
         testTx.commit();
-        testTx.doInTx(() -> {
+        assertThrows(TransactionClosedException.class, () -> testTx.doInTx(() -> {
             fail("This code should not be executed");
-        });
+        }));
     }
 
     @Test

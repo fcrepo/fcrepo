@@ -5,20 +5,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.junit.Assert.assertEquals;
-
-import org.apache.commons.io.IOUtils;
-
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ExternalContent;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -27,10 +14,25 @@ import java.util.HashSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.IOUtils;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ExternalContent;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 /**
  * @author bseeger
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class CreateNonRdfSourceOperationBuilderTest {
 
     private InputStream stream;
@@ -42,7 +44,7 @@ public class CreateNonRdfSourceOperationBuilderTest {
     @Mock
     private Transaction tx;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         stream = IOUtils.toInputStream("This is some test data", "UTF-8");
         internalBuilder = new CreateNonRdfSourceOperationBuilderImpl(tx, resourceId, stream);

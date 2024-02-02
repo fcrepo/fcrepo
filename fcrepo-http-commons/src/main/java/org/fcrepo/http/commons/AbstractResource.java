@@ -8,9 +8,9 @@ package org.fcrepo.http.commons;
 import java.util.function.Supplier;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.models.ResourceFactory;

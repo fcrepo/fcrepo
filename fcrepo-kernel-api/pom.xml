@@ -16,7 +16,7 @@
       com.google.common.*,
       org.apache.jena.*,
       org.apache.commons.codec.binary,
-      javax.inject,
+      jakarta.inject,
       *
     </osgi.import.packages>
     <osgi.export.packages>
@@ -65,14 +65,15 @@
       <artifactId>spring-context</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.inject</groupId>
+      <artifactId>jakarta.inject-api</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <!-- test gear -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

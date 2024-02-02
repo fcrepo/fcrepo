@@ -6,15 +6,15 @@
 package org.fcrepo.kernel.impl.models;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import javax.inject.Inject;
-
 import java.util.UUID;
 
+import jakarta.inject.Inject;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
@@ -24,21 +24,26 @@ import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentSessionClosedException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * Test for ResourceHelper
  * @author whikloj
  * @since 6.0.0
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @ContextConfiguration("/containmentIndexTest.xml")
 public class ResourceHelperImplTest {
 
@@ -70,7 +75,7 @@ public class ResourceHelperImplTest {
 
     private Transaction readOnlyTx;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         MockitoAnnotations.openMocks(this);
         fedoraIdStr = FEDORA_ID_PREFIX + "/" + UUID.randomUUID().toString();
@@ -157,21 +162,21 @@ public class ResourceHelperImplTest {
     /**
      * Only Mementos go to the persistence layer.
      */
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void doesResourceExist_Exception_WithSession() throws Exception {
         when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
-        resourceHelper.doesResourceExist(mockTx, fedoraMementoId, false);
+        assertThrows(RepositoryRuntimeException.class, () -> resourceHelper.doesResourceExist(mockTx, fedoraMementoId, false));
     }
 
     /**
      * Only Mementos go to the persistence layer.
      */
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void doesResourceExist_Exception_WithoutSession() throws Exception {
         when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
-        resourceHelper.doesResourceExist(readOnlyTx, fedoraMementoId, false);
+        assertThrows(RepositoryRuntimeException.class, () -> resourceHelper.doesResourceExist(readOnlyTx, fedoraMementoId, false));
     }
 
     /**

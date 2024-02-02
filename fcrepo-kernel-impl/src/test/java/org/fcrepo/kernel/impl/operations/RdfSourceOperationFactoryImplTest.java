@@ -5,25 +5,28 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import java.util.UUID;
 
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.util.UUID;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author bseeger
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RdfSourceOperationFactoryImplTest {
 
     private RdfSourceOperationFactory factory;
@@ -32,7 +35,7 @@ public class RdfSourceOperationFactoryImplTest {
     @Mock
     private Transaction tx;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         factory = new RdfSourceOperationFactoryImpl();
         randomId = FedoraId.create(UUID.randomUUID().toString());

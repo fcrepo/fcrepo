@@ -5,9 +5,9 @@
  */
 package org.fcrepo.kernel.impl.lock;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -18,11 +18,10 @@ import java.util.concurrent.Phaser;
 import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.lock.ResourceLockManager;
-
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author pwinckles
@@ -37,17 +36,17 @@ public class InMemoryResourceLockManagerTest {
     private String txId2;
     private FedoraId resourceId;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         executor = Executors.newCachedThreadPool();
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         executor.shutdown();
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         lockManager = new InMemoryResourceLockManager();
         txId1 = UUID.randomUUID().toString();
@@ -179,9 +178,9 @@ public class InMemoryResourceLockManagerTest {
         phaser.arriveAndAwaitAdvance();
 
         if (future1.get()) {
-            assertFalse("Only one tx should have acquired a lock", future2.get());
+            assertFalse(future2.get(), "Only one tx should have acquired a lock");
         } else {
-            assertTrue("Only one tx should have acquired a lock", future2.get());
+            assertTrue(future2.get(), "Only one tx should have acquired a lock");
         }
     }
 
@@ -212,9 +211,9 @@ public class InMemoryResourceLockManagerTest {
         phaser.arriveAndAwaitAdvance();
 
         if (future1.get()) {
-            assertFalse("Only one tx should have acquired a lock", future2.get());
+            assertFalse(future2.get(), "Only one tx should have acquired a lock");
         } else {
-            assertTrue("Only one tx should have acquired a lock", future2.get());
+            assertTrue(future2.get(), "Only one tx should have acquired a lock");
         }
     }
 

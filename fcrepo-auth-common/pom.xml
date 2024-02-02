@@ -34,8 +34,8 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -68,8 +68,8 @@
 
     <!-- test gear -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
     </dependency>
   
     <!-- This dependency is for compile-time: it keeps this module independent 
@@ -129,7 +129,7 @@
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring5</artifactId>
+      <artifactId>jersey-spring6</artifactId>
       <scope>test</scope>
       <version>${jersey.version}</version>
     </dependency>
@@ -155,8 +155,8 @@
       <artifactId>spring-test</artifactId>
     </dependency>   
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -164,8 +164,8 @@
       <artifactId>httpclient</artifactId>
     </dependency> 
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>

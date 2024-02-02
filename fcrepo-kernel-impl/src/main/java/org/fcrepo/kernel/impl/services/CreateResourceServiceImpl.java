@@ -30,9 +30,9 @@ import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Link;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.core.Link;
 
 import java.io.InputStream;
 import java.net.URI;

@@ -3,6 +3,8 @@ target/
 .settings/
 .project
 .metadata
+.java-version
+.vscode
 ActiveMQ/
 FedoraRepository/
 indexes/

@@ -38,7 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.NodeFactory;

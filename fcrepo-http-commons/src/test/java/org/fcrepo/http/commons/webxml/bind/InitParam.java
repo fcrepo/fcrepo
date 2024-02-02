@@ -5,7 +5,7 @@
  */
 package org.fcrepo.http.commons.webxml.bind;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
  * <p>InitParam class.</p>

@@ -5,8 +5,8 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
+import static jakarta.ws.rs.core.Response.status;
+import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 
 import org.fcrepo.kernel.api.exception.IncorrectTripleSubjectException;
@@ -15,11 +15,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+import jakarta.ws.rs.ext.Provider;
 
 /**
  * @author ajs6f

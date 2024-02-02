@@ -6,6 +6,17 @@
 
 package org.fcrepo.kernel.impl.observer;
 
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayInputStream;
+import java.util.Set;
+
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -15,28 +26,19 @@ import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.VersionResourceOperationFactoryImpl;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.io.ByteArrayInputStream;
-import java.util.Set;
-
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author pwinckles
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ResourceOperationEventBuilderTest {
 
     private static final FedoraId FEDORA_ID = FedoraId.create("/test");
@@ -46,7 +48,7 @@ public class ResourceOperationEventBuilderTest {
     @Mock
     private Transaction transaction;
 
-    @Before
+    @BeforeEach
     public void setup() {
         when(transaction.getId()).thenReturn("tx-123");
     }

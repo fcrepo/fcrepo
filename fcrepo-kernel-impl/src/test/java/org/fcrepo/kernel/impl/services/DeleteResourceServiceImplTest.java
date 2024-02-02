@@ -5,7 +5,8 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -16,8 +17,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import javax.inject.Inject;
-
+import com.github.benmanes.caffeine.cache.Cache;
+import jakarta.inject.Inject;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.auth.ACLHandle;
@@ -38,27 +39,30 @@ import org.fcrepo.kernel.impl.operations.DeleteResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.search.api.SearchIndex;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import com.github.benmanes.caffeine.cache.Cache;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 /**
  * DeleteResourceServiceTest
  *
  * @author dbernstein
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @ContextConfiguration("/containmentIndexTest.xml")
 public class DeleteResourceServiceImplTest {
 
@@ -128,9 +132,11 @@ public class DeleteResourceServiceImplTest {
     private static final FedoraId RESOURCE_DESCRIPTION_ID = RESOURCE_ID.resolve("fcr:metadata");
     private static final FedoraId RESOURCE_ACL_ID = RESOURCE_ID.resolve("fcr:acl");
 
-    @Before
+    private AutoCloseable closeable;
+
+    @BeforeEach
     public void setup() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         final String txId = UUID.randomUUID().toString();
         tx = TestTransactionHelper.mockTransaction(txId, false);
         when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
@@ -149,9 +155,10 @@ public class DeleteResourceServiceImplTest {
         when(pSession.getHeaders(RESOURCE_ACL_ID, null)).thenReturn(aclHeaders);
     }
 
-    @After
-    public void cleanUp() {
+    @AfterEach
+    public void cleanUp() throws Exception {
         containmentIndex.reset();
+        closeable.close();
     }
 
     @Test
@@ -207,10 +214,10 @@ public class DeleteResourceServiceImplTest {
         verifyResourceOperation(RESOURCE_ACL_ID, operationCaptor, pSession);
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void testBinaryDescriptionDelete() throws Exception {
         when(binaryDesc.getFedoraId()).thenReturn(RESOURCE_DESCRIPTION_ID);
-        service.perform(tx, binaryDesc, USER);
+        assertThrows(RepositoryRuntimeException.class, () -> service.perform(tx, binaryDesc, USER));
     }
 
     @Test

@@ -5,7 +5,7 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.apache.jena.riot.Lang.JSONLD;
 import static org.apache.jena.riot.Lang.RDFXML;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -29,9 +29,9 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.StreamingOutput;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.StreamingOutput;
 
 import com.google.common.util.concurrent.AbstractFuture;
 import org.apache.jena.riot.RiotException;

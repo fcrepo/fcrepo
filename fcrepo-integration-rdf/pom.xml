@@ -15,8 +15,8 @@
     <dependencies>
         <!-- test gear -->
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -89,7 +89,7 @@
         </dependency>
         <dependency>
             <groupId>org.glassfish.jersey.ext</groupId>
-            <artifactId>jersey-spring5</artifactId>
+            <artifactId>jersey-spring6</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

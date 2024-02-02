@@ -8,8 +8,8 @@ package org.fcrepo.http.commons.exceptionhandlers;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
 import org.junit.Before;
 import org.junit.Test;

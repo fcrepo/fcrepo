@@ -8,7 +8,7 @@ package org.fcrepo.http.commons.test.util;
 import static java.lang.reflect.Proxy.newProxyInstance;
 import static java.util.Collections.emptySet;
 import static java.util.Collections.singleton;
-import static javax.ws.rs.core.HttpHeaders.AUTHORIZATION;
+import static jakarta.ws.rs.core.HttpHeaders.AUTHORIZATION;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
@@ -25,7 +25,7 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
+import jakarta.ws.rs.WebApplicationException;
 
 import org.glassfish.grizzly.http.server.GrizzlyPrincipal;
 import org.slf4j.Logger;

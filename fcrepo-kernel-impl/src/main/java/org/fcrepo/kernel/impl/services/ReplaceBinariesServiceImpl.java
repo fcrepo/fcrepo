@@ -19,7 +19,7 @@ import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import java.io.InputStream;
 import java.net.URI;

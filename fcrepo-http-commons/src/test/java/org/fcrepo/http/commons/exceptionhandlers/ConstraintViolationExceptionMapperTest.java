@@ -6,8 +6,8 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import java.net.URI;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 

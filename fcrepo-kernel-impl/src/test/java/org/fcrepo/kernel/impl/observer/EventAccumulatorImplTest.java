@@ -6,8 +6,25 @@
 
 package org.fcrepo.kernel.impl.observer;
 
-import com.google.common.eventbus.EventBus;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
+
+import com.google.common.eventbus.EventBus;
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
@@ -23,36 +40,21 @@ import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeMatcher;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Set;
-
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author pwinckles
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EventAccumulatorImplTest {
 
     private static final String TX_ID = "tx1";
@@ -78,7 +80,7 @@ public class EventAccumulatorImplTest {
 
     private AuthPropsConfig authPropsConfig;
 
-    @Before
+    @BeforeEach
     public void setup() {
         authPropsConfig = new AuthPropsConfig();
         accumulator = new EventAccumulatorImpl();

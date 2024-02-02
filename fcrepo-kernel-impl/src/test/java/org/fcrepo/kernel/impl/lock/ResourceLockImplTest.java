@@ -5,18 +5,17 @@
  */
 package org.fcrepo.kernel.impl.lock;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.UUID;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.lock.ResourceLock;
 import org.fcrepo.kernel.api.lock.ResourceLockType;
-
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test ResourceLock
@@ -27,7 +26,7 @@ public class ResourceLockImplTest {
     private String txId;
     private FedoraId resourceId;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         txId = "tx" + UUID.randomUUID();
         resourceId = FedoraId.create(UUID.randomUUID().toString());

@@ -24,9 +24,11 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+
 import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
@@ -37,6 +39,7 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -59,7 +62,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     private int containsLimit = 50000;
 
-    @Inject
+    @Autowired
     private DataSource dataSource;
 
     private NamedParameterJdbcTemplate jdbcTemplate;

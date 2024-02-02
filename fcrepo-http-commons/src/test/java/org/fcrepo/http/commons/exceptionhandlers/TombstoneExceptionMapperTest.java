@@ -13,10 +13,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.ext.ExceptionMapper;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
@@ -25,8 +25,8 @@ import java.util.stream.Collectors;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.Response.Status.GONE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.Response.Status.GONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;

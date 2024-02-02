@@ -22,8 +22,8 @@
         javax.annotation,
         javax.inject,
         javax.jcr.*,
-        javax.servlet.http,
-        javax.ws.rs.*,
+        jakarta.servlet.http,
+        jakarta.ws.rs.*,
 
         org.apache.commons.lang3,
         org.apache.commons.io,
@@ -100,8 +100,9 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.grizzly</groupId>
@@ -184,12 +185,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.vintage</groupId>
+      <artifactId>junit-vintage-engine</artifactId>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring5</artifactId>
+      <artifactId>jersey-spring6</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -234,8 +235,8 @@
       gear. Otherwise it will get loaded during test phase, but because this is 
       just an API, the tests will not be able to execute. -->
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
     </dependency>
 
     <dependency>

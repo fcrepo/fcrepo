@@ -11,8 +11,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import java.util.function.Supplier;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.junit.Before;
 import org.junit.Test;

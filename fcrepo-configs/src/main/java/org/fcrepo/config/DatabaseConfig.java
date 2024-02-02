@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import com.zaxxer.hikari.HikariConfig;

@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nonnull;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;

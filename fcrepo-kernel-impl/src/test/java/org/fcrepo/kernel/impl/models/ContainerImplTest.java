@@ -5,8 +5,8 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -20,18 +20,23 @@ import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * @author bbpennel
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @ContextConfiguration("/containmentIndexTest.xml")
 public class ContainerImplTest {
     @Mock
@@ -45,7 +50,7 @@ public class ContainerImplTest {
 
     private FedoraId fedoraId;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         MockitoAnnotations.openMocks(this);
         when(transaction.getId()).thenReturn(UUID.randomUUID().toString());

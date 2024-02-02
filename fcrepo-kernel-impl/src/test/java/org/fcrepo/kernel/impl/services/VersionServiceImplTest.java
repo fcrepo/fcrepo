@@ -6,6 +6,11 @@
 
 package org.fcrepo.kernel.impl.services;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -16,22 +21,15 @@ import org.fcrepo.kernel.impl.operations.VersionResourceOperationFactoryImpl;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author mdurbin
  */
-@RunWith(MockitoJUnitRunner.class)
+
 public class VersionServiceImplTest {
 
     private VersionServiceImpl service;
@@ -51,7 +49,7 @@ public class VersionServiceImplTest {
     @Mock
     private ResourceHeaders headers;
 
-    @Before
+    @BeforeEach
     public void setup() {
         service = new VersionServiceImpl();
         setField(service, "eventAccumulator", eventAccumulator);

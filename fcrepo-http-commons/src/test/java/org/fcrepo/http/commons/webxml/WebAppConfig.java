@@ -14,9 +14,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElements;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import org.fcrepo.http.commons.webxml.bind.ContextParam;
 import org.fcrepo.http.commons.webxml.bind.Displayable;
