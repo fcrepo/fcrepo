@@ -12,7 +12,7 @@ import org.fcrepo.http.commons.responses.ConcurrentExceptionResponse;
 import org.fcrepo.kernel.api.exception.ConcurrentUpdateException;
 import org.slf4j.Logger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;

@@ -19,7 +19,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * An simple in-memory implementation of the {@link FedoraToOcflObjectIndex} used for testing
+ * A simple in-memory implementation of the {@link FedoraToOcflObjectIndex} used for testing
  *
  * @author pwinckles
  */
@@ -47,12 +47,8 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
                                         final FedoraId fedoraResourceIdentifier,
                                         final FedoraId fedoraRootObjectResourceId,
                                         final String ocflObjectId) {
-        FedoraOcflMapping mapping = fedoraOcflMappingMap.get(fedoraRootObjectResourceId);
-
-        if (mapping == null) {
-            mapping = new FedoraOcflMapping(fedoraRootObjectResourceId, ocflObjectId);
-            fedoraOcflMappingMap.put(fedoraRootObjectResourceId, mapping);
-        }
+        FedoraOcflMapping mapping = fedoraOcflMappingMap.computeIfAbsent(
+                fedoraRootObjectResourceId, i -> new FedoraOcflMapping(i, ocflObjectId));
 
         if (!fedoraResourceIdentifier.equals(fedoraRootObjectResourceId)) {
             fedoraOcflMappingMap.put(fedoraResourceIdentifier, mapping);

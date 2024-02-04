@@ -6,8 +6,8 @@
 package org.fcrepo.integration;
 
 import static java.lang.Integer.MAX_VALUE;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_CREATED;
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
 
-import javax.ws.rs.core.Link;
+import jakarta.ws.rs.core.Link;
 
 /**
  * <p>SanityCheckIT class.</p>

@@ -16,7 +16,8 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.Configuration;
 import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
@@ -57,7 +58,7 @@ public class TransactionProviderTest {
         final URI baseUri = create("http://localhost/fcrepo");
         final URI requestUri = create("http://localhost/fcrepo/foo");
         final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
+                mock(PropertiesDelegate.class), mock(Configuration.class));
         final UriInfo info = spy(req.getUriInfo());
 
         final String expectedBaseUrl = baseUri.toString();
@@ -86,7 +87,7 @@ public class TransactionProviderTest {
         final URI baseUri = create("http://localhost/fcrepo");
         final URI requestUri = create("http://localhost/fcrepo/foo");
         final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
+                mock(PropertiesDelegate.class), mock(Configuration.class));
         final UriInfo info = spy(req.getUriInfo());
 
         final String expectedBaseUrl = baseUri.toString();
@@ -114,7 +115,7 @@ public class TransactionProviderTest {
         final URI baseUri = create("http://localhost/fcrepo");
         final URI requestUri = create("http://localhost/fcrepo/foo");
         final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
+                mock(PropertiesDelegate.class), mock(Configuration.class));
         final UriInfo info = spy(req.getUriInfo());
 
         final String baseUrl = "http://example.org";
@@ -144,7 +145,7 @@ public class TransactionProviderTest {
         final URI baseUri = create("http://localhost/fcrepo");
         final URI requestUri = create("http://localhost/fcrepo/foo");
         final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
+                mock(PropertiesDelegate.class), mock(Configuration.class));
         final UriInfo info = spy(req.getUriInfo());
 
         final String baseUrl = "http://example.org:9090";
@@ -172,7 +173,7 @@ public class TransactionProviderTest {
         final URI baseUri = create("http://localhost/fcrepo");
         final URI requestUri = create("http://localhost/fcrepo/foo");
         final ContainerRequest req = new ContainerRequest(baseUri, requestUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
+                mock(PropertiesDelegate.class), mock(Configuration.class));
         final UriInfo info = spy(req.getUriInfo());
 
         final String expectedBaseUrl = "http://example.org/fcrepo/rest";
@@ -200,7 +201,7 @@ public class TransactionProviderTest {
         final URI baseUri = create("http://localhost:8080/fcrepo/rest");
         final URI reqUri = create("http://localhost:8080/fcrepo/rest/foo");
         final ContainerRequest req = new ContainerRequest(baseUri, reqUri, "GET", mock(SecurityContext.class),
-                mock(PropertiesDelegate.class));
+                mock(PropertiesDelegate.class), mock(Configuration.class));
         final UriInfo info = spy(req.getUriInfo());
 
         final String expectedBaseUrl = "http://example.org/fcrepo/rest/";

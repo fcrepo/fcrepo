@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;

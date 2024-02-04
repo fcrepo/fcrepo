@@ -10,7 +10,7 @@ import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Link;
 import jakarta.ws.rs.core.Response;

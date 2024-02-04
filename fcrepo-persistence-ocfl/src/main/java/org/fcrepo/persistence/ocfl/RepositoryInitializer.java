@@ -6,6 +6,15 @@
 package org.fcrepo.persistence.ocfl;
 
 
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Component;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.TransactionManager;
@@ -19,18 +28,8 @@ import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
-
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-
+import jakarta.inject.Inject;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**

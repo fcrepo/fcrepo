@@ -8,7 +8,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 import org.fcrepo.kernel.api.exception.CannotCreateMementoException;
 import org.slf4j.Logger;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Link;
 import jakarta.ws.rs.core.Response;

@@ -41,7 +41,6 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
             }
             TimeUnit.MILLISECONDS.sleep(10);
         }
-
         flyway.clean();
         flyway.migrate();
 

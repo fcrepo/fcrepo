@@ -5,18 +5,6 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 import com.github.benmanes.caffeine.cache.Cache;
 import jakarta.inject.Inject;
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -47,13 +35,23 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * DeleteResourceServiceTest
@@ -136,7 +134,6 @@ public class DeleteResourceServiceImplTest {
 
     @BeforeEach
     public void setup() {
-        closeable = MockitoAnnotations.openMocks(this);
         final String txId = UUID.randomUUID().toString();
         tx = TestTransactionHelper.mockTransaction(txId, false);
         when(psManager.getSession(any(Transaction.class))).thenReturn(pSession);
@@ -156,9 +153,8 @@ public class DeleteResourceServiceImplTest {
     }
 
     @AfterEach
-    public void cleanUp() throws Exception {
+    public void cleanUp() {
         containmentIndex.reset();
-        closeable.close();
     }
 
     @Test

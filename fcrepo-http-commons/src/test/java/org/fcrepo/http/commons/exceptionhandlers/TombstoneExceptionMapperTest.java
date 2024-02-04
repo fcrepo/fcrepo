@@ -5,13 +5,24 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.Response.Status.GONE;
+import static java.time.ZoneOffset.UTC;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.when;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
 
 import jakarta.ws.rs.core.Link;
 import jakarta.ws.rs.core.Response;
@@ -22,17 +33,6 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static java.time.ZoneOffset.UTC;
-import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static jakarta.ws.rs.core.HttpHeaders.LINK;
-import static jakarta.ws.rs.core.Response.Status.GONE;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author cabeer
@@ -54,7 +54,7 @@ public class TombstoneExceptionMapperTest {
 
     @Before
     public void setUp() {
-        initMocks(this);
+        MockitoAnnotations.openMocks(this);
         when(mockResource.getFedoraId()).thenReturn(fedoraId);
         when(mockResource.getLastModifiedDate()).thenReturn(deleteTime);
         testObj = new TombstoneExceptionMapper();

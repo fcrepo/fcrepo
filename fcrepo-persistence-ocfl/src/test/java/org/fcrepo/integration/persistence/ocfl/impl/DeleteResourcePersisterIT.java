@@ -6,15 +6,19 @@
 package org.fcrepo.integration.persistence.ocfl.impl;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.UUID;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
@@ -24,21 +28,16 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
 import edu.wisc.library.ocfl.api.MutableOcflRepository;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+
+import java.util.UUID;
 
 /**
  * Test delete resource persister for stamping versions of deleted resources in manually versioned repository.
  * @author whikloj
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration("/spring-test/manual-versioning-config.xml")
 public class DeleteResourcePersisterIT {
 
@@ -61,7 +60,7 @@ public class DeleteResourcePersisterIT {
 
     private FedoraId rescId;
 
-    @Before
+    @BeforeEach
     public void setup() {
         rescId = FedoraId.create(UUID.randomUUID().toString());
         transaction = mock(Transaction.class);

@@ -8,17 +8,20 @@ package org.fcrepo.persistence.common;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
+import java.util.List;
+
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.config.DigestAlgorithm;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author bbpennel
@@ -79,7 +82,7 @@ public class MultiDigestInputStreamWrapperTest {
         wrapper.checkFixity();
     }
 
-    @Test(expected = InvalidChecksumException.class)
+    @Test
     public void checkFixity_InvalidDigest() throws Exception {
         final var digests = asList(MD5_URI, URI.create("urn:sha1:totallybusted"), SHA512_URI);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, null);
@@ -87,21 +90,20 @@ public class MultiDigestInputStreamWrapperTest {
         // Read the stream to allow digest calculation
         IOUtils.toString(wrapper.getInputStream(), UTF_8);
 
-        // Expect no failures
-        wrapper.checkFixity();
+        assertThrows(InvalidChecksumException.class, wrapper::checkFixity);
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void unsupportedDigestAlgorithm() throws Exception {
         final var digests = asList(URI.create("urn:yum:123456"), SHA512_URI);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, null);
 
-        wrapper.getInputStream();
+        assertThrows(RepositoryRuntimeException.class, wrapper::getInputStream);
     }
 
     @Test
     public void checkFixity_BeforeRead() throws Exception {
-        final var digests = asList(MD5_URI);
+        final var digests = List.of(MD5_URI);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, null);
 
         // Expect no failures
@@ -110,7 +112,7 @@ public class MultiDigestInputStreamWrapperTest {
 
     @Test
     public void checkFixity_OnlyWantDigest() throws Exception {
-        final var wantDigests = asList(DigestAlgorithm.SHA1);
+        final var wantDigests = List.of(DigestAlgorithm.SHA1);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, null, wantDigests);
 
         // Read the stream to allow digest calculation
@@ -122,21 +124,8 @@ public class MultiDigestInputStreamWrapperTest {
 
     @Test
     public void checkFixity_OverlappingWantDigestAndProvided() throws Exception {
-        final var digests = asList(SHA1_URI);
-        final var wantDigests = asList(DigestAlgorithm.SHA1);
-        final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, wantDigests);
-
-        // Read the stream to allow digest calculation
-        IOUtils.toString(wrapper.getInputStream(), UTF_8);
-
-        // Expect no failures
-        wrapper.checkFixity();
-    }
-
-    @Test(expected = InvalidChecksumException.class)
-    public void checkFixity_OverlappingWantDigestAndProvided_InvalidDigest() throws Exception {
-        final var digests = asList(URI.create("urn:sha1:totallybusted"));
-        final var wantDigests = asList(DigestAlgorithm.SHA1);
+        final var digests = List.of(SHA1_URI);
+        final var wantDigests = List.of(DigestAlgorithm.SHA1);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, wantDigests);
 
         // Read the stream to allow digest calculation
@@ -147,9 +136,21 @@ public class MultiDigestInputStreamWrapperTest {
     }
 
     @Test
+    public void checkFixity_OverlappingWantDigestAndProvided_InvalidDigest() throws Exception {
+        final var digests = List.of(URI.create("urn:sha1:totallybusted"));
+        final var wantDigests = List.of(DigestAlgorithm.SHA1);
+        final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, wantDigests);
+
+        // Read the stream to allow digest calculation
+        IOUtils.toString(wrapper.getInputStream(), UTF_8);
+
+        assertThrows(InvalidChecksumException.class, wrapper::checkFixity);
+    }
+
+    @Test
     public void checkFixity_DifferentWantDigestAndProvided() throws Exception {
-        final var digests = asList(SHA1_URI);
-        final var wantDigests = asList(DigestAlgorithm.MD5);
+        final var digests = List.of(SHA1_URI);
+        final var wantDigests = List.of(DigestAlgorithm.MD5);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, wantDigests);
 
         // Read the stream to allow digest calculation
@@ -161,7 +162,7 @@ public class MultiDigestInputStreamWrapperTest {
 
     @Test
     public void getDigests_FromWantDigests() throws Exception {
-        final var wantDigests = asList(DigestAlgorithm.SHA1, DigestAlgorithm.SHA512);
+        final var wantDigests = List.of(DigestAlgorithm.SHA1, DigestAlgorithm.SHA512);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, null, wantDigests);
 
         final var computed = wrapper.getDigests();
@@ -171,7 +172,7 @@ public class MultiDigestInputStreamWrapperTest {
 
     @Test
     public void getDigests_FromProvidedDigests() throws Exception {
-        final var digests = asList(SHA1_URI, MD5_URI);
+        final var digests = List.of(SHA1_URI, MD5_URI);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, null);
 
         final var computed = wrapper.getDigests();
@@ -181,8 +182,8 @@ public class MultiDigestInputStreamWrapperTest {
 
     @Test
     public void getDigests_FromWantDigestsAndProvided() throws Exception {
-        final var wantDigests = asList(DigestAlgorithm.SHA1, DigestAlgorithm.SHA512);
-        final var digests = asList(SHA1_URI, MD5_URI);
+        final var wantDigests = List.of(DigestAlgorithm.SHA1, DigestAlgorithm.SHA512);
+        final var digests = List.of(SHA1_URI, MD5_URI);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, wantDigests);
 
         final var computed = wrapper.getDigests();
@@ -193,7 +194,7 @@ public class MultiDigestInputStreamWrapperTest {
 
     @Test
     public void getDigests_AfterCheckFixity() throws Exception {
-        final var digests = asList(SHA1_URI);
+        final var digests = List.of(SHA1_URI);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, null);
 
         IOUtils.toString(wrapper.getInputStream(), UTF_8);
@@ -206,7 +207,7 @@ public class MultiDigestInputStreamWrapperTest {
 
     @Test
     public void getDigests_FromConsumedStream() throws Exception {
-        final var wantDigests = asList(DigestAlgorithm.SHA512);
+        final var wantDigests = List.of(DigestAlgorithm.SHA512);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, null, wantDigests);
 
         IOUtils.toString(wrapper.getInputStream(), UTF_8);

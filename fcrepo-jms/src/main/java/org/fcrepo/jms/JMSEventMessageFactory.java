@@ -5,8 +5,8 @@
  */
 package org.fcrepo.jms;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
 
 import org.fcrepo.kernel.api.observer.Event;
 
@@ -27,5 +27,5 @@ public interface JMSEventMessageFactory {
      * @throws JMSException if JMS exception occurred
      */
     Message getMessage(final Event jcrEvent,
-            final javax.jms.Session jmsSession) throws JMSException;
+            final jakarta.jms.Session jmsSession) throws JMSException;
 }

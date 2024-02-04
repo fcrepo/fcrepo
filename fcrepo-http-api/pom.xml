@@ -19,8 +19,8 @@
         org.fcrepo.kernel.api.*,
         org.fcrepo.search.api.*,
 
-        javax.annotation,
-        javax.inject,
+        jakarta.annotation,
+        jakarta.inject,
         javax.jcr.*,
         jakarta.servlet.http,
         jakarta.ws.rs.*,
@@ -187,6 +187,23 @@
     <dependency>
       <groupId>org.junit.vintage</groupId>
       <artifactId>junit-vintage-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.junit.jupiter</groupId>
+          <artifactId>junit-jupiter-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>

@@ -97,11 +97,7 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
-    </dependency>
+
 
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -197,6 +193,11 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>org.junit.vintage</groupId>
       <artifactId>junit-vintage-engine</artifactId>
       <scope>test</scope>
@@ -273,18 +274,18 @@
 
     <dependency>
       <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-jersey2</artifactId>
+      <artifactId>micrometer-core</artifactId>
     </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_servlet</artifactId>
+      <artifactId>simpleclient_servlet_jakarta</artifactId>
       <!-- grizzly brings in a newer version of servlet-api -->
-      <exclusions>
+      <!--<exclusions>
         <exclusion>
           <groupId>javax.servlet</groupId>
           <artifactId>javax.servlet-api</artifactId>
         </exclusion>
-      </exclusions>
+      </exclusions>-->
     </dependency>
 
     <dependency>

@@ -5,7 +5,7 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;

@@ -8,6 +8,7 @@ package org.fcrepo.kernel.impl.services;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,23 +18,27 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.util.AssertionErrors.assertEquals;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import jakarta.inject.Inject;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
+import org.flywaydb.test.annotation.FlywayTest;
+import org.flywaydb.test.junit5.annotation.FlywayTestExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.mockito.stubbing.Answer;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
@@ -49,32 +54,23 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
-import org.flywaydb.test.FlywayTestExecutionListener;
-import org.flywaydb.test.annotation.FlywayTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.mockito.stubbing.Answer;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import jakarta.inject.Inject;
+import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author bbpennel
  */
 @ExtendWith(SpringExtension.class)
+@ContextConfiguration("/membershipServiceTest.xml")
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@SpringJUnitConfig(locations = "/membershipServiceTest.xml")
-@TestExecutionListeners({DependencyInjectionTestExecutionListener.class, FlywayTestExecutionListener.class })
+@FlywayTestExtension
 public class MembershipServiceImplTest {
 
     private final static Instant CREATED_DATE = Instant.parse("2019-11-12T10:00:30.0Z");
@@ -126,7 +122,6 @@ public class MembershipServiceImplTest {
     @BeforeEach
     @FlywayTest
     public void setup() {
-        MockitoAnnotations.openMocks(this);
 
         txId = UUID.randomUUID().toString();
         transaction = TestTransactionHelper.mockTransaction(txId, false);
@@ -196,8 +191,8 @@ public class MembershipServiceImplTest {
         membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
-        assertEquals("Last updated timestamp should not change during commit",
-                lastUpdated, membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId));
+        assertEquals(lastUpdated, membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId),
+                "Last updated timestamp should not change during commit");
     }
 
     @Test
@@ -244,10 +239,10 @@ public class MembershipServiceImplTest {
         assertHasMembersNoTx(member1Id, MEMBER_OF, membershipRescId);
         assertHasMembersNoTx(member2Id, MEMBER_OF, membershipRescId);
 
-        assertEquals("First membership timestamp does not match",
-                member1Updated, membershipService.getLastUpdatedTimestamp(readOnlyTx, member1Id));
-        assertEquals("Second membership timestamp does not match.",
-                member2Updated, membershipService.getLastUpdatedTimestamp(readOnlyTx, member2Id));
+        assertEquals(member1Updated, membershipService.getLastUpdatedTimestamp(readOnlyTx, member1Id),
+                "First membership timestamp does not match");
+        assertEquals(member2Updated, membershipService.getLastUpdatedTimestamp(readOnlyTx, member2Id),
+                "Second membership timestamp does not match.");
     }
 
     @Test
@@ -513,8 +508,8 @@ public class MembershipServiceImplTest {
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member2Id);
         assertUncommittedMembershipCount(transaction, membershipRescId, 1);
 
-        assertEquals("Last updated timestamp doesn't match",
-                lastUpdated, membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId));
+        assertEquals(lastUpdated, membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId),
+                "Last updated timestamp doesn't match");
     }
 
     @Test
@@ -707,7 +702,8 @@ public class MembershipServiceImplTest {
 
         final var msRescUpdatedAfter = membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId);
         assertNotNull(msRescUpdatedAfter);
-        assertNotEquals(msRescUpdated, msRescUpdatedAfter, "First membership resc should have changed last_updated timestamp");
+        assertNotEquals(msRescUpdated, msRescUpdatedAfter,
+                "First membership resc should have changed last_updated timestamp");
         assertNotNull(membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipResc2Id));
     }
 
@@ -1440,7 +1436,7 @@ public class MembershipServiceImplTest {
     private void assertHasMembers(final Transaction transaction, final FedoraId membershipRescId,
             final Property hasMemberRelation, final FedoraId... memberIds) {
         final var membershipList = getMembershipList(transaction, membershipRescId);
-        assertEquals("Membership list size not as expected", memberIds.length, membershipList.size());
+        assertEquals(memberIds.length, membershipList.size(), "Membership list size not as expected");
         final var subjectId = membershipRescId.asBaseId();
         for (final FedoraId memberId : memberIds) {
             assertContainsMembership(membershipList, subjectId, hasMemberRelation, memberId);
@@ -1455,7 +1451,7 @@ public class MembershipServiceImplTest {
     private void assertIsMemberOf(final Transaction transaction, final FedoraId memberId, final Property isMemberOf,
             final FedoraId membershipRescId) {
         final var membershipList = getMembershipList(transaction, memberId);
-        assertEquals("Membership list size not as expected", 1, membershipList.size());
+        assertEquals(1, membershipList.size(), "Membership list size not as expected");
         assertContainsMembership(membershipList, memberId.asBaseId(), isMemberOf, membershipRescId);
     }
 
@@ -1641,15 +1637,15 @@ public class MembershipServiceImplTest {
 
     private void assertCommittedMembershipCount(final FedoraId subjectId, final int expected) {
         final var results = membershipService.getMembership(shortLivedTx, subjectId);
-        assertEquals("Incorrect number of committed membership properties for " + subjectId,
-                expected, results.count());
+        assertEquals(expected, results.count(),
+                "Incorrect number of committed membership properties for " + subjectId);
     }
 
     private void assertUncommittedMembershipCount(final Transaction transaction,
                                                   final FedoraId subjectId,
-                                                  final int expected) {
+                                                  final long expected) {
         final var results = membershipService.getMembership(transaction, subjectId);
-        assertEquals("Incorrect number of uncommitted membership properties for " + subjectId,
-                expected, results.count());
+        assertEquals(expected, (int) results.count(),
+                "Incorrect number of uncommitted membership properties for " + subjectId);
     }
 }

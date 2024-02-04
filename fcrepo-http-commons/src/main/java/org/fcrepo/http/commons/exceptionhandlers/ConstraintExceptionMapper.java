@@ -7,7 +7,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.core.Link;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.ExceptionMapper;

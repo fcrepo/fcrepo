@@ -12,7 +12,7 @@
 
   <properties>
     <osgi.import.packages>
-      javax.servlet.http,
+      jakarta.servlet.http,
       
 
       *
@@ -45,10 +45,12 @@
     <dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-core</artifactId>
+      <classifier>jakarta</classifier>
     </dependency>
     <dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-spring</artifactId>
+      <classifier>jakarta</classifier>
     </dependency>
     
     <dependency>
@@ -70,6 +72,12 @@
     <dependency>
       <groupId>org.junit.vintage</groupId>
       <artifactId>junit-vintage-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
   
     <!-- This dependency is for compile-time: it keeps this module independent 
@@ -128,20 +136,25 @@
       <artifactId>spring-web</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring6</artifactId>
-      <scope>test</scope>
-      <version>${jersey.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-common</artifactId>
-      <scope>test</scope>
+      <scope>test</scope>      <exclusions>
+      <exclusion>
+        <!-- jaxb-impl brings in a newer version -->
+        <groupId>jakarta.activation</groupId>
+        <artifactId>jakarta.activation-api</artifactId>
+      </exclusion>
+    </exclusions>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-multipart</artifactId>
       <version>${jersey.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.sun.xml.bind</groupId>
+      <artifactId>jaxb-impl</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <dependency>

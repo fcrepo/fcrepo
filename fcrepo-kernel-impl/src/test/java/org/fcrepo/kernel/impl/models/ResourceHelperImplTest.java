@@ -5,15 +5,6 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import java.util.UUID;
-
 import jakarta.inject.Inject;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
@@ -29,12 +20,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.UUID;
+
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * Test for ResourceHelper
@@ -77,7 +76,6 @@ public class ResourceHelperImplTest {
 
     @BeforeEach
     public void setup() throws Exception {
-        MockitoAnnotations.openMocks(this);
         fedoraIdStr = FEDORA_ID_PREFIX + "/" + UUID.randomUUID().toString();
         fedoraId = FedoraId.create(fedoraIdStr);
         fedoraMementoIdStr = fedoraIdStr + "/fcr:versions/20000102120000";
@@ -166,7 +164,8 @@ public class ResourceHelperImplTest {
     public void doesResourceExist_Exception_WithSession() throws Exception {
         when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
-        assertThrows(RepositoryRuntimeException.class, () -> resourceHelper.doesResourceExist(mockTx, fedoraMementoId, false));
+        assertThrows(RepositoryRuntimeException.class,
+                () -> resourceHelper.doesResourceExist(mockTx, fedoraMementoId, false));
     }
 
     /**
@@ -176,7 +175,8 @@ public class ResourceHelperImplTest {
     public void doesResourceExist_Exception_WithoutSession() throws Exception {
         when(psSession.getHeaders(fedoraMementoId, fedoraMementoId.getMementoInstant()))
                 .thenThrow(PersistentSessionClosedException.class);
-        assertThrows(RepositoryRuntimeException.class, () -> resourceHelper.doesResourceExist(readOnlyTx, fedoraMementoId, false));
+        assertThrows(RepositoryRuntimeException.class,
+                () -> resourceHelper.doesResourceExist(readOnlyTx, fedoraMementoId, false));
     }
 
     /**

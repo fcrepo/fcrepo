@@ -5,17 +5,21 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import java.util.UUID;
-
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
 import org.fcrepo.config.FlywayFactory;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
@@ -24,11 +28,7 @@ import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.mockito.Mockito;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import java.util.UUID;
 
 /**
  * @author dbernstein
@@ -51,7 +51,7 @@ public class DbFedoraToOcflObjectIndexTest {
 
     private static OcflPropsConfig propsConfig;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
         dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.jdbcx.JdbcDataSource");
@@ -65,7 +65,7 @@ public class DbFedoraToOcflObjectIndexTest {
         index.setup();
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         index.reset();
         session = Mockito.mock(Transaction.class);
@@ -124,9 +124,9 @@ public class DbFedoraToOcflObjectIndexTest {
         assertEquals(OCFL_ID, mapping1.getOcflObjectId());
     }
 
-    @Test(expected = FedoraOcflMappingNotFoundException.class)
+    @Test
     public void testNotExists() throws Exception {
-        index.getMapping(readOnlyTx, RESOURCE_ID_1);
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(readOnlyTx, RESOURCE_ID_1));
     }
 
     @Test

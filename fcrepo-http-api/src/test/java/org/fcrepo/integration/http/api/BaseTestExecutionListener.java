@@ -22,12 +22,6 @@ public class BaseTestExecutionListener extends AbstractTestExecutionListener {
         reindexService.reset();
     }
 
-    protected <T> T getBean(final TestContext testContext, final String name) {
-        final var containerWrapper = testContext.getApplicationContext()
-                .getBean(ContainerWrapper.class);
-        return (T) containerWrapper.getSpringAppContext().getBean(name);
-    }
-
     protected <T> T getBean(final TestContext testContext, final Class<T> clazz) {
         final var containerWrapper = testContext.getApplicationContext()
                 .getBean(ContainerWrapper.class);

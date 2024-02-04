@@ -7,12 +7,12 @@ package org.fcrepo.integration.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.stream;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.FORBIDDEN;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
@@ -39,8 +39,8 @@ import java.util.Arrays;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response;
 
 import org.fcrepo.auth.webac.WebACRolesProvider;
 import org.fcrepo.http.commons.test.util.CloseableDataset;

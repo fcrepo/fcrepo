@@ -5,8 +5,8 @@
  */
 package org.fcrepo.jms;
 
-import javax.jms.Destination;
-import javax.jms.JMSException;
+import jakarta.jms.Destination;
+import jakarta.jms.JMSException;
 
 /**
  * Machinery to publish JMS messages when an EventBus

@@ -5,6 +5,8 @@
  */
 package org.fcrepo.kernel.impl;
 
+import static java.time.ZoneOffset.UTC;
+import static java.util.stream.Collectors.toList;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -14,9 +16,23 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
-import static java.time.ZoneOffset.UTC;
-import static java.util.stream.Collectors.toList;
+import org.flywaydb.test.annotation.FlywayTest;
+import org.flywaydb.test.junit5.annotation.FlywayTestExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
 
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,28 +41,15 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.flywaydb.test.annotation.FlywayTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
-
 /**
  * @author peichman
  */
 @ExtendWith(SpringExtension.class)
-@SpringJUnitConfig(locations = "/containmentIndexTest.xml")
-@TestExecutionListeners({DependencyInjectionTestExecutionListener.class })
-public class ContainmentIndexImplIT {
+@ContextConfiguration("/containmentIndexTest.xml")
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+@FlywayTestExtension
+public class ContainmentIndexImplTest {
 
     @Mock
     private FedoraResource parent1;

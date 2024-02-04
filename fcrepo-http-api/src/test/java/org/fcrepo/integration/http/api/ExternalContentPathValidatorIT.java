@@ -5,24 +5,17 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.APPEND;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_OK;
-import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.net.ConnectException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -32,21 +25,29 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestExecutionListeners.MergeMode;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.net.ConnectException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author bbpennel
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @TestExecutionListeners(listeners = {
         DependencyInjectionTestExecutionListener.class,
@@ -87,7 +88,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
         }
     }
 
-    @Before
+    @BeforeEach
     public void init() throws Exception {
         // Because of the dirtied context, need to wait for fedora to restart before testing
         int triesRemaining = 50;
@@ -169,7 +170,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
             assertEquals(SC_OK, getStatus(response));
             assertEquals("text/plain", response.getFirstHeader(CONTENT_TYPE).getValue());
             assertEquals(fileUri, response.getFirstHeader(CONTENT_LOCATION).getValue());
-            assertEquals(fileContent, IOUtils.toString(response.getEntity().getContent(), "UTF-8"));
+            assertEquals(fileContent, IOUtils.toString(response.getEntity().getContent(), UTF_8));
         }
     }
 
@@ -191,7 +192,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
             assertEquals(SC_OK, getStatus(response));
             assertEquals("text/plain", response.getFirstHeader(CONTENT_TYPE).getValue());
             assertEquals(fileUri, response.getFirstHeader(CONTENT_LOCATION).getValue());
-            assertEquals(fileContent, IOUtils.toString(response.getEntity().getContent(), "UTF-8"));
+            assertEquals(fileContent, IOUtils.toString(response.getEntity().getContent(), UTF_8));
         }
     }
 
@@ -229,7 +230,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
             final HttpPut put = putObjMethod(id);
             put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", "text/plain"));
             try (final CloseableHttpResponse response = execute(put)) {
-                assertEquals("Path " + externalLocation + " must be rejected", SC_BAD_REQUEST, getStatus(response));
+                assertEquals(SC_BAD_REQUEST, getStatus(response), "Path " + externalLocation + " must be rejected");
             }
         }
     }

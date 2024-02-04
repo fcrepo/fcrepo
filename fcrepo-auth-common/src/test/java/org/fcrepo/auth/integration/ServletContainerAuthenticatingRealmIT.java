@@ -5,14 +5,14 @@
  */
 package org.fcrepo.auth.integration;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.message.AbstractHttpMessage;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author peichman

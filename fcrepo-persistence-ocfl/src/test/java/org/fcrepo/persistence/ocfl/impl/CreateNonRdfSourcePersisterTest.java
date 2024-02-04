@@ -5,35 +5,15 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import org.apache.commons.io.IOUtils;
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.operations.CreateResourceOperation;
-import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
-import org.fcrepo.kernel.api.operations.ResourceOperation;
-import org.fcrepo.persistence.common.ResourceHeadersImpl;
-import org.fcrepo.storage.ocfl.OcflObjectSession;
-import org.fcrepo.storage.ocfl.ResourceHeaders;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import java.io.InputStream;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -42,11 +22,37 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.operations.CreateResourceOperation;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
+import org.fcrepo.kernel.api.operations.ResourceOperation;
+import org.fcrepo.persistence.common.ResourceHeadersImpl;
+import org.fcrepo.storage.ocfl.OcflObjectSession;
+import org.fcrepo.storage.ocfl.ResourceHeaders;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
 /**
  * @author dbernstein
  * @since 6.0.0
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class CreateNonRdfSourcePersisterTest {
 
     private NonRdfSourceOperation nonRdfSourceOperation;
@@ -64,6 +70,9 @@ public class CreateNonRdfSourcePersisterTest {
 
     @Mock
     private OcflPersistentStorageSession psSession;
+
+    @Mock
+    private Transaction transaction;
 
     private TestOcflObjectIndex index;
 
@@ -89,11 +98,11 @@ public class CreateNonRdfSourcePersisterTest {
 
     private static final String SESSION_ID = "SOME-SESSION-ID";
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         index = new TestOcflObjectIndex();
 
-        index.addMapping(null, ROOT_RESOURCE_ID, FedoraId.getRepositoryRootId(),
+        index.addMapping(transaction, ROOT_RESOURCE_ID, FedoraId.getRepositoryRootId(),
                 ROOT_RESOURCE_ID.getFullId());
 
         headers = new ResourceHeadersImpl();
@@ -173,7 +182,7 @@ public class CreateNonRdfSourcePersisterTest {
 
         final InputStream content = IOUtils.toInputStream(CONTENT_BODY, UTF_8);
 
-        when(nonRdfSourceOperation.getContentDigests()).thenReturn(asList(CONTENT_SHA1_URI));
+        when(nonRdfSourceOperation.getContentDigests()).thenReturn(List.of(CONTENT_SHA1_URI));
 
         when(nonRdfSourceOperation.getContentStream()).thenReturn(content);
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
@@ -187,11 +196,11 @@ public class CreateNonRdfSourcePersisterTest {
         assertEquals(NON_RDF_SOURCE.toString(), resultHeaders.getInteractionModel());
 
         assertModificationHeadersSet(resultHeaders);
-        assertTrue("Headers did not contain the provided sha1 digest",
-                resultHeaders.getDigests().contains(CONTENT_SHA1_URI));
+        assertTrue(resultHeaders.getDigests().contains(CONTENT_SHA1_URI),
+                "Headers did not contain the provided sha1 digest");
     }
 
-    @Test(expected = InvalidChecksumException.class)
+    @Test
     public void testInternalWithInvalidDigest() throws Exception {
         // During write, ensure that input stream is consumed
         mockSessionWriteConsumeStream();
@@ -205,7 +214,9 @@ public class CreateNonRdfSourcePersisterTest {
         when(((CreateResourceOperation) nonRdfSourceOperation).getInteractionModel())
                 .thenReturn(NON_RDF_SOURCE.toString());
 
-        persister.persist(psSession, nonRdfSourceOperation);
+        assertThrows(InvalidChecksumException.class, () -> {
+            persister.persist(psSession, nonRdfSourceOperation);
+        });
     }
 
     private void mockSessionWriteConsumeStream() throws Exception {

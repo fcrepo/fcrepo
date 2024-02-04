@@ -5,6 +5,8 @@
  */
 package org.fcrepo.auth.integration;
 
+import static java.lang.Integer.parseInt;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Strings;
@@ -14,36 +16,33 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.fcrepo.kernel.api.auth.ACLHandle;
 
 import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.Integer.parseInt;
-
-import org.fcrepo.kernel.api.auth.ACLHandle;
-
 /**
  * <p>Abstract AbstractResourceIT class.</p>
  *
  * @author gregjan
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {
 
     private Logger logger;
 
-    @Before
+    @BeforeEach
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
     }
@@ -79,7 +78,7 @@ public abstract class AbstractResourceIT {
 
     protected static HttpPost postObjMethod(final String pid,
             final String query) {
-        if (query.equals("")) {
+        if (query.isEmpty()) {
             return new HttpPost(serverAddress + pid);
         }
         return new HttpPost(serverAddress + pid + "?" + query);

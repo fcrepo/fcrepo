@@ -15,11 +15,12 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -29,15 +30,21 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
 
-import java.io.ByteArrayInputStream;
-import java.nio.file.Path;
-import java.time.Instant;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
-
+import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.DC;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.mockito.stubbing.Answer;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.RdfStream;
@@ -59,28 +66,23 @@ import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.cache.NoOpCache;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.vocabulary.DC;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.stubbing.Answer;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import com.github.benmanes.caffeine.cache.Caffeine;
+import java.io.ByteArrayInputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 /**
  * Test class for {@link OcflPersistentStorageSession}
  *
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class OcflPersistentStorageSessionTest {
 
     private OcflPersistentStorageSession session;
@@ -127,8 +129,8 @@ public class OcflPersistentStorageSessionTest {
 
     private static final String BINARY_CONTENT = "Some test content";
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    public Path tempFolder;
 
     private Path stagingDir;
 
@@ -141,11 +143,17 @@ public class OcflPersistentStorageSessionTest {
     private static final boolean VERIFY_INVENTORY = true;
     private static final DigestAlgorithm DEFAULT_FEDORA_ALGORITHM = DigestAlgorithm.SHA512;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
-        stagingDir = tempFolder.newFolder("ocfl-staging").toPath();
-        final var repoDir = tempFolder.newFolder("ocfl-repo").toPath();
-        final var workDir = tempFolder.newFolder("ocfl-work").toPath();
+        stagingDir = Files.createDirectories(
+                tempFolder.resolve("ocfl-staging")
+        );
+        final var repoDir = Files.createDirectories(
+                tempFolder.resolve("ocfl-repo")
+        );
+        final var workDir = Files.createDirectories(
+                tempFolder.resolve("ocfl-work")
+        );
 
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         final var repository = createFilesystemRepository(repoDir, workDir, DEFAULT_FEDORA_ALGORITHM, false,
@@ -246,9 +254,9 @@ public class OcflPersistentStorageSessionTest {
         final var headers = session.getHeaders(RESOURCE_ID, null);
         assertEquals(USER_PRINCIPAL, headers.getCreatedBy());
         final var originalCreatedDate = headers.getCreatedDate();
-        assertNotNull("Headers must contain created date", originalCreatedDate);
+        assertNotNull(originalCreatedDate, "Headers must contain created date");
         final var originalModifiedDate = headers.getLastModifiedDate();
-        assertNotNull("Headers must contain modified date", originalModifiedDate);
+        assertNotNull(originalModifiedDate, "Headers must contain modified date");
 
         session.prepare();
         //commit to OCFL
@@ -268,9 +276,9 @@ public class OcflPersistentStorageSessionTest {
         assertEquals(originalModifiedDate, headers2.getLastModifiedDate());
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void unsupportedPersistOperation() throws Exception {
-        this.session.persist(unsupportedOperation);
+        assertThrows(UnsupportedOperationException.class, () -> this.session.persist(unsupportedOperation));
     }
 
     @Test
@@ -322,12 +330,7 @@ public class OcflPersistentStorageSessionTest {
         session.commit();
 
         //this should fail
-        try {
-            session.persist(rdfSourceOperation);
-            fail("second session.persist(...) invocation should have failed.");
-        } catch (final PersistentStorageException ex) {
-            //expected failure
-        }
+        assertThrows(PersistentStorageException.class, () -> session.persist(rdfSourceOperation));
     }
 
     @Test
@@ -342,12 +345,7 @@ public class OcflPersistentStorageSessionTest {
         session.commit();
 
         //this should fail
-        try {
-            session.getTriples(RESOURCE_ID, null);
-            fail("second session.getTriples(...) invocation should have failed.");
-        } catch (final PersistentStorageException ex) {
-            //expected failure
-        }
+        assertThrows(PersistentStorageException.class, () -> session.getTriples(RESOURCE_ID, null));
     }
 
     @Test
@@ -362,12 +360,9 @@ public class OcflPersistentStorageSessionTest {
         session.commit();
 
         //this should fail
-        try {
-            session.commit();
-            fail("second session.commit(...) invocation should have failed.");
-        } catch (final PersistentStorageException ex) {
-            //expected failure
-        }
+        assertThrows(PersistentStorageException.class, () -> session.commit(),
+                "second session.commit(...) invocation should have failed.");
+
     }
 
     @Test
@@ -378,12 +373,8 @@ public class OcflPersistentStorageSessionTest {
         //perform the create rdf operation
         session.persist(rdfSourceOperation);
 
-        try {
-            session.commit();
-            fail("commit should have failed because prepare() was not called");
-        } catch (final PersistentStorageException ex) {
-            //expected failure
-        }
+        assertThrows(PersistentStorageException.class, () -> session.commit(),
+                "commit should have failed because prepare() was not called");
     }
 
     @Test
@@ -395,12 +386,8 @@ public class OcflPersistentStorageSessionTest {
         session.persist(rdfSourceOperation);
         session.prepare();
 
-        try {
-            session.prepare();
-            fail("prepare should have failed because prepare() was already called");
-        } catch (final PersistentStorageException ex) {
-            //expected failure
-        }
+        assertThrows(PersistentStorageException.class, () -> session.prepare(),
+            "prepare should have failed because prepare() was already called");
     }
 
     @Test
@@ -418,19 +405,15 @@ public class OcflPersistentStorageSessionTest {
         session.rollback();
 
         //get triples should now fail because the session is effectively closed.
-        try {
-            session.getTriples(RESOURCE_ID, null);
-            fail("session.getTriples(...) invocation after rollback should have failed.");
-        } catch (final PersistentStorageException ex) {
-            //expected failure
-        }
+        assertThrows(PersistentStorageException.class, () -> session.getTriples(RESOURCE_ID, null),
+        "session.getTriples(...) invocation after rollback should have failed.");
     }
 
     /*
      * This test covers the expected behavior when two OCFL Object Sessions are modified and one of the commits to
      * the mutable head fails.
      */
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void rollbackOnSessionWithCommitsToMutableHeadShouldFail() throws Exception {
         mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
@@ -446,33 +429,25 @@ public class OcflPersistentStorageSessionTest {
         doThrow(IllegalStateException.class).when(objectSession1).rollback();
 
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
-        try {
-            //perform the create rdf operations
-            session1.persist(rdfSourceOperation);
-            session1.persist(rdfSourceOperation2);
-        } catch (final PersistentStorageException e) {
-            fail("Operations should not fail.");
-        }
+        //perform the create rdf operations
+        session1.persist(rdfSourceOperation);
+        session1.persist(rdfSourceOperation2);
 
         //get triples should now fail because the session is effectively closed.
-        try {
-            session1.prepare();
-            session1.commit();
-            fail("session1.commit(...) invocation should fail.");
-        } catch (final PersistentStorageException ex) {
-            session1.rollback();
-            fail("session1.rollback(...) invocation should fail.");
-        }
+        session1.prepare();
+        assertThrows(PersistentStorageException.class, session1::commit,
+        "session1.commit(...) invocation should fail.");
+        assertThrows(PersistentStorageException.class, session1::rollback,
+            "session1.rollback(...) invocation should fail.");
     }
 
     @Test
     public void getTriplesFailsIfCommitHasAlreadyStarted() throws Exception {
-        final var ocflId = OCFL_RESOURCE_ID;
         mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
 
         //mock success on commit for the first object session
-        when(mockSessionFactory.newSession(eq(ocflId))).thenReturn(objectSession1);
+        when(mockSessionFactory.newSession(eq(OCFL_RESOURCE_ID))).thenReturn(objectSession1);
         //pause on commit for 1 second
         doAnswer(invocation -> {
             Thread.sleep(1000);
@@ -503,12 +478,8 @@ public class OcflPersistentStorageSessionTest {
         //commit thread runs first.
         Thread.sleep(500);
         //get triples should now fail because the commit has started.
-        try {
-            session1.getTriples(RESOURCE_ID, null);
-            fail("session1.getTriples(...) invocation should have failed.");
-        } catch (final PersistentStorageException e) {
-            //do nothing
-        }
+        assertThrows(PersistentStorageException.class, () -> session1.getTriples(RESOURCE_ID, null),
+        "session1.getTriples(...) invocation should have failed.");
 
         latch.await(1000, TimeUnit.MILLISECONDS);
 
@@ -522,64 +493,42 @@ public class OcflPersistentStorageSessionTest {
 
         final PersistentStorageSession session1 = createSession(index, objectSessionFactory);
         //persist the operation
-        try {
-            session1.persist(rdfSourceOperation);
-            session1.prepare();
-            session1.commit();
-        } catch (final PersistentStorageException e) {
-            fail("Operation should not fail.");
-        }
+        session1.persist(rdfSourceOperation);
+        session1.prepare();
+        session1.commit();
 
         session1.rollback();
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void rollbackSucceedsOnUncommittedChanges() throws Exception {
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
         final PersistentStorageSession session1 = createSession(index, this.objectSessionFactory);
 
-        try {
-            session1.persist(rdfSourceOperation);
-            session1.rollback();
-        } catch (final PersistentStorageException e) {
-            fail("Neither persist() nor rollback() should have failed.");
-
-        }
+        session1.persist(rdfSourceOperation);
+        session1.rollback();
         //verify that the resource cannot be found now (since it wasn't committed).
         final OcflPersistentStorageSession newSession = createSession(index, objectSessionFactory);
-        newSession.getTriples(RESOURCE_ID, null);
-        fail("second session.getTriples(...) invocation should have failed.");
+        assertThrows(PersistentStorageException.class, () -> newSession.getTriples(RESOURCE_ID, null),
+        "second session.getTriples(...) invocation should have failed.");
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void rollbackFailsWhenAlreadyRolledBack() throws Exception {
         mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
         when(mockSessionFactory.newSession(eq(OCFL_RESOURCE_ID))).thenReturn(objectSession1);
         doThrow(new RuntimeException("commit error")).when(objectSession1).commit();
         final PersistentStorageSession session1 = createSession(index, mockSessionFactory);
-        try {
-            session1.persist(rdfSourceOperation);
-        } catch (final PersistentStorageException e) {
-            fail("Operation should not fail.");
-        }
+        session1.persist(rdfSourceOperation);
 
-        try {
-            session1.prepare();
-            session1.commit();
-            fail("Operation should fail.");
-        } catch (final PersistentStorageException e) {
-            //expected failure
-        }
-
-        try {
-            session1.rollback();
-        } catch (final PersistentStorageException e) {
-            fail("Operation should not fail.");
-        }
+        session1.prepare();
+        assertThrows(PersistentStorageException.class, session1::commit);
 
         session1.rollback();
+
+        assertThrows(PersistentStorageException.class, session1::rollback);
     }
 
     @Test
@@ -697,12 +646,8 @@ public class OcflPersistentStorageSessionTest {
         // commit to OCFL
         session.commit();
 
-        try {
-            session.getBinaryContent(RESOURCE_ID, null);
-            fail("Get must fail due to session having been committed");
-        } catch (final PersistentStorageException ex) {
-            // expected failure, handled with catch since the persist can throw same error
-        }
+        assertThrows(PersistentStorageException.class, () -> session.getBinaryContent(RESOURCE_ID, null),
+            "Get must fail due to session having been committed");
     }
 
     @Test

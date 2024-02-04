@@ -8,23 +8,7 @@ package org.fcrepo.http.commons.test.util;
 import static org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory.createHttpServer;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.net.URI;
-import java.util.Collection;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.Unmarshaller;
-
 import com.google.common.base.Strings;
-import org.fcrepo.http.commons.webxml.WebAppConfig;
-import org.fcrepo.http.commons.webxml.bind.ContextParam;
-import org.fcrepo.http.commons.webxml.bind.Filter;
-import org.fcrepo.http.commons.webxml.bind.FilterMapping;
-import org.fcrepo.http.commons.webxml.bind.InitParam;
-import org.fcrepo.http.commons.webxml.bind.Listener;
-import org.fcrepo.http.commons.webxml.bind.Servlet;
-import org.fcrepo.http.commons.webxml.bind.ServletMapping;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.grizzly.servlet.FilterRegistration;
 import org.glassfish.grizzly.servlet.ServletRegistration;
@@ -34,7 +18,23 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.lang.NonNullApi;
 import org.springframework.web.context.support.WebApplicationContextUtils;
+import org.fcrepo.http.commons.webxml.WebAppConfig;
+import org.fcrepo.http.commons.webxml.bind.ContextParam;
+import org.fcrepo.http.commons.webxml.bind.Filter;
+import org.fcrepo.http.commons.webxml.bind.FilterMapping;
+import org.fcrepo.http.commons.webxml.bind.InitParam;
+import org.fcrepo.http.commons.webxml.bind.Listener;
+import org.fcrepo.http.commons.webxml.bind.Servlet;
+import org.fcrepo.http.commons.webxml.bind.ServletMapping;
+
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import java.net.URI;
+import java.util.Collection;
 
 /**
  * <p>ContainerWrapper class.</p>
@@ -160,6 +160,7 @@ public class ContainerWrapper implements ApplicationContextAware {
     @Override
     public void setApplicationContext(final ApplicationContext springAppContext)
             throws BeansException {
+        // no-op
     }
 
 }

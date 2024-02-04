@@ -22,7 +22,7 @@ import org.springframework.test.context.TestExecutionListeners.MergeMode;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
-import javax.ws.rs.core.Link;
+import jakarta.ws.rs.core.Link;
 import java.net.ConnectException;
 
 import static org.apache.http.HttpStatus.SC_OK;

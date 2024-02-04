@@ -1,4 +1,4 @@
-#* @vtlvariable name="uriInfo" type="javax.ws.rs.core.UriInfo" *#
+#* @vtlvariable name="uriInfo" type="jakarta.ws.rs.core.UriInfo" *#
 <!DOCTYPE html>
 #set( $title = $helpers.getObjectTitle($rdf, $topic) )
 

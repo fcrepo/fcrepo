@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
+import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
@@ -258,7 +258,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public FedoraOcflMapping addMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId,
+    public FedoraOcflMapping addMapping(@NotNull final Transaction transaction, final FedoraId fedoraId,
                                         final FedoraId fedoraRootId, final String ocflId) {
         transaction.doInTx(() -> {
             if (!transaction.isShortLived()) {
@@ -272,7 +272,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public void removeMapping(@Nonnull final Transaction transaction, final FedoraId fedoraId) {
+    public void removeMapping(@NotNull final Transaction transaction, final FedoraId fedoraId) {
         transaction.doInTx(() -> {
             if (!transaction.isShortLived()) {
                 upsert(transaction, fedoraId, "delete");
@@ -337,7 +337,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     @Override
-    public void commit(@Nonnull final Transaction transaction) {
+    public void commit(@NotNull final Transaction transaction) {
         if (!transaction.isShortLived()) {
             transaction.ensureCommitting();
 
@@ -358,7 +358,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @Override
-    public void rollback(@Nonnull final Transaction transaction) {
+    public void rollback(@NotNull final Transaction transaction) {
         if (!transaction.isShortLived()) {
             jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, Map.of("transactionId", transaction.getId()));
         }

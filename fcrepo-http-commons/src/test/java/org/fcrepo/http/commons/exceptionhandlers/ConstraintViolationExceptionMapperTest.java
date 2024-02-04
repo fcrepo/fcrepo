@@ -16,7 +16,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImp
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.Assert.assertEquals;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

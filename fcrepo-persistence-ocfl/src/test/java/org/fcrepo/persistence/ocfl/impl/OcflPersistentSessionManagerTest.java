@@ -5,32 +5,36 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
-
-import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * Test class for {@link OcflPersistentSessionManager}
  *
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class OcflPersistentSessionManagerTest {
 
     private OcflPersistentSessionManager sessionManager;
@@ -53,7 +57,7 @@ public class OcflPersistentSessionManagerTest {
     @Mock
     private Transaction transaction;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         this.sessionManager = new OcflPersistentSessionManager();
         when(transaction.getId()).thenReturn(testSessionId);
@@ -63,19 +67,19 @@ public class OcflPersistentSessionManagerTest {
         readOnlySession = this.sessionManager.getReadOnlySession();
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testUnsupportedOperationOnUnrecognizedOperation() throws Exception {
-        readWriteSession.persist(mockOperation);
+        assertThrows(UnsupportedOperationException.class, () -> readWriteSession.persist(mockOperation));
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void testPersistNoSession() throws Exception {
-        readOnlySession.persist(mockOperation);
+        assertThrows(PersistentStorageException.class, () -> readOnlySession.persist(mockOperation));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNullSessionId() {
-        this.sessionManager.getSession(null);
+        assertThrows(IllegalArgumentException.class, () -> this.sessionManager.getSession(null));
     }
 
     @Test

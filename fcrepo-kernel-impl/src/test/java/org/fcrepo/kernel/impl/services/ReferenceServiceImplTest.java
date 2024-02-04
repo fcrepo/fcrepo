@@ -14,16 +14,22 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import jakarta.inject.Inject;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.flywaydb.test.annotation.FlywayTest;
+import org.flywaydb.test.junit5.annotation.FlywayTestExtension;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -32,21 +38,11 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.impl.TestTransactionHelper;
-import org.flywaydb.test.FlywayTestExecutionListener;
-import org.flywaydb.test.annotation.FlywayTest;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+
+import jakarta.inject.Inject;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Reference Service Tests
@@ -55,8 +51,8 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 @ExtendWith(SpringExtension.class)
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@SpringJUnitConfig(locations = "/containmentIndexTest.xml")
-@TestExecutionListeners({DependencyInjectionTestExecutionListener.class, FlywayTestExecutionListener.class })
+@ContextConfiguration("/containmentIndexTest.xml")
+@FlywayTestExtension
 public class ReferenceServiceImplTest {
 
     @Inject
@@ -94,7 +90,6 @@ public class ReferenceServiceImplTest {
     @BeforeEach
     @FlywayTest
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
         final String transactionId = UUID.randomUUID().toString();
         transaction = TestTransactionHelper.mockTransaction(transactionId, false);
         shortLivedTx = TestTransactionHelper.mockTransaction(UUID.randomUUID().toString(), true);

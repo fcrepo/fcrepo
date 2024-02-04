@@ -24,7 +24,7 @@
     <project_organization>fcrepo</project_organization>
     <fcrepo-storage-ocfl.version>6.4.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
-    <activemq.version>5.16.7</activemq.version>
+    <activemq.version>6.0.1</activemq.version>
     <aws.version>2.17.50</aws.version>
     <caffeine.version>3.0.4</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
@@ -32,8 +32,8 @@
     <commons-io.version>2.11.0</commons-io.version>
     <commons-lang.version>3.12.0</commons-lang.version>
     <failsafe.version>2.4.4</failsafe.version>
-    <flyway.version>8.5.5</flyway.version>
-    <flyway.test.version>7.0.0</flyway.test.version>
+    <flyway.version>10.7.1</flyway.version>
+    <flyway.test.version>10.0.0</flyway.test.version>
     <guava.version>32.0.0-jre</guava.version>
     <h2database.version>2.2.220</h2database.version>
     <hikari.version>5.0.0</hikari.version>
@@ -43,17 +43,19 @@
     <httpclient.version>4.5.13</httpclient.version>
     <httpmime.version>4.5.13</httpmime.version>
     <httpcore.version>4.4.14</httpcore.version>
+    <jakarta.activation.version>2.1.0</jakarta.activation.version>
     <jakarta.annotation.version>2.1.1</jakarta.annotation.version>
     <jakarta.inject.version>2.0.1</jakarta.inject.version>
-    <jakarta.xml.version>4.0.0</jakarta.xml.version>
-    <jakarta.servlet-api.version>4.0.2</jakarta.servlet-api.version>
-    <jakarta.jakartaee-api.version>9.1.0</jakarta.jakartaee-api.version>
+    <jakarta.jakartaee-api.version>10.0.0</jakarta.jakartaee-api.version>
+    <jakarta.json-api.version>2.1.0</jakarta.json-api.version>
+    <jakarta.servlet-api.version>6.0.0</jakarta.servlet-api.version>
+    <jakarta.xml.version>4.0.1</jakarta.xml.version>
     <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
     <javax.annotation.version>1.3.2</javax.annotation.version>
     <javaee-api.version>8.0.1</javaee-api.version>
     <javaee.xml.version>2.3.1</javaee.xml.version>
-    <jaxb.core.version>2.3.0.1</jaxb.core.version>
-    <jaxb.impl.version>2.3.1</jaxb.impl.version>
+    <jaxb.core.version>4.0.4</jaxb.core.version>
+    <jaxb.impl.version>4.0.4</jaxb.impl.version>
     <jackson2.version>2.15.0</jackson2.version>
     <jackson2.databind.version>2.15.0</jackson2.databind.version>
     <jboss-logging.version>3.4.2.Final</jboss-logging.version>
@@ -63,14 +65,15 @@
     <jgroups.version>5.1.9.Final</jgroups.version>
     <jsonld.version>0.13.3</jsonld.version>
     <logback.version>1.2.13</logback.version>
-    <micrometer.version>1.7.4</micrometer.version>
+    <micrometer.prometheus.version>1.12.2</micrometer.prometheus.version>
+    <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
     <netty.version>4.1.68.Final</netty.version>
     <ocfl-java.version>1.5.0</ocfl-java.version>
-    <prometheus.version>0.10.0</prometheus.version>
+    <prometheus.version>0.16.0</prometheus.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>1.13.0</shiro.version>
     <slf4j.version>1.7.32</slf4j.version>
-    <spring.version>5.3.31</spring.version>
+    <spring.version>6.1.3</spring.version>
     <xerces.version>2.12.2</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>2.3</velocity.version>
@@ -80,7 +83,8 @@
     <mariadb.version>2.7.4</mariadb.version>
     <!-- test gear -->
     <awaitility.version>4.1.0</awaitility.version>
-    <grizzly.version>2.4.4</grizzly.version>
+    <grizzly.version>4.0.2</grizzly.version>
+    <hamcrest.version>2.2</hamcrest.version>
     <junit.version>4.13.2</junit.version>
     <junit5.version>5.10.0</junit5.version>
     <system-rules.version>1.19.0</system-rules.version>
@@ -149,7 +153,7 @@
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-impl</artifactId>
         <version>${jaxb.impl.version}</version>
-         </dependency>
+      </dependency>
       <dependency>
         <groupId>jakarta.annotation</groupId>
         <artifactId>jakarta.annotation-api</artifactId>
@@ -165,6 +169,18 @@
             <artifactId>jakarta.annotation-api</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.activation</groupId>
+        <artifactId>jakarta.activation-api</artifactId>
+        <version>${jakarta.activation.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.json</groupId>
+        <artifactId>jakarta.json-api</artifactId>
+        <version>${jakarta.json-api.version}</version>
+        <scope>provided</scope>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
@@ -185,7 +201,14 @@
         <groupId>org.glassfish.jersey.ext</groupId>
         <artifactId>jersey-spring6</artifactId>
         <version>${jersey.version}</version>
-
+        <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <!-- also brought in by jersey-common -->
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.core</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <!--<dependency>
         <groupId>org.glassfish.hk2.external</groupId>
@@ -356,27 +379,16 @@
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-core</artifactId>
-        <version>${micrometer.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>io.micrometer</groupId>
-        <artifactId>micrometer-jersey2</artifactId>
-        <version>${micrometer.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.glassfish.jersey.inject</groupId>
-            <artifactId>jersey-hk2</artifactId>
-          </exclusion>
-        </exclusions>
+        <version>${micrometer.prometheus.version}</version>
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
-        <version>${micrometer.version}</version>
+        <version>${micrometer.prometheus.version}</version>
       </dependency>
       <dependency>
         <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient_servlet</artifactId>
+        <artifactId>simpleclient_servlet_jakarta</artifactId>
         <version>${prometheus.version}</version>
       </dependency>
       <dependency>
@@ -591,6 +603,7 @@
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-core</artifactId>
         <version>${shiro.version}</version>
+        <classifier>jakarta</classifier>
         <exclusions>
           <exclusion>
             <groupId>commons-collections</groupId>
@@ -602,7 +615,12 @@
         <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-spring</artifactId>
         <version>${shiro.version}</version>
+        <classifier>jakarta</classifier>
         <exclusions>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>javax.servlet.jsp</groupId>
             <artifactId>jsp-api</artifactId>
@@ -614,12 +632,6 @@
         </exclusions>
       </dependency>
       <!-- test gear -->
-      <!--<dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>${junit.version}</version>
-        <scope>test</scope>
-      </dependency>-->
       <!-- JUnit 5 runners for JUnit 4 tests, update tests to JUnit 5 then get rid of this -->
       <dependency>
         <groupId>org.junit.vintage</groupId>
@@ -641,8 +653,8 @@
       </dependency>
       <dependency>
         <groupId>org.hamcrest</groupId>
-        <artifactId>hamcrest-all</artifactId>
-        <version>1.3</version>
+        <artifactId>hamcrest</artifactId>
+        <version>${hamcrest.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -668,14 +680,15 @@
         <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
         <scope>test</scope>
-        <exclusions>
-          <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls
-            in the more recent 1.3 -->
+        <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls
+           in the more recent 1.3 -->
+        <!--<exclusions>
+
           <exclusion>
             <groupId>org.hamcrest</groupId>
             <artifactId>hamcrest-core</artifactId>
           </exclusion>
-        </exclusions>
+        </exclusions>-->
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>

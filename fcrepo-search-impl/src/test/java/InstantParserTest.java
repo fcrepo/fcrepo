@@ -4,9 +4,10 @@
  * tree.
  */
 import org.fcrepo.search.impl.InstantParser;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author dbernstein
@@ -24,8 +25,8 @@ public class InstantParserTest {
         assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("Wed, 1 Jan 2020 00:00:00 GMT").toString());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testInvalidString() {
-        InstantParser.parse("2020-01-01 24").toString();
+        assertThrows(IllegalArgumentException.class, () -> InstantParser.parse("2020-01-01 24").toString());
     }
 }

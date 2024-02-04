@@ -5,7 +5,7 @@
  */
 package org.fcrepo.integration.rdf;
 
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

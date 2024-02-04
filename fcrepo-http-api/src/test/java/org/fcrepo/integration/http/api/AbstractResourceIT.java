@@ -5,10 +5,47 @@
  */
 package org.fcrepo.integration.http.api;
 
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.GONE;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.lang.Integer.MAX_VALUE;
+import static java.lang.Integer.parseInt;
+import static java.util.Arrays.stream;
+import static java.util.UUID.randomUUID;
+import static java.util.stream.Collectors.toList;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.vocabulary.DC_11.title;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
+import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.slf4j.LoggerFactory.getLogger;
+
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Strings;
-
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -39,27 +76,25 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.slf4j.Logger;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.fcrepo.kernel.api.auth.ACLHandle;
-
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
-import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.slf4j.Logger;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import javax.inject.Inject;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response.Status;
-import javax.xml.bind.DatatypeConverter;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -78,51 +113,13 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static java.lang.Integer.MAX_VALUE;
-import static java.lang.Integer.parseInt;
-import static java.util.Arrays.stream;
-import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.apache.jena.vocabulary.DC_11.title;
-import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
-import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
-import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.slf4j.LoggerFactory.getLogger;
-
 /**
  * <p>Abstract AbstractResourceIT class.</p>
  *
  * @author awoods
  * @author ajs6f
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {
 
@@ -158,7 +155,7 @@ public abstract class AbstractResourceIT {
                 .collect(Collectors.toMap(a -> a[0], a -> a.length > 1 ? a[1] : ""));
     }
 
-    @Before
+    @BeforeEach
     public void setLogger() throws InterruptedException {
         // must wait for the repo to be initialized
         final var initializer = getBean(RepositoryInitializer.class);
@@ -639,7 +636,7 @@ public abstract class AbstractResourceIT {
                         "> <" + propertyUri + "> " + value + " } WHERE { }";
         postProp.setEntity(new StringEntity(updateString));
         final CloseableHttpResponse dcResp = execute(postProp);
-        assertEquals(dcResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(dcResp));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(dcResp), dcResp.getStatusLine().toString());
         postProp.releaseConnection();
         return dcResp;
     }
@@ -653,7 +650,7 @@ public abstract class AbstractResourceIT {
                 "INSERT { <" + serverAddress + id + "> <" + propertyUri + "> \"" + value + "\" } WHERE { }";
         postProp.setEntity(new StringEntity(updateString));
         final CloseableHttpResponse dcResp = execute(postProp);
-        assertEquals(dcResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(dcResp));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(dcResp), dcResp.getStatusLine().toString());
         postProp.releaseConnection();
         return dcResp;
     }
@@ -812,9 +809,8 @@ public abstract class AbstractResourceIT {
 
     protected static void assertConstrainedByPresent(final CloseableHttpResponse response) {
         final Collection<String> linkHeaders = getLinkHeaders(response);
-        assertTrue("Constrained by link header not present",
-                linkHeaders.stream().map(Link::valueOf)
-                        .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
+        assertTrue(linkHeaders.stream().map(Link::valueOf).anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())),
+                "Constrained by link header not present");
     }
 
 

@@ -18,13 +18,13 @@ import java.security.Principal;
 import java.util.Base64;
 import java.util.Set;
 
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.WebApplicationException;
 
 import org.glassfish.grizzly.http.server.GrizzlyPrincipal;
@@ -122,7 +122,7 @@ public class TestAuthenticationRequestFilter implements Filter {
 
     /*
      * (non-Javadoc)
-     * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)
+     * @see jakarta.servlet.Filter#init(jakarta.servlet.FilterConfig)
      */
     @Override
     public void init(final FilterConfig filterConfig) {
@@ -130,7 +130,7 @@ public class TestAuthenticationRequestFilter implements Filter {
 
     /*
      * (non-Javadoc)
-     * @see javax.servlet.Filter#destroy()
+     * @see jakarta.servlet.Filter#destroy()
      */
     @Override
     public void destroy() {

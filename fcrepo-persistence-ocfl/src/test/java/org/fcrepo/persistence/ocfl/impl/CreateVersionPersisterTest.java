@@ -6,15 +6,22 @@
 
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Duration;
-import java.time.Instant;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.CreateVersionResourceOperation;
@@ -27,18 +34,15 @@ import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.ResourceHeaders;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * @author pwinckles
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class CreateVersionPersisterTest {
 
     private CreateVersionPersister persister;
@@ -51,7 +55,7 @@ public class CreateVersionPersisterTest {
     @Captor
     private ArgumentCaptor<ResourceHeaders> headersCaptor;
 
-    @Before
+    @BeforeEach
     public void setup() {
         index = new TestOcflObjectIndex();
         persister = new CreateVersionPersister(index);
@@ -85,17 +89,17 @@ public class CreateVersionPersisterTest {
         verifyHeaders(objectSession);
     }
 
-    @Test(expected = PersistentItemConflictException.class)
+    @Test
     public void forbidVersionCreationWhenChildOfAg() throws PersistentStorageException {
         final var resourceId = FedoraId.create("info:fedora/ag/blah");
 
         expectArchivalGroup(resourceId, false);
         expectArchivalGroup(FedoraId.create("info:fedora/ag"), true);
 
-        persister.persist(session, operation(resourceId));
+        assertThrows(PersistentItemConflictException.class, () -> persister.persist(session, operation(resourceId)));
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void failVersionCreationWhenNoOclfMapping() throws PersistentStorageException {
         final var resourceId = FedoraId.create("info:fedora/bogus");
         final var ocflId = "blah";
@@ -103,7 +107,7 @@ public class CreateVersionPersisterTest {
         addMapping(FedoraId.create("info:fedora/blah"), ocflId);
         expectArchivalGroup(resourceId, false);
 
-        persister.persist(session, operation(resourceId));
+        assertThrows(PersistentStorageException.class, () -> persister.persist(session, operation(resourceId)));
     }
 
     private void expectArchivalGroup(final FedoraId resourceId, final boolean isAgChild)
@@ -134,9 +138,11 @@ public class CreateVersionPersisterTest {
     private void verifyHeaders(final OcflObjectSession objectSession) {
         verify(objectSession).writeHeaders(headersCaptor.capture());
         final var actualHeaders = headersCaptor.getValue();
-        assertTrue("Timestamp should be within 1 second of now",
-                Duration.between(actualHeaders.getMementoCreatedDate(), Instant.now())
-                        .compareTo(Duration.ofSeconds(1)) < 0);
+        assertTrue(
+                Duration.between(actualHeaders.getMementoCreatedDate(),
+                        Instant.now()).compareTo(Duration.ofSeconds(1)) < 0,
+                "Timestamp should be within 1 second of now"
+        );
     }
 
 }

@@ -5,16 +5,16 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.Link.fromUri;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.Link.fromUri;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -23,15 +23,9 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.net.URI;
-import java.nio.file.Paths;
-
-import javax.ws.rs.core.Link;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -41,10 +35,15 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.DatasetGraph;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+
+import jakarta.ws.rs.core.Link;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Paths;
 
 /**
  * @author lsitu
@@ -58,7 +57,7 @@ public class FedoraAclIT extends AbstractResourceIT {
     private String subjectUri;
     private String id;
 
-    @Before
+    @BeforeEach
     public void init() {
         id = getRandomUniqueId();
         subjectUri = serverAddress + id;
@@ -291,15 +290,15 @@ public class FedoraAclIT extends AbstractResourceIT {
     @Test
     public void testDeleteDefaultRootAcl() {
         final String rootAclUri = serverAddress + FCR_ACL;
-        assertEquals("DELETE should fail for default generated root ACL.",
-                CONFLICT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)),
+                "DELETE should fail for default generated root ACL.");
     }
 
     @Test
     public void testPatchDefaultRootAcl() {
         final String rootAclUri = serverAddress + FCR_ACL;
-        assertEquals("PATCH should fail for default generated root ACL.",
-                CONFLICT.getStatusCode(), getStatus(new HttpPatch(rootAclUri)));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPatch(rootAclUri)),
+                "PATCH should fail for default generated root ACL.");
     }
 
     @Test
@@ -335,20 +334,19 @@ public class FedoraAclIT extends AbstractResourceIT {
         put.setHeader("Content-Type", "text/turtle");
 
         // Test PUT
-        assertEquals("PUT a new ACL should succeed.",
-                CREATED.getStatusCode(), getStatus(put));
+        assertEquals(CREATED.getStatusCode(), getStatus(put), "PUT a new ACL should succeed.");
 
         // Test PATCH
         final HttpPatch patch = new HttpPatch(rootAclUri);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
                                             "INSERT { <#readAccess> acl:mode acl:Write . } WHERE { }"));
-        assertEquals("PATCH should succeed for default generated root ACL.",
-                NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch),
+                "PATCH should succeed for default generated root ACL.");
 
         // Test DELETE
-        assertEquals("DELETE should succeed for user-defined default root ACL.",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)),
+                "DELETE should succeed for user-defined default root ACL.");
     }
 
     @Test

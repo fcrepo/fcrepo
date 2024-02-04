@@ -13,7 +13,7 @@ import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.fcrepo.kernel.api.Transaction;
@@ -24,7 +24,7 @@ import org.glassfish.jersey.uri.internal.JerseyUriBuilder;
 import org.slf4j.Logger;
 
 /**
- * Provide a fedora tranasction within the current request context
+ * Provide a fedora transaction within the current request context
  *
  * @author awoods
  */
