@@ -5,13 +5,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static java.util.Calendar.getInstance;
-import static java.util.Spliterator.IMMUTABLE;
-import static java.util.Spliterators.spliteratorUnknownSize;
-import static java.util.TimeZone.getTimeZone;
-import static java.util.stream.StreamSupport.stream;
 import static jakarta.ws.rs.core.HttpHeaders.ALLOW;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.LINK;
@@ -21,6 +14,13 @@ import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.Calendar.getInstance;
+import static java.util.Spliterator.IMMUTABLE;
+import static java.util.Spliterators.spliteratorUnknownSize;
+import static java.util.TimeZone.getTimeZone;
+import static java.util.stream.StreamSupport.stream;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
@@ -39,29 +39,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.stream.Stream;
-
-import jakarta.ws.rs.core.Link;
-import jakarta.xml.bind.DatatypeConverter;
-
-import org.fcrepo.config.ServerManagedPropsMode;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.utils.GraphDifferencer;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -88,17 +69,34 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.RDF;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.utils.GraphDifferencer;
+
+import jakarta.ws.rs.core.Link;
+import jakarta.xml.bind.DatatypeConverter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author Mike Durbin
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestExecutionListeners(
         listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
@@ -112,7 +110,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         providedDate.add(Calendar.YEAR, -20);
     }
 
-    @Before
+    @BeforeEach
     public void switchToRelaxedMode() {
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.RELAXED);
     }
@@ -549,7 +547,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         confirmResponseBodyNTriplesAreEqual(originalBody, newBody);
     }
 
-    @After
+    @AfterEach
     public void switchToStrictMode() {
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
     }
@@ -568,7 +566,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
                     }
                     roundtrippedGraph.delete(q);
                 }
-                assertTrue("Roundtripped graph had extra quads! " + roundtrippedGraph, roundtrippedGraph.isEmpty());
+                assertTrue(roundtrippedGraph.isEmpty(), "Roundtripped graph had extra quads! " + roundtrippedGraph);
             }
         }
     }
@@ -732,14 +730,15 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
 
         public ResultGraphWrapper mustHave(final Node predicate, final Node object) {
-            assertTrue(predicate.getLocalName() + " should have been set to " + object.getLiteral().toString()
-                    + "!\nStatements:\n" + statements, graph.contains(ANY, nodeUri, predicate, object));
+            assertTrue(graph.contains(ANY, nodeUri, predicate, object),
+                    predicate.getLocalName() + " should have been set to " + object.getLiteral().toString()
+                                + "!\nStatements:\n" + statements);
             return this;
         }
 
         public ResultGraphWrapper mustNotHave(final Node predicate, final Node object) {
-            assertFalse(predicate.getLocalName() + " should not have been set to " + object.getLiteral().toString()
-                    + "!", graph.contains(ANY, nodeUri, predicate, object));
+            assertFalse(graph.contains(ANY, nodeUri, predicate, object),
+                    predicate.getLocalName() + " should not have been set to " + object.getLiteral().toString() + "!");
             return this;
         }
 

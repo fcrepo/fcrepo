@@ -6,15 +6,8 @@
 
 package org.fcrepo.config;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Map;
-
-import jakarta.annotation.PostConstruct;
-import javax.sql.DataSource;
-
 import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +24,12 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.zaxxer.hikari.HikariDataSource;
+import jakarta.annotation.PostConstruct;
+import javax.sql.DataSource;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Map;
 
 /**
  * @author pwinckles
@@ -43,6 +41,9 @@ public class DatabaseConfig extends BasePropsConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);
 
     private static final String H2_FILE = "fcrepo-h2";
+
+    @Value("${flyway.cleanDisabled:true}")
+    private boolean flywayCleanDisabled;
 
     @Value("${fcrepo.db.url:#{'jdbc:h2:'" +
             " + fedoraPropsConfig.fedoraData.resolve('" + H2_FILE + "').toAbsolutePath().toString()" +
@@ -173,7 +174,8 @@ public class DatabaseConfig extends BasePropsConfig {
     @Bean
     public Flyway flyway(final DataSource source) throws Exception {
         LOGGER.debug("Instantiating a new flyway bean");
-        return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType()).getObject();
+        return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType())
+                .setCleanDisabled(flywayCleanDisabled).getObject();
     }
 
 }

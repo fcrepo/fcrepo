@@ -5,29 +5,10 @@
  */
 package org.fcrepo.http.api;
 
-import org.fcrepo.common.db.DbTransactionExecutor;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.fcrepo.kernel.api.models.Tombstone;
-import org.fcrepo.kernel.api.services.PurgeResourceService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import jakarta.servlet.ServletContext;
-import jakarta.ws.rs.core.Request;
-import jakarta.ws.rs.core.Response;
-import jakarta.ws.rs.core.SecurityContext;
-
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
-
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -35,10 +16,31 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.fcrepo.common.db.DbTransactionExecutor;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.models.Tombstone;
+import org.fcrepo.kernel.api.services.PurgeResourceService;
+
+import jakarta.servlet.ServletContext;
+import jakarta.ws.rs.core.Request;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+
 /**
  * @author cabeer
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class FedoraTombstonesTest {
 
     private final String path = "/test/object";
@@ -71,7 +73,7 @@ public class FedoraTombstonesTest {
     @Mock
     private ResourceFactory resourceFactory;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         testObj = spy(new FedoraTombstones(path));
@@ -101,7 +103,7 @@ public class FedoraTombstonesTest {
      */
     @Test
     public void testNotYetDeleted() throws Exception {
-        when(resourceFactory.getResource((Transaction)any(), eq(fedoraId))).thenReturn(mockDeletedObj);
+        when(resourceFactory.getResource(any(), eq(fedoraId))).thenReturn(mockDeletedObj);
         final Response actual = testObj.delete();
         assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
     }

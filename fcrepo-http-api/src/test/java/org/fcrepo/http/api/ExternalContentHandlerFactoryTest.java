@@ -6,26 +6,30 @@
 package org.fcrepo.http.api;
 
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
+
+import jakarta.ws.rs.core.Link;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import jakarta.ws.rs.core.Link;
-import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
 /**
  * @author bbpennel
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ExternalContentHandlerFactoryTest {
 
     @Mock
@@ -33,7 +37,7 @@ public class ExternalContentHandlerFactoryTest {
 
     private ExternalContentHandlerFactory factory;
 
-    @Before
+    @BeforeEach
     public void init() {
         factory = new ExternalContentHandlerFactory();
         factory.setValidator(validator);
@@ -49,18 +53,19 @@ public class ExternalContentHandlerFactoryTest {
         assertEquals("proxy", handler.getHandling());
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testValidationFailure() {
         doThrow(new ExternalMessageBodyException("")).when(validator).validate(anyString());
 
-        factory.createFromLinks(makeLinks("https://fedora.info/"));
+        assertThrows(ExternalMessageBodyException.class,
+                () -> factory.createFromLinks(makeLinks("https://fedora.info/")));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testMultipleExtLinkHeaders() {
         final List<String> links = makeLinks("https://fedora.info/", "https://fedora.info/");
 
-        factory.createFromLinks(links);
+        assertThrows(ExternalMessageBodyException.class, () -> factory.createFromLinks(links));
     }
 
     private List<String> makeLinks(final String... uris) {

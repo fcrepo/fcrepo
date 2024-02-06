@@ -10,7 +10,9 @@ import org.apache.commons.io.FileUtils;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.flywaydb.core.Flyway;
+import org.flywaydb.test.junit5.annotation.FlywayTestExtension;
 import org.springframework.test.context.TestContext;
+import org.springframework.test.context.TestPropertySource;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -24,6 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author pwinckles
  */
+@FlywayTestExtension
 public class TestIsolationExecutionListener extends BaseTestExecutionListener {
 
     @Override

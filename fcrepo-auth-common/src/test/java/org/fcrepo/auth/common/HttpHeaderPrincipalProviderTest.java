@@ -5,29 +5,32 @@
  */
 package org.fcrepo.auth.common;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.security.Principal;
-import java.util.Set;
-
-import jakarta.servlet.http.HttpServletRequest;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import jakarta.servlet.http.HttpServletRequest;
+import java.security.Principal;
+import java.util.Set;
 
 /**
  * @author daines
  * @author bbpennel
  * @since Mar 6, 2014
  */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class HttpHeaderPrincipalProviderTest {
 
     @Mock
@@ -35,10 +38,8 @@ public class HttpHeaderPrincipalProviderTest {
 
     private HttpHeaderPrincipalProvider provider;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        MockitoAnnotations.openMocks(this);
-
         provider = new HttpHeaderPrincipalProvider();
     }
 
@@ -53,10 +54,10 @@ public class HttpHeaderPrincipalProviderTest {
         final Set<Principal> principals = provider.getPrincipals(request);
 
         assertEquals(2, principals.size());
-        assertTrue("The principals should contain 'a'", principals
-                .contains(new HttpHeaderPrincipal("a")));
-        assertTrue("The principals should contain 'b'", principals
-                .contains(new HttpHeaderPrincipal("b")));
+        assertTrue(principals.contains(new HttpHeaderPrincipal("a")),
+                "The principals should contain 'a'");
+        assertTrue(principals.contains(new HttpHeaderPrincipal("b")),
+                "The principals should contain 'b'");
 
     }
 
@@ -71,10 +72,10 @@ public class HttpHeaderPrincipalProviderTest {
         final Set<Principal> principals = provider.getPrincipals(request);
 
         assertEquals(2, principals.size());
-        assertTrue("The principals should contain 'a'", principals
-                .contains(new HttpHeaderPrincipal("a")));
-        assertTrue("The principals should contain 'b'", principals
-                .contains(new HttpHeaderPrincipal("b")));
+        assertTrue(principals.contains(new HttpHeaderPrincipal("a")),
+                "The principals should contain 'a'");
+        assertTrue(principals.contains(new HttpHeaderPrincipal("b")),
+                "The principals should contain 'b'");
 
     }
 
@@ -83,7 +84,7 @@ public class HttpHeaderPrincipalProviderTest {
 
         final Set<Principal> principals = provider.getPrincipals(request);
 
-        assertTrue("Empty set expected when no header name configured", principals.isEmpty());
+        assertTrue(principals.isEmpty(), "Empty set expected when no header name configured");
 
     }
 
@@ -94,7 +95,7 @@ public class HttpHeaderPrincipalProviderTest {
 
         final Set<Principal> principals = provider.getPrincipals(request);
 
-        assertTrue("Empty set expected when no separator name configured", principals.isEmpty());
+        assertTrue(principals.isEmpty(), "Empty set expected when no separator name configured");
 
     }
 
@@ -106,7 +107,7 @@ public class HttpHeaderPrincipalProviderTest {
 
         final Set<Principal> principals = provider.getPrincipals(null);
 
-        assertTrue("Empty set expected when no request supplied", principals.isEmpty());
+        assertTrue(principals.isEmpty(), "Empty set expected when no request supplied");
 
     }
 
@@ -122,8 +123,7 @@ public class HttpHeaderPrincipalProviderTest {
 
         final Principal principal = principals.iterator().next();
 
-        assertNotEquals("Principals should not be equal if not the same class",
-                principal, mock(Principal.class));
+        assertNotEquals(principal, mock(Principal.class), "Principals should not be equal if not the same class");
 
     }
 

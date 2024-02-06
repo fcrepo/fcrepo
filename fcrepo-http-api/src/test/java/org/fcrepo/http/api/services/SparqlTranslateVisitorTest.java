@@ -5,35 +5,30 @@
  */
 package org.fcrepo.http.api.services;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
-
-import jakarta.ws.rs.core.UriBuilder;
-
-import org.fcrepo.config.FedoraPropsConfig;
-import org.fcrepo.config.ServerManagedPropsMode;
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.jena.update.Update;
 import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.DC_11;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.ServerManagedPropsMode;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+
+import jakarta.ws.rs.core.UriBuilder;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Tests for SparqlTranslateVisitor
  * @author whikloj
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class SparqlTranslateVisitorTest {
 
     private static final String URI_BASE = "http://localhost:8080/rest/";
@@ -54,7 +49,7 @@ public class SparqlTranslateVisitorTest {
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         makeVisitor(UUID.randomUUID().toString());
     }

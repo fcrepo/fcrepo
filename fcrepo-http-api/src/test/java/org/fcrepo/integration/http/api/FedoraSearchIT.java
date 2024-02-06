@@ -13,7 +13,7 @@ import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchResult;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 import java.io.IOException;
@@ -40,10 +40,10 @@ import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
 import static org.fcrepo.search.api.Condition.Field.MODIFIED;
 import static org.fcrepo.search.api.Condition.Field.RDF_TYPE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author dbernstein
@@ -104,7 +104,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertNotNull(result);
             assertNotNull(result.getPagination());
-            assertTrue("Items not found! " + resources, result.getItems().size() > 0);
+            assertTrue(result.getItems().size() > 0, "Items not found! " + resources);
             final var resultingFedoraIds =
                     result.getItems().stream().map(x -> x.get("fedora_id")).collect(Collectors.toList());
 
@@ -132,8 +132,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 assertEquals(OK.getStatusCode(), getStatus(response));
                 final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                         SearchResult.class);
-                assertEquals("expected " + count + " items where condition = " + condition, count,
-                        result.getItems().size());
+                assertEquals(count, result.getItems().size(),
+                        "expected " + count + " items where condition = " + condition);
 
                 assertTrue(result.getItems().stream().map(x -> x.get(FEDORA_ID.toString()))
                         .allMatch(x -> x.toString().startsWith(urlPrefix)));
@@ -151,8 +151,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected 1 item where condition = " + condition, 1,
-                    result.getItems().size());
+            assertEquals(1, result.getItems().size(),
+                    "expected 1 item where condition = " + condition);
             modified = result.getItems().get(0).get(MODIFIED.toString()).toString();
         }
 
@@ -169,8 +169,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected 1 item where condition = " + condition, 1,
-                    result.getItems().size());
+            assertEquals(1, result.getItems().size(),
+                    "expected 1 item where condition = " + condition);
             final var newModified = result.getItems().get(0).get(MODIFIED.toString()).toString();
             assertNotEquals("Modified date should have changed  but it did not.", modified, newModified);
         }
@@ -185,8 +185,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected 1 item where condition = " + condition, 1,
-                    result.getItems().size());
+            assertEquals(1, result.getItems().size(),
+                    "expected 1 item where condition = " + condition);
         }
 
         final var httpDelete = new HttpDelete(resourceId);
@@ -198,8 +198,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected 0 items where condition = " + condition, 0,
-                    result.getItems().size());
+            assertEquals(0, result.getItems().size(),
+                    "expected 0 items where condition = " + condition);
         }
     }
 
@@ -224,8 +224,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected no results", 0,
-                    result.getItems().size());
+            assertEquals(0, result.getItems().size(), "expected no results");
         }
         //no results for resources modified after tomorrow
         searchUrl =
@@ -234,8 +233,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected no results", 0,
-                    result.getItems().size());
+            assertEquals(0, result.getItems().size(), "expected no results");
         }
 
         // ensure that greater than now returns a result
@@ -244,8 +242,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected " + count + " results", count,
-                    result.getItems().size());
+            assertEquals(count, result.getItems().size(), "expected " + count + " results");
 
             assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
                     .allMatch(x -> x.toString().equals(fedoraId)));
@@ -257,8 +254,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected " + count + " results", count,
-                    result.getItems().size());
+            assertEquals(count, result.getItems().size(), "expected " + count + " results");
 
             assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
                     .allMatch(x -> x.toString().equals(fedoraId)));
@@ -271,8 +267,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected " + count + " results ", count,
-                    result.getItems().size());
+            assertEquals(count, result.getItems().size(), "expected " + count + " results ");
             assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
                     .allMatch(x -> x.toString().equals(fedoraId)));
         }
@@ -312,11 +307,11 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             final var items = result.getItems();
-            assertEquals("expected " + count + " items", count, items.size());
+            assertEquals(count, items.size(), "expected " + count + " items");
             for (final Map<String, Object> item : items) {
-                assertEquals("expected " + fields.size() + " fields returned", fields.size(), item.size());
+                assertEquals(fields.size(), item.size(), "expected " + fields.size() + " fields returned");
                 for (final String field : fields) {
-                    assertTrue("Result does not contain expected field: " + field, item.containsKey(field));
+                    assertTrue(item.containsKey(field), "Result does not contain expected field: " + field);
                 }
             }
         }
@@ -447,7 +442,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertNotNull(result);
             assertNotNull(result.getPagination());
-            assertEquals("No results expected.", 0, result.getItems().size());
+            assertEquals(0, result.getItems().size(), "No results expected.");
         }
     }
 
@@ -633,12 +628,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final String prefix = "test_total_";
         final String prefix2 = "test_total2_";
         final String resource1;
-        final String resource2;
         try (final var response = createObject(prefix + "-1")) {
             resource1 = getLocation(response);
-        }
-        try (final var response = createObject(prefix2 + "-1")) {
-            resource2 = getLocation(response);
         }
         final var condition = FEDORA_ID + "=" + prefix + "*";
 

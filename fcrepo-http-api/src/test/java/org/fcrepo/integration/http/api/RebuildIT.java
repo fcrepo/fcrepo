@@ -29,9 +29,8 @@ import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.impl.ReindexService;
 import org.fcrepo.storage.ocfl.ResourceHeaders;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
@@ -59,10 +58,12 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.fail;
-import static org.springframework.test.util.AssertionErrors.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 
 /**
  * @author awooods
@@ -94,7 +95,7 @@ public class RebuildIT extends AbstractResourceIT {
         txManager = getBean(TransactionManagerImpl.class);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         setBeans();
     }
@@ -121,8 +122,8 @@ public class RebuildIT extends AbstractResourceIT {
         }
 
         assertEquals(8, ocflRepository.listObjectIds().count());
-        assertTrue("Should contain object with id: " + FedoraTypes.FEDORA_ID_PREFIX,
-                ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX));
+        assertTrue(ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX),
+                "Should contain object with id: " + FedoraTypes.FEDORA_ID_PREFIX);
         assertContains("binary");
         assertContains("test");
         assertContains("test/child");
@@ -138,7 +139,7 @@ public class RebuildIT extends AbstractResourceIT {
 
     @Test
     public void testRebuildOnStart() throws Exception {
-        assertFalse("rebuild on start is disabled", fedoraPropsConfig.isRebuildOnStart());
+        assertFalse(fedoraPropsConfig.isRebuildOnStart(), "rebuild on start is disabled");
         rebuild("test-rebuild-ocfl/objects");
 
         // Optional debugging
@@ -146,8 +147,8 @@ public class RebuildIT extends AbstractResourceIT {
             ocflRepository.listObjectIds().forEach(id -> LOGGER.debug("Object id: {}", id));
         }
 
-        assertTrue("Should contain object with id: " + FedoraTypes.FEDORA_ID_PREFIX,
-                ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX));
+        assertTrue(ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX),
+                "Should contain object with id: " + FedoraTypes.FEDORA_ID_PREFIX);
         assertContains("binary");
         assertContains("test");
 
@@ -176,12 +177,8 @@ public class RebuildIT extends AbstractResourceIT {
         TimeUnit.MILLISECONDS.sleep(2000);
         initializer.initialize();
 
-        try {
-            this.index.getMapping(readOnlyTx, binaryId);
-            fail("Expected failure to retrieve mapping");
-        } catch (final FedoraOcflMappingNotFoundException ex) {
-            //intentionally left blank
-        }
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> this.index.getMapping(readOnlyTx, binaryId),
+                "Expected failure to retrieve mapping");
 
     }
 
@@ -276,35 +273,27 @@ public class RebuildIT extends AbstractResourceIT {
 
             for (final String child : includeChildren) {
                 final var childNode = createURI(subjectUri + (subjectUri.endsWith("/") ? "" : "/") + child);
-                Assert.assertTrue(format("Triple not found: {0}, {1}, {2}", subjectUri,
-                 CONTAINS, childNode),
-                        graph.contains(ANY,
-                        subjectNode,
-                        CONTAINS.asNode(),
-                        childNode));
+                assertTrue(graph.contains(ANY, subjectNode, CONTAINS.asNode(), childNode),
+                        format("Triple not found: {0}, {1}, {2}", subjectUri, CONTAINS, childNode));
             }
             for (final String child : excludeChildren) {
                 final var childNode = createURI(subjectUri + (subjectUri.endsWith("/") ? "" : "/") + child);
-                Assert.assertFalse(format("Triple found: {0}, {1}, {2}", subjectUri,
-                        CONTAINS, childNode),
-                        graph.contains(ANY,
-                                subjectNode,
-                                CONTAINS.asNode(),
-                                childNode));
+                assertFalse(graph.contains(ANY, subjectNode, CONTAINS.asNode(), childNode),
+                        format("Triple found: {0}, {1}, {2}", subjectUri, CONTAINS, childNode));
             }
         }
     }
 
     private void assertContains(final String id) {
         final var fedoraId = FedoraTypes.FEDORA_ID_PREFIX + "/" + id;
-        assertTrue("Should contain object with id: " + fedoraId,
-                ocflRepository.containsObject(fedoraId));
+        assertTrue(ocflRepository.containsObject(fedoraId),
+                "Should contain object with id: " + fedoraId);
     }
 
     private void assertNotContains(final String id) {
         final var fedoraId = FedoraTypes.FEDORA_ID_PREFIX + "/" + id;
-        assertFalse("Should NOT contain object with id: " + fedoraId,
-                ocflRepository.containsObject(fedoraId));
+        assertFalse(ocflRepository.containsObject(fedoraId),
+                "Should NOT contain object with id: " + fedoraId);
     }
 
     private void rebuild(final String name) {

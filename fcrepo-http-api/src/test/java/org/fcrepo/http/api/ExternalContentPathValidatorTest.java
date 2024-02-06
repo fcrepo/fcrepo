@@ -6,20 +6,22 @@
 package org.fcrepo.http.api;
 
 import static java.nio.file.StandardOpenOption.APPEND;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import java.nio.file.Path;
+import java.util.UUID;
 
 /**
  * @author bbpennel
@@ -28,8 +30,8 @@ public class ExternalContentPathValidatorTest {
 
     private ExternalContentPathValidator validator;
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    @TempDir
+    public Path tmpDir;
 
     private File dataDir;
 
@@ -41,14 +43,18 @@ public class ExternalContentPathValidatorTest {
 
     private String goodFileUri;
 
-    @Before
+    @BeforeEach
     public void init() throws Exception {
-        allowListFile = tmpDir.newFile();
+        allowListFile = Files.createFile(
+                tmpDir.resolve("allow-list-" + UUID.randomUUID() + ".txt")
+        ).toFile();
 
         validator = new ExternalContentPathValidator();
         validator.setConfigPath(allowListFile.getAbsolutePath());
 
-        dataDir = tmpDir.newFolder();
+        dataDir = Files.createDirectory(
+                tmpDir.resolve("data-" + UUID.randomUUID())
+        ).toFile();
         dataUri = dataDir.toURI().toString();
 
         goodFile = new File(dataDir, "file.txt");
@@ -56,17 +62,17 @@ public class ExternalContentPathValidatorTest {
         goodFileUri = goodFile.toURI().toString();
     }
 
-    @After
+    @AfterEach
     public void after() {
         validator.shutdown();
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testValidateWithNoAllowList() throws Exception {
         validator.setConfigPath(null);
         validator.init();
 
-        validator.validate(goodFileUri);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(goodFileUri));
     }
 
     @Test
@@ -97,7 +103,7 @@ public class ExternalContentPathValidatorTest {
     public void testMultipleMatches() throws Exception {
         new File(dataDir, "file.txt").createNewFile();
         final String extPath = goodFileUri;
-        final String anotherPath = tmpDir.getRoot().toURI().toString();
+        final String anotherPath = tmpDir.toString();
 
         addAllowedPath(anotherPath);
         addAllowedPath(dataUri);
@@ -115,46 +121,48 @@ public class ExternalContentPathValidatorTest {
         validator.validate(goodFileUri);
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testInvalidFileUri() throws Exception {
-        final String extPath = tmpDir.newFile("file.txt").toURI().toString();
+        final String extPath = Files.createFile(
+                tmpDir.resolve("file.txt")
+        ).toString();
 
         addAllowedPath(dataUri);
 
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testMalformedUri() throws Exception {
         final String goodPath = "http://example.com/";
         final String extPath = ".bad://example.com/file.txt";
 
         addAllowedPath(goodPath);
 
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testNonabsoluteUri() throws Exception {
         final String goodPath = "http://example.com/";
         final String extPath = "/example.com/file.txt";
 
         addAllowedPath(goodPath);
 
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testInvalidHttpUri() throws Exception {
         final String goodPath = "http://good.example.com/";
         final String extPath = "http://bad.example.com/file.txt";
 
         addAllowedPath(goodPath);
 
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testHttpUriMissingSlash() throws Exception {
         // Slash after domain is required
         final String goodPath = "http://good.example.com";
@@ -162,46 +170,46 @@ public class ExternalContentPathValidatorTest {
 
         addAllowedPath(goodPath);
 
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testRelativeModifier() throws Exception {
         final String extPath = dataUri + "../sneaky.txt";
 
         addAllowedPath(dataUri);
 
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testNoScheme() throws Exception {
         final String extPath = dataDir.getAbsolutePath() + "file.txt";
 
         addAllowedPath(dataUri);
 
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testEmptyPath() throws Exception {
         addAllowedPath(dataUri);
 
-        validator.validate("");
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(""));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testNullPath() throws Exception {
         addAllowedPath(dataUri);
 
-        validator.validate(null);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(null));
     }
 
-    @Test(expected = IOException.class)
+    @Test
     public void testListFileDoesNotExist() throws Exception {
         allowListFile.delete();
 
-        validator.init();
+        assertThrows(IOException.class, () -> validator.init());
     }
 
     @Test
@@ -230,7 +238,9 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testVaryingSensitiveFilePath() throws Exception {
-        final File subfolder = tmpDir.newFolder("CAPSLOCK");
+        final File subfolder = Files.createDirectory(
+                tmpDir.resolve("CAPSLOCK-" + UUID.randomUUID())
+        ).toFile();
         final File file = new File(subfolder, "OoOoOooOOooo.txt");
         file.createNewFile();
 
@@ -254,10 +264,18 @@ public class ExternalContentPathValidatorTest {
 
     @Test
     public void testFileSlashes() throws Exception {
-        final File oneFolder = tmpDir.newFolder("one");
-        final File twoFolder = tmpDir.newFolder("two");
-        final File threeFolder = tmpDir.newFolder("three");
-        final File manyFolder = tmpDir.newFolder("toomany");
+        final File oneFolder = Files.createDirectory(
+                tmpDir.resolve("one-" + UUID.randomUUID())
+        ).toFile();
+        final File twoFolder = Files.createDirectory(
+                tmpDir.resolve("two-" + UUID.randomUUID())
+        ).toFile();
+        final File threeFolder = Files.createDirectory(
+                tmpDir.resolve("three-" + UUID.randomUUID())
+        ).toFile();
+        final File manyFolder = Files.createDirectory(
+                tmpDir.resolve("toomany-" + UUID.randomUUID())
+        ).toFile();
         new File(oneFolder, "file").createNewFile();
         new File(twoFolder, "file").createNewFile();
         new File(threeFolder, "file").createNewFile();
@@ -280,24 +298,20 @@ public class ExternalContentPathValidatorTest {
         validator.validate("file:/" + threeFolder.toURI().getPath() + "/file");
         validator.validate("file://" + threeFolder.toURI().getPath() + "/file");
 
-        try {
-            validator.validate("file:" + manyFolder.toURI().getPath() + "file");
-            fail();
-        } catch (final ExternalMessageBodyException e) {
-            // expected
-        }
+        assertThrows(ExternalMessageBodyException.class,
+                () -> validator.validate("file:" + manyFolder.toURI().getPath() + "file"));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testDisallowDirectoryUriWithoutSlash() throws Exception {
         final String allowDir = dataUri.substring(0, dataUri.length() - 1);
         addAllowedPath(allowDir);
 
         final String extPath = dataUri + "file.txt";
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testDisallowFileUriWithSlash() throws Exception {
         new File(dataDir, "file").createNewFile();
         final String extPath = dataUri + "file/";
@@ -305,28 +319,24 @@ public class ExternalContentPathValidatorTest {
 
         addAllowedPath(allowExactPath);
 
-        validator.validate(extPath);
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(extPath));
     }
 
     /*
      * Test ignored because it takes around 10+ seconds to poll for events on MacOS:
      * https://bugs.openjdk.java.net/browse/JDK-7133447 Can be enabled for one off testing
      */
-    @Ignore("Test is ignored due to file event timing")
+    @Disabled("Test is ignored due to file event timing")
+    // TODO: Should this be removed if it is unreliable?
     @Test
     public void testDetectModification() throws Exception {
         validator.setMonitorForChanges(true);
 
-        final String anotherPath = tmpDir.newFolder("other").toURI().toString();
+        final String anotherPath = tmpDir.resolve("other").toString();
         addAllowedPath(anotherPath);
 
         final String path = dataUri + "file";
-        try {
-            validator.validate(path);
-            fail();
-        } catch (final ExternalMessageBodyException e) {
-            // Expected
-        }
+        assertThrows(ExternalMessageBodyException.class, () -> validator.validate(path));
 
         // Wait to ensure that the watch service is watching...
         Thread.sleep(5000);
@@ -351,7 +361,7 @@ public class ExternalContentPathValidatorTest {
             }
         }
 
-        assertTrue("Validator did not update with new path", pass);
+        assertTrue(pass, "Validator did not update with new path");
     }
 
     private void addAllowedPath(final String allowed) throws Exception {

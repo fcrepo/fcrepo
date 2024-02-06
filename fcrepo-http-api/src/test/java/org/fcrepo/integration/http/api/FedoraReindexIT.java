@@ -6,25 +6,24 @@
 package org.fcrepo.integration.http.api;
 
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
-import static org.junit.Assert.assertEquals;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import org.fcrepo.kernel.api.identifiers.FedoraId;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.http.HttpStatus;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import edu.wisc.library.ocfl.api.OcflOption;
 import edu.wisc.library.ocfl.api.OcflRepository;
 import edu.wisc.library.ocfl.api.model.ObjectVersionId;
 import edu.wisc.library.ocfl.api.model.VersionNum;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * @author dbernstein
@@ -39,7 +38,7 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
     private OcflRepository ocflRepository;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         ocflRepository = getBean(OcflRepository.class);
     }
@@ -131,17 +130,17 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
         //test get
         try (final var response = execute(getObjMethod(getReindexEndpoint("fedoraId")))) {
-            assertEquals("expected 405", HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+            assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode(), "expected 405");
         }
 
         //test put
         try (final var response = execute(putObjMethod(getReindexEndpoint("fedoraId")))) {
-            assertEquals("expected 405", HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+            assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode(), "expected 405");
         }
 
         //test delete
         try (final var response = execute(deleteObjMethod(getReindexEndpoint("fedoraId")))) {
-            assertEquals("expected 405", HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode());
+            assertEquals(HttpStatus.SC_METHOD_NOT_ALLOWED, response.getStatusLine().getStatusCode(), "expected 405");
         }
     }
 

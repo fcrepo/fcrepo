@@ -47,7 +47,7 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
                                         final FedoraId fedoraResourceIdentifier,
                                         final FedoraId fedoraRootObjectResourceId,
                                         final String ocflObjectId) {
-        FedoraOcflMapping mapping = fedoraOcflMappingMap.computeIfAbsent(
+        final FedoraOcflMapping mapping = fedoraOcflMappingMap.computeIfAbsent(
                 fedoraRootObjectResourceId, i -> new FedoraOcflMapping(i, ocflObjectId));
 
         if (!fedoraResourceIdentifier.equals(fedoraRootObjectResourceId)) {

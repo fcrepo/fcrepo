@@ -5,10 +5,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static java.util.Arrays.asList;
-import static java.util.Arrays.sort;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -23,6 +19,10 @@ import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.sort;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -54,39 +54,15 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEMAP_TYPE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAccessor;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import jakarta.ws.rs.core.Link;
-import jakarta.ws.rs.core.UriBuilder;
-
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.storage.ocfl.CommitType;
-import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
-
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -114,14 +90,35 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.context.TestExecutionListeners;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 
-import com.google.common.collect.ImmutableList;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.UriBuilder;
+import java.io.IOException;
+import java.io.StringWriter;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author lsitu
@@ -151,19 +148,19 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private static final HttpIdentifierConverter identifierConverter =
             new HttpIdentifierConverter(UriBuilder.fromUri(serverAddress + "{path: .*}"));
 
-    @Rule
-    public TemporaryFolder tmpDir = new TemporaryFolder();
+    @TempDir
+    public Path tmpDir;
 
     private DefaultOcflObjectSessionFactory objectSessionFactory;
 
-    @Before
+    @BeforeEach
     public void init() {
         id = getRandomUniqueId();
         subjectUri = serverAddress + id;
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
     }
 
-    @After
+    @AfterEach
     public void after() {
         objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
     }
@@ -297,7 +294,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(httpGet)) {
             final DatasetGraph results = dataset.asDatasetGraph();
             final Node subject = createURI(subjectUri + "/" + FCR_VERSIONS);
-            assertTrue("Did not find correct subject", results.contains(ANY, subject, ANY, ANY));
+            assertTrue(results.contains(ANY, subject, ANY, ANY), "Did not find correct subject");
         }
     }
 
@@ -313,8 +310,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             final Node mementoSubject = createURI(mementoUri);
 
-            assertFalse("Memento type should not be visible",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
+            assertFalse(results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE),
+                    "Memento type should not be visible");
 
             assertMementoEqualsOriginal(mementoUri);
         }
@@ -328,8 +325,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final var post = postObjMethod(id + "/fcr:versions");
         post.addHeader(MEMENTO_DATETIME_HEADER, mementoDateTime);
         try (final CloseableHttpResponse response = execute(post)) {
-            assertEquals("Operation should return " + SC_BAD_REQUEST + " status", SC_BAD_REQUEST,
-                    response.getStatusLine().getStatusCode());
+            assertEquals(SC_BAD_REQUEST, response.getStatusLine().getStatusCode(),
+                    "Operation should return " + SC_BAD_REQUEST + " status");
             assertConstrainedByPresent(response);
         }
     }
@@ -342,7 +339,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createMethod.addHeader(CONTENT_TYPE, N3);
         createMethod.setEntity(new StringEntity("<#test> <info:test#label> \"foo\""));
 
-        assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(createMethod));
+        assertEquals(CREATED.getStatusCode(), getStatus(createMethod), "Didn't get a CREATED response!");
 
         final String mementoUri = createMemento(subjectUri);
         assertMementoUri(mementoUri, subjectUri);
@@ -352,8 +349,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             final Node mementoSubject = createURI(mementoUri);
 
-            assertFalse("Memento type should not be visible",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE));
+            assertFalse(results.contains(ANY, mementoSubject, RDF.type.asNode(), MEMENTO_TYPE_NODE),
+                    "Memento type should not be visible");
 
             assertMementoEqualsOriginal(mementoUri);
         }
@@ -368,7 +365,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 "[ a <info:test#Something> ]"));
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
         }
 
         final String mementoUri = createMemento(subjectUri);
@@ -382,12 +379,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     results.find(ANY, createURI(subjectUri), createURI("http://purl.org/dc/terms/subject"), ANY);
 
             final List<Quad> quadList = ImmutableList.copyOf(quads);
-            assertEquals("Should only be one element: " + quadList.size(), 1, quadList.size());
+            assertEquals(1, quadList.size(), "Should only be one element: " + quadList.size());
 
             final Quad quad = quadList.get(0);
             // The quad:Object is the subject of the Blank Node triple we are expecting
-            assertTrue("Should have found blank node triple",
-                    results.contains(ANY, quad.getObject(), RDF.type.asNode(), createURI("info:test#Something")));
+            assertTrue(results.contains(ANY, quad.getObject(), RDF.type.asNode(), createURI("info:test#Something")),
+                    "Should have found blank node triple");
         }
     }
 
@@ -399,8 +396,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpPost post = postObjMethod(id + "/" + FCR_VERSIONS);
         post.addHeader("Slug", "version_label");
 
-        assertEquals("Created memento with Slug!",
-                BAD_REQUEST.getStatusCode(), getStatus(post));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(post), "Created memento with Slug!");
     }
 
     @Test
@@ -416,8 +412,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         post.addHeader(CONTENT_TYPE, N3);
         post.setEntity(new StringEntity(body));
 
-        assertEquals("Created memento with Memento-Datetime!",
-                BAD_REQUEST.getStatusCode(), getStatus(post));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(post), "Created memento with Memento-Datetime!");
     }
 
     @Test
@@ -433,23 +428,22 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         TimeUnit.SECONDS.sleep(1);
         // Remove the child resource
-        assertEquals("Expected delete to succeed",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(childUri)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(childUri)), "Expected delete to succeed");
 
         // Ensure that the resource reference is gone
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(subjectUri));
                 final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertFalse("Expected NOT to have child resource: " + graph, graph.contains(ANY,
-                    ANY, createURI(CONTAINS.getURI()), createURI(childUri)));
+            assertFalse(graph.contains(ANY, ANY, createURI(CONTAINS.getURI()), createURI(childUri)),
+                    "Expected NOT to have child resource: " + graph);
         }
 
         // Ensure that the resource reference is still in memento
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
                 final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Expected child resource NOT found: " + graph, graph.contains(ANY,
-                    ANY, createURI(CONTAINS.getURI()), createURI(childUri)));
+            assertTrue(graph.contains(ANY, ANY, createURI(CONTAINS.getURI()), createURI(childUri)),
+                    "Expected child resource NOT found: " + graph);
         }
     }
 
@@ -461,12 +455,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Status 200: HEAD request on existing memento
         final HttpHead headMethod = new HttpHead(mementoUri);
-        assertEquals("Expected memento is NOT found: " + mementoUri, OK.getStatusCode(), getStatus(headMethod));
+        assertEquals(OK.getStatusCode(), getStatus(headMethod), "Expected memento is NOT found: " + mementoUri);
 
         // Status 404: HEAD request on absent memento
         final HttpHead headMementoAbsent = headObjMethod(id + "/" + FCR_VERSIONS + "/20000101000001");
-        assertEquals("Didn't get status 404 on absent memento!",
-            NOT_FOUND.getStatusCode(), getStatus(headMementoAbsent));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(headMementoAbsent),
+                "Didn't get status 404 on absent memento!");
 
         // Status 400: HEAD request with invalid memento path
         final HttpHead headMethodInvalid = headObjMethod(id + "/" + FCR_VERSIONS + "/any");
@@ -481,12 +475,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Status 200: GET request on existing memento
         final HttpGet getMemento = new HttpGet(mementoUri);
-        assertEquals("Expected memento is NOT found: " + mementoUri, OK.getStatusCode(), getStatus(getMemento));
+        assertEquals(OK.getStatusCode(), getStatus(getMemento), "Expected memento is NOT found: " + mementoUri);
 
         // Status 404: GET request on absent memento
         final HttpGet getMementoAbsent = getObjMethod(id + "/" + FCR_VERSIONS + "/20000101000001");
-        assertEquals("Didn't get status 404 on absent memento!",
-            NOT_FOUND.getStatusCode(), getStatus(getMementoAbsent));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(getMementoAbsent),
+                "Didn't get status 404 on absent memento!");
 
         // Status 400: GET request with invalid memento path
         final HttpGet getMementoInvalid = getObjMethod(id + "/" + FCR_VERSIONS + "/any");
@@ -502,9 +496,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Status 200: GET request on existing memento
         final HttpGet getMemento = new HttpGet(mementoUri);
         getMemento.addHeader(ACCEPT_DATETIME, mementoDateTime);
-        assertEquals("Expected memento could not be retrieved when Accept-Datetime header is present: " + mementoUri,
-                     OK.getStatusCode(),
-                     getStatus(getMemento));
+        assertEquals(OK.getStatusCode(), getStatus(getMemento),
+                "Expected memento could not be retrieved when Accept-Datetime header is present: " + mementoUri);
     }
 
     @Test
@@ -516,9 +509,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Status 200: HEAD request on existing memento
         final HttpHead headMemento = new HttpHead(mementoUri);
         headMemento.addHeader(ACCEPT_DATETIME, mementoDateTime);
-        assertEquals("Expected memento could not be retrieved when Accept-Datetime header is present: " + mementoUri,
-                OK.getStatusCode(),
-                getStatus(headMemento));
+        assertEquals(OK.getStatusCode(), getStatus(headMemento),
+                "Expected memento could not be retrieved when Accept-Datetime header is present: " + mementoUri);
     }
 
     @Test
@@ -529,13 +521,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Status 200: OPTIONS request on existing memento
         final HttpOptions optionsMemento = new HttpOptions(mementoUri);
-        assertEquals("Expected memento is NOT found: " + mementoUri, OK.getStatusCode(), getStatus(optionsMemento));
+        assertEquals(OK.getStatusCode(), getStatus(optionsMemento), "Expected memento is NOT found: " + mementoUri);
 
         // Status 404: OPTIONS request on absent memento
         final String absentMementoPath = serverAddress + id + "/" + FCR_VERSIONS + "/20000101000001";
         final HttpOptions optionsMementoAbsent = new HttpOptions(absentMementoPath);
-        assertEquals("Didn't get status 404 on absent memento!",
-            NOT_FOUND.getStatusCode(), getStatus(optionsMementoAbsent));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(optionsMementoAbsent),
+                "Didn't get status 404 on absent memento!");
 
         // Status 400: OPTIONS request with invalid memento path
         final HttpOptions optionsMementoInvalid = new HttpOptions(serverAddress + id + "/" + FCR_VERSIONS + "/any");
@@ -560,15 +552,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String mementoUri = createMemento(subjectUri);
 
         // Remove the referencing resource
-        assertEquals("Expected delete to succeed",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(resource)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(resource)),
+                "Expected delete to succeed");
 
         // Ensure that the resource reference remains (no referential integrity)
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(subjectUri));
                 final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Expected to see resource: " + graph, graph.contains(ANY,
-                    ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
+            assertTrue(graph.contains(ANY, ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)),
+                    "Expected to see resource: " + graph);
         }
 
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(mementoUri));
@@ -577,12 +569,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
 
             // Ensure that the resource reference is still in memento
-            assertTrue("Expected resource NOT found: " + graph, graph.contains(ANY,
-                    ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)));
+            assertTrue(graph.contains(ANY, ANY, createURI("http://pcdm.org/models#hasMember"), createURI(resource)),
+                    "Expected resource NOT found: " + graph);
 
             // Ensure that the subject of the memento is the original reosurce
-            assertFalse("Subjects should be the original resource, not the memento: " + graph,
-                    graph.contains(ANY, createURI(mementoUri), ANY, ANY));
+            assertFalse(graph.contains(ANY, createURI(mementoUri), ANY, ANY),
+                    "Subjects should be the original resource, not the memento: " + graph);
         }
     }
 
@@ -610,16 +602,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertMementoUri(mementoUri, subjectUri);
 
         // Delete referenced resource
-        assertEquals("Expected delete to succeed",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(referencedResource)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(referencedResource)),
+                "Expected delete to succeed");
 
         final Node originalBinaryNode = createURI(serverAddress + id);
         // Ensure that the resource reference remains
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(metadataUri));
                 final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Expected TO have resource: " + graph, graph.contains(ANY,
-                    originalBinaryNode, createURI(relation), createURI(referencedResource)));
+            assertTrue(graph.contains(ANY, originalBinaryNode, createURI(relation), createURI(referencedResource)),
+                    "Expected TO have resource: " + graph);
         }
 
         final String descMementoUrl = mementoUri.replace(FCR_VERSIONS, "fcr:metadata/fcr:versions");
@@ -627,8 +619,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(descMementoUrl));
                 final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Expected resource NOT found: " + graph, graph.contains(ANY,
-                    originalBinaryNode, createURI(relation), createURI(referencedResource)));
+            assertTrue(graph.contains(ANY, originalBinaryNode, createURI(relation), createURI(referencedResource)),
+                    "Expected resource NOT found: " + graph);
         }
     }
 
@@ -664,8 +656,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpGet httpGet = getObjMethod(id + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", "application/arbitrary");
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertEquals("Should get a 'Not Acceptable' response!", NOT_ACCEPTABLE.getStatusCode(), getStatus(
-                    response));
+            assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(response),
+                    "Should get a 'Not Acceptable' response!");
         }
 
     }
@@ -744,7 +736,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpGet httpGet = new HttpGet(uri + "/" + FCR_VERSIONS);
         httpGet.setHeader("Accept", APPLICATION_LINK_FORMAT);
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
+            assertEquals(OK.getStatusCode(), getStatus(response), "Didn't get a OK response!");
             // verify headers in link format.
             verifyTimeMapHeaders(response, uri);
             final var responseBody = EntityUtils.toString(response.getEntity());
@@ -789,13 +781,13 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final var actualUntilStr = actual.getParams().get("until");
 
             if (expectedFromStr != null) {
-                assertNotNull("link cannot have a null 'from' param", actualFromStr);
-                assertNotNull("link cannot have a null 'until' param", actualUntilStr);
+                assertNotNull(actualFromStr, "link cannot have a null 'from' param");
+                assertNotNull(actualUntilStr, "link cannot have a null 'until' param");
                 assertDuration(expectedFromStr, actualFromStr);
                 assertDuration(expectedUntilStr, actualUntilStr);
             } else {
-                assertNull("link cannot have a 'from' param", actualFromStr);
-                assertNull("link cannot have a 'until' param", actualUntilStr);
+                assertNull(actualFromStr, "link cannot have a 'from' param");
+                assertNull(actualUntilStr, "link cannot have a 'until' param");
             }
         }
     }
@@ -820,8 +812,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         final var diff = Duration.between(expectedInstant, actualInstant);
 
-        assertTrue("Difference in expected and actual times should be less than 5 seconds",
-                diff.abs().getSeconds() < 5);
+        assertTrue(diff.abs().getSeconds() < 5,
+                "Difference in expected and actual times should be less than 5 seconds");
     }
 
     private static Instant parseToInstant(final String value) {
@@ -845,7 +837,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                     expected,
                     expectedUriPrefix + MEMENTO_LABEL_FORMATTER.format(expectedInstant.plusSeconds(1))
             );
-            assertTrue(message, allowed.contains(actual));
+            assertTrue(allowed.contains(actual), message);
         }
     }
 
@@ -967,16 +959,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             final Node mementoSubject = createURI(subjectUri);
 
-            assertTrue("Property added to original before versioning must appear",
-                    results.contains(ANY, mementoSubject, DC.title.asNode(), createLiteral("Original")));
-            assertFalse("Property added after memento created must not appear",
-                    results.contains(ANY, mementoSubject, title.asNode(), createLiteral("Updated")));
-            assertFalse("Memento type should not be visible",
-                    results.contains(ANY, mementoSubject, type.asNode(), MEMENTO_TYPE_NODE));
-            assertTrue("Must have binary type",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()));
-            assertTrue("Must have custom type",
-                    results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()));
+            assertTrue(results.contains(ANY, mementoSubject, DC.title.asNode(), createLiteral("Original")),
+                    "Property added to original before versioning must appear");
+            assertFalse(results.contains(ANY, mementoSubject, title.asNode(), createLiteral("Updated")),
+                    "Property added after memento created must not appear");
+            assertFalse(results.contains(ANY, mementoSubject, type.asNode(), MEMENTO_TYPE_NODE),
+                    "Memento type should not be visible");
+            assertTrue(results.contains(ANY, mementoSubject, RDF.type.asNode(), FEDORA_BINARY.asNode()),
+                    "Must have binary type");
+            assertTrue(results.contains(ANY, mementoSubject, RDF.type.asNode(), TEST_TYPE_RESOURCE.asNode()),
+                    "Must have custom type");
         }
     }
 
@@ -988,8 +980,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         patchLiteralProperty(serverAddress + id, title.getURI(), "First Title");
 
         try (final CloseableDataset dataset = getContent(serverAddress + id)) {
-            assertTrue("Should find original title", dataset.asDatasetGraph().contains(ANY,
-                    ANY, title.asNode(), createLiteral("First Title")));
+            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteral("First Title")),
+                    "Should find original title");
         }
         logger.debug("Posting version v0.0.1");
         final String mementoUri = createMemento(subjectUri);
@@ -1004,13 +996,12 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             logger.debug("Got version profile:");
             final DatasetGraph versionResults = dataset.asDatasetGraph();
 
-            assertTrue("Should find a title in historic version", versionResults.contains(ANY,
-                    subjectUri, title.asNode(), createLiteral("First Title")));
-            assertTrue("Should find original title in historic version", versionResults.contains(ANY,
-                    subjectUri, title.asNode(), createLiteral("First Title")));
-            assertFalse("Should not find the updated title in historic version",
-                    versionResults.contains(ANY, subjectUri, title.asNode(),
-                            createLiteral("Second Title")));
+            assertTrue(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteral("First Title")),
+                    "Should find a title in historic version");
+            assertTrue(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteral("First Title")),
+                    "Should find original title in historic version");
+            assertFalse(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteral("Second Title")),
+                    "Should not find the updated title in historic version");
         }
     }
 
@@ -1060,16 +1051,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         putVersionedContainer(id, "update", true);
         final String version2Uri = createMemento(subjectUri);
 
-        assertNotEquals("mementos should be different", version1Uri, version2Uri);
+        assertNotEquals(version1Uri, version2Uri, "mementos should be different");
 
         final HttpGet getMemento = getObjMethod(id);
         getMemento.addHeader(ACCEPT_DATETIME, betweenDatetime);
 
         try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
-            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertEquals(FOUND.getStatusCode(), getStatus(response), "Did not get FOUND response");
             assertNoMementoDatetimeHeaderPresent(response);
             verifyMementoUri("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
-            assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
+            assertEquals("0", response.getFirstHeader(CONTENT_LENGTH).getValue(), "Did not get Content-Length == 0");
         }
 
         TimeUnit.SECONDS.sleep(1);
@@ -1081,7 +1072,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         getMemento2.addHeader(ACCEPT_DATETIME, afterDatetime);
 
         try (final CloseableHttpResponse response = customClient.execute(getMemento2)) {
-            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertEquals(FOUND.getStatusCode(), getStatus(response), "Did not get FOUND response");
             assertNoMementoDatetimeHeaderPresent(response);
             verifyMementoUri("Did not get Location header", version2Uri, response.getFirstHeader(LOCATION).getValue());
             assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
@@ -1092,10 +1083,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         getMemento3.addHeader(ACCEPT_DATETIME, startDatetime);
 
         try (final CloseableHttpResponse response = customClient.execute(getMemento3)) {
-            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertEquals(FOUND.getStatusCode(), getStatus(response), "Did not get FOUND response");
             assertNoMementoDatetimeHeaderPresent(response);
             verifyMementoUri("Did not get Location header", version1Uri, response.getFirstHeader(LOCATION).getValue());
-            assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
+            assertEquals("0", response.getFirstHeader(CONTENT_LENGTH).getValue(), "Did not get Content-Length == 0");
         }
     }
 
@@ -1124,14 +1115,14 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             version2Datetime = response.getFirstHeader(MEMENTO_DATETIME_HEADER).getValue();
         }
 
-        assertNotEquals("mementos should be different", version1Uri, version2Uri);
+        assertNotEquals(version1Uri, version2Uri, "mementos should be different");
 
         // Attempt to retrieve newer memento
         final HttpGet getVersion2 = getObjMethod(id);
         getVersion2.addHeader(ACCEPT_DATETIME, version2Datetime);
 
         try (final CloseableHttpResponse response = customClient.execute(getVersion2)) {
-            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertEquals(FOUND.getStatusCode(), getStatus(response), "Did not get FOUND response");
             assertNoMementoDatetimeHeaderPresent(response);
             verifyMementoUri("Did not get expected memento location",
                     version2Uri, response.getFirstHeader(LOCATION).getValue());
@@ -1142,7 +1133,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         getVersion1.addHeader(ACCEPT_DATETIME, version1Datetime);
 
         try (final CloseableHttpResponse response = customClient.execute(getVersion1)) {
-            assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
+            assertEquals(FOUND.getStatusCode(), getStatus(response), "Did not get FOUND response");
             assertNoMementoDatetimeHeaderPresent(response);
             verifyMementoUri("Did not get expected memento location",
                     version1Uri, response.getFirstHeader(LOCATION).getValue());
@@ -1160,9 +1151,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         getMemento.addHeader(ACCEPT_DATETIME, requestDatetime);
 
         try (final CloseableHttpResponse response = customClient.execute(getMemento)) {
-            assertEquals("Didn't get NOT_ACCEPTABLE response", NOT_ACCEPTABLE.getStatusCode(), getStatus(response));
-            assertNull("Didn't expect a Location header", response.getFirstHeader(LOCATION));
-            assertNotEquals("Didn't get Content-Length > 0", 0, response.getFirstHeader(CONTENT_LENGTH).getValue());
+            assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(response), "Didn't get NOT_ACCEPTABLE response");
+            assertNull(response.getFirstHeader(LOCATION), "Didn't expect a Location header");
+            assertNotEquals(0, response.getFirstHeader(CONTENT_LENGTH).getValue(), "Didn't get Content-Length > 0");
         }
     }
 
@@ -1179,8 +1170,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Status 406: Get absent memento with datetime negotiation.
         final HttpGet getMethod1 = getObjMethod(id);
         getMethod1.setHeader(ACCEPT_DATETIME, mementoDateTime);
-        assertEquals("Didn't get status 406 on absent memento!",
-                NOT_ACCEPTABLE.getStatusCode(), getStatus(customClient.execute(getMethod1)));
+        assertEquals(NOT_ACCEPTABLE.getStatusCode(), getStatus(customClient.execute(getMethod1)),
+                "Didn't get status 406 on absent memento!");
 
         // Create memento
         final String mementoUri = createMemento(subjectUri);
@@ -1188,15 +1179,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // Status 302: GET memento with datetime negotiation
         final HttpGet getMethod2 = getObjMethod(id);
         getMethod2.setHeader(ACCEPT_DATETIME, mementoDateTime);
-        assertEquals("Expected memento is NOT found: " + mementoUri, FOUND.getStatusCode(),
-                getStatus(customClient.execute(getMethod2)));
+        assertEquals(FOUND.getStatusCode(), getStatus(customClient.execute(getMethod2)),
+                "Expected memento is NOT found: " + mementoUri);
 
         // Status 400: Get memento with bad Accept-Datetime header value
         final String badDataTime = "Wed, 29 Aug 2017 15:47:50 GMT"; // should be TUE, 29 Aug 2017 15:47:50 GMT
         final HttpGet getMethod3 = getObjMethod(id);
         getMethod3.setHeader(ACCEPT_DATETIME, badDataTime);
-        assertEquals("Didn't get status 400 on bad Accept-Datetime value!",
-                BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)));
+        assertEquals(BAD_REQUEST.getStatusCode(), getStatus(customClient.execute(getMethod3)),
+                "Didn't get status 400 on bad Accept-Datetime value!");
     }
 
     @Test
@@ -1208,7 +1199,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpGet checkFixity = new HttpGet(mementoUri);
         checkFixity.setHeader("Want-Digest", "sha");
         try (final CloseableHttpResponse response = execute(checkFixity)) {
-            assertEquals("Did not get OK response", OK.getStatusCode(), getStatus(response));
+            assertEquals(OK.getStatusCode(), getStatus(response), "Did not get OK response");
             assertTrue(decodeDigestHeader(response.getFirstHeader("Digest").getValue()).containsKey("sha"));
         }
     }
@@ -1385,8 +1376,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // 4. verify that the binary description timemap RDF is there and contains the new description memento
         try (final CloseableDataset dataset = getDataset(new HttpGet(descTimemapUri))) {
             final DatasetGraph results = dataset.asDatasetGraph();
-            assertTrue("Timemap RDF response must contain description memento",
-                    results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc));
+            assertTrue(results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc),
+                    "Timemap RDF response must contain description memento");
         }
 
         // Wait a second to avoid timestamp collisions
@@ -1400,10 +1391,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final DatasetGraph results = dataset.asDatasetGraph();
             final Node descMementoResc2 = createURI(descMementoUri2);
 
-            assertTrue("Timemap RDF response must contain first description memento",
-                    results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc));
-            assertTrue("Timemap RDF response must contain second description memento",
-                    results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc2));
+            assertTrue(results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc),
+                    "Timemap RDF response must contain first description memento");
+            assertTrue(results.contains(ANY, timemapSubject, CONTAINS.asNode(), descMementoResc2),
+                    "Timemap RDF response must contain second description memento");
         }
     }
 
@@ -1675,16 +1666,16 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"");
         httpPut.addHeader(LINK, getExternalContentLinkHeader(externalUri, handling, null));
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
         }
     }
 
     private static void assertMementoOptionsHeaders(final HttpResponse httpResponse) {
         final List<String> methods = headerValues(httpResponse, "Allow");
-        assertTrue("Should allow GET", methods.contains(HttpGet.METHOD_NAME));
-        assertTrue("Should allow HEAD", methods.contains(HttpHead.METHOD_NAME));
-        assertTrue("Should allow OPTIONS", methods.contains(HttpOptions.METHOD_NAME));
-        assertFalse("Should NOT allow DELETE", methods.contains(HttpDelete.METHOD_NAME));
+        assertTrue(methods.contains(HttpGet.METHOD_NAME), "Should allow GET");
+        assertTrue(methods.contains(HttpHead.METHOD_NAME), "Should allow HEAD");
+        assertTrue(methods.contains(HttpOptions.METHOD_NAME), "Should allow OPTIONS");
+        assertFalse(methods.contains(HttpDelete.METHOD_NAME), "Should NOT allow DELETE");
     }
 
     private String createMemento(final String subjectUri) throws Exception {
@@ -1692,7 +1683,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         // Create new memento of resource with updated body
         try (final CloseableHttpResponse response = execute(createVersionMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             assertMementoDatetimeHeaderPresent(response);
 
             return response.getFirstHeader(LOCATION).getValue();
@@ -1737,7 +1728,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             return response.getFirstHeader(LOCATION).getValue();
         }
     }
@@ -1768,9 +1759,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
             if (isUpdate) {
-                assertEquals("Didn't get a NO_CONTENT response!", NO_CONTENT.getStatusCode(), getStatus(response));
+                assertEquals(NO_CONTENT.getStatusCode(), getStatus(response), "Didn't get a NO_CONTENT response!");
             } else {
-                assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+                assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
                 logger.info("created object: {}", response.getFirstHeader(LOCATION).getValue());
             }
         }
@@ -1792,7 +1783,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         createMethod.setEntity(new StringEntity("<> <info:test#label> \"foo\""));
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             return response.getFirstHeader(LOCATION).getValue();
         }
     }
@@ -1822,9 +1813,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
             if (isUpdate) {
-                assertEquals("Didn't get a NO_CONTENT response!", NO_CONTENT.getStatusCode(), getStatus(response));
+                assertEquals(NO_CONTENT.getStatusCode(), getStatus(response), "Didn't get a NO_CONTENT response!");
             } else {
-                assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+                assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
                 logger.info("created object: {}", response.getFirstHeader(LOCATION).getValue());
             }
         }
@@ -1852,7 +1843,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         try (final CloseableHttpResponse response = execute(createMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             logger.info("created object: {}", response.getFirstHeader(LOCATION).getValue());
             return response.getFirstHeader(LOCATION).getValue();
         }
@@ -1870,13 +1861,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     }
 
     private static void assertNoMementoDatetimeHeaderPresent(final CloseableHttpResponse response) {
-        assertNull("No memento datetime header set in response",
-            response.getFirstHeader(MEMENTO_DATETIME_HEADER));
+        assertNull(response.getFirstHeader(MEMENTO_DATETIME_HEADER), "No memento datetime header set in response");
     }
 
     private static void assertMementoDatetimeHeaderPresent(final CloseableHttpResponse response) {
-        assertNotNull("No memento datetime header set in response",
-            response.getFirstHeader(MEMENTO_DATETIME_HEADER));
+        assertNotNull(response.getFirstHeader(MEMENTO_DATETIME_HEADER), "No memento datetime header set in response");
     }
 
     private static void assertMementoDatetimeHeaderMatches(final CloseableHttpResponse response,
@@ -1932,7 +1921,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
                 sort(mTriples);
                 sort(oTriples);
 
-                assertArrayEquals("Memento and Original Resource triples do not match!", mTriples, oTriples);
+                assertArrayEquals(mTriples, oTriples, "Memento and Original Resource triples do not match!");
             }
         }
     }
@@ -1940,15 +1929,15 @@ public class FedoraVersioningIT extends AbstractResourceIT {
     private static void assertHasLink(final CloseableHttpResponse response, final Property relation,
             final String uri) {
         final String relName = relation.getLocalName();
-        assertTrue("Missing link " + relName + " with value " + uri, getLinkHeaders(response)
-                .stream().map(Link::valueOf)
-                .anyMatch(l -> relName.equals(l.getRel()) && uri.equals(l.getUri().toString())));
+        assertTrue(getLinkHeaders(response).stream().map(Link::valueOf)
+                .anyMatch(l -> relName.equals(l.getRel()) && uri.equals(l.getUri().toString())),
+                "Missing link " + relName + " with value " + uri);
     }
 
     private void checkResponseWithInvalidMementoID(final HttpUriRequest req) throws IOException {
         try (final CloseableHttpResponse response = execute(req)) {
-            assertEquals("Didn't get status 400 with invalid memento path!",
-                BAD_REQUEST.getStatusCode(), getStatus(req));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(req),
+                    "Didn't get status 400 with invalid memento path!");
 
             // Request must fail with constrained exception due to invalid memento ID
             assertConstrainedByPresent(response);

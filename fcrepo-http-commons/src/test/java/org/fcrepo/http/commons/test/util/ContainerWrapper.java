@@ -18,7 +18,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.lang.NonNullApi;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.fcrepo.http.commons.webxml.WebAppConfig;
 import org.fcrepo.http.commons.webxml.bind.ContextParam;
@@ -29,10 +28,10 @@ import org.fcrepo.http.commons.webxml.bind.Listener;
 import org.fcrepo.http.commons.webxml.bind.Servlet;
 import org.fcrepo.http.commons.webxml.bind.ServletMapping;
 
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.Unmarshaller;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.Unmarshaller;
 import java.net.URI;
 import java.util.Collection;
 
