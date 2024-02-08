@@ -14,6 +14,7 @@ import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 
+import org.fcrepo.persistence.api.exceptions.ObjectExistsInOcflIndexException;
 import org.slf4j.Logger;
 
 import com.google.common.base.Stopwatch;
@@ -87,6 +88,7 @@ public class ReindexWorker implements Runnable {
 
             int completed = 0;
             int errors = 0;
+            int skipped = 0;
 
             for (final var id : ids) {
                 if (!running) {
@@ -97,7 +99,7 @@ public class ReindexWorker implements Runnable {
                 tx.suppressEvents();
                 tx.setShortLived(true);
                 if (stopwatch.elapsed(TimeUnit.SECONDS) > REPORTING_INTERVAL_SECS) {
-                    manager.updateComplete(completed, errors);
+                    manager.updateComplete(completed, errors, skipped);
                     completed = 0;
                     errors = 0;
                     stopwatch.reset().start();
@@ -108,12 +110,16 @@ public class ReindexWorker implements Runnable {
                         tx.commit();
                     });
                     completed += 1;
+                } catch (final ObjectExistsInOcflIndexException e) {
+                    tx.rollback();
+                    LOGGER.debug(e.getMessage());
+                    skipped += 1;
                 } catch (final Exception e) {
                     LOGGER.error("Reindexing of OCFL id {} failed", id, e);
                     tx.rollback();
                     errors += 1;
                     if (failOnError) {
-                        manager.updateComplete(completed, errors);
+                        manager.updateComplete(completed, errors, skipped);
                         manager.stop();
                         service.cleanupSession(tx.getId());
                         throw e;
@@ -121,7 +127,7 @@ public class ReindexWorker implements Runnable {
                 }
                 service.cleanupSession(tx.getId());
             }
-            manager.updateComplete(completed, errors);
+            manager.updateComplete(completed, errors, skipped);
         }
     }
 
