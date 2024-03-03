@@ -65,15 +65,15 @@
     <jgroups.version>5.1.9.Final</jgroups.version>
     <jsonld.version>0.13.3</jsonld.version>
     <logback.version>1.2.13</logback.version>
-    <micrometer.prometheus.version>1.12.2</micrometer.prometheus.version>
+    <micrometer.prometheus.version>1.12.3</micrometer.prometheus.version>
     <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
     <netty.version>4.1.68.Final</netty.version>
     <ocfl-java.version>1.5.0</ocfl-java.version>
     <prometheus.version>0.16.0</prometheus.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
-    <shiro.version>1.13.0</shiro.version>
+    <shiro.version>2.0.0</shiro.version>
     <slf4j.version>1.7.32</slf4j.version>
-    <spring.version>6.1.3</spring.version>
+    <spring.version>6.1.4</spring.version>
     <xerces.version>2.12.2</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>2.3</velocity.version>
