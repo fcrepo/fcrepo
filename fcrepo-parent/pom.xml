@@ -21,7 +21,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.copyrightYear>2015</project.copyrightYear>
-    <project.java.source>11</project.java.source>
+    <project.java.source>17</project.java.source>
     <!-- scm, site distribution names -->
     <project_name>${project.artifactId}</project_name>
     <project_organization>fcrepo</project_organization>
