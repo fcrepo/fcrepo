@@ -603,12 +603,6 @@
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-spring</artifactId>
-        <version>${shiro.version}</version>
-        <classifier>jakarta</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-bom</artifactId>
         <version>${shiro.version}</version>
         <scope>import</scope>
@@ -931,7 +925,7 @@
                   <version>[3.6.3,)</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[11,)</version>
+                  <version>[17,)</version>
                 </requireJavaVersion>
                 <DependencyConvergence />
                 <bannedDependencies>

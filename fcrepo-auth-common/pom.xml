@@ -44,12 +44,6 @@
     </dependency>
     <dependency>
       <groupId>org.apache.shiro</groupId>
-      <artifactId>shiro-spring</artifactId>
-      <classifier>jakarta</classifier>
-    </dependency>
-    <!-- try commenting out as shiro-spring with bring these in -->
-    <!--<dependency>
-      <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-core</artifactId>
       <classifier>jakarta</classifier>
     </dependency>
@@ -57,7 +51,7 @@
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-web</artifactId>
       <classifier>jakarta</classifier>
-    </dependency>-->
+    </dependency>
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity-engine-core</artifactId>
@@ -217,18 +211,6 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-bom</artifactId>
-        <version>${shiro.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
 
   <build>
     <plugins>

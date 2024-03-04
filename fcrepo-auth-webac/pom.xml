@@ -236,23 +236,15 @@
     </dependency>
     <dependency>
       <groupId>org.apache.shiro</groupId>
-      <artifactId>shiro-spring</artifactId>
+      <artifactId>shiro-core</artifactId>
+      <classifier>jakarta</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-web</artifactId>
       <classifier>jakarta</classifier>
     </dependency>
   </dependencies>
-
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-bom</artifactId>
-        <version>${shiro.version}</version>
-        <scope>import</scope>
-        <type>pom</type>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
 
   <build>
 
