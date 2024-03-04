@@ -603,19 +603,7 @@
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-core</artifactId>
-        <version>${shiro.version}</version>
-        <classifier>jakarta</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
         <artifactId>shiro-spring</artifactId>
-        <version>${shiro.version}</version>
-        <classifier>jakarta</classifier>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-web</artifactId>
         <version>${shiro.version}</version>
         <classifier>jakarta</classifier>
       </dependency>
