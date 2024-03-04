@@ -47,7 +47,8 @@
       <artifactId>shiro-spring</artifactId>
       <classifier>jakarta</classifier>
     </dependency>
-    <dependency>
+    <!-- try commenting out as shiro-spring with bring these in -->
+    <!--<dependency>
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-core</artifactId>
       <classifier>jakarta</classifier>
@@ -56,7 +57,7 @@
       <groupId>org.apache.shiro</groupId>
       <artifactId>shiro-web</artifactId>
       <classifier>jakarta</classifier>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity-engine-core</artifactId>
@@ -183,11 +184,11 @@
       <scope>provided</scope>
     </dependency>
     <!-- Shiro still uses javax.servlet in the ShiroFilterFactoryBean -->
-    <dependency>
+    <!--<dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <version>4.0.1</version>
-    </dependency>
+    </dependency>-->
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
