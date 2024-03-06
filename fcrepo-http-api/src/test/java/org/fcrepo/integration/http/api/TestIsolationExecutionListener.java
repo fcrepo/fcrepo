@@ -12,7 +12,6 @@ import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.test.junit5.annotation.FlywayTestExtension;
 import org.springframework.test.context.TestContext;
-import org.springframework.test.context.TestPropertySource;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

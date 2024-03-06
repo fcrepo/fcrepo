@@ -46,7 +46,7 @@
 		<url-pattern>/rest/*</url-pattern>
 	</servlet-mapping>
     
-	<!-- The filter-name matches name of a 'shiroFilter' bean inside applicationContext.xml -->
+	<!-- The filter-name matches name of a 'shiroFilter' bean inside fcrepo-config.xml -->
 	<filter>
 		<filter-name>shiroFilter</filter-name>
 		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>

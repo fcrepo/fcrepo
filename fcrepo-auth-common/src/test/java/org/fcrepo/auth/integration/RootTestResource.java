@@ -5,7 +5,6 @@
  */
 package org.fcrepo.auth.integration;
 
-import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -17,7 +16,9 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -28,14 +29,19 @@ import static org.slf4j.LoggerFactory.getLogger;
  * - These integration tests are intended to test the AuthZ functionality, not the F4 REST API
  * - A circular dependency between fcrepo-auth-common &lt;--&gt; fcrepo-http-api is bad
  *
+ * Removed dependency on fcrepo-http-commons AbstractResource as the @Injected fields are not resolved here.
+ *
  * @author awoods
  * @since 2014-06-26
  */
 @Scope("prototype")
 @Path("/{path: .*}")
-public class RootTestResource extends AbstractResource {
+public class RootTestResource {
 
     private static final Logger LOGGER = getLogger(RootTestResource.class);
+
+    @Context
+    protected UriInfo uriInfo;
 
     @GET
     public Response get(@PathParam("path") final String externalPath) {

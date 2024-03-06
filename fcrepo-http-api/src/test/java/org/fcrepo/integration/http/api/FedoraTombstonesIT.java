@@ -46,7 +46,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.TestExecutionListeners;
 
 /**
  * Tests related to tombstone stuff.
