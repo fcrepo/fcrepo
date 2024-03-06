@@ -6,14 +6,13 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import jakarta.ws.rs.core.Response;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 
-import org.junit.Before;
-import org.junit.Test;
+import jakarta.ws.rs.core.Response;
 
 
 /**
@@ -25,7 +24,7 @@ public class PathNotFoundExceptionMapperTest {
 
     private PathNotFoundExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new PathNotFoundExceptionMapper();
     }
@@ -33,8 +32,9 @@ public class PathNotFoundExceptionMapperTest {
     @Test
     public void testToResponse() {
         final PathNotFoundException input = new PathNotFoundException("xyz");
-        final Response actual = testObj.toResponse(input);
-        assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
-        assertEquals(actual.getEntity(), "Error: xyz");
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
+            assertEquals(actual.getEntity(), "Error: xyz");
+        }
     }
 }

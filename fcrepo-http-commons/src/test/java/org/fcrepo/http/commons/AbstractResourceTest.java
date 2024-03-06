@@ -6,23 +6,24 @@
 package org.fcrepo.http.commons;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.util.function.Supplier;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.UriInfo;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
+import java.util.function.Supplier;
 
 /**
  * <p>AbstractResourceTest class.</p>
  *
  * @author awoods
  */
+@ExtendWith(MockitoExtension.class)
 public class AbstractResourceTest {
 
     private AbstractResource testObj;
@@ -36,9 +37,8 @@ public class AbstractResourceTest {
     @Mock
     private HttpHeaders mockHeaders;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        initMocks(this);
         testObj = new AbstractResource() {/**/};
     }
 

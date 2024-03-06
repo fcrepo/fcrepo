@@ -903,7 +903,8 @@ public class FedoraLdpTest {
         final Model model = ((RdfNamespacedStream) actual.getEntity()).stream.collect(toModel());
         final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
         log.info("Found RDF objects\n{}", rdfNodes);
-        assertTrue(rdfNodes.containsAll(ImmutableSet.of("LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")),
+        assertTrue(rdfNodes.containsAll(
+                ImmutableSet.of("LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")),
                 "Expected RDF contexts missing");
     }
 

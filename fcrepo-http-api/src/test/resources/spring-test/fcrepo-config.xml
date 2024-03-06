@@ -13,8 +13,6 @@
 
   <!-- Master context for the test application. -->
 
-  <!-- Context that supports the actual ModeShape JCR itself -->
-
   <context:annotation-config/>
   <context:property-placeholder location="classpath:application.properties" />
   <context:component-scan base-package="org.fcrepo"/>

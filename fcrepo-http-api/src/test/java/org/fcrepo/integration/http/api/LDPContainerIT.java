@@ -310,7 +310,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, memberId);
 
         final String etag1 = getEtag(membershipUri);
-        assertNotEquals("ETag didn't change!", etag0, etag1);
+        assertNotEquals(etag0, etag1, "ETag didn't change!");
 
         // Wait a second so that the creation and deletion of the child are not simultaneous
         TimeUnit.SECONDS.sleep(1);
@@ -399,7 +399,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertIsMemberOf(memberId, EX_IS_MEMBER_PROP, membershipId);
 
         final String etag1 = getEtag(memberUri);
-        assertNotEquals("ETag didn't change!", etag0, etag1);
+        assertNotEquals(etag0, etag1, "ETag didn't change!");
 
         // Wait a second so that the creation and deletion of the child are not simultaneous
         TimeUnit.SECONDS.sleep(1);

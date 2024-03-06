@@ -6,15 +6,14 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import jakarta.ws.rs.core.Response;
-
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.apache.jena.query.QueryParseException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import jakarta.ws.rs.core.Response;
 
 /**
  * @author whikloj
@@ -24,7 +23,7 @@ public class QueryParseExceptionMapperTest {
 
     private QueryParseExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new QueryParseExceptionMapper();
     }
@@ -33,16 +32,18 @@ public class QueryParseExceptionMapperTest {
     public void testInvalidNamespace() {
         final QueryParseException input = new QueryParseException(
             "Unresolved prefixed name: invalidNS:title", 14, 10);
-        final Response actual = testObj.toResponse(input);
-        assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
-        assertEquals(actual.getEntity(), input.getMessage());
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
+            assertEquals(actual.getEntity(), input.getMessage());
+        }
     }
 
     @Test
     public void testToResponse() {
         final QueryParseException input = new QueryParseException("An error occurred", 14, 10);
-        final Response actual = testObj.toResponse(input);
-        assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
-        assertNotNull(actual.getEntity());
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
+            assertNotNull(actual.getEntity());
+        }
     }
 }

@@ -5,24 +5,28 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.fcrepo.kernel.api.exception.RepositoryException;
+import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Providers;
 
-import org.fcrepo.kernel.api.exception.RepositoryException;
-import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-
 /**
  * @author cabeer
  */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 public class RepositoryRuntimeExceptionMapperTest {
 
     @Mock
@@ -33,10 +37,8 @@ public class RepositoryRuntimeExceptionMapperTest {
     @Mock
     private ExceptionMapper<RepositoryException> mockProvider;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        initMocks(this);
-
         testObj = new RepositoryRuntimeExceptionMapper(mockProviders);
     }
 
@@ -54,15 +56,17 @@ public class RepositoryRuntimeExceptionMapperTest {
         when(mockProviders.getExceptionMapper(Exception.class)).thenReturn(null);
         final Exception cause = new Exception("xyz");
         final RepositoryRuntimeException ex = new RepositoryRuntimeException(cause.getMessage(), cause);
-        final Response response = testObj.toResponse(ex);
-        assertEquals(500, response.getStatus());
+        try (final Response response = testObj.toResponse(ex)) {
+            assertEquals(500, response.getStatus());
+        }
     }
 
     @Test
     public void testToResponseWithNoWrappedException() {
         when(mockProviders.getExceptionMapper(Exception.class)).thenReturn(null);
         final RepositoryRuntimeException ex = new RepositoryRuntimeException("!");
-        final Response response = testObj.toResponse(ex);
-        assertEquals(500, response.getStatus());
+        try (final Response response = testObj.toResponse(ex)) {
+            assertEquals(500, response.getStatus());
+        }
     }
 }

@@ -7,14 +7,13 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static jakarta.ws.rs.core.Response.Status.PRECONDITION_FAILED;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import jakarta.ws.rs.core.Response;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.fcrepo.kernel.api.exception.PreconditionException;
 
-import org.junit.Before;
-import org.junit.Test;
+import jakarta.ws.rs.core.Response;
 
 /**
  * PreconditionExceptionTest class.
@@ -26,7 +25,7 @@ public class PreconditionExceptionMapperTest {
 
     private PreconditionExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new PreconditionExceptionMapper();
     }
@@ -35,9 +34,9 @@ public class PreconditionExceptionMapperTest {
     public void testToResponse() {
         final String message = "error message";
         final PreconditionException input = new PreconditionException(message, PRECONDITION_FAILED.getStatusCode());
-        final Response actual = testObj.toResponse(input);
-        assertEquals(PRECONDITION_FAILED.getStatusCode(), actual.getStatus());
-        assertEquals(message, actual.getEntity().toString());
-
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(PRECONDITION_FAILED.getStatusCode(), actual.getStatus());
+            assertEquals(message, actual.getEntity().toString());
+        }
     }
 }

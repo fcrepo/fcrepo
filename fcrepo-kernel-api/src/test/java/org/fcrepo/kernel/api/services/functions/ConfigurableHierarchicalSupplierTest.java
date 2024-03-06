@@ -5,13 +5,12 @@
  */
 package org.fcrepo.kernel.api.services.functions;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
-import org.junit.Test;
-import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.fcrepo.config.FedoraPropsConfig;;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.fcrepo.config.FedoraPropsConfig;
 
 /**
  * <p>
@@ -20,14 +19,14 @@ import org.fcrepo.config.FedoraPropsConfig;;
  *
  * @author rdfloyd
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+
 public class ConfigurableHierarchicalSupplierTest {
 
     private final FedoraPropsConfig propsConfig = new FedoraPropsConfig();
 
     private final UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         // Need to set the defaults
         propsConfig.setFcrepoPidMinterLength(0);

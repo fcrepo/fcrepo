@@ -897,8 +897,10 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     "SHA-1 Fixity Checksum doesn't match");
             assertTrue(digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE),
                     "MD5 fixity checksum doesn't match");
-            assertTrue(digesterHeaderValue.contains(
-                                "sha-256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903"), "SHA-256 fixity checksum doesn't match");
+            assertTrue(digesterHeaderValue
+                    .contains(
+                            "sha-256=fb871ff8cce8fea83dfaeab41784305a1461e008dc02a371ed26d856c766c903"
+                    ), "SHA-256 fixity checksum doesn't match");
         }
     }
 
@@ -1533,8 +1535,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             binaryLastModed2 = response.getFirstHeader("Last-Modified").getValue();
         }
 
-        assertEquals("ETags should be the same", binaryEtag1, binaryEtag2);
-        assertEquals("Last-Modified should be the same", binaryLastModed1, binaryLastModed2);
+        assertEquals(binaryEtag1, binaryEtag2, "ETags should be the same");
+        assertEquals(binaryLastModed1, binaryLastModed2, "Last-Modified should be the same");
 
         final HttpGet get6 = new HttpGet(binaryLocation);
         get6.addHeader("If-Match", binaryEtag1);
@@ -2082,7 +2084,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
 
         // Retrieve the new resource and verify the content-disposition
-        verifyContentDispositionFilename(location, filenamePart);
+        verifyContentDispositionFilename(location, filename);
 
         final HttpGet get = new HttpGet(location + "/" + FCR_METADATA);
         try (final CloseableHttpResponse response = execute(get)) {
@@ -3010,7 +3012,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")),
                     "Didn't find a triple we thought we added.");
-            assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#number"), createLiteral("42", XSDinteger)),
+            assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#number"), createLiteral("42",
+                            XSDinteger)),
                     "Didn't find a triple we thought we added.");
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#date"), createLiteral("1953?",
                                     getInstance().getSafeTypeByName("http://id.loc.gov/datatypes/edtf/EDTF"))),

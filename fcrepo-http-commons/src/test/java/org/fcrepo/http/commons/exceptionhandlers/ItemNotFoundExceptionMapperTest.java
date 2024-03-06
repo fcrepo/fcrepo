@@ -6,12 +6,13 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.fcrepo.kernel.api.exception.ItemNotFoundException;
 
 import jakarta.ws.rs.core.Response;
-import org.fcrepo.kernel.api.exception.ItemNotFoundException;
-import org.junit.Before;
-import org.junit.Test;
 
 
 /**
@@ -23,7 +24,7 @@ public class ItemNotFoundExceptionMapperTest {
 
     private ItemNotFoundExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new ItemNotFoundExceptionMapper();
     }
@@ -31,8 +32,9 @@ public class ItemNotFoundExceptionMapperTest {
     @Test
     public void testToResponse() {
         final ItemNotFoundException input = new ItemNotFoundException("xyz");
-        final Response actual = testObj.toResponse(input);
-        assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
-        assertEquals(actual.getEntity(), "Error: xyz");
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(NOT_FOUND.getStatusCode(), actual.getStatus());
+            assertEquals(actual.getEntity(), "Error: xyz");
+        }
     }
 }

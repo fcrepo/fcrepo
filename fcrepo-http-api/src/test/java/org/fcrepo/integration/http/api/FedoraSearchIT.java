@@ -172,7 +172,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(1, result.getItems().size(),
                     "expected 1 item where condition = " + condition);
             final var newModified = result.getItems().get(0).get(MODIFIED.toString()).toString();
-            assertNotEquals("Modified date should have changed  but it did not.", modified, newModified);
+            assertNotEquals(modified, newModified, "Modified date should have changed  but it did not.");
         }
     }
 

@@ -5,14 +5,13 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import jakarta.ws.rs.core.Response;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 
-import org.junit.Before;
-import org.junit.Test;
+import jakarta.ws.rs.core.Response;
 
 /**
  * <p>
@@ -26,7 +25,7 @@ public class InsufficientStorageExceptionMapperTest {
 
     private InsufficientStorageExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new InsufficientStorageExceptionMapper();
     }
@@ -35,7 +34,8 @@ public class InsufficientStorageExceptionMapperTest {
     public void testToResponse() {
         final InsufficientStorageException input = new InsufficientStorageException(
                 "No space left on device.", null);
-        final Response actual = testObj.toResponse(input);
-        assertEquals(InsufficientStorageExceptionMapper.INSUFFICIENT_STORAGE_HTTP_CODE, actual.getStatus());
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(InsufficientStorageExceptionMapper.INSUFFICIENT_STORAGE_HTTP_CODE, actual.getStatus());
+        }
     }
 }

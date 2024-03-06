@@ -32,36 +32,36 @@
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <!-- plugin versions -->
-    <build-helper.plugin.version>3.2.0</build-helper.plugin.version>
+    <build-helper.plugin.version>3.5.0</build-helper.plugin.version>
     <bundle.plugin.version>5.1.2</bundle.plugin.version>
-    <changelog.plugin.version>2.3</changelog.plugin.version>
-    <checkstyle.plugin.version>3.1.2</checkstyle.plugin.version>
-    <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>
-    <clean.plugin.version>3.1.0</clean.plugin.version>
+    <!--<changelog.plugin.version>2.3</changelog.plugin.version>-->
+    <checkstyle.plugin.version>3.3.1</checkstyle.plugin.version>
+    <!--<duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>-->
+    <clean.plugin.version>3.3.2</clean.plugin.version>
     <compiler.plugin.version>3.12.1</compiler.plugin.version>
     <dependency.plugin.version>3.6.1</dependency.plugin.version>
-    <deploy.plugin.version>2.8.2</deploy.plugin.version>
-    <doxia-markdown.plugin.version>1.8</doxia-markdown.plugin.version>
+    <deploy.plugin.version>3.1.1</deploy.plugin.version>
+    <doxia-markdown.plugin.version>1.12.0</doxia-markdown.plugin.version>
     <failsafe.plugin.version>3.2.1</failsafe.plugin.version>
     <fcrepo-build-tools.version>6.0.0</fcrepo-build-tools.version>
     <github-site.plugin.version>0.12</github-site.plugin.version>
-    <gpg.plugin.version>3.0.1</gpg.plugin.version>
-    <install.plugin.version>2.5.2</install.plugin.version>
-    <jacoco.plugin.version>0.8.7</jacoco.plugin.version>
-    <jar.plugin.version>3.2.0</jar.plugin.version>
-    <javadoc.plugin.version>3.3.1</javadoc.plugin.version>
+    <gpg.plugin.version>3.1.0</gpg.plugin.version>
+    <install.plugin.version>3.1.1</install.plugin.version>
+    <jacoco.plugin.version>0.8.11</jacoco.plugin.version>
+    <jar.plugin.version>3.3.0</jar.plugin.version>
+    <javadoc.plugin.version>3.6.3</javadoc.plugin.version>
     <jxr.plugin.version>3.3.2</jxr.plugin.version>
-    <license.plugin.version>4.1</license.plugin.version>
-    <nexus-staging.plugin.version>1.6.8</nexus-staging.plugin.version>
-    <project-info-reports.plugin.version>3.1.2</project-info-reports.plugin.version>
-    <release.plugin.version>2.5.3</release.plugin.version>
-    <remote-resources.plugin.version>1.7</remote-resources.plugin.version>
-    <resources.plugin.version>3.2.0</resources.plugin.version>
-    <scm-provider-gitexe.plugin.version>1.12.0</scm-provider-gitexe.plugin.version>
-    <site.plugin.version>3.9.1</site.plugin.version>
-    <source.plugin.version>3.2.1</source.plugin.version>
-    <surefire.plugin.version>3.2.1</surefire.plugin.version>
-    <versions.plugin.version>2.8.1</versions.plugin.version>
+    <license.plugin.version>4.3</license.plugin.version>
+    <nexus-staging.plugin.version>1.6.13</nexus-staging.plugin.version>
+    <project-info-reports.plugin.version>3.5.0</project-info-reports.plugin.version>
+    <release.plugin.version>3.0.1</release.plugin.version>
+    <remote-resources.plugin.version>3.1.0</remote-resources.plugin.version>
+    <resources.plugin.version>3.3.1</resources.plugin.version>
+    <scm-provider-gitexe.plugin.version>2.1.0</scm-provider-gitexe.plugin.version>
+    <site.plugin.version>3.12.1</site.plugin.version>
+    <source.plugin.version>3.3.0</source.plugin.version>
+    <surefire.plugin.version>3.2.5</surefire.plugin.version>
+    <versions.plugin.version>2.16.2</versions.plugin.version>
     <!-- jacoco and sonar configuration -->
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
     <jacoco.out.unit.file>jacoco-ut.exec</jacoco.out.unit.file>
@@ -220,10 +220,10 @@
           </configuration>
         </plugin>
 
-        <plugin>
+        <!--<plugin>
           <artifactId>maven-changelog-plugin</artifactId>
           <version>${changelog.plugin.version}</version>
-        </plugin>
+        </plugin>-->
 
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

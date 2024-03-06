@@ -8,30 +8,30 @@ package org.fcrepo.http.commons.api.rdf;
 import static com.google.common.collect.ImmutableBiMap.of;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.Map;
-import jakarta.ws.rs.core.UriInfo;
-
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.context.ApplicationContext;
+
+import jakarta.ws.rs.core.UriInfo;
+import java.util.Map;
 
 /**
  * <p>HttpTripleUtilTest class.</p>
  *
  * @author awoods
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class HttpTripleUtilTest {
 
     private HttpTripleUtil testObj;
@@ -51,7 +51,7 @@ public class HttpTripleUtilTest {
     @Mock
     private FedoraResource mockResource;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new HttpTripleUtil();
         testObj.setApplicationContext(mockContext);

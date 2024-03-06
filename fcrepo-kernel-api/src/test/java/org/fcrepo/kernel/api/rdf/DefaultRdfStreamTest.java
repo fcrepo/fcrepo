@@ -9,14 +9,14 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -48,7 +48,7 @@ public class DefaultRdfStreamTest {
             .flatMap(x -> new DefaultRdfStream(x, getTriples(x).stream()))
             .map(Triple::getObject)
             .map(Node::getURI)
-            .collect(toList());
+            .toList();
 
         assertEquals(18, objs.size());
         assertEquals("obj1", objs.get(0));

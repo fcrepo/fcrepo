@@ -14,29 +14,28 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import com.google.common.eventbus.EventBus;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.fcrepo.kernel.api.observer.Event;
+
 import jakarta.jms.Connection;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import jakarta.jms.MessageProducer;
-
-import org.apache.activemq.ActiveMQConnectionFactory;
-
-import org.fcrepo.kernel.api.observer.Event;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import com.google.common.eventbus.EventBus;
 
 /**
  * <p>JMSTopicPublisherTest class.</p>
  *
  * @author awoods
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 abstract class AbstractJMSPublisherTest {
 
     protected abstract AbstractJMSPublisher getPublisher();
@@ -61,7 +60,7 @@ abstract class AbstractJMSPublisherTest {
     @Mock
     private Connection mockConn;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testJMSPublisher = getPublisher();
         setField(testJMSPublisher, "eventFactory", mockEventFactory);

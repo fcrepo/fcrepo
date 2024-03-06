@@ -5,22 +5,19 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import java.net.URI;
-import jakarta.ws.rs.core.Link;
-import jakarta.ws.rs.core.UriInfo;
+import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImpl;
+import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 
-import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImpl;
-import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
-import static org.junit.Assert.assertEquals;
-
 import jakarta.servlet.ServletContext;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.UriInfo;
+import java.net.URI;
 
 /**
  * ConstraintViolationExceptionMapperTest
@@ -28,14 +25,13 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author whikloj
  * @since 2015-06-22
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class ConstraintViolationExceptionMapperTest {
 
     private UriInfo mockInfo;
 
     private ServletContext mockContext;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         this.mockInfo = getUriInfoImpl();
         this.mockContext = getServletContextImpl();

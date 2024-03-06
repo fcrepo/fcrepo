@@ -5,9 +5,9 @@
  */
 package org.fcrepo.integration.jms.observer;
 
+import static jakarta.jms.Session.AUTO_ACKNOWLEDGE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.UUID.randomUUID;
-import static jakarta.jms.Session.AUTO_ACKNOWLEDGE;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.awaitility.Awaitility.await;
@@ -19,29 +19,27 @@ import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertTimeout;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
-import jakarta.inject.Inject;
-import jakarta.jms.Connection;
-import jakarta.jms.Destination;
-import jakarta.jms.JMSException;
-import jakarta.jms.Message;
-import jakarta.jms.MessageConsumer;
-import jakarta.jms.MessageListener;
-import jakarta.jms.Session;
-import jakarta.jms.TextMessage;
-import jakarta.ws.rs.core.UriBuilder;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.activemq.ActiveMQConnectionFactory;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.vocabulary.RDF;
+import org.awaitility.core.ConditionTimeoutException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.fcrepo.event.serialization.JsonLDEventMessage;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
@@ -59,24 +57,25 @@ import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.vocabulary.RDF;
-import org.awaitility.core.ConditionTimeoutException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.inject.Inject;
+import jakarta.jms.Connection;
+import jakarta.jms.Destination;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.MessageListener;
+import jakarta.jms.Session;
+import jakarta.jms.TextMessage;
+import jakarta.ws.rs.core.UriBuilder;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * <p>
@@ -90,7 +89,7 @@ abstract class AbstractJmsIT implements MessageListener {
     /**
      * Time to wait for a set of test messages, in milliseconds.
      */
-    private static final long TIMEOUT = 20000;
+    private static final Duration TIMEOUT = Duration.ofMillis(20000);
 
     private final String testIngested = "/testMessageFromIngestion-" + randomUUID();
 
@@ -149,110 +148,119 @@ abstract class AbstractJmsIT implements MessageListener {
     private final HttpIdentifierConverter identifierConverter = new HttpIdentifierConverter(
             UriBuilder.fromUri(TEST_BASE_URL + "/{path: .*}"));
 
-    @Test(timeout = TIMEOUT)
+    @Test
     public void testIngestion() {
-
         LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
         final FedoraId fedoraId = FedoraId.create(testIngested);
         final String externalUri = identifierConverter.toExternalId(fedoraId.getFullId());
 
-        doInTx(tx -> {
-            createResourceService.perform(tx, USER, fedoraId,
-                    null, createDefaultModel());
-            tx.commit();
-            awaitMessageOrFail(externalUri, RESOURCE_CREATION.getType(), null);
+        assertTimeout(TIMEOUT, () -> {
+            doInTx(tx -> {
+                createResourceService.perform(tx, USER, fedoraId,
+                        null, createDefaultModel());
+                tx.commit();
+                awaitMessageOrFail(externalUri, RESOURCE_CREATION.getType(), null);
+            });
         });
     }
 
-    @Test(timeout = TIMEOUT)
+    @Test
     public void testFileEvents() throws InvalidChecksumException {
         final var fedoraId = FedoraId.create(testFile);
         final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
 
-        doInTx(tx -> {
-            createResourceService.perform(tx, USER, fedoraId,
-                    "text/plain", "file.txt", 3L,
-                    List.of(), null, stream("foo"), null);
-            tx.commit();
-            awaitMessageOrFail(externalId, RESOURCE_CREATION.getType(), NON_RDF_SOURCE.toString());
-        });
+        assertTimeout(TIMEOUT, () -> {
+            doInTx(tx -> {
+                createResourceService.perform(tx, USER, fedoraId,
+                        "text/plain", "file.txt", 3L,
+                        List.of(), null, stream("foo"), null);
+                tx.commit();
+                awaitMessageOrFail(externalId, RESOURCE_CREATION.getType(), NON_RDF_SOURCE.toString());
+            });
 
-        doInTx(tx -> {
-            replaceBinariesService.perform(tx, USER, fedoraId,
-                    "file.txt", "text/plain", null,
-                    stream("barney"), 6L, null);
-            tx.commit();
-            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), NON_RDF_SOURCE.toString());
-        });
+            doInTx(tx -> {
+                replaceBinariesService.perform(tx, USER, fedoraId,
+                        "file.txt", "text/plain", null,
+                        stream("barney"), 6L, null);
+                tx.commit();
+                awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), NON_RDF_SOURCE.toString());
+            });
 
-        doInTx(tx -> {
-            final FedoraResource binaryResource = getResource(tx, fedoraId);
-            deleteResourceService.perform(tx, binaryResource, USER);
-            tx.commit();
-            awaitMessageOrFail(externalId, RESOURCE_DELETION.getType(), null);
+            doInTx(tx -> {
+                final FedoraResource binaryResource = getResource(tx, fedoraId);
+                deleteResourceService.perform(tx, binaryResource, USER);
+                tx.commit();
+                awaitMessageOrFail(externalId, RESOURCE_DELETION.getType(), null);
+            });
         });
     }
 
-    @Test(timeout = TIMEOUT)
+    @Test
     public void testMetadataEvents() {
         final var fedoraId = FedoraId.create(testMeta);
         final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
 
-        doInTx(tx -> {
-            createResourceService.perform(tx, USER, fedoraId, List.of(), createDefaultModel());
-            final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
-            updatePropertiesService.updateProperties(tx, USER, fedoraId, sparql1);
-            tx.commit();
-            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), FEDORA_CONTAINER.getURI());
-        });
+        assertTimeout(TIMEOUT, () -> {
+            doInTx(tx -> {
+                createResourceService.perform(tx, USER, fedoraId, List.of(), createDefaultModel());
+                final String sparql1 = "insert data { <> <http://foo.com/prop> \"foo\" . }";
+                updatePropertiesService.updateProperties(tx, USER, fedoraId, sparql1);
+                tx.commit();
+                awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), FEDORA_CONTAINER.getURI());
+            });
 
-        doInTx(tx -> {
-            final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
-                    + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
-            updatePropertiesService.updateProperties(tx, USER, fedoraId, sparql2);
-            tx.commit();
-            awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), FEDORA_RESOURCE.getURI());
+            doInTx(tx -> {
+                final String sparql2 = " delete { <> <http://foo.com/prop> \"foo\" . } "
+                        + "insert { <> <http://foo.com/prop> \"bar\" . } where {}";
+                updatePropertiesService.updateProperties(tx, USER, fedoraId, sparql2);
+                tx.commit();
+                awaitMessageOrFail(externalId, RESOURCE_MODIFICATION.getType(), FEDORA_RESOURCE.getURI());
+            });
         });
     }
 
-    @Test(timeout = TIMEOUT)
+    @Test
     public void testRemoval() throws PathNotFoundException {
         final var fedoraId = FedoraId.create(testRemoved);
         final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
 
         LOGGER.debug("Expecting a {} event", RESOURCE_DELETION.getType());
 
-        doInTx(tx -> {
-            createResourceService.perform(tx, USER, fedoraId,
-                    null, createDefaultModel());
-            tx.commit();
-        });
+        assertTimeout(TIMEOUT, () -> {
+            doInTx(tx -> {
+                createResourceService.perform(tx, USER, fedoraId,
+                        null, createDefaultModel());
+                tx.commit();
+            });
 
-        doInTx(tx -> {
-            final var resource = getResource(tx, fedoraId);
-            deleteResourceService.perform(tx, resource, USER);
-            tx.commit();
-            awaitMessageOrFail(externalId, RESOURCE_DELETION.getType(), null);
+            doInTx(tx -> {
+                final var resource = getResource(tx, fedoraId);
+                deleteResourceService.perform(tx, resource, USER);
+                tx.commit();
+                awaitMessageOrFail(externalId, RESOURCE_DELETION.getType(), null);
+            });
         });
     }
 
-    @Test(timeout = TIMEOUT)
+    @Test
     public void testInboundReference() {
         final var id1 = FedoraId.create("/testInboundReference-" + randomUUID().toString());
         final var id2 = FedoraId.create("/testInboundReference-" + randomUUID().toString());
         final var externalId2 = identifierConverter.toExternalId(id2.getFullId());
 
-        doInTx(tx -> {
-            createResourceService.perform(tx, USER, id1, List.of(), createDefaultModel());
-            createResourceService.perform(tx, USER, id2, List.of(), createDefaultModel());
-            tx.commit();
-        });
+        assertTimeout(TIMEOUT, () -> {
+            doInTx(tx -> {
+                createResourceService.perform(tx, USER, id1, List.of(), createDefaultModel());
+                createResourceService.perform(tx, USER, id2, List.of(), createDefaultModel());
+                tx.commit();
+            });
 
-        doInTx(tx -> {
-            final String sparql = "insert { <> <http://foo.com/prop> <" + id2.getFullId() + "> . } where {}";
-            updatePropertiesService.updateProperties(tx, USER, id1, sparql);
-            tx.commit();
-            awaitMessageOrFail(externalId2, INBOUND_REFERENCE.getType(), null);
+            doInTx(tx -> {
+                final String sparql = "insert { <> <http://foo.com/prop> <" + id2.getFullId() + "> . } where {}";
+                updatePropertiesService.updateProperties(tx, USER, id1, sparql);
+                tx.commit();
+                awaitMessageOrFail(externalId2, INBOUND_REFERENCE.getType(), null);
+            });
         });
     }
 
@@ -280,7 +288,7 @@ abstract class AbstractJmsIT implements MessageListener {
         messages.add(message);
     }
 
-    @Before
+    @BeforeEach
     public void acquireConnection() throws JMSException {
         LOGGER.debug(this.getClass().getName() + " acquiring JMS connection.");
         connection = connectionFactory.createConnection();
@@ -291,7 +299,7 @@ abstract class AbstractJmsIT implements MessageListener {
         consumer.setMessageListener(this);
     }
 
-    @After
+    @AfterEach
     public void releaseConnection() throws JMSException {
         // ignore any remaining or queued messages
         consumer.setMessageListener(msg -> { });
@@ -314,7 +322,7 @@ abstract class AbstractJmsIT implements MessageListener {
 
     private void awaitNoMessageOrFail(final String id, final String eventType, final String resourceType) {
         try {
-            await().atMost(TIMEOUT, TimeUnit.MILLISECONDS).until(() -> messages.stream().anyMatch(msg -> {
+            await().atMost(TIMEOUT).until(() -> messages.stream().anyMatch(msg -> {
                 try {
                     return checkForMatchingMessage(msg, id, eventType, resourceType);
                 } catch (final JMSException | JsonProcessingException e) {

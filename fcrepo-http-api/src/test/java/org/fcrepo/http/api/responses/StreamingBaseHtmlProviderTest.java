@@ -12,12 +12,9 @@ import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
-
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -64,7 +61,6 @@ import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URI;
-import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -137,9 +133,8 @@ public class StreamingBaseHtmlProviderTest {
     @Test
     public void testIsWriteable() {
         assertTrue(
-                testProvider.isWriteable(RdfNamespacedStream.class, RdfNamespacedStream.class,
-                                null, TEXT_HTML_TYPE),
-                "Gave false response to HtmlProvider.isWriteable() that contained legitimate combination of parameters");
+                testProvider.isWriteable(RdfNamespacedStream.class, RdfNamespacedStream.class, null, TEXT_HTML_TYPE),
+                "Gave false response to HtmlProvider.isWriteable() with correct combination of parameters");
         assertFalse(
                 testProvider.isWriteable(RdfStream.class, RdfStream.class,
                                 null, TEXT_HTML_TYPE),

@@ -6,26 +6,26 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.security.AccessControlException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import jakarta.ws.rs.core.Response;
-
-import org.junit.Before;
-import org.junit.Test;
+import java.security.AccessControlException;
 
 /**
  * <p>AccessControlJavaSecurityExceptionMapperTest class.</p>
  *
  * @author lsitu
  * @author awoods
+ * @deprecated AccessControlException is deprecated, so all use of it should be removed.
  */
 public class AccessControlJavaSecurityExceptionMapperTest {
 
     private AccessControlJavaSecurityExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new AccessControlJavaSecurityExceptionMapper();
     }

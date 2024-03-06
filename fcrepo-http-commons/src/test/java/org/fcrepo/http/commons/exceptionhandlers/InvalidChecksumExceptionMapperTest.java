@@ -6,13 +6,13 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 
 import jakarta.ws.rs.core.Response;
-
-import org.fcrepo.kernel.api.exception.InvalidChecksumException;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * <p>InvalidChecksumExceptionMapperTest class.</p>
@@ -23,7 +23,7 @@ public class InvalidChecksumExceptionMapperTest {
 
     private InvalidChecksumExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new InvalidChecksumExceptionMapper();
     }
@@ -31,7 +31,8 @@ public class InvalidChecksumExceptionMapperTest {
     @Test
     public void testToResponse() {
         final InvalidChecksumException input = new InvalidChecksumException("x didn't match y");
-        final Response actual = testObj.toResponse(input);
-        assertEquals(CONFLICT.getStatusCode(), actual.getStatus());
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(CONFLICT.getStatusCode(), actual.getStatus());
+        }
     }
 }

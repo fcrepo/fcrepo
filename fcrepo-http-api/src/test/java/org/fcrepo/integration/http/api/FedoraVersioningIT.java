@@ -118,7 +118,6 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * @author lsitu
@@ -264,8 +263,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpGet httpGet = new HttpGet(subjectUri + "/child1/fcr:versions" + mementoTime);
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertMementoDatetimeHeaderMatches(response, now());
-            assertEquals("Binary content of memento must match original content",
-                    "v2", EntityUtils.toString(response.getEntity()));
+            assertEquals("v2", EntityUtils.toString(response.getEntity()),
+                    "Binary content of memento must match original content");
         }
     }
 
@@ -749,7 +748,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             final var allLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
                                                       .sorted(Comparator.naturalOrder())
-                                                      .map(Link::valueOf).collect(Collectors.toList());
+                                                      .map(Link::valueOf).toList();
 
             for (final var link : allLinks) {
                 if ("memento".equals(link.getRel())) {
@@ -879,8 +878,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpGet httpGet = new HttpGet(mementoUri);
         try (final CloseableHttpResponse response = execute(httpGet)) {
             assertMementoDatetimeHeaderMatches(response, now());
-            assertEquals("Binary content of memento must match original content",
-                    BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
+            assertEquals(BINARY_CONTENT, EntityUtils.toString(response.getEntity()),
+                    "Binary content of memento must match original content");
         }
 
         // Verifying that the associated description memento was created
@@ -911,7 +910,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final String v2Time = now();
         assertMementoUri(mementoUri2, subjectUri);
 
-        assertNotEquals("mementos should be different", mementoUri, mementoUri2);
+        assertNotEquals(mementoUri, mementoUri2, "mementos should be different");
 
         // Verify that the memento has the updated binary
         try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri))) {
@@ -919,8 +918,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
 
-            assertEquals("Binary content of memento must match original content",
-                    BINARY_CONTENT, EntityUtils.toString(response.getEntity()));
+            assertEquals(BINARY_CONTENT, EntityUtils.toString(response.getEntity()),
+                    "Binary content of memento must match original content");
         }
 
         try (final CloseableHttpResponse response = execute(new HttpGet(mementoUri2))) {
@@ -929,8 +928,8 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             // Content-type is not retained for a binary memento created without description
             assertEquals(OCTET_STREAM_TYPE, response.getFirstHeader(CONTENT_TYPE).getValue());
 
-            assertEquals("Binary content of memento must match updated content",
-                    BINARY_UPDATED, EntityUtils.toString(response.getEntity()));
+            assertEquals(BINARY_UPDATED, EntityUtils.toString(response.getEntity()),
+                    "Binary content of memento must match updated content");
         }
     }
 
@@ -1075,7 +1074,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertEquals(FOUND.getStatusCode(), getStatus(response), "Did not get FOUND response");
             assertNoMementoDatetimeHeaderPresent(response);
             verifyMementoUri("Did not get Location header", version2Uri, response.getFirstHeader(LOCATION).getValue());
-            assertEquals("Did not get Content-Length == 0", "0", response.getFirstHeader(CONTENT_LENGTH).getValue());
+            assertEquals("0", response.getFirstHeader(CONTENT_LENGTH).getValue(), "Did not get Content-Length == 0");
         }
 
         // Request datetime older than either mementos
@@ -1430,7 +1429,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             assertMementoDatetimeHeaderPresent(getResponse);
             assertEquals(proxiedUri, getContentLocation(getResponse));
             final String content = EntityUtils.toString(getResponse.getEntity());
-            assertEquals("Entity Data doesn't match proxied versioned content!", proxyContent, content);
+            assertEquals(proxyContent, content, "Entity Data doesn't match proxied versioned content!");
         }
     }
 

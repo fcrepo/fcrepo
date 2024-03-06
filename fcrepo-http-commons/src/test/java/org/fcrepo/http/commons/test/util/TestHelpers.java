@@ -10,9 +10,10 @@ import static jakarta.ws.rs.core.UriBuilder.fromUri;
 import static org.apache.http.entity.ContentType.parse;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.junit.Assert.assertNotNull;
+
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.AssertionErrors.assertNotNull;
 
 import java.io.IOException;
 import java.io.InputStream;

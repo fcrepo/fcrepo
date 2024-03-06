@@ -93,7 +93,7 @@
     <mockito.version>3.12.4</mockito.version>
     <mockito.junit5.version>5.4.0</mockito.junit5.version>
     <!-- fcrepo5-specific plugins -->
-    <enforcer.plugin.version>3.0.0</enforcer.plugin.version>
+    <enforcer.plugin.version>3.4.1</enforcer.plugin.version>
     <war.plugin.version>3.3.2</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
     <fcrepo.test.context.path />
@@ -212,11 +212,16 @@
           </exclusion>
         </exclusions>
       </dependency>
-      <!--<dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.inject</groupId>
+        <artifactId>jersey-hk2</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.glassfish.hk2.external</groupId>
         <artifactId>jakarta.inject</artifactId>
         <version>${hk2.version}</version>
-      </dependency>-->
+      </dependency>
       <dependency>
         <groupId>jakarta.inject</groupId>
         <artifactId>jakarta.inject-api</artifactId>
@@ -905,9 +910,9 @@
         <artifactId>maven-javadoc-plugin</artifactId>
       </plugin>
 
-      <plugin>
+      <!--<plugin>
         <artifactId>maven-changelog-plugin</artifactId>
-      </plugin>
+      </plugin>-->
 
       <plugin>
         <artifactId>maven-enforcer-plugin</artifactId>

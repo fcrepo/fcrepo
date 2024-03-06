@@ -21,7 +21,7 @@
 
         jakarta.annotation,
         jakarta.inject,
-        javax.jcr.*,
+        jakarta.jcr.*,
         jakarta.servlet.http,
         jakarta.ws.rs.*,
 
@@ -193,12 +193,6 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-junit-jupiter</artifactId>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.junit.jupiter</groupId>
-          <artifactId>junit-jupiter-api</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>

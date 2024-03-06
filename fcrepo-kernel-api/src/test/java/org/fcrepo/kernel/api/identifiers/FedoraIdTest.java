@@ -11,10 +11,11 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.time.Instant;
 import java.util.Arrays;
@@ -25,7 +26,7 @@ import org.fcrepo.kernel.api.FedoraTypes;
 import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author pwinckles
@@ -52,10 +53,10 @@ public class FedoraIdTest {
         assertResource(fedoraID, "NORMAL", testID, testID);
     }
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testEmptyPath() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object//second-object";
-        FedoraId.create(testID);
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(testID));
     }
 
     @Test
@@ -65,10 +66,10 @@ public class FedoraIdTest {
         assertResource(fedoraID, "ACL", testID, FEDORA_ID_PREFIX + "/first-object");
     }
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testNormalAclException() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_ACL + "/garbage";
-        FedoraId.create(testID);
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(testID));
     }
 
     @Test
@@ -78,10 +79,10 @@ public class FedoraIdTest {
         assertResource(fedoraID, "METADATA", testID, FEDORA_ID_PREFIX + "/first-object");
     }
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testNormalDescriptionException() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/test-garbage";
-        FedoraId.create(testID);
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(testID));
     }
 
     @Test
@@ -102,31 +103,31 @@ public class FedoraIdTest {
         assertEquals(mementoInstant, fedoraID.getMementoInstant());
     }
 
-    @Test(expected = InvalidMementoPathException.class)
+    @Test
     public void testNormalMementoException() throws Exception {
         final String mementoString = "00001221010304";
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString;
-        FedoraId.create(testID);
+        assertThrows(InvalidMementoPathException.class, () ->FedoraId.create(testID));
     }
 
-    @Test(expected = InvalidMementoPathException.class)
+    @Test
     public void testNormalMementoException2() throws Exception {
         final String mementoString = "other-text";
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString;
-        FedoraId.create(testID);
+        assertThrows(InvalidMementoPathException.class, () ->FedoraId.create(testID));
     }
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testMetadataAcl() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL;
-        FedoraId.create(testID);
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(testID));
     }
 
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testMetadataAclException() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL + "/garbage";
-        FedoraId.create(testID);
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(testID));
     }
 
     @Test
@@ -168,10 +169,10 @@ public class FedoraIdTest {
     }
 
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testAclWithHashException() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_ACL + "/garbage#hashURI";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(testID));
     }
 
     @Test
@@ -182,19 +183,16 @@ public class FedoraIdTest {
         assertEquals("hashURI", fedoraID.getHashUri());
     }
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testMetadataAclWithHash() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL + "#hashURI";
-        final FedoraId fedoraID = FedoraId.create(testID);
-        assertResource(fedoraID, Arrays.asList("HASH", "METADATA", "ACL"), testID, FEDORA_ID_PREFIX +
-                "/first-object");
-        assertEquals("hashURI", fedoraID.getHashUri());
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(testID));
     }
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testMetadataAclWithHashException() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_ACL + "/garbage#hashURI";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(testID));
     }
 
     @Test
@@ -218,18 +216,18 @@ public class FedoraIdTest {
         assertEquals(mementoInstant, fedoraID.getMementoInstant());
     }
 
-    @Test(expected = InvalidMementoPathException.class)
+    @Test
     public void testMementoWithHashException() throws Exception {
         final String mementoString = "00001221010304";
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString + "#hashURI";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        assertThrows(InvalidMementoPathException.class, () -> FedoraId.create(testID));
     }
 
-    @Test(expected = InvalidMementoPathException.class)
+    @Test
     public void testMementoWithHashException2() throws Exception {
         final String mementoString = "test-garbage";
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_VERSIONS + "/" + mementoString + "#hashURI";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        assertThrows(InvalidMementoPathException.class, () -> FedoraId.create(testID));
     }
 
     @Test
@@ -255,20 +253,20 @@ public class FedoraIdTest {
         assertEquals(mementoInstant, fedoraID.getMementoInstant());
     }
 
-    @Test(expected = InvalidMementoPathException.class)
+    @Test
     public void testMetadataMementoWithHashException() throws Exception {
         final String mementoString = "00001221010304";
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
                 mementoString + "#hashURI";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        assertThrows(InvalidMementoPathException.class, () -> FedoraId.create(testID));
     }
 
-    @Test(expected = InvalidMementoPathException.class)
+    @Test
     public void testMetadataMementoWithHashException1() throws Exception {
         final String mementoString = "test-garbage";
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_METADATA + "/" + FCR_VERSIONS + "/" +
                 mementoString + "#hashURI";
-        final FedoraId fedoraID = FedoraId.create(testID);
+        assertThrows(InvalidMementoPathException.class, () -> FedoraId.create(testID));
     }
 
     @Test
@@ -320,21 +318,22 @@ public class FedoraIdTest {
                 fedoraId1.getFullId());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testResolveBlank() {
         final FedoraId fedoraId = FedoraId.create("core-object");
-        fedoraId.resolve(null);
+        assertThrows(IllegalArgumentException.class, () -> fedoraId.resolve(null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testResolveEmptyString() {
         final FedoraId fedoraId = FedoraId.create("core-object");
-        fedoraId.resolve("");
+        assertThrows(IllegalArgumentException.class, () -> fedoraId.resolve(""));
     }
 
-    @Test(expected = InvalidResourceIdentifierException.class)
+    @Test
     public void testDoubleAcl() {
-        FedoraId.create("core-object/" + FCR_ACL + "/" + FCR_ACL);
+        assertThrows(InvalidResourceIdentifierException.class,
+                () -> FedoraId.create("core-object/" + FCR_ACL + "/" + FCR_ACL));
     }
 
     @Test

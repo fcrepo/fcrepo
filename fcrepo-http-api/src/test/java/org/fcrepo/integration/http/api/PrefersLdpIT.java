@@ -463,7 +463,7 @@ public class PrefersLdpIT extends AbstractResourceIT {
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", preferLink(null, PREFER_CONTAINMENT.toString()));
         final String omitEtag = getEtag(getObjMethod);
-        assertNotEquals("Should not match initial because of membership", initialEtag, omitEtag);
+        assertNotEquals(initialEtag, omitEtag, "Should not match initial because of membership");
         assertNotEquals(withMemberEtag, omitEtag);
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
@@ -499,7 +499,7 @@ public class PrefersLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", preferLink(null, PREFER_SERVER_MANAGED.toString()));
-        assertNotEquals("Etag should not match with SMTs excluded", withMemberEtag, getEtag(getObjMethod));
+        assertNotEquals(withMemberEtag, getEtag(getObjMethod), "Etag should not match with SMTs excluded");
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
@@ -541,7 +541,7 @@ public class PrefersLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", preferLink(PREFER_CONTAINMENT.toString(), PREFER_SERVER_MANAGED.toString()));
-        assertNotEquals("Etag should not match with SMTs excluded", withMemberEtag, getEtag(getObjMethod));
+        assertNotEquals(withMemberEtag, getEtag(getObjMethod), "Etag should not match with SMTs excluded");
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);

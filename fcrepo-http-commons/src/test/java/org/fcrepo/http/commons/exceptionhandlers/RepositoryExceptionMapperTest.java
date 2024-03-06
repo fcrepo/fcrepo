@@ -7,14 +7,14 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.fcrepo.kernel.api.exception.RepositoryException;
 
 import jakarta.ws.rs.core.Response;
-
-import org.fcrepo.kernel.api.exception.RepositoryException;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author escowles
@@ -24,7 +24,7 @@ public class RepositoryExceptionMapperTest {
 
     private RepositoryExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new RepositoryExceptionMapper();
     }
@@ -32,16 +32,18 @@ public class RepositoryExceptionMapperTest {
     @Test
     public void testInvalidNamespace() {
         final RepositoryException input = new RepositoryException("Error converting \"abc:123\" from String to a Name");
-        final Response actual = testObj.toResponse(input);
-        assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
-        assertEquals(actual.getEntity(), input.getMessage());
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
+            assertEquals(actual.getEntity(), input.getMessage());
+        }
     }
 
     @Test
     public void testToResponse() {
         final RepositoryException input = new RepositoryException("An error occurred");
-        final Response actual = testObj.toResponse(input);
-        assertEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());
-        assertNotNull(actual.getEntity());
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());
+            assertNotNull(actual.getEntity());
+        }
     }
 }

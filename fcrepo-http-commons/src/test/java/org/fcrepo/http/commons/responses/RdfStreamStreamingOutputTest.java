@@ -5,9 +5,9 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static java.util.stream.Stream.of;
 import static com.google.common.util.concurrent.Futures.addCallback;
 import static jakarta.ws.rs.core.MediaType.valueOf;
+import static java.util.stream.Stream.of;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -17,10 +17,32 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.apache.jena.graph.Node;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.RDFNode;
+import org.apache.jena.riot.RiotException;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.stubbing.Answer;
+import org.slf4j.Logger;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,35 +52,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.MediaType;
-
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.MoreExecutors;
-
-import org.apache.jena.rdf.model.RDFNode;
-import org.apache.jena.riot.RiotException;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.fcrepo.kernel.api.RdfStream;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.stubbing.Answer;
-import org.slf4j.Logger;
-
-import org.apache.jena.graph.Node;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-
 /**
  * <p>RdfStreamStreamingOutputTest class.</p>
  *
  * @author ajs6f
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 public class RdfStreamStreamingOutputTest {
 
     private RdfStreamStreamingOutput testRdfStreamStreamingOutput;
@@ -81,7 +81,7 @@ public class RdfStreamStreamingOutputTest {
     private static final Logger LOGGER =
             getLogger(RdfStreamStreamingOutputTest.class);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testRdfStreamStreamingOutput =
             new RdfStreamStreamingOutput(testRdfStream, testNamespaces, testMediaType);
@@ -98,7 +98,7 @@ public class RdfStreamStreamingOutputTest {
             new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
             try ( final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
                 final Model result = createDefaultModel().read(resultStream, null);
-                assertTrue("Didn't find our test triple!", result.contains(result.asStatement(expected)));
+                assertTrue(result.contains(result.asStatement(expected)), "Didn't find our test triple!");
             }
         }
     }
@@ -163,10 +163,10 @@ public class RdfStreamStreamingOutputTest {
                 createLiteral("french string", "fr")));
     }
 
-    @Test(expected = WebApplicationException.class)
+    @Test
     public void testWriteWithException() throws IOException {
 
-        final FutureCallback<Void> callback = new FutureCallback<Void>() {
+        final FutureCallback<Void> callback = new FutureCallback<>() {
 
             @Override
             public void onSuccess(final Void v) {
@@ -175,15 +175,13 @@ public class RdfStreamStreamingOutputTest {
 
             @Override
             public void onFailure(final Throwable e) {
-                LOGGER.debug("Got exception:", e.getMessage());
-                assertTrue("Got wrong kind of exception!", e instanceof RiotException);
+                LOGGER.debug("Got exception: " + e.getMessage());
+                assertInstanceOf(RiotException.class, e, "Got wrong kind of exception!");
             }
         };
         addCallback(testRdfStreamStreamingOutput, callback, MoreExecutors.directExecutor());
-        try (final OutputStream mockOutputStream = mock(OutputStream.class, (Answer<Object>) invocation -> {
-            throw new RiotException("Expected.");
-        })) {
-            testRdfStreamStreamingOutput.write(mockOutputStream);
-        }
+        final OutputStream mockOutputStream = mock(OutputStream.class, (Answer<Object>) invocation -> {
+            throw new RiotException("Expected.");});
+        assertThrows(WebApplicationException.class, () -> testRdfStreamStreamingOutput.write(mockOutputStream));
     }
 }

@@ -35,7 +35,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
@@ -186,8 +185,11 @@ public class TransactionsIT extends AbstractResourceIT {
     private void assertHeaderIsRfc1123Date(final CloseableHttpResponse response, final String headerName) {
         final Header header = response.getFirstHeader(headerName);
         assertNotNull(header, "Header " + headerName + " was not set");
-        assertThrows(DateTimeParseException.class, () -> EXPIRES_RFC_1123_FORMATTER.parse(header.getValue()),
-                "Expected header " + headerName + " to be an RFC1123 date, but was " + header.getValue());
+        try {
+            EXPIRES_RFC_1123_FORMATTER.parse(header.getValue());
+        } catch (final DateTimeParseException e) {
+            fail("Expected header " + headerName + " to be an RFC1123 date, but was " + header.getValue());
+        }
     }
 
     @Test

@@ -1189,7 +1189,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     private void assertBodyMatches(final CloseableHttpResponse response, final String expected) throws IOException {
         final String body = IOUtils.toString(response.getEntity().getContent(), UTF_8);
-        assertEquals("Response body did not match the expected value", expected, body);
+        assertEquals(expected, body, "Response body did not match the expected value");
     }
 
     private void assertContentLength(final CloseableHttpResponse response, final long expectedLength) {

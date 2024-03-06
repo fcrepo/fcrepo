@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.ws.rs.Produces;
@@ -112,7 +112,7 @@ public class StreamingBaseHtmlProvider implements MessageBodyWriter<RdfNamespace
 
     private boolean autoVersioningEnabled;
 
-    private Map<URI, HttpIdentifierConverter> identifierConverters = new HashMap<>();
+    private final Map<URI, HttpIdentifierConverter> identifierConverters = new HashMap<>();
 
     private Transaction readOnlyTx;
 

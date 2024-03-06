@@ -5,14 +5,14 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.glassfish.jersey.server.ParamException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import jakarta.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * {@link org.fcrepo.http.commons.exceptionhandlers.ParamExceptionMapper}
@@ -24,7 +24,7 @@ public class ParamExceptionMapperTest {
 
     private ParamExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new ParamExceptionMapper();
     }
@@ -34,8 +34,9 @@ public class ParamExceptionMapperTest {
         final ParamException input = new ParamException.HeaderParamException(new RuntimeException("canned-exception"),
                                                                              "test-header",
                                                                              null);
-        final Response actual = testObj.toResponse(input);
-        assertEquals(input.getResponse().getStatus(), actual.getStatus());
-        assertNotNull(actual.getEntity());
+        try (final Response actual = testObj.toResponse(input)) {
+            assertEquals(input.getResponse().getStatus(), actual.getStatus());
+            assertNotNull(actual.getEntity());
+        }
     }
 }

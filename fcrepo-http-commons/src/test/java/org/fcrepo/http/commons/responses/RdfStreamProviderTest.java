@@ -9,43 +9,32 @@ import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.junit.jupiter.api.Test;
+import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import jakarta.ws.rs.WebApplicationException;
-import jakarta.ws.rs.core.MediaType;
-
-import org.fcrepo.kernel.api.RdfStream;
-import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.junit.Before;
-import org.junit.Test;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
-
 /**
  * <p>RdfStreamProviderTest class.</p>
  *
  * @author ajs6f
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class RdfStreamProviderTest {
 
     private final RdfStreamProvider testProvider = new RdfStreamProvider();
-
-
-    @Before
-    public void setUp() throws Exception {
-    }
 
     @Test
     public void testGetSize() {
@@ -54,18 +43,18 @@ public class RdfStreamProviderTest {
 
     @Test
     public void testIsWriteable() {
-        assertTrue("Should be able to serialize this!", testProvider
+        assertTrue(testProvider
                 .isWriteable(RdfNamespacedStream.class, null, null, MediaType
-                        .valueOf("application/rdf+xml")));
-        assertFalse("Should not be able to serialize this!", testProvider
+                        .valueOf("application/rdf+xml")), "Should be able to serialize this!");
+        assertFalse(testProvider
                 .isWriteable(RdfStream.class, null, null, MediaType
-                        .valueOf("application/rdf+xml")));
-        assertFalse("Should not be able to serialize this!", testProvider
+                        .valueOf("application/rdf+xml")), "Should not be able to serialize this!");
+        assertFalse(testProvider
                 .isWriteable(RdfStreamProviderTest.class, null, null, MediaType
-                        .valueOf("application/rdf+xml")));
-        assertFalse("Should not be able to serialize this!", testProvider
+                        .valueOf("application/rdf+xml")), "Should not be able to serialize this!");
+        assertFalse(testProvider
                 .isWriteable(RdfStream.class, null, null, MediaType
-                        .valueOf("text/html")));
+                        .valueOf("text/html")), "Should not be able to serialize this!");
     }
 
     @Test
@@ -81,7 +70,7 @@ public class RdfStreamProviderTest {
                 final byte[] result = entityStream.toByteArray();
 
                 final Model postSerialization = createDefaultModel().read(new ByteArrayInputStream(result), null);
-                assertTrue("Didn't find our triple!", postSerialization.contains(postSerialization.asStatement(t)));
+                assertTrue(postSerialization.contains(postSerialization.asStatement(t)), "Didn't find our triple!");
             }
         }
     }

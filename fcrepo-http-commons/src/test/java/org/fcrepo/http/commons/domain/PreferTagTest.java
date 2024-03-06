@@ -6,12 +6,12 @@
 package org.fcrepo.http.commons.domain;
 
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author cabeer
@@ -37,12 +37,12 @@ public class PreferTagTest {
         final PreferTag preferTag1 = new PreferTag("handling=lenient; received=\"minimal\"");
         final PreferTag preferTag2 = new PreferTag("handling=lenient; received=\"minimal\"");
         final PreferTag preferTag3 = PreferTag.emptyTag();
-        assertTrue(preferTag1.equals(preferTag2));
-        assertTrue(preferTag1.equals(preferTag1));  // ensure consistency
-        assertTrue(preferTag2.equals(preferTag1));
-        assertFalse(preferTag1.equals(preferTag3));
-        assertFalse(preferTag1.equals(null));
-        assertFalse(preferTag1.equals("some string"));
+        assertEquals(preferTag1, preferTag2);
+        assertEquals(preferTag1, preferTag1);  // ensure consistency
+        assertEquals(preferTag2, preferTag1);
+        assertNotEquals(preferTag1, preferTag3);
+        assertNotEquals(null, preferTag1);
+        assertNotEquals("some string", preferTag1);
     }
 
     @Test
