@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE configuration>
 <configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
+    <import class="ch.qos.logback.core.status.OnConsoleStatusListener"/>
+    <import class="ch.qos.logback.core.ConsoleAppender"/>
+    <import class="ch.qos.logback.classic.encoder.PatternLayoutEncoder"/>
+
+    <statusListener class="OnConsoleStatusListener"/>
+
+    <appender name="STDOUT" class="ConsoleAppender">
+        <encoder class="PatternLayoutEncoder">
             <pattern>%p %d{HH:mm:ss.SSS} \(%c{0}\) %m%n</pattern>
         </encoder>
     </appender>
@@ -13,7 +19,7 @@
     <logger name="org.fcrepo" additivity="false" level="${fcrepo.log:-INFO}">
         <appender-ref ref="STDOUT"/>
     </logger>
-    <root additivity="false" level="WARN">
+    <root>
         <appender-ref ref="STDOUT"/>
     </root>
 </configuration>

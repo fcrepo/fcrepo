@@ -5,9 +5,9 @@
  */
 package org.fcrepo.auth.webac;
 
-import static java.util.stream.Stream.of;
 import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static jakarta.servlet.http.HttpServletResponse.SC_OK;
+import static java.util.stream.Stream.of;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
@@ -20,48 +20,47 @@ import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import org.fcrepo.config.FedoraPropsConfig;
-import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceFactory;
-
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.support.SubjectThreadState;
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.models.Container;
-import org.fcrepo.kernel.api.models.Binary;
-import org.fcrepo.kernel.api.models.FedoraResource;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peichman
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 public class WebACFilterTest {
 
     private static final String baseURL = "http://localhost";
@@ -141,7 +140,7 @@ public class WebACFilterTest {
 
     private FedoraPropsConfig propsConfig;
 
-    @Before
+    @BeforeEach
     public void setupRequest() throws Exception {
         propsConfig = new FedoraPropsConfig();
         SecurityUtils.setSecurityManager(mockSecurityManager);
@@ -180,11 +179,11 @@ public class WebACFilterTest {
         when(mockContainer.getContainer()).thenReturn(mockRoot);
         when(mockChildContainer.getContainer()).thenReturn(mockContainer);
 
-        when(mockContainer.getTypes()).thenReturn(Arrays.asList(URI.create(BASIC_CONTAINER.toString())));
+        when(mockContainer.getTypes()).thenReturn(List.of(URI.create(BASIC_CONTAINER.toString())));
         when(mockContainer.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        when(mockChildContainer.getTypes()).thenReturn(Arrays.asList(URI.create(BASIC_CONTAINER.toString())));
+        when(mockChildContainer.getTypes()).thenReturn(List.of(URI.create(BASIC_CONTAINER.toString())));
         when(mockChildContainer.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
-        when(mockBinary.getTypes()).thenReturn(Arrays.asList(URI.create(NON_RDF_SOURCE.toString())));
+        when(mockBinary.getTypes()).thenReturn(List.of(URI.create(NON_RDF_SOURCE.toString())));
         when(mockBinary.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
 
         final List<URI> rootTypes = new ArrayList<>();
@@ -544,7 +543,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPatchSparqlInvalidContent() throws Exception {
         setupAuthUserReadAppend();
@@ -557,7 +555,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPatchSparqlInsert() throws Exception {
         setupAuthUserReadAppend();
@@ -572,7 +569,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPatchSparqlDelete() throws Exception {
         setupAuthUserReadAppend();
@@ -587,7 +583,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserAppendPostContainer() throws Exception {
         setupAuthUserAppendOnly();
@@ -609,7 +604,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserAppendDelete() throws Exception {
         setupAuthUserAppendOnly();
@@ -620,7 +614,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPostContainer() throws Exception {
         setupAuthUserReadAppend();
@@ -642,7 +635,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendDelete() throws Exception {
         setupAuthUserReadAppend();
@@ -720,7 +712,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadWritePatch() throws Exception {
         setupAuthUserReadWrite();
@@ -730,7 +721,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadWriteDelete() throws Exception {
         setupAuthUserReadWrite();
@@ -740,7 +730,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendWriteDelete() throws Exception {
         setupAuthUserReadAppendWrite();
@@ -874,7 +863,7 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @After
+    @AfterEach
     public void clearSubject() {
         // unbind the subject to the thread
         threadState.restore();

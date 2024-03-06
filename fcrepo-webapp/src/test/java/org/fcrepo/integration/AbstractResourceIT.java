@@ -9,8 +9,7 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.util.Objects;
-
+import com.google.common.base.Strings;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -18,10 +17,10 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 
-import com.google.common.base.Strings;
+import java.util.Objects;
 
 /**
  * Base class for ITs
@@ -35,7 +34,7 @@ public abstract class AbstractResourceIT {
     public static final Credentials FEDORA_ADMIN_CREDENTIALS = new UsernamePasswordCredentials("fedoraAdmin",
             "fedoraAdmin");
 
-    @Before
+    @BeforeEach
     public void setLogger() {
         logger = getLogger(this.getClass());
     }

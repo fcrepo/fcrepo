@@ -5,12 +5,14 @@
  */
 package org.fcrepo.webapp;
 
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.fcrepo.kernel.api.exception.MultipleConstraintViolationException;
-import org.junit.Assert;
+
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 import org.fcrepo.kernel.api.exception.RelaxableServerManagedPropertyException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.reflections.Reflections;
 
 import java.io.File;
@@ -36,7 +38,7 @@ public class ConstraintExceptionsTest {
 
         for (final Class<? extends ConstraintViolationException> c : subTypes) {
             final File file = new File("src/main/webapp/static/constraints/" + c.getSimpleName() + ".rdf");
-            Assert.assertTrue("Expected to find: " + file.getPath(), file.exists());
+            assertTrue(file.exists(), "Expected to find: " + file.getPath());
         }
     }
 

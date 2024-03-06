@@ -5,14 +5,14 @@
  */
 package org.fcrepo.integration.auth.webac;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.stream;
 import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static jakarta.ws.rs.core.Response.Status.FORBIDDEN;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.stream;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
@@ -28,24 +28,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Optional;
-import java.util.regex.Pattern;
-
-import jakarta.ws.rs.core.Link;
-import jakarta.ws.rs.core.Response;
-
-import org.fcrepo.auth.webac.WebACRolesProvider;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.fcrepo.integration.http.api.TestIsolationExecutionListener;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
@@ -71,13 +55,26 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.glassfish.grizzly.utils.Charsets;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
+import org.fcrepo.auth.webac.WebACRolesProvider;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.integration.http.api.AbstractResourceIT;
+import org.fcrepo.integration.http.api.TestIsolationExecutionListener;
+
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * @author Peter Eichman
@@ -91,16 +88,13 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
     private static final Logger logger = LoggerFactory.getLogger(WebACRecipesIT.class);
 
-    @Rule
-    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
-
     private final ContentType turtleContentType = ContentType.create("text/turtle", "UTF-8");
 
     private final ContentType sparqlContentType = ContentType.create("application/sparql-update", "UTF-8");
 
     private WebACRolesProvider rolesProvider;
 
-    @Before
+    @BeforeEach
     public void setup() {
         this.rolesProvider = getBean(WebACRolesProvider.class);
         authPropsConfig.setRootAuthAclPath(null);
@@ -140,7 +134,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         request.setHeader("Content-Type", "text/turtle");
 
         try (final CloseableHttpResponse response = execute(request)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             return response;
         }
 
@@ -207,7 +201,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final var method = postObjMethod(txObj);
         setAuth(method, "testUser");
         try (final CloseableHttpResponse response = execute(method)) {
-            assertEquals("User 'testUser' can create " + txObj, SC_CREATED, getStatus(response));
+            assertEquals(SC_CREATED, getStatus(response), "User 'testUser' can create " + txObj);
             idFromHeader = getHeader(response, "Location").stream().findFirst();
         }
 
@@ -220,20 +214,20 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final var getTx = getObjMethod(updatedObj);
         setAuth(getTx, "testUser");
         try (final CloseableHttpResponse response = execute(getTx)) {
-            assertEquals("User 'testUser' can get " + updatedObj, SC_NO_CONTENT, getStatus(response));
+            assertEquals(SC_NO_CONTENT, getStatus(response), "User 'testUser' can get " + updatedObj);
         }
 
         // test post against the transaction uuid as well
         final var postMethod = postObjMethod(updatedObj);
         setAuth(postMethod, "testUser");
         try (final CloseableHttpResponse response = execute(postMethod)) {
-            assertEquals("User 'testUser' can update " + updatedObj, SC_NO_CONTENT, getStatus(response));
+            assertEquals(SC_NO_CONTENT, getStatus(response), "User 'testUser' can update " + updatedObj);
         }
 
         final var putMethod = putObjMethod(updatedObj);
         setAuth(putMethod, "testUser");
         try (final CloseableHttpResponse response = execute(putMethod)) {
-            assertEquals("User 'testUser' can commit " + updatedObj, SC_NO_CONTENT, getStatus(response));
+            assertEquals(SC_NO_CONTENT, getStatus(response), "User 'testUser' can commit " + updatedObj);
         }
     }
 
@@ -246,7 +240,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final var method = postObjMethod(txObj);
         setAuth(method, "testUser");
         try (final CloseableHttpResponse response = execute(method)) {
-            assertEquals("User 'testUser' can create " + txObj, SC_CREATED, getStatus(response));
+            assertEquals(SC_CREATED, getStatus(response), "User 'testUser' can create " + txObj);
             idFromHeader = getHeader(response, "Location").stream().findFirst();
         }
 
@@ -258,7 +252,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final var closeTx = deleteObjMethod(delObj);
         setAuth(closeTx, "testUser");
         try (final CloseableHttpResponse response = execute(closeTx)) {
-            assertEquals("User 'testUser' can delete " + delObj, SC_NO_CONTENT, getStatus(response));
+            assertEquals(SC_NO_CONTENT, getStatus(response), "User 'testUser' can delete " + delObj);
         }
     }
 
@@ -269,7 +263,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final var txObj = "/rest/fcr:tx";
         final var method = postObjMethod(txObj);
         try (final CloseableHttpResponse response = execute(method)) {
-            assertEquals("Unauthenticated user cannot create " + txObj, SC_FORBIDDEN, getStatus(response));
+            assertEquals(SC_FORBIDDEN, getStatus(response), "Unauthenticated user cannot create " + txObj);
         }
     }
 
@@ -282,23 +276,23 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final String aclLink = Link.fromUri(acl1).rel("acl").build().toString();
 
         final HttpGet request = getObjMethod(testObj.replace(serverAddress, ""));
-        assertEquals("Anonymous can read " + testObj, HttpStatus.SC_FORBIDDEN, getStatus(request));
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(request), "Anonymous can read " + testObj);
 
         setAuth(request, "user01");
         try (final CloseableHttpResponse response = execute(request)) {
-            assertEquals("User 'user01' can't read" + testObj, HttpStatus.SC_OK, getStatus(response));
+            assertEquals(HttpStatus.SC_OK, getStatus(response), "User 'user01' can't read" + testObj);
             // This gets the Link headers and filters for the correct one (aclLink::equals) defined above.
             final Optional<String> header = stream(response.getHeaders("Link")).map(Header::getValue)
                     .filter(aclLink::equals).findFirst();
             // So you either have the correct Link header or you get nothing.
-            assertTrue("Missing Link header", header.isPresent());
+            assertTrue(header.isPresent(), "Missing Link header");
         }
 
         final String childObj = ingestObj("/rest/webacl_box1/child");
         final HttpGet getReq = getObjMethod(childObj.replace(serverAddress, ""));
         setAuth(getReq, "user01");
         try (final CloseableHttpResponse response = execute(getReq)) {
-            assertEquals("User 'user01' can't read child of " + testObj, HttpStatus.SC_OK, getStatus(response));
+            assertEquals(HttpStatus.SC_OK, getStatus(response), "User 'user01' can't read child of " + testObj);
         }
     }
 
@@ -492,7 +486,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
         request.setEntity(fileEntity);
         request.setHeader("Content-Type", "text/turtle;charset=UTF-8");
 
-        assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(request));
+        assertEquals(CREATED.getStatusCode(), getStatus(request), "Didn't get a CREATED response!");
 
         ingestAcl("fedoraAdmin", "/acls/09/acl.ttl", testObj + "/fcr:acl");
 
@@ -733,19 +727,19 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Test the parent ACL with no acl:default is applied for the parent resource authorization.
         final HttpGet requestGet1 = getObjMethod(parentPath);
         setAuth(requestGet1, "user21");
-        assertEquals("Agent user21 can't read resource " + parentPath + " with its own ACL!",
-                HttpStatus.SC_OK, getStatus(requestGet1));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet1),
+                "Agent user21 can't read resource " + parentPath + " with its own ACL!");
 
         final HttpGet requestGet2 = getObjMethod(id);
-        assertEquals("Agent user21 inherits read permission from parent ACL to read resource " + testObj + "!",
-                HttpStatus.SC_OK, getStatus(requestGet2));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet2),
+                "Agent user21 inherits read permission from parent ACL to read resource " + testObj + "!");
 
         // Test the default root ACL is inherited for authorization while the parent ACL with no acl:default is ignored
         authPropsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-root-authorization2.ttl"));
         final HttpGet requestGet3 = getObjMethod(id);
         setAuth(requestGet3, "user06a");
-        assertEquals("Agent user06a can't inherit read persmssion from root ACL to read resource " + testObj + "!",
-                HttpStatus.SC_OK, getStatus(requestGet3));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet3),
+                "Agent user06a can't inherit read persmssion from root ACL to read resource " + testObj + "!");
     }
 
     @Test
@@ -762,24 +756,24 @@ public class WebACRecipesIT extends AbstractResourceIT {
         // Test the parent ACL is applied for the parent resource authorization.
         final HttpGet requestGet1 = getObjMethod(parentPath);
         setAuth(requestGet1, "user22a");
-        assertEquals("Agent user22a can't read resource " + parentPath + " with its own ACL!",
-                HttpStatus.SC_OK, getStatus(requestGet1));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet1),
+                "Agent user22a can't read resource " + parentPath + " with its own ACL!");
 
         final HttpGet requestGet2 = getObjMethod(parentPath);
         setAuth(requestGet2, "user22b");
-        assertEquals("Agent user22b can't read resource " + parentPath + " with its own ACL!",
-                HttpStatus.SC_OK, getStatus(requestGet1));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet1),
+                "Agent user22b can't read resource " + parentPath + " with its own ACL!");
 
         // Test the parent ACL is applied for the parent resource authorization.
         final HttpGet requestGet3 = getObjMethod(id);
         setAuth(requestGet3, "user22a");
-        assertEquals("Agent user22a inherits read permission from parent ACL to read resource " + testObj + "!",
-                HttpStatus.SC_FORBIDDEN, getStatus(requestGet3));
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(requestGet3),
+                "Agent user22a inherits read permission from parent ACL to read resource " + testObj + "!");
 
         final HttpGet requestGet4 = getObjMethod(id);
         setAuth(requestGet4, "user22b");
-        assertEquals("Agent user22b can't inherits read permission from parent ACL to read resource " + testObj + "!",
-                HttpStatus.SC_OK, getStatus(requestGet4));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet4),
+                "Agent user22b can't inherits read permission from parent ACL to read resource " + testObj + "!");
     }
 
     @Test
@@ -820,15 +814,15 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         final HttpGet requestGet1 = getObjMethod(idVersion);
         setAuth(requestGet1, "user10");
-        assertEquals("user10 can't read object", HttpStatus.SC_OK, getStatus(requestGet1));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet1), "user10 can't read object");
 
         final HttpPost requestPost1 = postObjMethod(idVersion + "/fcr:versions");
         setAuth(requestPost1, "fedoraAdmin");
-        assertEquals("Unable to create a new version", HttpStatus.SC_CREATED, getStatus(requestPost1));
+        assertEquals(HttpStatus.SC_CREATED, getStatus(requestPost1), "Unable to create a new version");
 
         final HttpGet requestGet2 = getObjMethod(idVersion);
         setAuth(requestGet2, "user10");
-        assertEquals("user10 can't read versioned object", HttpStatus.SC_OK, getStatus(requestGet2));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet2), "user10 can't read versioned object");
     }
 
     @Test
@@ -841,29 +835,29 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         final HttpGet adminGet = getObjMethod(targetPath);
         setAuth(adminGet, "fedoraAdmin");
-        assertEquals("admin can read object", HttpStatus.SC_OK, getStatus(adminGet));
+        assertEquals(HttpStatus.SC_OK, getStatus(adminGet), "admin can't read object");
 
         final HttpGet adminDelegatedGet = getObjMethod(targetPath);
         setAuth(adminDelegatedGet, "fedoraAdmin");
         adminDelegatedGet.addHeader("On-Behalf-Of", "user11");
-        assertEquals("delegated user can read object", HttpStatus.SC_OK, getStatus(adminDelegatedGet));
+        assertEquals(HttpStatus.SC_OK, getStatus(adminDelegatedGet), "delegated user can't read object");
 
         final HttpGet adminUnauthorizedDelegatedGet = getObjMethod(targetPath);
         setAuth(adminUnauthorizedDelegatedGet, "fedoraAdmin");
         adminUnauthorizedDelegatedGet.addHeader("On-Behalf-Of", "fakeuser");
-        assertEquals("delegated fakeuser cannot read object", HttpStatus.SC_FORBIDDEN,
-                getStatus(adminUnauthorizedDelegatedGet));
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(adminUnauthorizedDelegatedGet),
+                "delegated fakeuser can read object");
 
         final HttpGet adminDelegatedGet2 = getObjMethod(targetPath);
         setAuth(adminDelegatedGet2, "fedoraAdmin");
         adminDelegatedGet2.addHeader("On-Behalf-Of", "info:user/user2");
-        assertEquals("delegated user can read object", HttpStatus.SC_OK, getStatus(adminDelegatedGet2));
+        assertEquals(HttpStatus.SC_OK, getStatus(adminDelegatedGet2), "delegated user can't read object");
 
         final HttpGet adminUnauthorizedDelegatedGet2 = getObjMethod(targetPath);
         setAuth(adminUnauthorizedDelegatedGet2, "fedoraAdmin");
         adminUnauthorizedDelegatedGet2.addHeader("On-Behalf-Of", "info:user/fakeuser");
-        assertEquals("delegated fakeuser cannot read object", HttpStatus.SC_FORBIDDEN,
-                getStatus(adminUnauthorizedDelegatedGet2));
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(adminUnauthorizedDelegatedGet2),
+                "delegated fakeuser can read object");
 
         // Now test with the system property in effect
         rolesProvider.setUserBaseUri("info:user/");
@@ -872,13 +866,13 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final HttpGet adminDelegatedGet3 = getObjMethod(targetPath);
         setAuth(adminDelegatedGet3, "fedoraAdmin");
         adminDelegatedGet3.addHeader("On-Behalf-Of", "info:user/user2");
-        assertEquals("delegated user can read object", HttpStatus.SC_OK, getStatus(adminDelegatedGet3));
+        assertEquals(HttpStatus.SC_OK, getStatus(adminDelegatedGet3), "delegated user can't read object");
 
         final HttpGet adminUnauthorizedDelegatedGet3 = getObjMethod(targetPath);
         setAuth(adminUnauthorizedDelegatedGet3, "fedoraAdmin");
         adminUnauthorizedDelegatedGet3.addHeader("On-Behalf-Of", "info:user/fakeuser");
-        assertEquals("delegated fakeuser cannot read object", HttpStatus.SC_FORBIDDEN,
-                getStatus(adminUnauthorizedDelegatedGet3));
+        assertEquals(HttpStatus.SC_FORBIDDEN, getStatus(adminUnauthorizedDelegatedGet3),
+                "delegated fakeuser can read object");
     }
 
     @Test
@@ -890,19 +884,19 @@ public class WebACRecipesIT extends AbstractResourceIT {
 
         final HttpGet requestGet1 = getObjMethod(idVersionPath);
         setAuth(requestGet1, "user12");
-        assertEquals("testuser can't read object", HttpStatus.SC_OK, getStatus(requestGet1));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet1), "testuser can't read object");
 
         final HttpPost requestPost1 = postObjMethod(idVersionPath + "/fcr:versions");
         setAuth(requestPost1, "user12");
         final String mementoLocation;
         try (final CloseableHttpResponse response = execute(requestPost1)) {
-            assertEquals("Unable to create a new version", HttpStatus.SC_CREATED, getStatus(response));
+            assertEquals(HttpStatus.SC_CREATED, getStatus(response), "Unable to create a new version");
             mementoLocation = getLocation(response);
         }
 
         final HttpGet requestGet2 = new HttpGet(mementoLocation);
         setAuth(requestGet2, "user12");
-        assertEquals("testuser can't read versioned object", HttpStatus.SC_OK, getStatus(requestGet2));
+        assertEquals(HttpStatus.SC_OK, getStatus(requestGet2), "testuser can't read versioned object");
     }
 
     @Test
@@ -1334,9 +1328,8 @@ public class WebACRecipesIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(getReq)) {
             assertEquals(HttpStatus.SC_OK, getStatus(response));
             descriptionUri = Arrays.stream(response.getHeaders("Link"))
-                    .flatMap(header -> Arrays.stream(header.getValue().split(","))).map(linkStr -> Link.valueOf(
-                            linkStr))
-                    .filter(link -> link.getRels().contains("describedby")).map(link -> link.getUri().toString())
+                    .flatMap(header -> Arrays.stream(header.getValue().split(","))).map(Link::valueOf)
+                    .filter(link -> link.getRels().contains("describedby")).map(Link::getUri).map(URI::toString)
                     .findFirst().orElse(null);
         }
 
@@ -1548,13 +1541,13 @@ public class WebACRecipesIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(verifyGet)) {
             final CloseableDataset dataset = getDataset(response);
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Can't find " + targetUri + " in graph",
-                    graph.contains(
+            assertTrue(graph.contains(
                             Node.ANY,
                             NodeFactory.createURI(indirectUri),
                             MEMBERSHIP_RESOURCE.asNode(),
                             NodeFactory.createURI(targetUri)
-                    )
+                    ),
+                    "Can't find " + targetUri + " in graph"
             );
         }
 
@@ -1842,13 +1835,12 @@ public class WebACRecipesIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(verifyGet)) {
             final CloseableDataset dataset = getDataset(response);
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Can't find " + targetUri + " in graph",
-                    graph.contains(
+            assertTrue(graph.contains(
                         Node.ANY,
                         NodeFactory.createURI(directUri),
                         MEMBERSHIP_RESOURCE.asNode(),
                         NodeFactory.createURI(targetUri)
-                    )
+                    ), "Can't find " + targetUri + " in graph"
             );
         }
 
@@ -2429,13 +2421,12 @@ public class WebACRecipesIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(verifyGet)) {
             final CloseableDataset dataset = getDataset(response);
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Can't find " + predicateValue + " for predicate " + predicateUri + " in graph",
-                    graph.contains(
+            assertTrue(graph.contains(
                             Node.ANY,
                             Node.ANY,
                             NodeFactory.createURI(predicateUri),
                             NodeFactory.createLiteral(predicateValue)
-                    )
+                    ), "Can't find " + predicateValue + " for predicate " + predicateUri + " in graph"
             );
         }
     }

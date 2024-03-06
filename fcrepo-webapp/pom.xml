@@ -86,6 +86,10 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -108,8 +112,8 @@
       <artifactId>jersey-spring6</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.junit.vintage</groupId>
-      <artifactId>junit-vintage-engine</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
     </dependency>
 
     <dependency>
@@ -235,8 +239,8 @@
       gear. Otherwise it will get loaded during test phase, but because this is
       just an API, the tests will not be able to execute. -->
     <dependency>
-  <groupId>jakarta.platform</groupId>
-  <artifactId>jakarta.jakartaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -365,12 +369,12 @@
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
         <configuration>
-          <scanIntervalSeconds>2</scanIntervalSeconds>
+          <scan>2</scan>
           <stopKey>STOP</stopKey>
           <webApp>
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
-          <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
+          <jettyXmls>${project.build.directory}/test-classes/jetty-test.xml</jettyXmls>
           <systemProperties>
             <systemProperty>
               <name>fcrepo.home</name>

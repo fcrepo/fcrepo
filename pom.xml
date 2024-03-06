@@ -39,7 +39,7 @@
     <hikari.version>5.0.0</hikari.version>
     <hk2.version>2.6.1</hk2.version>
     <hk2.api.version>3.0.5</hk2.api.version>
-    <htmlunit.version>2.53.0</htmlunit.version>
+    <htmlunit.version>2.70.0</htmlunit.version>
     <httpclient.version>4.5.13</httpclient.version>
     <httpmime.version>4.5.13</httpmime.version>
     <httpcore.version>4.4.14</httpcore.version>
@@ -63,10 +63,11 @@
     <jboss-logging.version>3.4.2.Final</jboss-logging.version>
     <jena.version>4.2.0</jena.version>
     <jersey.version>3.1.5</jersey.version>
-    <jetty.version>9.4.44.v20210927</jetty.version>
+    <!--<jetty.version>9.4.44.v20210927</jetty.version>-->
+    <jetty.version>11.0.20</jetty.version>
     <jgroups.version>5.1.9.Final</jgroups.version>
     <jsonld.version>0.13.3</jsonld.version>
-    <logback.version>1.2.13</logback.version>
+    <logback.version>1.5.3</logback.version>
     <micrometer.prometheus.version>1.12.3</micrometer.prometheus.version>
     <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
     <netty.version>4.1.68.Final</netty.version>
@@ -626,13 +627,6 @@
         <scope>provided</scope>
       </dependency>
       <!-- test gear -->
-      <!-- JUnit 5 runners for JUnit 4 tests, update tests to JUnit 5 then get rid of this -->
-      <dependency>
-        <groupId>org.junit.vintage</groupId>
-        <artifactId>junit-vintage-engine</artifactId>
-        <version>${junit5.version}</version>
-        <scope>test</scope>
-      </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter</artifactId>
