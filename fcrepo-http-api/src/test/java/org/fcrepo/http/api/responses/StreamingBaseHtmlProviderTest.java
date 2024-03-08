@@ -8,21 +8,31 @@ package org.fcrepo.http.api.responses;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
-import static java.util.Collections.singletonMap;
-import static java.util.stream.Stream.of;
-import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static java.util.Collections.singletonMap;
+import static java.util.stream.Stream.of;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,23 +40,26 @@ import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-
+import com.google.common.collect.ImmutableMap;
+import org.apache.jena.graph.Triple;
+import org.apache.velocity.Template;
+import org.apache.velocity.context.Context;
+import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.config.SystemInfoConfig;
 import org.fcrepo.http.commons.responses.HtmlTemplate;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-
-import org.apache.velocity.Template;
-import org.apache.velocity.context.Context;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -54,15 +67,11 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.mockito.stubbing.Answer;
 
-import com.google.common.collect.ImmutableMap;
-import org.apache.jena.graph.Triple;
-
 /**
  * <p>BaseHtmlProviderTest class.</p>
  *
  * @author awoods
  */
-@Ignore // TODO fix these tests
 @RunWith(MockitoJUnitRunner.class)
 public class StreamingBaseHtmlProviderTest {
 
@@ -74,28 +83,75 @@ public class StreamingBaseHtmlProviderTest {
     @Mock
     private UriInfo mockUriInfo;
 
+    @Mock
+    private SystemInfoConfig mockSystemInfoConfig;
+
+    @Mock
+    private ResourceFactory mockResourceFactory;
+
+    @Mock
+    private FedoraResource mockResource1;
+
+    @Mock
+    private FedoraResource mockResource2;
+
+    @Mock
+    private HttpServletRequest mockRequest;
+
+    @Mock
+    private FedoraPropsConfig mockFedoraPropsConfig;
+
     @Before
     public void setup() throws Exception {
 
-        final Stream<Triple> triples = of(new Triple(createURI("test:subject"), createURI("test:predicate"),
-                createLiteral("test:object")), new Triple(createURI("test:subject"), type.asNode(),
+        final var namespaces = Map.of("test", "info");
+        final var base_uri = "http://localhost:8080/rest/";
+        final var external_id1 = base_uri + "subject";
+        final var external_id2 = base_uri + "subject2";
+        final var internal_id1 = FEDORA_ID_PREFIX + "/subject";
+        final var internal_id2 = FEDORA_ID_PREFIX + "/subject2";
+        final Stream<Triple> triples = of(new Triple(createURI(external_id1), createURI("test:predicate"),
+                createLiteral("test:object")), new Triple(createURI(external_id1), type.asNode(),
                 FEDORA_BINARY.asNode()));
-        final Stream<Triple> triples2 = of(new Triple(createURI("test:subject2"), type.asNode(),
+        final Stream<Triple> triples2 = of(new Triple(createURI(external_id2), type.asNode(),
                 FEDORA_CONTAINER.asNode()));
         @SuppressWarnings("resource")
-        final DefaultRdfStream stream = new DefaultRdfStream(createURI("test:subject"), triples);
+        final DefaultRdfStream stream = new DefaultRdfStream(createURI(external_id1), triples);
         @SuppressWarnings("resource")
-        final DefaultRdfStream stream2 = new DefaultRdfStream(createURI("test:subject2"), triples2);
-        testData = new RdfNamespacedStream(stream, null);
+        final DefaultRdfStream stream2 = new DefaultRdfStream(createURI(external_id2), triples2);
+        testData = new RdfNamespacedStream(stream, namespaces);
 
-        testData2 = new RdfNamespacedStream(stream2, null);
+        testData2 = new RdfNamespacedStream(stream2, namespaces);
 
-        final URI baseUri = URI.create("http://localhost:8080/rest/");
+        final URI baseUri = URI.create(base_uri);
         final UriBuilder baseUriBuilder = UriBuilder.fromUri(baseUri);
         when(mockUriInfo.getBaseUri()).thenReturn(baseUri);
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(baseUriBuilder);
+        when(mockSystemInfoConfig.getGitCommit()).thenReturn("some-commit");
+        when(mockSystemInfoConfig.getImplementationVersion()).thenReturn("some-version");
+        when(mockRequest.getHeader(ATOMIC_ID_HEADER)).thenReturn(null);
+
+        when(mockResource1.isOriginalResource()).thenReturn(true);
+        when(mockResource1.getDescribedResource()).thenReturn(mockResource1);
+        when(mockResource2.isOriginalResource()).thenReturn(true);
+        when(mockResource2.getDescribedResource()).thenReturn(mockResource2);
+
+        when(mockResourceFactory.getResource(org.mockito.ArgumentMatchers.any(Transaction.class),
+                eq(FedoraId.create(internal_id1)))).thenReturn(mockResource1);
+        when(mockResourceFactory.getResource(org.mockito.ArgumentMatchers.any(Transaction.class),
+                eq(FedoraId.create(internal_id2)))).thenReturn(mockResource2);
+
+        when(mockFedoraPropsConfig.getVelocityLog()).thenReturn(Path.of("/logs"));
+        final var ocflProps = new OcflPropsConfig();
+        ocflProps.setAutoVersioningEnabled(true);
+        setField(testProvider, "ocflPropsConfig", ocflProps);
+        setField(testProvider, "fedoraPropsConfig", mockFedoraPropsConfig);
 
         setField(testProvider, "uriInfo", mockUriInfo);
+        setField(testProvider, "systemInfoConfig", mockSystemInfoConfig);
+        setField(testProvider, "request", mockRequest);
+        setField(testProvider, "resourceFactory", mockResourceFactory);
+        testProvider.init();
     }
 
     @Test
@@ -139,8 +195,7 @@ public class StreamingBaseHtmlProviderTest {
                 return "I am pretending to merge a template for you.";
             }
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
-        setField(testProvider, "templatesMap", singletonMap(FEDORA_BINARY.getURI(),
-                mockTemplate));
+        setField(testProvider, "templatesMap", singletonMap(FEDORA_BINARY.getURI(), mockTemplate));
         testProvider.writeTo(testData, RdfNamespacedStream.class, mock(Type.class),
                 new Annotation[]{}, MediaType.valueOf("text/html"),
                 new MultivaluedHashMap<>(), outStream);

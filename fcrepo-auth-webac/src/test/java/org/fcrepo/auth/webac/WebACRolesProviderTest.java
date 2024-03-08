@@ -5,7 +5,6 @@
  */
 package org.fcrepo.auth.webac;
 
-import static java.util.Collections.singletonList;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
@@ -22,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import static java.util.Collections.singletonList;
+
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -30,6 +31,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -40,22 +47,13 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 
 /**
  * @author acoburn
@@ -134,7 +132,6 @@ public class WebACRolesProviderTest {
         assertOnlyDefaultAgentInRoles(roles);
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void acl01ParentTest() throws RepositoryException {
         final String agent = "user01";
@@ -148,7 +145,6 @@ public class WebACRolesProviderTest {
         when(mockResource.getId()).thenReturn(addPrefix(accessTo));
         when(mockResource.getContainer()).thenReturn(mockParentResource);
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
-        when(mockResource.getAcl()).thenReturn(mockAclResource);
 
         when(mockParentResource.getId()).thenReturn(addPrefix(parentPath));
         when(mockParentResource.getAcl()).thenReturn(mockAclResource);
@@ -228,7 +224,6 @@ public class WebACRolesProviderTest {
         assertTrue("The agent should be able to write", roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE));
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void acl01Test2() throws RepositoryException, PathNotFoundException {
         final String accessTo = "/webacl_box2";
@@ -489,7 +484,6 @@ public class WebACRolesProviderTest {
      * the rdf:type of foaf:Group. This test mocks a resource that is not of the type
      * foaf:Group and therefore should retrieve zero agents.
      */
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void acl09Test2() throws RepositoryException, PathNotFoundException {
         final String accessTo = "/anotherCollection";
