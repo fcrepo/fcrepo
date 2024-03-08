@@ -5,16 +5,14 @@
  */
 package org.fcrepo.integration.rdf;
 
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.io.IOException;
+
+import org.junit.Test;
 
 /**
  * @author cabeer
  */
-@Ignore // TODO FIX THESE TESTS
-public class B3KatIT extends AbstractIntegrationRdfIT {
+ public class B3KatIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExampleRecord() throws IOException {
         createLDPRSAndCheckResponse(getRandomUniqueId(), getContentFromClasspath("/examples/b3kat.ttl"));

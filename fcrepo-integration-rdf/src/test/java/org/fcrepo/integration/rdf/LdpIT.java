@@ -5,24 +5,23 @@
  */
 package org.fcrepo.integration.rdf;
 
-import org.apache.jena.query.Dataset;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.junit.Ignore;
-import org.junit.Test;
+import static org.junit.Assert.assertFalse;
+
+import static javax.ws.rs.core.Response.Status.CREATED;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static org.junit.Assert.assertFalse;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.jena.query.Dataset;
+import org.junit.Test;
 
 /**
  * @author cabeer
  */
-@Ignore // TODO FIX THESE TESTS
 public class LdpIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExample10() throws IOException {

@@ -36,6 +36,8 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -70,9 +72,9 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             final String location = response.getFirstHeader("Location").getValue();
 
             final HttpGet httpGet = new HttpGet(location);
-            httpGet.addHeader("Prefer", "return=representation; " +
-                    "include=\"http://www.w3.org/ns/ldp#PreferMinimalContainer\"; " +
-                    "omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
+            final var preferHeader = String.format("return=representation; include=\"%s\"; omit=\"%s\"",
+                    PREFER_MINIMAL_CONTAINER.getURI(), PREFER_SERVER_MANAGED.getURI());
+            httpGet.addHeader("Prefer", preferHeader);
             final Dataset dataset = getDataset(httpGet);
 
             final DatasetGraph graphStore = dataset.asDatasetGraph();

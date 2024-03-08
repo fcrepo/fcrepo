@@ -5,14 +5,15 @@
  */
 package org.fcrepo.integration.rdf;
 
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -20,13 +21,11 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * @author bbpennel
  */
-@Ignore // TODO FIX THESE TESTS
 public class RdfNamespaceMappingIT extends AbstractResourceIT {
 
     public static final Property RDF_TYPE = createProperty(RDF_NAMESPACE + "type");
