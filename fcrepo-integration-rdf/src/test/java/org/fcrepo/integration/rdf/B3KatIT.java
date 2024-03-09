@@ -12,7 +12,7 @@ import org.junit.Test;
 /**
  * @author cabeer
  */
- public class B3KatIT extends AbstractIntegrationRdfIT {
+public class B3KatIT extends AbstractIntegrationRdfIT {
     @Test
     public void testExampleRecord() throws IOException {
         createLDPRSAndCheckResponse(getRandomUniqueId(), getContentFromClasspath("/examples/b3kat.ttl"));
