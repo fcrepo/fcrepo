@@ -10,7 +10,7 @@
 
   <bean id="containerWrapper"
         class="org.fcrepo.http.commons.test.util.ContainerWrapper"
-        init-method="start" destroy-method="stop" p:port="${fcrepo.dynamic.test.port:8080}"
+        init-method="start" destroy-method="stop"
         p:configLocation="classpath:web.xml"/>
 
 </beans>

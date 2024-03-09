@@ -5,9 +5,6 @@
  */
 package org.fcrepo.auth.webac;
 
-import static java.util.stream.Stream.of;
-import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
-import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_ADMIN_ROLE;
 import static org.fcrepo.auth.common.ServletContainerAuthFilter.FEDORA_USER_ROLE;
@@ -26,11 +23,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import org.fcrepo.config.FedoraPropsConfig;
-import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.kernel.api.models.ResourceFactory;
+import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static javax.servlet.http.HttpServletResponse.SC_OK;
+import static java.util.stream.Stream.of;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -41,13 +36,17 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.support.SubjectThreadState;
+import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.models.Container;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
+import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
@@ -544,7 +543,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPatchSparqlInvalidContent() throws Exception {
         setupAuthUserReadAppend();
@@ -557,7 +555,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPatchSparqlInsert() throws Exception {
         setupAuthUserReadAppend();
@@ -572,7 +569,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPatchSparqlDelete() throws Exception {
         setupAuthUserReadAppend();
@@ -587,7 +583,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserAppendPostContainer() throws Exception {
         setupAuthUserAppendOnly();
@@ -609,7 +604,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserAppendDelete() throws Exception {
         setupAuthUserAppendOnly();
@@ -620,7 +614,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendPostContainer() throws Exception {
         setupAuthUserReadAppend();
@@ -642,7 +635,6 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendDelete() throws Exception {
         setupAuthUserReadAppend();
@@ -720,7 +712,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadWritePatch() throws Exception {
         setupAuthUserReadWrite();
@@ -730,7 +721,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadWriteDelete() throws Exception {
         setupAuthUserReadWrite();
@@ -740,7 +730,6 @@ public class WebACFilterTest {
         assertEquals(SC_OK, response.getStatus());
     }
 
-    @Ignore // TODO FIX THIS TEST
     @Test
     public void testAuthUserReadAppendWriteDelete() throws Exception {
         setupAuthUserReadAppendWrite();

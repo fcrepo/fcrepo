@@ -12,17 +12,12 @@
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
 
   <!-- Master context for the test application. -->
-  
-  <context:property-placeholder />
-  <context:annotation-config />
-
-  <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
-  
-  <bean class="org.fcrepo.kernel.api.TransactionManager"/>
 
   <context:annotation-config/>
-
+  <context:property-placeholder location="classpath:application.properties" />
   <context:component-scan base-package="org.fcrepo"/>
+
+  <bean id="connectionManager" class="org.apache.http.impl.conn.PoolingHttpClientConnectionManager"/>
   
   <!-- Configuration of namespace prefixes -->
   <bean name="rdfNamespaceRegistry" class="org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry"
@@ -42,4 +37,10 @@
     <property name="validator" ref="externalContentPathValidator" />
   </bean>
 
+  <task:scheduler id="taskScheduler" />
+  <task:executor id="taskExecutor" pool-size="1" />
+  <task:annotation-driven executor="taskExecutor" scheduler="taskScheduler" />
+
+  <!-- Fedora's lightweight internal event bus. Currently memory-resident.-->
+  <bean name="fedoraInternalEventBus" class="com.google.common.eventbus.EventBus"/>
 </beans>
