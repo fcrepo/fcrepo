@@ -65,7 +65,7 @@
             window.location.reload();
           }
         } else {
-            ajaxErrorHandler(res, 'Error creating binary');
+            ajaxErrorHandler(res, `Error creating ${mixin}`);
         }
       });
     }
