@@ -565,7 +565,7 @@ public abstract class AbstractResourceIT {
         return createObjectWithLinkHeader(pid, null);
     }
 
-    private CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String... linkHeaders) {
+    protected CloseableHttpResponse createObjectWithLinkHeader(final String pid, final String... linkHeaders) {
         final HttpPost httpPost = postObjMethod("/");
         if (isNotEmpty(pid)) {
             httpPost.addHeader("Slug", URLEncoder.encode(pid, StandardCharsets.UTF_8));
