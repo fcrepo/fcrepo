@@ -10,6 +10,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
@@ -83,11 +84,14 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
         verifyRejectUpdateUriRef(CONTAINS.getURI(), refURI);
 
         // Verify that ldp:hasMemberRelation referencing an SMT is rejected
-        // TODO: These tests are failing, but a manual test properly rejects these requests
-        // verifyRejectUriRef(HAS_MEMBER_RELATION.getURI(), REPOSITORY_NAMESPACE + NON_EXISTENT_PREDICATE);
-        // verifyRejectUpdateUriRef(HAS_MEMBER_RELATION.getURI(), REPOSITORY_NAMESPACE + NON_EXISTENT_PREDICATE);
-        // verifyRejectUriRef(HAS_MEMBER_RELATION.getURI(), CONTAINS.getURI());
-        // verifyRejectUpdateUriRef(HAS_MEMBER_RELATION.getURI(), CONTAINS.getURI());
+        verifyRejectUriRef(HAS_MEMBER_RELATION.getURI(),
+                           REPOSITORY_NAMESPACE + NON_EXISTENT_PREDICATE,
+                           DIRECT_CONTAINER_LINK_HEADER);
+        verifyRejectUpdateUriRef(HAS_MEMBER_RELATION.getURI(),
+                                 REPOSITORY_NAMESPACE + NON_EXISTENT_PREDICATE,
+                                 DIRECT_CONTAINER_LINK_HEADER);
+        verifyRejectUriRef(HAS_MEMBER_RELATION.getURI(), CONTAINS.getURI(), DIRECT_CONTAINER_LINK_HEADER);
+        verifyRejectUpdateUriRef(HAS_MEMBER_RELATION.getURI(), CONTAINS.getURI(), DIRECT_CONTAINER_LINK_HEADER);
 
         // Verify that types in the ldp namespace are rejected
         verifyRejectRdfType(RESOURCE.getURI());
@@ -134,11 +138,19 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
     }
 
     private void verifyRejectUriRef(final String predicate, final String refURI) throws Exception {
+        verifyRejectUriRef(predicate, refURI, null);
+    }
+
+    private void verifyRejectUriRef(final String predicate, final String refURI, final String link) throws Exception {
         final String pid = getRandomUniqueId();
         final String content = "<> <" + predicate + "> <" + refURI + "> .";
-        try (final CloseableHttpResponse response = execute(putObjMethod(pid, "text/turtle", content))) {
+        final var put = putObjMethod(pid, "text/turtle", content);
+        if (link != null) {
+            put.setHeader(LINK, link);
+        }
+        try (final CloseableHttpResponse response = execute(put)) {
             assertEquals("Must reject server managed property <" + predicate + "> <" + refURI + ">",
-                    409, response.getStatusLine().getStatusCode());
+                         409, response.getStatusLine().getStatusCode());
         }
     }
 
@@ -168,14 +180,24 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
     }
 
     private void verifyRejectUpdateUriRef(final String predicate, final String refURI) throws Exception {
+        verifyRejectUpdateUriRef(predicate, refURI, null);
+    }
+
+    private void verifyRejectUpdateUriRef(final String predicate,
+                                          final String refURI,
+                                          final String link) throws Exception {
         final String updateString =
-                "INSERT { <> <" + predicate + "> <" + refURI + "> } WHERE { }";
+            "INSERT { <> <" + predicate + "> <" + refURI + "> } WHERE { }";
 
         final String pid = getRandomUniqueId();
-        createObject(pid);
+        if (link != null) {
+            createObjectWithLinkHeader(pid, link);
+        } else {
+            createObject(pid);
+        }
         try (final CloseableHttpResponse response = performUpdate(pid, updateString)) {
             assertEquals("Must reject update of server managed property <" + predicate + "> <" + refURI + ">",
-                    409, response.getStatusLine().getStatusCode());
+                         409, response.getStatusLine().getStatusCode());
         }
     }
 
