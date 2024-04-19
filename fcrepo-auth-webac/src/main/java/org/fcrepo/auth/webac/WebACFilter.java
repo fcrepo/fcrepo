@@ -31,6 +31,7 @@ import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSE
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
+import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -55,6 +56,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
@@ -68,6 +70,8 @@ import org.fcrepo.http.commons.session.TransactionProvider;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.ConstraintViolationException;
+import org.fcrepo.kernel.api.exception.InvalidMementoPathException;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.exception.MalformedRdfException;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
@@ -199,7 +203,7 @@ public class WebACFilter extends RequestContextFilter {
         try {
             transaction(request);
         } catch (final TransactionRuntimeException e) {
-            printException(response, SC_CONFLICT, e);
+            printException(response, SC_CONFLICT, e, Set.of());
             return;
         }
         final Subject currentUser = SecurityUtils.getSubject();
@@ -244,7 +248,11 @@ public class WebACFilter extends RequestContextFilter {
                 }
             }
         } catch (final InvalidResourceIdentifierException e) {
-            printException(response, SC_BAD_REQUEST, e);
+            printException(response, SC_BAD_REQUEST, e, Set.of());
+            return;
+        }  catch (final InvalidMementoPathException e) {
+            final var link = buildConstraintLink(e.getClass(), request);
+            printException(response, SC_BAD_REQUEST, e, Set.of(link));
             return;
         } catch (final IllegalArgumentException e) {
             // No Fedora request path provided, so just continue along.
@@ -258,9 +266,11 @@ public class WebACFilter extends RequestContextFilter {
      * Displays the message from the exception to the screen.
      * @param response the servlet response
      * @param e the exception being handled
+     * @param constrainedBy link headers, if available
      * @throws IOException if problems opening the output writer.
      */
-    private void printException(final HttpServletResponse response, final int responseCode, final Throwable e)
+    private void printException(final HttpServletResponse response, final int responseCode, final Throwable e,
+                                final Set<Link> constrainedBy)
             throws IOException {
         final var message = e.getMessage();
         response.resetBuffer();
@@ -268,10 +278,34 @@ public class WebACFilter extends RequestContextFilter {
         response.setContentType(TEXT_PLAIN_WITH_CHARSET);
         response.setContentLength(message.length());
         response.setCharacterEncoding("UTF-8");
+        constrainedBy.forEach(link -> response.setHeader(HttpHeaders.LINK, link.toString()));
         final var write = response.getWriter();
         write.write(message);
         write.flush();
     }
+
+    /**
+     * Creates a constrainedBy link header with the appropriate RDF URL for the exception. Modified from
+     * ConstraintExceptionMapper
+     *
+     * @param clazz the class of the exception to build the link for.
+     * @param request the servlet request
+     * @return Link A http://www.w3.org/ns/ldp#constrainedBy link header
+     */
+    private Link buildConstraintLink(final Class<? extends ConstraintViolationException> clazz,
+                                     final HttpServletRequest request) {
+        final String constraintDir = "/static/constraints/";
+        String path = request.getContextPath();
+        if (path.equals("/")) {
+            path = "";
+        }
+
+        final var uri = URI.create(request.getRequestURL().toString());
+        final String constraintURI = String.format("%s://%s%s%s%s.rdf", uri.getScheme(), uri.getAuthority(), path,
+            constraintDir, clazz.getName().substring(clazz.getName().lastIndexOf('.') + 1));
+        return Link.fromUri(constraintURI).rel(CONSTRAINED_BY.getURI()).build();
+    }
+
 
     private Subject getFoafAgentSubject() {
         if (FOAF_AGENT_SUBJECT == null) {
