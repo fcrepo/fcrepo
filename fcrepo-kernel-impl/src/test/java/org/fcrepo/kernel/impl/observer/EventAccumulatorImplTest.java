@@ -294,16 +294,53 @@ public class EventAccumulatorImplTest {
         ));
     }
 
+    @Test
+    public void testUserAgentWithSpace() throws PathNotFoundException{
+        final var fId1 = FedoraId.create("/test/1");
+        final var fId2 = FedoraId.create("/test/2");
+        final var op1 = createOp(fId1, "user name");
+        final var op2 = updateOp(fId2, "user name");
+
+        accumulator.recordEventForOperation(transaction, fId1, op1);
+        accumulator.recordEventForOperation(transaction, fId2, op2);
+
+        expectResource(fId1, CONTAINER_TYPE);
+        expectResource(fId2, RESOURCE_TYPE);
+
+        accumulator.emitEvents(transaction, BASE_URL, USER_AGENT);
+
+        verify(eventBus, times(2)).post(eventCaptor.capture());
+
+        final var events = eventCaptor.getAllValues();
+
+        assertThat(events, containsInAnyOrder(
+                defaultEvent(fId1, Set.of(EventType.RESOURCE_CREATION),
+                        Set.of(CONTAINER_TYPE.toString())),
+                defaultEvent(fId2, Set.of(EventType.RESOURCE_MODIFICATION),
+                        Set.of(RESOURCE_TYPE.toString()))
+        ));
+    }
+
     private ResourceOperation createOp(final FedoraId fedoraId) {
+        return createOp(fedoraId, null);
+    }
+
+    private ResourceOperation createOp(final FedoraId fedoraId, final String user) {
+        final var agent = user == null ? USER : user;
         return new RdfSourceOperationFactoryImpl().createBuilder(transaction, fedoraId, RDF_SOURCE.toString(),
                 ServerManagedPropsMode.RELAXED)
-                .userPrincipal(USER)
+                .userPrincipal(agent)
                 .build();
     }
 
     private ResourceOperation updateOp(final FedoraId fedoraId) {
+        return updateOp(fedoraId, null);
+    }
+
+    private ResourceOperation updateOp(final FedoraId fedoraId, final String user) {
+        final var agent = user == null ? USER : user;
         return new RdfSourceOperationFactoryImpl().updateBuilder(transaction, fedoraId, ServerManagedPropsMode.RELAXED)
-                .userPrincipal(USER)
+                .userPrincipal(agent)
                 .build();
     }
 
