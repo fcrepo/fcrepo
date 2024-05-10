@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Configuration;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import io.ocfl.api.MutableOcflRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;

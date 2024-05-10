@@ -28,8 +28,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import edu.wisc.library.ocfl.api.OcflRepository;
-import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import io.ocfl.api.OcflRepository;
+import io.ocfl.api.model.ObjectVersionId;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 

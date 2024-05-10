@@ -72,7 +72,7 @@
     </dependency>
 
     <dependency>
-      <groupId>edu.wisc.library.ocfl</groupId>
+      <groupId>io.ocfl</groupId>
       <artifactId>ocfl-java-aws</artifactId>
       <version>${ocfl-java.version}</version>
       <exclusions>

@@ -31,8 +31,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
-import edu.wisc.library.ocfl.api.model.ObjectVersionId;
+import io.ocfl.api.MutableOcflRepository;
+import io.ocfl.api.model.ObjectVersionId;
 
 /**
  * Test delete resource persister for stamping versions of deleted resources in manually versioned repository.
