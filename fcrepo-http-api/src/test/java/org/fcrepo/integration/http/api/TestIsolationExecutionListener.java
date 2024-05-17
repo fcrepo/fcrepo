@@ -5,7 +5,7 @@
  */
 package org.fcrepo.integration.http.api;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import io.ocfl.api.MutableOcflRepository;
 import org.apache.commons.io.FileUtils;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;

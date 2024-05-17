@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
-import edu.wisc.library.ocfl.api.OcflRepository;
+import io.ocfl.api.OcflRepository;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;

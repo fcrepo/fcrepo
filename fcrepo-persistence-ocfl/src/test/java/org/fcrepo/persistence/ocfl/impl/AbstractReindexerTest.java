@@ -25,7 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.nio.file.Paths;
 import java.util.UUID;
 
-import edu.wisc.library.ocfl.api.MutableOcflRepository;
+import io.ocfl.api.MutableOcflRepository;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
 
