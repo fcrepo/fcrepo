@@ -6,17 +6,20 @@
 
 package org.fcrepo.kernel.impl.observer;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.time.Instant;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
 import org.fcrepo.kernel.impl.util.UserUtil;
-
-import java.net.URI;
-import java.time.Instant;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
 
 /**
  * Converts a ResourceOperation into an Event.
@@ -125,7 +128,7 @@ public class ResourceOperationEventBuilder implements EventBuilder {
 
     @Override
     public EventBuilder withUserAgent(final String userAgent) {
-        this.userAgent = userAgent;
+        this.userAgent = (userAgent.contains(" ") ? URLEncoder.encode(userAgent, UTF_8) : userAgent);
         return this;
     }
 

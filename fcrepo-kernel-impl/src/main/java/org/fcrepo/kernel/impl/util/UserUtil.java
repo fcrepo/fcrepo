@@ -6,13 +6,16 @@
 
 package org.fcrepo.kernel.impl.util;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-
-import java.net.URI;
-
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import java.net.URI;
+import java.net.URLEncoder;
+
+import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
 
 /**
  * @author Daniel Bernstein
@@ -63,7 +66,7 @@ public class UserUtil {
             baseUri = DEFAULT_USER_AGENT_BASE_URI;
         }
 
-        final String userAgentUri = baseUri + userId;
+        final String userAgentUri = baseUri + (userId.contains(" ") ? URLEncoder.encode(userId, UTF_8) : userId);
 
         LOGGER.trace("Default URI is created for user {}: {}", userId, userAgentUri);
         return URI.create(userAgentUri);

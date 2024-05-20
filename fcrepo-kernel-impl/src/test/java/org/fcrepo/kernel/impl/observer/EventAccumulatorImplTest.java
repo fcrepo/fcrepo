@@ -6,8 +6,25 @@
 
 package org.fcrepo.kernel.impl.observer;
 
-import com.google.common.eventbus.EventBus;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
+
+import com.google.common.eventbus.EventBus;
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
@@ -30,24 +47,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Set;
-
-import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author pwinckles
@@ -294,16 +293,53 @@ public class EventAccumulatorImplTest {
         ));
     }
 
+    @Test
+    public void testUserAgentWithSpace() throws PathNotFoundException {
+        final var fId1 = FedoraId.create("/test/1");
+        final var fId2 = FedoraId.create("/test/2");
+        final var op1 = createOp(fId1, "user name");
+        final var op2 = updateOp(fId2, "user name");
+
+        accumulator.recordEventForOperation(transaction, fId1, op1);
+        accumulator.recordEventForOperation(transaction, fId2, op2);
+
+        expectResource(fId1, CONTAINER_TYPE);
+        expectResource(fId2, RESOURCE_TYPE);
+
+        accumulator.emitEvents(transaction, BASE_URL, "user agent");
+
+        verify(eventBus, times(2)).post(eventCaptor.capture());
+
+        final var events = eventCaptor.getAllValues();
+
+        assertThat(events, containsInAnyOrder(
+                event(fId1, Set.of(EventType.RESOURCE_CREATION),
+                        Set.of(CONTAINER_TYPE.toString()), BASE_URL, "user+agent"),
+                event(fId2, Set.of(EventType.RESOURCE_MODIFICATION),
+                        Set.of(RESOURCE_TYPE.toString()), BASE_URL, "user+agent")
+        ));
+    }
+
     private ResourceOperation createOp(final FedoraId fedoraId) {
+        return createOp(fedoraId, null);
+    }
+
+    private ResourceOperation createOp(final FedoraId fedoraId, final String user) {
+        final var agent = user == null ? USER : user;
         return new RdfSourceOperationFactoryImpl().createBuilder(transaction, fedoraId, RDF_SOURCE.toString(),
                 ServerManagedPropsMode.RELAXED)
-                .userPrincipal(USER)
+                .userPrincipal(agent)
                 .build();
     }
 
     private ResourceOperation updateOp(final FedoraId fedoraId) {
+        return updateOp(fedoraId, null);
+    }
+
+    private ResourceOperation updateOp(final FedoraId fedoraId, final String user) {
+        final var agent = user == null ? USER : user;
         return new RdfSourceOperationFactoryImpl().updateBuilder(transaction, fedoraId, ServerManagedPropsMode.RELAXED)
-                .userPrincipal(USER)
+                .userPrincipal(agent)
                 .build();
     }
 
