@@ -6,6 +6,7 @@
 package org.fcrepo.integration.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.ZoneOffset.UTC;
 import static java.util.Arrays.stream;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -14,6 +15,7 @@ import static javax.ws.rs.core.Response.Status.FORBIDDEN;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_FORBIDDEN;
 import static org.apache.http.HttpStatus.SC_GONE;
@@ -21,9 +23,11 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TX;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -35,13 +39,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.Response;
 
+import org.apache.http.util.EntityUtils;
 import org.fcrepo.auth.webac.WebACRolesProvider;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
@@ -270,6 +278,32 @@ public class WebACRecipesIT extends AbstractResourceIT {
         final var method = postObjMethod(txObj);
         try (final CloseableHttpResponse response = execute(method)) {
             assertEquals("Unauthenticated user cannot create " + txObj, SC_FORBIDDEN, getStatus(response));
+        }
+    }
+
+    @Test
+    public void invalidResourceIdentifier() throws IOException {
+        final var uuid = UUID.randomUUID().toString();
+        final var invalidPath = "/rest/" + uuid + "/" + FCR_TOMBSTONE + "/" + FCR_ACL;
+        final var get = getObjMethod(invalidPath);
+        try (final var response = execute(get)) {
+            assertEquals(SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
+            final var message = EntityUtils.toString(response.getEntity());
+            assertTrue(message.contains("Path is invalid"));
+        }
+    }
+
+    @Test
+    public void invalidMementoPath() throws IOException {
+        final var mementoFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(UTC);
+        final var uuid = UUID.randomUUID().toString();
+        final var memento = mementoFormatter.format(LocalDateTime.now());
+
+        // The admin ui used to add fcr:metadata to the end of some mementos, so it's used as the test url
+        final var invalidMemento = "/rest/" + uuid + "/" + FCR_VERSIONS + "/" + memento + "/" + FCR_METADATA;
+        final var get = getObjMethod(invalidMemento);
+        try (final var response = execute(get)) {
+            assertEquals(SC_BAD_REQUEST, response.getStatusLine().getStatusCode());
         }
     }
 
