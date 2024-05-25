@@ -13,13 +13,13 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_OCFL_PATH;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.jena.graph.Triple;
+import org.fcrepo.config.DisplayOcflPath;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -119,9 +120,11 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
             triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));
         });
 
-        final var ocflPath = resolveOcflPath(describedResource);
-        triples.add(Triple.create(subject, createURI(REPOSITORY_NAMESPACE + "ocflPath"),
-                createLiteral(ocflPath)));
+        if (ocflPropsConfig.getDisplayOcflPath() != DisplayOcflPath.NONE) {
+            final var ocflPath = resolveOcflPath(describedResource, ocflPropsConfig.getDisplayOcflPath());
+            triples.add(Triple.create(subject, createURI(FEDORA_OCFL_PATH.getURI()),
+                    createLiteral(ocflPath)));
+        }
 
         return new DefaultRdfStream(subject, triples.stream());
     }
@@ -133,7 +136,7 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
         return resource.getId();
     }
 
-    private String resolveOcflPath(final FedoraResource resource) {
+    private String resolveOcflPath(final FedoraResource resource, final DisplayOcflPath displayOcflPath) {
         try {
             final FedoraId id;
             if (resource.getArchivalGroupId().isPresent()) {
@@ -144,8 +147,14 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
             final var algo = MessageDigest.getInstance("sha-256");
             final var ocflId = algo.digest(id.getBaseId().getBytes(UTF_8));
             final var ocflIdHash = encodeHexString(ocflId);
-            return ocflPropsConfig.getOcflRepoRoot() + "/" + ocflIdHash.substring(0, 3) + "/" +
-                    ocflIdHash.substring(3, 6) + "/" + ocflIdHash.substring(6, 9) + "/" + ocflIdHash;
+            final List<String> hashSlices = new ArrayList<>();
+            for (int i = 0; i < ocflIdHash.length(); i += 3) {
+                hashSlices.add(ocflIdHash.substring(i, Math.min(i + 3,ocflIdHash.length())));
+            }
+            final var ocflPath = hashSlices.get(0) + "/" + hashSlices.get(1) + "/" + hashSlices.get(2) + "/" +
+                    ocflIdHash;
+            return (displayOcflPath == DisplayOcflPath.ABSOLUTE ? ocflPropsConfig.getOcflRepoRoot() + "/" : "") +
+                    ocflPath;
         } catch (NoSuchAlgorithmException e) {
             final var message = "Unable to resolve OCFL path for resource " + resource.getId();
             LOGGER.error(message, e);
