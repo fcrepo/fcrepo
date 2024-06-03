@@ -21,6 +21,8 @@ public class FlywayFactory implements FactoryBean<Flyway> {
 
     private String databaseType;
 
+    private boolean cleanDisabled = true;
+
     /**
      * Static constructor
      * @return a new FlywayFactory instance.
@@ -35,7 +37,8 @@ public class FlywayFactory implements FactoryBean<Flyway> {
             throw new IllegalStateException("Cannot get flyway instance without a configured datasource.");
         }
         final var fly = Flyway.configure().dataSource(dataSource)
-                .locations("classpath:sql/" + (databaseType == null ? "h2" : databaseType)).load();
+                .locations("classpath:sql/" + (databaseType == null ? "h2" : databaseType))
+                .cleanDisabled(cleanDisabled).load();
         fly.migrate();
         return fly;
     }
@@ -62,6 +65,16 @@ public class FlywayFactory implements FactoryBean<Flyway> {
      */
     public FlywayFactory setDatabaseType(final String type) {
         databaseType = type;
+        return this;
+    }
+
+    /**
+     * Set whether to disable the clean operation.
+     * @param disabled Set to false to allow clean, this is dangerous in production.
+     * @return this factory
+     */
+    public FlywayFactory setCleanDisabled(final boolean disabled) {
+        cleanDisabled = disabled;
         return this;
     }
 }

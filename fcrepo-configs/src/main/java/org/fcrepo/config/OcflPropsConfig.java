@@ -120,6 +120,21 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.verify.inventory:true}")
     private boolean verifyInventory;
 
+    @Value("${fcrepo.ocfl.s3.timeout.connection.seconds:60}")
+    private int s3ConnectionTimeout;
+
+    @Value("${fcrepo.ocfl.s3.timeout.write.seconds:60}")
+    private int s3WriteTimeout;
+
+    @Value("${fcrepo.ocfl.s3.timeout.read.seconds:60}")
+    private int s3ReadTimeout;
+
+    @Value("${fcrepo.ocfl.s3.max_concurrency:100}")
+    private int s3MaxConcurrency;
+
+    @Value("${fcrepo.ocfl.s3.enable.checksum:true}")
+    private boolean s3EnableChecksum;
+
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
 
     /**
@@ -495,5 +510,40 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public boolean verifyInventory() {
         return verifyInventory;
+    }
+
+    /**
+     * @return True if client checksums should be used when writing using S3 client.
+     */
+    public boolean isOcflS3ChecksumEnabled() {
+        return s3EnableChecksum;
+    }
+
+    /**
+     * @return the AWS S3 connection acquisition timeout in seconds.
+     */
+    public int getS3ConnectionTimeout() {
+        return s3ConnectionTimeout;
+    }
+
+    /**
+     * @return the AWS S3 write timeout in seconds.
+     */
+    public int getS3WriteTimeout() {
+        return s3WriteTimeout;
+    }
+
+    /**
+     * @return the AWS S3 read timeout in seconds.
+     */
+    public int getS3ReadTimeout() {
+        return s3ReadTimeout;
+    }
+
+    /**
+     * @return the maximum number of concurrent S3 operations.
+     */
+    public int getS3MaxConcurrency() {
+        return s3MaxConcurrency;
     }
 }

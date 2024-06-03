@@ -44,6 +44,9 @@ public class DatabaseConfig extends BasePropsConfig {
 
     private static final String H2_FILE = "fcrepo-h2";
 
+    @Value("${flyway.cleanDisabled:true}")
+    private boolean flywayCleanDisabled;
+
     @Value("${fcrepo.db.url:#{'jdbc:h2:'" +
             " + fedoraPropsConfig.fedoraData.resolve('" + H2_FILE + "').toAbsolutePath().toString()" +
             " + ';FILE_LOCK=SOCKET'}}")
@@ -173,7 +176,8 @@ public class DatabaseConfig extends BasePropsConfig {
     @Bean
     public Flyway flyway(final DataSource source) throws Exception {
         LOGGER.debug("Instantiating a new flyway bean");
-        return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType()).getObject();
+        return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType())
+                .setCleanDisabled(flywayCleanDisabled).getObject();
     }
 
 }

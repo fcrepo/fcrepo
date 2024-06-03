@@ -25,15 +25,16 @@
     <fcrepo-storage-ocfl.version>6.4.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
     <activemq.version>5.16.7</activemq.version>
-    <aws.version>2.17.50</aws.version>
+    <aws.sdk.version>2.19.1</aws.sdk.version>
+    <aws.crt.version>0.29.16</aws.crt.version>
     <caffeine.version>3.0.4</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-io.version>2.11.0</commons-io.version>
     <commons-lang.version>3.12.0</commons-lang.version>
     <failsafe.version>2.4.4</failsafe.version>
-    <flyway.version>8.5.5</flyway.version>
-    <flyway.test.version>7.0.0</flyway.test.version>
+    <flyway.version>9.22.3</flyway.version>
+    <flyway.test.version>9.5.0</flyway.test.version>
     <guava.version>32.0.0-jre</guava.version>
     <h2database.version>2.2.220</h2database.version>
     <hikari.version>5.0.0</hikari.version>
@@ -59,7 +60,7 @@
     <logback.version>1.2.13</logback.version>
     <micrometer.version>1.7.4</micrometer.version>
     <netty.version>4.1.68.Final</netty.version>
-    <ocfl-java.version>2.0.1</ocfl-java.version>
+    <ocfl-java.version>2.1.0</ocfl-java.version>
     <prometheus.version>0.10.0</prometheus.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>1.13.0</shiro.version>
@@ -597,6 +598,13 @@
             <artifactId>el-api</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${aws.sdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <!-- test gear -->
       <dependency>

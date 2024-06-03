@@ -5,15 +5,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.LOCATION;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -35,21 +26,26 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.HttpHeaders.LOCATION;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CONFLICT;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.GONE;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
+
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response.Status;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response.Status;
-
-import org.fcrepo.config.OcflPropsConfig;
-import org.fcrepo.kernel.api.RdfLexicon;
-import org.fcrepo.storage.ocfl.CommitType;
-import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -67,6 +63,10 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.RdfLexicon;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -698,7 +698,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
         final var mementos2 = listMementoIds(membershipRescId);
         assertEquals(1, mementos2.size());
-        assertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        awaitAssertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
 
         TimeUnit.MILLISECONDS.sleep(1000);
 
@@ -708,7 +708,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
         final var mementos3 = listMementoIds(membershipRescId);
         assertEquals(1, mementos3.size());
-        assertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        awaitAssertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
 
         final var txUri = createTransaction();
         final String member3Id = createBasicContainer(null, getRandomUniqueId(), txUri);
@@ -1919,6 +1919,14 @@ public class LDPContainerIT extends AbstractResourceIT {
             final Property hasMemberRelation, final String... memberIds) throws Exception {
         final var subjId = StringUtils.substringBefore(membershipMementoRescId, "/fcr:versions");
         assertHasMembers(null, membershipMementoRescId, subjId, hasMemberRelation, memberIds);
+    }
+
+    private void awaitAssertMementoHasMembers(final String membershipMementoRescId,
+                                                           final Property hasMemberRelation,
+                                                           final String... memberIds) {
+        await().untilAsserted(() -> {
+            assertMementoHasMembers(membershipMementoRescId, hasMemberRelation, memberIds);
+        });
     }
 
     private void assertHasMembers(final String membershipRescId,
