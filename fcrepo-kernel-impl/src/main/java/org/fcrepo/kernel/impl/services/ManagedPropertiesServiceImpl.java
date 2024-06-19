@@ -26,6 +26,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import javax.inject.Inject;
 
+import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -151,10 +152,13 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
             for (int i = 0; i < ocflIdHash.length(); i += 3) {
                 hashSlices.add(ocflIdHash.substring(i, Math.min(i + 3,ocflIdHash.length())));
             }
-            final var ocflPath = hashSlices.get(0) + "/" + hashSlices.get(1) + "/" + hashSlices.get(2) + "/" +
-                    ocflIdHash;
-            return (displayOcflPath == DisplayOcflPath.ABSOLUTE ? ocflPropsConfig.getOcflRepoRoot() + "/" : "") +
-                    ocflPath;
+            final var ocflPath = hashSlices.get(0) + File.separator + hashSlices.get(1) + File.separator +
+                    hashSlices.get(2) + File.separator + ocflIdHash;
+            return (
+                    displayOcflPath == DisplayOcflPath.ABSOLUTE ?
+                            ocflPropsConfig.getOcflRepoRoot() + File.separator :
+                            ""
+            ) + ocflPath;
         } catch (NoSuchAlgorithmException e) {
             final var message = "Unable to resolve OCFL path for resource " + resource.getId();
             LOGGER.error(message, e);

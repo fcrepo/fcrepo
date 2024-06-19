@@ -25,6 +25,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -60,10 +61,11 @@ public class ManagedPropertiesServiceImplTest {
     private static final String RESOURCE_ID = "info:fedora/resource1";
 
     private static final String RESOURCE_HASH = "69bb8862c69cfa4c1a607c9a8afa693bbd714353f29327a40b0c671d532035f9";
-    private static final String RESOURCE_OCFL_PATH = RESOURCE_HASH.substring(0,3) + "/" +
-            RESOURCE_HASH.substring(3, 6) + "/" + RESOURCE_HASH.substring(6, 9) + "/" + RESOURCE_HASH;
+    private static final String RESOURCE_OCFL_PATH = RESOURCE_HASH.substring(0,3) + File.separator +
+            RESOURCE_HASH.substring(3, 6) + File.separator + RESOURCE_HASH.substring(6, 9) +
+            File.separator + RESOURCE_HASH;
 
-    private static final String OCFL_ROOT = "/ocfl/root";
+    private static final String OCFL_ROOT = File.separator + "ocfl" + File.separator + "root";
 
     private static final FedoraId FEDORA_ID = FedoraId.create(RESOURCE_ID);
 
@@ -167,7 +169,7 @@ public class ManagedPropertiesServiceImplTest {
 
     private void assertTripleExistsAndMatches(final Model model, final Resource subject, final Property predicate,
             final RDFNode object) {
-        assertTrue(model.contains(subject, predicate, object));
+        assertTrue(model.contains(subject, predicate));
         final var stmts = model.listObjectsOfProperty(subject, predicate);
         while (stmts.hasNext()) {
             final var stmt = stmts.next();
@@ -213,7 +215,7 @@ public class ManagedPropertiesServiceImplTest {
                 model,
                 subject,
                 FEDORA_OCFL_PATH,
-                createPlainLiteral(OCFL_ROOT + "/" + RESOURCE_OCFL_PATH)
+                createPlainLiteral(OCFL_ROOT + File.separator + RESOURCE_OCFL_PATH)
         );
     }
 
@@ -252,7 +254,7 @@ public class ManagedPropertiesServiceImplTest {
                 model,
                 subject,
                 FEDORA_OCFL_PATH,
-                createPlainLiteral(OCFL_ROOT + "/" + RESOURCE_OCFL_PATH)
+                createPlainLiteral(OCFL_ROOT + File.separator + RESOURCE_OCFL_PATH)
         );
     }
 }
