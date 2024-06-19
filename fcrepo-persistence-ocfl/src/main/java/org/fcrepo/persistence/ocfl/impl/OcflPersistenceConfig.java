@@ -120,14 +120,27 @@ public class OcflPersistenceConfig {
     }
 
     private S3AsyncClient s3CrtClient() {
-        return S3AsyncClient.crtBuilder()
-                .checksumValidationEnabled(ocflPropsConfig.isOcflS3ChecksumEnabled())
-                .build();
+        final var builder = S3AsyncClient.crtBuilder()
+                .checksumValidationEnabled(ocflPropsConfig.isOcflS3ChecksumEnabled());
+
+        if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {
+            builder.region(Region.of(ocflPropsConfig.getAwsRegion()));
+        }
+
+        if (StringUtils.isNotBlank(ocflPropsConfig.getS3Endpoint())) {
+            builder.endpointOverride(URI.create(ocflPropsConfig.getS3Endpoint()));
+        }
+
+        if (StringUtils.isNoneBlank(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())) {
+            builder.credentialsProvider(StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())));
+        }
+
+        return builder.build();
     }
 
     private S3AsyncClient s3Client() {
         final var builder = S3AsyncClient.builder();
-
 
         if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {
             builder.region(Region.of(ocflPropsConfig.getAwsRegion()));

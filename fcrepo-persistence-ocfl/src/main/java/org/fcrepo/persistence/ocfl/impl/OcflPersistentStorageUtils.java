@@ -35,7 +35,7 @@ import org.apache.jena.riot.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.s3.S3AsyncClient;
-import software.amazon.awssdk.transfer.s3.internal.DefaultS3TransferManager;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 /**
  * A set of utility functions for supporting OCFL persistence activities.
@@ -129,7 +129,7 @@ public class OcflPersistentStorageUtils {
             throws IOException {
         createDirectories(ocflWorkDir);
 
-        final var transferManager = DefaultS3TransferManager.builder()
+        final var transferManager = S3TransferManager.builder()
                 .s3Client(s3CrtClient).build();
 
         final var storage = OcflStorageBuilder.builder()

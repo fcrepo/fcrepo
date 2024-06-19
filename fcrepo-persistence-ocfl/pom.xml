@@ -85,9 +85,6 @@
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>s3</artifactId>
-      <!--
-      These are convergence issues stemming from within the AWS SDK. These deps must be manually kept up-to-date
-      -->
     </dependency>
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
@@ -101,11 +98,6 @@
       <groupId>software.amazon.awssdk.crt</groupId>
       <artifactId>aws-crt</artifactId>
       <version>${aws.crt.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.reactivestreams</groupId>
-      <artifactId>reactive-streams</artifactId>
-      <version>${reactivestreams.version}</version>
     </dependency>
 
     <dependency>
