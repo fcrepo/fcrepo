@@ -20,6 +20,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
@@ -31,6 +32,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.config.DisplayOcflPath;
@@ -163,6 +165,16 @@ public class ManagedPropertiesServiceImplTest {
         ));
     }
 
+    private void assertTripleExistsAndMatches(final Model model, final Resource subject, final Property predicate,
+            final RDFNode object) {
+        assertTrue(model.contains(subject, predicate, object));
+        final var stmts = model.listObjectsOfProperty(subject, predicate);
+        while (stmts.hasNext()) {
+            final var stmt = stmts.next();
+            assertEquals(object, stmt);
+        }
+    }
+
     /**
      * Test a normal container without an OCFL path but all the other SMTs.
      */
@@ -197,11 +209,12 @@ public class ManagedPropertiesServiceImplTest {
         final var triples = managedPropertiesService.get(containerResource);
         final var model = triples.collect(toModel());
         assertExpectedContainerModel(model);
-        assertTrue(model.contains(
+        assertTripleExistsAndMatches(
+                model,
                 subject,
                 FEDORA_OCFL_PATH,
-                OCFL_ROOT + "/" + RESOURCE_OCFL_PATH
-        ));
+                createPlainLiteral(OCFL_ROOT + "/" + RESOURCE_OCFL_PATH)
+        );
     }
 
     @Test
@@ -235,10 +248,11 @@ public class ManagedPropertiesServiceImplTest {
         final var triples = managedPropertiesService.get(binaryResource);
         final var model = triples.collect(toModel());
         assertExpectedBinaryModel(model);
-        assertTrue(model.contains(
+        assertTripleExistsAndMatches(
+                model,
                 subject,
                 FEDORA_OCFL_PATH,
-                OCFL_ROOT + "/" + RESOURCE_OCFL_PATH
-        ));
+                createPlainLiteral(OCFL_ROOT + "/" + RESOURCE_OCFL_PATH)
+        );
     }
 }
