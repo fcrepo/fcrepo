@@ -8,13 +8,13 @@ package org.fcrepo.persistence.ocfl.impl;
 import static com.fasterxml.jackson.databind.SerializationFeature.WRITE_DATES_AS_TIMESTAMPS;
 import static org.apache.jena.riot.RDFFormat.NTRIPLES;
 
+import javax.sql.DataSource;
+
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
-
-import javax.sql.DataSource;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +34,8 @@ import org.apache.http.impl.auth.UnsupportedDigestAlgorithmException;
 import org.apache.jena.riot.RDFFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
+import software.amazon.awssdk.transfer.s3.S3TransferManager;
 
 /**
  * A set of utility functions for supporting OCFL persistence activities.
@@ -104,7 +105,8 @@ public class OcflPersistentStorageUtils {
      * Create a new ocfl repository backed by s3
      *
      * @param dataSource the datasource to keep inventories in and use as a lock
-     * @param s3Client aws s3 client
+     * @param s3Client aws s3 async client
+     * @param s3CrtClient aws CRT async client
      * @param bucket the bucket to store objects in
      * @param prefix the prefix within the bucket to store objects under
      * @param ocflWorkDir the local directory to stage objects in
@@ -115,7 +117,8 @@ public class OcflPersistentStorageUtils {
      * @return the repository
      */
     public static MutableOcflRepository createS3Repository(final DataSource dataSource,
-                                                           final S3Client s3Client,
+                                                           final S3AsyncClient s3Client,
+                                                           final S3AsyncClient s3CrtClient,
                                                            final String bucket,
                                                            final String prefix,
                                                            final Path ocflWorkDir,
@@ -126,9 +129,13 @@ public class OcflPersistentStorageUtils {
             throws IOException {
         createDirectories(ocflWorkDir);
 
+        final var transferManager = S3TransferManager.builder()
+                .s3Client(s3CrtClient).build();
+
         final var storage = OcflStorageBuilder.builder()
             .verifyInventoryDigest(verifyInventory)
             .cloud(OcflS3Client.builder()
+                .transferManager(transferManager)
                 .s3Client(s3Client)
                 .bucket(bucket)
                 .repoPrefix(prefix)

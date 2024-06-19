@@ -10,6 +10,7 @@ import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.create
 
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -38,8 +39,9 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 
 /**
  * A Configuration for OCFL dependencies
@@ -72,6 +74,7 @@ public class OcflPersistenceConfig {
             return createS3Repository(
                     dataSource,
                     s3Client(),
+                    s3CrtClient(),
                     ocflPropsConfig.getOcflS3Bucket(),
                     ocflPropsConfig.getOcflS3Prefix(),
                     ocflPropsConfig.getOcflTemp(),
@@ -116,8 +119,28 @@ public class OcflPersistenceConfig {
         return CommitType.UNVERSIONED;
     }
 
-    private S3Client s3Client() {
-        final var builder = S3Client.builder();
+    private S3AsyncClient s3CrtClient() {
+        final var builder = S3AsyncClient.crtBuilder()
+                .checksumValidationEnabled(ocflPropsConfig.isOcflS3ChecksumEnabled());
+
+        if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {
+            builder.region(Region.of(ocflPropsConfig.getAwsRegion()));
+        }
+
+        if (StringUtils.isNotBlank(ocflPropsConfig.getS3Endpoint())) {
+            builder.endpointOverride(URI.create(ocflPropsConfig.getS3Endpoint()));
+        }
+
+        if (StringUtils.isNoneBlank(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())) {
+            builder.credentialsProvider(StaticCredentialsProvider.create(
+                    AwsBasicCredentials.create(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())));
+        }
+
+        return builder.build();
+    }
+
+    private S3AsyncClient s3Client() {
+        final var builder = S3AsyncClient.builder();
 
         if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {
             builder.region(Region.of(ocflPropsConfig.getAwsRegion()));
@@ -137,6 +160,12 @@ public class OcflPersistenceConfig {
         }
 
         // May want to do additional HTTP client configuration, connection pool, etc
+        final var httpClientBuilder = NettyNioAsyncHttpClient.builder()
+                .connectionAcquisitionTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ConnectionTimeout()))
+                .writeTimeout(Duration.ofSeconds(ocflPropsConfig.getS3WriteTimeout()))
+                .readTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ReadTimeout()))
+                .maxConcurrency(ocflPropsConfig.getS3MaxConcurrency());
+        builder.httpClientBuilder(httpClientBuilder);
 
         return builder.build();
     }

@@ -5,24 +5,6 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static java.util.Arrays.asList;
-import static java.util.Arrays.sort;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.LOCATION;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.FOUND;
-import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -62,6 +44,28 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.HttpHeaders.LOCATION;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.CREATED;
+import static javax.ws.rs.core.Response.Status.FOUND;
+import static javax.ws.rs.core.Response.Status.GONE;
+import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static javax.ws.rs.core.Response.Status.NO_CONTENT;
+import static javax.ws.rs.core.Response.Status.OK;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.time.format.DateTimeFormatter.ISO_INSTANT;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.sort;
+
+import javax.ws.rs.core.Link;
+import javax.ws.rs.core.UriBuilder;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.Duration;
@@ -75,18 +79,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.UriBuilder;
-
-import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.storage.ocfl.CommitType;
-import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
-
+import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -114,14 +113,19 @@ import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC;
 import org.apache.jena.vocabulary.RDF;
+import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
+import org.fcrepo.http.commons.test.util.CloseableDataset;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.storage.ocfl.CommitType;
+import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.test.context.TestExecutionListeners;
-
-import com.google.common.collect.ImmutableList;
 
 /**
  * @author lsitu
@@ -150,6 +154,18 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     private static final HttpIdentifierConverter identifierConverter =
             new HttpIdentifierConverter(UriBuilder.fromUri(serverAddress + "{path: .*}"));
+
+    private static ExecutorService executorService;
+
+    @BeforeClass
+    public static void beforeClass() {
+        executorService = Executors.newSingleThreadExecutor();
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        executorService.shutdown();
+    }
 
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
@@ -203,8 +219,20 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         TimeUnit.SECONDS.sleep(1);
 
         final var v2 = now();
-        createMemento(subjectUri);
-        createMemento(subjectUri);
+        final List<Future<Void>> tasks = executorService.invokeAll(List.of(
+                () -> {
+                    createMemento(subjectUri);
+                    createMemento(subjectUri);
+                    return null;
+                }
+        ));
+        for (var task : tasks) {
+            try {
+                task.get();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
         verifyTimemapResponse(subjectUri, new String[]{v1, v2}, v1, v2);
     }
 
