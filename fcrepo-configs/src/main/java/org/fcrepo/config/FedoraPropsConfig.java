@@ -156,7 +156,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @PostConstruct
     private void postConstruct() throws IOException {
-        LOGGER.info("Fedora is an open source project supported entirely by it's users. To continue the " +
+        LOGGER.info("Fedora is an open source project supported entirely by its users. To continue the " +
                 "on-going maintenance of the software and ensure Fedora is meeting the needs of the " +
                 "community, we are working to gather information on current installations. We strongly " +
                 "encourage all users to register their instance in the DuraSpace Community Supported " +
