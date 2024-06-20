@@ -34,6 +34,7 @@ public class OcflPropsConfig extends BasePropsConfig {
     public static final String FCREPO_OCFL_ROOT = "fcrepo.ocfl.root";
     public static final String FCREPO_OCFL_TEMP = "fcrepo.ocfl.temp";
     private static final String FCREPO_OCFL_S3_BUCKET = "fcrepo.ocfl.s3.bucket";
+    private static final String FCREPO_OCFL_SHOW_PATH = "fcrepo.ocfl.display_path";
 
     private static final String OCFL_STAGING = "staging";
     private static final String OCFL_ROOT = "ocfl-root";
@@ -120,6 +121,10 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.verify.inventory:true}")
     private boolean verifyInventory;
 
+    @Value("${" + FCREPO_OCFL_SHOW_PATH + ":none}")
+    private String displayOcflPathStr;
+    private DisplayOcflPath displayOcflPath;
+
     @Value("${fcrepo.ocfl.s3.timeout.connection.seconds:60}")
     private int s3ConnectionTimeout;
 
@@ -187,6 +192,8 @@ public class OcflPropsConfig extends BasePropsConfig {
                             .collect(Collectors.joining(", "))));
         }
         LOGGER.info("Fedora OCFL digest algorithm: {}", FCREPO_DIGEST_ALGORITHM.getAlgorithm());
+        displayOcflPath = DisplayOcflPath.fromString(displayOcflPathStr);
+        LOGGER.info("Fedora OCFL display path: {}", displayOcflPath.getValue());
     }
 
     /**
@@ -545,5 +552,19 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public int getS3MaxConcurrency() {
         return s3MaxConcurrency;
+    }
+
+    /**
+     * @param displayOcflPath the display OCFL path mode
+     */
+    public void setDisplayOcflPath(final String displayOcflPath) {
+        this.displayOcflPath = DisplayOcflPath.fromString(displayOcflPath);
+    }
+
+    /**
+     * @return the display OCFL path mode
+     */
+    public DisplayOcflPath getDisplayOcflPath() {
+        return displayOcflPath;
     }
 }
