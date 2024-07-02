@@ -1129,6 +1129,31 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
     @Test
     public void testDatetimeNegotiationExactMatch() throws Exception {
+        testDatetimeNegotiation(false, false);
+    }
+
+    @Test
+    public void testDatetimeNegotiationExactMatchHead() throws Exception {
+        testDatetimeNegotiation(true, false);
+    }
+
+    @Test
+    public void testDatetimeNegotiationOnTombstone() throws Exception {
+        testDatetimeNegotiation(false, true);
+    }
+
+    @Test
+    public void testDatetimeNegotiationOnTombstoneHead() throws Exception {
+        testDatetimeNegotiation(true, true);
+    }
+
+    /**
+     * Test datetime negotiation on a versioned resource.
+     * @param isHead true if the request should be a HEAD request, false for GET
+     * @param isTombstone true if the resource should be deleted before the request
+     * @throws Exception on error
+     */
+    private void testDatetimeNegotiation(final boolean isHead, final boolean isTombstone) throws Exception {
         final CloseableHttpClient customClient = createClient(true);
 
         final String originalUri = createVersionedContainer(id);
@@ -1154,11 +1179,20 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
         assertNotEquals("mementos should be different", version1Uri, version2Uri);
 
-        // Attempt to retrieve newer memento
-        final HttpGet getVersion2 = getObjMethod(id);
-        getVersion2.addHeader(ACCEPT_DATETIME, version2Datetime);
+        if (isTombstone) {
+            // Wait one second and then delete the resource
+            TimeUnit.SECONDS.sleep(1);
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(id)));
 
-        try (final CloseableHttpResponse response = customClient.execute(getVersion2)) {
+            // Test we get a Tombstone now
+            assertEquals(GONE.getStatusCode(), getStatus(getObjMethod(id)));
+        }
+
+        // Attempt to retrieve newer memento
+        final HttpUriRequest requestVersion2 = isHead ? headObjMethod(id) : getObjMethod(id);
+        requestVersion2.addHeader(ACCEPT_DATETIME, version2Datetime);
+
+        try (final CloseableHttpResponse response = customClient.execute(requestVersion2)) {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
             assertNoMementoDatetimeHeaderPresent(response);
             verifyMementoUri("Did not get expected memento location",
@@ -1166,10 +1200,10 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         }
 
         // Attempt to get older memento
-        final HttpGet getVersion1 = getObjMethod(id);
-        getVersion1.addHeader(ACCEPT_DATETIME, version1Datetime);
+        final HttpUriRequest requestVersion1 = isHead ? headObjMethod(id) : getObjMethod(id);
+        requestVersion1.addHeader(ACCEPT_DATETIME, version1Datetime);
 
-        try (final CloseableHttpResponse response = customClient.execute(getVersion1)) {
+        try (final CloseableHttpResponse response = customClient.execute(requestVersion1)) {
             assertEquals("Did not get FOUND response", FOUND.getStatusCode(), getStatus(response));
             assertNoMementoDatetimeHeaderPresent(response);
             verifyMementoUri("Did not get expected memento location",
