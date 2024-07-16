@@ -13,9 +13,12 @@ import io.ocfl.api.OcflRepository;
 import io.ocfl.api.model.ObjectVersionId;
 import io.ocfl.api.model.VersionInfo;
 import io.ocfl.api.model.VersionNum;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.jena.graph.Node;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
@@ -52,10 +55,13 @@ import java.util.stream.StreamSupport;
 
 import static java.text.MessageFormat.format;
 import static java.util.Arrays.asList;
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
@@ -238,6 +244,50 @@ public class RebuildIT extends AbstractResourceIT {
 
         assertEquals(HttpStatus.SC_NOT_FOUND, getStatus(getObjMethod("test")));
         assertEquals(HttpStatus.SC_NOT_FOUND, getStatus(getObjMethod("binary")));
+    }
+
+    private final String PCDM_HAS_MEMBER = "http://pcdm.org/models#hasMember";
+    private final Property PCDM_HAS_MEMBER_PROP = createProperty(PCDM_HAS_MEMBER);
+
+    @Test
+    public void testRebuildMembership() throws Exception {
+        rebuild("test-rebuild-membership");
+
+        // Optional debugging
+        if (LOGGER.isDebugEnabled()) {
+            ocflRepository.listObjectIds().forEach(id -> LOGGER.debug("Object id: {}", id));
+        }
+
+        assertEquals(8, ocflRepository.listObjectIds().count());
+        assertTrue("Should contain object with id: " + FedoraTypes.FEDORA_ID_PREFIX,
+                ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX));
+        assertContains("work_container");
+        assertContains("work_container/indirect");
+        assertContains("work_container/indirect/member_proxy");
+        assertContains("work_member");
+        assertContains("direct_test");
+        assertContains("direct_test/direct");
+        assertContains("direct_test/direct/direct_member");
+
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("work_container")));
+
+        final String indirectContainerUri = serverAddress + "work_container";
+        final String indirectMemberUri = serverAddress + "work_member";
+        assertHasMembership(indirectContainerUri, indirectMemberUri);
+
+        final String directContainerUri = serverAddress + "direct_test";
+        final String directMemberUri = serverAddress + "direct_test/direct/direct_member";
+        assertHasMembership(directContainerUri, directMemberUri);
+    }
+
+    private void assertHasMembership(String subjectUri, String memberUri) throws Exception {
+        final var subjectNode = createURI(subjectUri);
+        final var memberNode = createURI(memberUri);
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectUri))) {
+            final var graph = dataset.asDatasetGraph();
+            Assert.assertTrue("Membership triple not present",
+                    graph.contains(ANY, subjectNode, PCDM_HAS_MEMBER_PROP.asNode(), memberNode));
+        }
     }
 
     private void verifyContainment(final String subjectUri, final List<String> children) throws Exception {

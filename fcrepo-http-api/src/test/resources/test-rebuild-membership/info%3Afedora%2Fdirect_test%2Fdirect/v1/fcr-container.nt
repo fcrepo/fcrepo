@@ -1,0 +1,2 @@
+<info:fedora/direct_test/direct> <http://www.w3.org/ns/ldp#membershipResource> <info:fedora/direct_test> .
+<info:fedora/direct_test/direct> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember> .

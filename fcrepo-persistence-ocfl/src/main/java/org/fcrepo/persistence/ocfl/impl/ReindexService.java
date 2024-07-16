@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
 
 import io.ocfl.api.OcflRepository;
+import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
@@ -221,15 +222,20 @@ public class ReindexService {
     }
 
     /**
-     * Index all membership properties by querying for Direct containers, and then
+     * Index all membership properties by querying for Direct and Indirect containers, and then
      * trying population of the membership index for each one
      * @param transaction the transaction id.
      */
     public void indexMembership(final Transaction transaction) {
+        indexContainerType(transaction, RdfLexicon.DIRECT_CONTAINER);
+        indexContainerType(transaction, RdfLexicon.INDIRECT_CONTAINER);
+    }
+
+    private void indexContainerType(final Transaction transaction, Resource containerType) {
         LOGGER.debug("Starting indexMembership for transaction {}", transaction);
         final var fields = List.of(Condition.Field.FEDORA_ID);
         final var conditions = List.of(Condition.fromEnums(Condition.Field.RDF_TYPE, Condition.Operator.EQ,
-                RdfLexicon.DIRECT_CONTAINER.getURI()));
+                containerType.getURI()));
         int offset = 0;
 
         try {
