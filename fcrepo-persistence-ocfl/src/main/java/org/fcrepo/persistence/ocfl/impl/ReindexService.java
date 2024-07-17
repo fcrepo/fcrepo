@@ -231,7 +231,7 @@ public class ReindexService {
         indexContainerType(transaction, RdfLexicon.INDIRECT_CONTAINER);
     }
 
-    private void indexContainerType(final Transaction transaction, Resource containerType) {
+    private void indexContainerType(final Transaction transaction, final Resource containerType) {
         LOGGER.debug("Starting indexMembership for transaction {}", transaction);
         final var fields = List.of(Condition.Field.FEDORA_ID);
         final var conditions = List.of(Condition.fromEnums(Condition.Field.RDF_TYPE, Condition.Operator.EQ,
