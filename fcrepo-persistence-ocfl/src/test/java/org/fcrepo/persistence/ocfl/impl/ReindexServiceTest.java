@@ -141,7 +141,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
 
         verify(transaction, times(2)).commit();
-        verify(searchIndex).doSearch(any(SearchParameters.class));
+        verify(searchIndex, times(2)).doSearch(any(SearchParameters.class));
     }
 
     @Test
@@ -213,7 +213,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
 
         verify(transaction, times(numberContainers + 1)).commit();
-        verify(searchIndex).doSearch(any(SearchParameters.class));
+        verify(searchIndex, times(2)).doSearch(any(SearchParameters.class));
     }
 
     @Test
@@ -354,7 +354,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(transaction, times(numberContainers + 1)).commit();
         verify(searchIndex, times(numberContainers)).addUpdateIndex(any(Transaction.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class));
-        verify(membershipService, times(numberContainers)).populateMembershipHistory(any(Transaction.class),
+        verify(membershipService, times(numberContainers * 2)).populateMembershipHistory(any(Transaction.class),
                 any(FedoraId.class));
     }
 
