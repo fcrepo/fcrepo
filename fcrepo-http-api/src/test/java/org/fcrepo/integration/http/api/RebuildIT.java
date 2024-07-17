@@ -13,9 +13,7 @@ import io.ocfl.api.OcflRepository;
 import io.ocfl.api.model.ObjectVersionId;
 import io.ocfl.api.model.VersionInfo;
 import io.ocfl.api.model.VersionNum;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Property;
@@ -55,13 +53,11 @@ import java.util.stream.StreamSupport;
 
 import static java.text.MessageFormat.format;
 import static java.util.Arrays.asList;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.Response.Status.GONE;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
@@ -280,7 +276,7 @@ public class RebuildIT extends AbstractResourceIT {
         assertHasMembership(directContainerUri, directMemberUri);
     }
 
-    private void assertHasMembership(String subjectUri, String memberUri) throws Exception {
+    private void assertHasMembership(final String subjectUri, final String memberUri) throws Exception {
         final var subjectNode = createURI(subjectUri);
         final var memberNode = createURI(memberUri);
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectUri))) {
