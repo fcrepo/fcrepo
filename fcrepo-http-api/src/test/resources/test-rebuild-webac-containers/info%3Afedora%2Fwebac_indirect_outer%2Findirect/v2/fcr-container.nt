@@ -1,3 +1,0 @@
-<info:fedora/webac_indirect_outer/indirect> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://www.w3.org/ns/ldp#member> .
-<info:fedora/webac_indirect_outer/indirect> <http://www.w3.org/ns/ldp#membershipResource> <info:fedora/webac_indirect_outer/indirect> .
-<info:fedora/webac_indirect_outer/indirect> <http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.w3.org/ns/ldp#MemberSubject> .

@@ -298,27 +298,32 @@ public class RebuildIT extends AbstractResourceIT {
         assertContains("webac_basic");
         assertContains("webac_basic/basic_child");
 
-//        assertEquals(OK.getStatusCode(), getStatus(getObjMethod("work_container")));
-
         final String indirectContainerUri = serverAddress + "webac_indirect_outer/indirect";
         final String indirectMemberUri = serverAddress + "webac_indirect_outer/indirect/basic_child";
-        final String indirectWebacPath = serverAddress + "webac_indirect_outer/indirect/fcr:acl";
+        final String indirectWebacPath = "webac_indirect_outer/indirect/fcr:acl";
         final String indirectWebacUri = serverAddress + indirectWebacPath;
         assertHasMembership(indirectContainerUri, LDP_MEMBER, indirectMemberUri);
-        verifyContainment(indirectContainerUri, asList("basic_child"));
-//        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(indirectWebacPath)));
+        verifyContainment(indirectContainerUri, asList("basic_child"), asList("fcr:acl"));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(indirectWebacPath)));
         assertDoesNotHaveMembership(indirectContainerUri, LDP_MEMBER, indirectWebacUri);
 
         final String directContainerUri = serverAddress + "webac_direct";
         final String directMemberUri = serverAddress + "webac_direct/direct_child";
+        final String directWebacPath = "webac_direct/fcr:acl";
+        final String directWebacUri = serverAddress + directWebacPath;
         assertHasMembership(directContainerUri, LDP_MEMBER, directMemberUri);
-        verifyContainment(directContainerUri, asList("direct_child"));
+        verifyContainment(directContainerUri, asList("direct_child"), asList("fcr:acl"));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(directWebacPath)));
+        assertDoesNotHaveMembership(indirectContainerUri, LDP_MEMBER, directWebacUri);
 
         final String basicContainerUri = serverAddress + "webac_basic";
-        verifyContainment(basicContainerUri, asList("basic_child"));
+        final String basicWebacPath = "webac_basic/fcr:acl";
+        verifyContainment(basicContainerUri, asList("basic_child"), asList("fcr:acl"));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(basicWebacPath)));
     }
 
-    private void assertHasMembership(final String subjectUri, final Property property, final String memberUri) throws Exception {
+    private void assertHasMembership(final String subjectUri, final Property property, final String memberUri)
+            throws Exception {
         final var subjectNode = createURI(subjectUri);
         final var memberNode = createURI(memberUri);
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectUri))) {
@@ -328,7 +333,8 @@ public class RebuildIT extends AbstractResourceIT {
         }
     }
 
-    private void assertDoesNotHaveMembership(final String subjectUri, final Property property, final String memberUri) throws Exception {
+    private void assertDoesNotHaveMembership(final String subjectUri, final Property property, final String memberUri)
+            throws Exception {
         final var subjectNode = createURI(subjectUri);
         final var memberNode = createURI(memberUri);
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectUri))) {
