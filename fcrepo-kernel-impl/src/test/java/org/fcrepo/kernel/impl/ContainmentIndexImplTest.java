@@ -729,6 +729,18 @@ public class ContainmentIndexImplTest {
         assertEquals(10, foundChildren.size());
         assertEquals(expectedChildren, foundChildren);
     }
+
+    @Test
+    public void testAddAclInTransaction() {
+        stubObject("parent1");
+        final FedoraId aclId = FedoraId.create("parent1/fcr:acl");
+        stubObject("transaction1");
+        assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
+        containmentIndex.addContainedBy(transaction1, parent1.getFedoraId(), aclId);
+        assertEquals(0, containmentIndex.getContains(transaction1, parent1.getFedoraId()).count());
+        // outside of the transaction, it still shouldn't show up
+        assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
+    }
 }
 
 

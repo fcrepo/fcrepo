@@ -61,6 +61,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
+import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
@@ -269,20 +270,77 @@ public class RebuildIT extends AbstractResourceIT {
 
         final String indirectContainerUri = serverAddress + "work_container";
         final String indirectMemberUri = serverAddress + "work_member";
-        assertHasMembership(indirectContainerUri, indirectMemberUri);
+        assertHasMembership(indirectContainerUri, PCDM_HAS_MEMBER_PROP, indirectMemberUri);
 
         final String directContainerUri = serverAddress + "direct_test";
         final String directMemberUri = serverAddress + "direct_test/direct/direct_member";
-        assertHasMembership(directContainerUri, directMemberUri);
+        assertHasMembership(directContainerUri, PCDM_HAS_MEMBER_PROP, directMemberUri);
     }
 
-    private void assertHasMembership(final String subjectUri, final String memberUri) throws Exception {
+    // Test intended to replicate FCREPO-3950
+    @Test
+    public void testRebuildContainersWithWebacs() throws Exception {
+        rebuild("test-rebuild-webac-containers");
+
+        // Optional debugging
+        if (LOGGER.isDebugEnabled()) {
+            ocflRepository.listObjectIds().forEach(id -> LOGGER.debug("Object id: {}", id));
+        }
+
+        assertEquals(8, ocflRepository.listObjectIds().count());
+        assertTrue("Should contain object with id: " + FedoraTypes.FEDORA_ID_PREFIX,
+                ocflRepository.containsObject(FedoraTypes.FEDORA_ID_PREFIX));
+        assertContains("webac_indirect_outer");
+        assertContains("webac_indirect_outer/indirect");
+        assertContains("webac_indirect_outer/indirect/basic_child");
+        assertContains("webac_direct");
+        assertContains("webac_direct/direct_child");
+        assertContains("webac_basic");
+        assertContains("webac_basic/basic_child");
+
+        final String indirectContainerUri = serverAddress + "webac_indirect_outer/indirect";
+        final String indirectMemberUri = serverAddress + "webac_indirect_outer/indirect/basic_child";
+        final String indirectWebacPath = "webac_indirect_outer/indirect/fcr:acl";
+        final String indirectWebacUri = serverAddress + indirectWebacPath;
+        assertHasMembership(indirectContainerUri, LDP_MEMBER, indirectMemberUri);
+        verifyContainment(indirectContainerUri, asList("basic_child"), asList("fcr:acl"));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(indirectWebacPath)));
+        assertDoesNotHaveMembership(indirectContainerUri, LDP_MEMBER, indirectWebacUri);
+
+        final String directContainerUri = serverAddress + "webac_direct";
+        final String directMemberUri = serverAddress + "webac_direct/direct_child";
+        final String directWebacPath = "webac_direct/fcr:acl";
+        final String directWebacUri = serverAddress + directWebacPath;
+        assertHasMembership(directContainerUri, LDP_MEMBER, directMemberUri);
+        verifyContainment(directContainerUri, asList("direct_child"), asList("fcr:acl"));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(directWebacPath)));
+        assertDoesNotHaveMembership(indirectContainerUri, LDP_MEMBER, directWebacUri);
+
+        final String basicContainerUri = serverAddress + "webac_basic";
+        final String basicWebacPath = "webac_basic/fcr:acl";
+        verifyContainment(basicContainerUri, asList("basic_child"), asList("fcr:acl"));
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(basicWebacPath)));
+    }
+
+    private void assertHasMembership(final String subjectUri, final Property property, final String memberUri)
+            throws Exception {
         final var subjectNode = createURI(subjectUri);
         final var memberNode = createURI(memberUri);
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectUri))) {
             final var graph = dataset.asDatasetGraph();
             Assert.assertTrue("Membership triple not present",
-                    graph.contains(ANY, subjectNode, PCDM_HAS_MEMBER_PROP.asNode(), memberNode));
+                    graph.contains(ANY, subjectNode, property.asNode(), memberNode));
+        }
+    }
+
+    private void assertDoesNotHaveMembership(final String subjectUri, final Property property, final String memberUri)
+            throws Exception {
+        final var subjectNode = createURI(subjectUri);
+        final var memberNode = createURI(memberUri);
+        try (final CloseableDataset dataset = getDataset(new HttpGet(subjectUri))) {
+            final var graph = dataset.asDatasetGraph();
+            Assert.assertFalse("Membership triple should not be present",
+                    graph.contains(ANY, subjectNode, property.asNode(), memberNode));
         }
     }
 

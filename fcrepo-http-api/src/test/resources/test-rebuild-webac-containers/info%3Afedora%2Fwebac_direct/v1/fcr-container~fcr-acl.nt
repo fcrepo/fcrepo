@@ -1,0 +1,14 @@
+<info:fedora/webac_direct/fcr:acl#authzRead> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/auth/acl#Authorization> .
+<info:fedora/webac_direct/fcr:acl#authzRead> <http://www.w3.org/2000/01/rdf-schema#label> "Read Authorization" .
+<info:fedora/webac_direct/fcr:acl#authzRead> <http://www.w3.org/2000/01/rdf-schema#comment> "Define users authorized for access to the container." .
+<info:fedora/webac_direct/fcr:acl#authzRead> <http://www.w3.org/ns/auth/acl#accessTo> <info:fedora/webac_direct> .
+<info:fedora/webac_direct/fcr:acl#authzRead> <http://www.w3.org/ns/auth/acl#default> <info:fedora/webac_direct> .
+<info:fedora/webac_direct/fcr:acl#authzRead> <http://www.w3.org/ns/auth/acl#agent> "agent2" .
+<info:fedora/webac_direct/fcr:acl#authzRead> <http://www.w3.org/ns/auth/acl#mode> <http://www.w3.org/ns/auth/acl#Read> .
+<info:fedora/webac_direct/fcr:acl#authzReadWrite> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/ns/auth/acl#Authorization> .
+<info:fedora/webac_direct/fcr:acl#authzReadWrite> <http://www.w3.org/2000/01/rdf-schema#label> "Read & Write Authorization" .
+<info:fedora/webac_direct/fcr:acl#authzReadWrite> <http://www.w3.org/2000/01/rdf-schema#comment> "Define users authorized for full control over the container." .
+<info:fedora/webac_direct/fcr:acl#authzReadWrite> <http://www.w3.org/ns/auth/acl#accessTo> <info:fedora/webac_direct> .
+<info:fedora/webac_direct/fcr:acl#authzReadWrite> <http://www.w3.org/ns/auth/acl#agent> "agent1" .
+<info:fedora/webac_direct/fcr:acl#authzReadWrite> <http://www.w3.org/ns/auth/acl#mode> <http://www.w3.org/ns/auth/acl#Read> .
+<info:fedora/webac_direct/fcr:acl#authzReadWrite> <http://www.w3.org/ns/auth/acl#mode> <http://www.w3.org/ns/auth/acl#Write> .

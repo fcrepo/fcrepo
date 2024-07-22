@@ -567,6 +567,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Override
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child,
                                final Instant startTime, final Instant endTime) {
+        // Don't add containment for these types of children
+        if (childShouldNotBeContained(child)) {
+            return;
+        }
         tx.doInTx(() -> {
             final String parentID = parent.getFullId();
             final String childID = child.getFullId();
@@ -581,6 +585,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                 doDirectUpsert(parentID, childID, startTime, endTime);
             }
         });
+    }
+
+    private boolean childShouldNotBeContained(final FedoraId child) {
+        return child.isAcl();
     }
 
     @Override
