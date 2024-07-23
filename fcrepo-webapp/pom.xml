@@ -14,7 +14,7 @@
   <properties>
     <!-- integration test properties -->
     <fcrepo.test.context.path>/</fcrepo.test.context.path>
-    
+
     <!-- sonar -->
     <sonar.artifact.path>${project.build.directory}${file.separator}${project.artifactId}-${project.version}.war</sonar.artifact.path>
 
@@ -22,7 +22,6 @@
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
-    <jetty-console.version>1.64</jetty-console.version>
   </properties>
 
   <dependencies>
@@ -457,99 +456,5 @@
       </plugin>
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>one-click</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-      <properties>
-      </properties>
-
-      <build>
-        <resources>
-          <resource>
-            <directory>src/main/resources</directory>
-            <filtering>true</filtering>
-            <includes>
-              <include>**/fcrepo-config.xml</include>
-            </includes>
-          </resource>
-        </resources>
-
-        <plugins>
-          <plugin>
-            <artifactId>maven-war-plugin</artifactId>
-            <configuration>
-              <attachClasses>true</attachClasses>
-              <webResources>
-                <resource>
-                  <directory>src/main/jetty-console</directory>
-                  <filtering>true</filtering>
-                </resource>
-                <resource>
-                  <directory>src/main/webapp</directory>
-                  <includes>
-                    <include>*.html</include>
-                  </includes>
-                  <filtering>true</filtering>
-                </resource>
-              </webResources>
-                <archive>
-                  <index>true</index>
-                  <manifest>
-                    <addClasspath>true</addClasspath>
-                    <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  </manifest>
-                </archive>
-            </configuration>
-          </plugin>
-
-          <plugin>
-            <groupId>org.fcrepo</groupId>
-            <artifactId>jetty-console-maven-plugin</artifactId>
-            <version>${jetty-console.version}</version>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>createconsole</goal>
-                </goals>
-                <configuration>
-                  <backgroundImage>${basedir}/src/main/webapp/static/images/fedora_logo_10in.png</backgroundImage>
-                  <destinationFile>
-                    ${project.build.directory}${file.separator}${project.artifactId}-${project.version}-jetty-console.jar
-                  </destinationFile>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <artifactId>maven-clean-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>remove-war</id>
-                <phase>post-integration-test</phase>
-                <goals>
-                  <goal>clean</goal>
-                </goals>
-                <configuration>
-                  <excludeDefaultDirectories>true</excludeDefaultDirectories>
-                  <filesets>
-                    <fileset>
-                      <directory>${project.build.directory}</directory>
-                      <includes>
-                        <include>**/*.war</include>
-                      </includes>
-                    </fileset>
-                  </filesets>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
 
 </project>
