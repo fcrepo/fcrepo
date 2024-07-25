@@ -71,28 +71,16 @@ described in the [deployment guide](https://wiki.lyrasis.org/display/FEDORA6x/De
 If deployed locally using a war file called `fcrepo.war`, the web application will typically be available at
 http://localhost:8080/fcrepo/rest.
 
-There are two convenient methods for *testing* the Fedora application by launching it directly from the command line.
+There is a convenient method for *testing* the Fedora application by launching it directly from the command line.
 
-One option is to use the "one click" application, which comes with an embedded Jetty servlet. This can be optionally built by running:
-
-    mvn install -pl fcrepo-webapp -P one-click
-
-and can be started by either double-clicking on the jar file or by running the following command:
-
-    java -jar ./fcrepo-webapp/target/fcrepo-webapp-<version>-jetty-console.jar
-
-By default, a Fedora home directory, `fcrepo`, is created in the current directory. You can change the default location by passing in an argument when starting the one-click, e.g.:
-
-    java -Dfcrepo.home=/data/fedora-home -jar fcrepo-webapp-<version>-jetty-console.jar
-
-An alternative is use the maven command: `mvn jetty:run`
+Use the maven command: `mvn jetty:run`
 
 ```
 $ cd fcrepo-webapp
 $ mvn jetty:run
 ```
 
-For both of these methods, your Fedora repository will be available at: [http://localhost:8080/rest/](http://localhost:8080/rest/)
+For this method, your Fedora repository will be available at: [http://localhost:8080/rest/](http://localhost:8080/rest/)
 
 Note: You may need to set the $JAVA_HOME property, since Maven uses it to find the Java runtime to use, overriding your PATH.
 `mvn --version` will show which version of Java is being used by Maven, e.g.:
