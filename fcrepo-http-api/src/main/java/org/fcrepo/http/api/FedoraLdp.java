@@ -219,8 +219,8 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.info("HEAD for: {}", externalPath);
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
-        if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
-            return getMemento(datetimeHeader, resource(), inlineDisposition);
+        if (!isBlank(datetimeHeader) && resource(true).isOriginalResource()) {
+            return getMemento(datetimeHeader, resource(true), inlineDisposition);
         }
 
         final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
@@ -303,8 +303,8 @@ public class FedoraLdp extends ContentExposingResource {
             throws IOException, UnsupportedAlgorithmException {
 
         final String datetimeHeader = headers.getHeaderString(ACCEPT_DATETIME);
-        if (!isBlank(datetimeHeader) && resource().isOriginalResource()) {
-            return getMemento(datetimeHeader, resource(), inlineDisposition);
+        if (!isBlank(datetimeHeader) && resource(true).isOriginalResource()) {
+            return getMemento(datetimeHeader, resource(true), inlineDisposition);
         }
 
         checkCacheControlHeaders(request, servletResponse, resource(), transaction());
