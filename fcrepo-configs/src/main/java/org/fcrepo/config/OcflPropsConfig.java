@@ -135,6 +135,9 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.s3.enable.checksum:true}")
     private boolean s3EnableChecksum;
 
+    @Value("${fcrepo.ocfl.show_path:false}")
+    private boolean showPath;
+
     private DigestAlgorithm FCREPO_DIGEST_ALGORITHM;
 
     /**
@@ -187,6 +190,7 @@ public class OcflPropsConfig extends BasePropsConfig {
                             .collect(Collectors.joining(", "))));
         }
         LOGGER.info("Fedora OCFL digest algorithm: {}", FCREPO_DIGEST_ALGORITHM.getAlgorithm());
+        LOGGER.info("Fedora OCFL show path: {}", showPath);
     }
 
     /**
@@ -545,5 +549,12 @@ public class OcflPropsConfig extends BasePropsConfig {
      */
     public int getS3MaxConcurrency() {
         return s3MaxConcurrency;
+    }
+
+    /**
+     * @return true if the path of the OCFL object should be shown
+     */
+    public boolean isShowPath() {
+        return showPath;
     }
 }
