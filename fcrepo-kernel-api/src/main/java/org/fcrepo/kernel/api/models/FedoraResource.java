@@ -235,4 +235,10 @@ public interface FedoraResource {
      * @return the interaction model.
      */
     String getInteractionModel();
+
+    /**
+     * Get the resource's path in storage.
+     * @return the path in storage.
+     */
+    String getStorageRelativePath();
 }

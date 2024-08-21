@@ -181,6 +181,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
         resc.setStateToken(headers.getStateToken());
         resc.setIsArchivalGroup(headers.isArchivalGroup());
         resc.setInteractionModel(headers.getInteractionModel());
+        resc.setStorageRelativePath(headers.getStorageRelativePath());
 
         // If there's a version, then it's a memento
         if (version != null) {

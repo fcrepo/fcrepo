@@ -12,6 +12,7 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_OCFL_PATH;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
@@ -100,6 +101,11 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
         describedResource.getSystemTypes(true).forEach(triple -> {
             triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));
         });
+
+        final var contentPath = resource.getStorageRelativePath();
+        if (contentPath != null) {
+            triples.add(Triple.create(subject, FEDORA_OCFL_PATH.asNode(), createLiteral(contentPath)));
+        }
 
         return new DefaultRdfStream(subject, triples.stream());
     }

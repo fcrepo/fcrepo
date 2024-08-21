@@ -70,6 +70,7 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
         kernelHeaders.setObjectRoot(storageHeaders.isObjectRoot());
         kernelHeaders.setStateToken(storageHeaders.getStateToken());
         kernelHeaders.setHeadersVersion(storageHeaders.getHeadersVersion());
+        kernelHeaders.setStorageRelativePath(storageHeaders.getStorageRelativePath());
     }
 
     /**
@@ -416,4 +417,8 @@ public class ResourceHeadersAdapter implements ResourceHeaders {
         storageHeaders.withHeadersVersion(headersVersion);
     }
 
+    @Override
+    public String getStorageRelativePath() {
+        return kernelHeaders.getStorageRelativePath();
+    }
 }

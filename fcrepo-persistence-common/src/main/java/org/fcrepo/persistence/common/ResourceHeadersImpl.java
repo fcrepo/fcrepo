@@ -61,6 +61,8 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private String headersVersion;
 
+    private String storageRelativePath;
+
     @Override
     public FedoraId getId() {
         return id;
@@ -325,6 +327,18 @@ public class ResourceHeadersImpl implements ResourceHeaders {
      */
     public void setHeadersVersion(final String headersVersion) {
         this.headersVersion = headersVersion;
+    }
+
+    @Override
+    public String getStorageRelativePath() {
+        return storageRelativePath;
+    }
+
+    /**
+     * @param storageRelativePath the storage relative path
+     */
+    public void setStorageRelativePath(final String storageRelativePath) {
+        this.storageRelativePath = storageRelativePath;
     }
 
     @Override

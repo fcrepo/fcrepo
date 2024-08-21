@@ -102,6 +102,8 @@ public class FedoraResourceImpl implements FedoraResource {
 
     private boolean isArchivalGroup;
 
+    private String storageRelativePath;
+
     protected FedoraResourceImpl(final FedoraId fedoraId,
                                  final Transaction transaction,
                                  final PersistentStorageSessionManager pSessionManager,
@@ -380,6 +382,11 @@ public class FedoraResourceImpl implements FedoraResource {
         return this.interactionModel;
     }
 
+    @Override
+    public String getStorageRelativePath() {
+        return this.storageRelativePath;
+    }
+
     /**
      * @param parentId the parentId to set
      */
@@ -477,5 +484,12 @@ public class FedoraResourceImpl implements FedoraResource {
 
     public Optional<FedoraId> getArchivalGroupId() {
         return Optional.ofNullable(archivalGroupId);
+    }
+
+    /**
+     * @param storageRelativePath the path to the content
+     */
+    protected void setStorageRelativePath(final String storageRelativePath) {
+        this.storageRelativePath = storageRelativePath;
     }
 }
