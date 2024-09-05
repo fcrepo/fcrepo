@@ -19,14 +19,11 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 
-import javax.inject.Inject;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
 import org.apache.jena.graph.Triple;
-import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.TimeMap;
@@ -43,9 +40,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
-
-    @Inject
-    OcflPropsConfig ocflPropsConfig;
 
     @Override
     public Stream<Triple> get(final FedoraResource resource) {
