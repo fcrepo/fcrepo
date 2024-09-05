@@ -15,6 +15,7 @@ import org.apache.jena.rdf.model.RDFNode;
 
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.api.services.EtagService;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
@@ -70,6 +71,7 @@ import javax.ws.rs.core.SecurityContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Path;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -240,6 +242,9 @@ public class FedoraLdpTest {
     @Mock
     private FedoraPropsConfig fedoraPropsConfig;
 
+    @Mock
+    private OcflPropsConfig ocflPropsConfig;
+
     private final List<URI> typeList = new ArrayList<>();
 
     private static final Logger log = getLogger(FedoraLdpTest.class);
@@ -277,6 +282,7 @@ public class FedoraLdpTest {
         setField(testObj, "resourceHelper", resourceHelper);
         setField(testObj, "etagService", etagService);
         setField(testObj, "dbTransactionExecutor", new DbTransactionExecutor());
+        setField(testObj, "ocflPropsConfig", ocflPropsConfig);
 
         when(rdfNamespaceRegistry.getNamespaces()).thenReturn(new HashMap<>());
 
@@ -323,6 +329,7 @@ public class FedoraLdpTest {
 
         when(etagService.getRdfResourceEtag(nullable(Transaction.class), any(FedoraResource.class),
                 nullable(LdpTriplePreferences.class), any())).thenReturn("etagval");
+        when(ocflPropsConfig.isShowPath()).thenReturn(false);
     }
 
     private FedoraResource setResource(final Class<? extends FedoraResource> klass) {
@@ -371,6 +378,7 @@ public class FedoraLdpTest {
         when(mockResource.getStateToken()).thenReturn("");
         when(mockResource.getDescribedResource()).thenReturn(mockResource);
         when(mockResource.getArchivalGroupId()).thenReturn(Optional.ofNullable(archivalGroupId));
+        when(mockResource.getStorageRelativePath()).thenReturn(Path.of("some/ocfl/path"));
 
         setupResourceService(mockResource, tripleTypesList);
         return mockResource;
@@ -513,6 +521,25 @@ public class FedoraLdpTest {
         assertShouldBeAnLDPNonRDFSource();
         assertShouldNotAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToBinaryDescription();
+    }
+
+    @Test
+    public void testHeadShowOcflPathDisabled() throws Exception {
+        setResource(Container.class);
+        when(mockRequest.getMethod()).thenReturn("HEAD");
+        final Response actual = testObj.head(false);
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertFalse("Should not advertise Fedora-Ocfl-Path header", mockResponse.containsHeader("Fedora-Ocfl-Path"));
+    }
+
+    @Test
+    public void testHeadShowOcflPathEnabled() throws Exception {
+        when(ocflPropsConfig.isShowPath()).thenReturn(true);
+        setResource(Container.class);
+        when(mockRequest.getMethod()).thenReturn("HEAD");
+        final Response actual = testObj.head(false);
+        assertEquals(OK.getStatusCode(), actual.getStatus());
+        assertTrue("Should advertise Fedora-Ocfl-Path header", mockResponse.containsHeader("Fedora-Ocfl-Path"));
     }
 
     private void assertContentLengthGreaterThan0(final String contentLength) {
@@ -1316,5 +1343,4 @@ public class FedoraLdpTest {
         final MediaType sanitizedMediaType = MediaType.valueOf(getSimpleContentType(mediaType));
         assertEquals("text/plain", sanitizedMediaType.toString());
     }
-
 }

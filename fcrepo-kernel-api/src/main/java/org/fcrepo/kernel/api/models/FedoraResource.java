@@ -6,6 +6,7 @@
 package org.fcrepo.kernel.api.models;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.time.Instant;
 
 import java.util.List;
@@ -240,5 +241,5 @@ public interface FedoraResource {
      * Get the resource's path in storage.
      * @return the path in storage.
      */
-    String getStorageRelativePath();
+    Path getStorageRelativePath();
 }
