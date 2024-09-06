@@ -51,9 +51,9 @@ public class RangeTest {
     public void testUnboundedLowerRangeParsing() {
         final Range range = Range.convert("bytes=-50");
 
-        assertEquals(0L, range.start());
+        assertEquals(-1L, range.start());
         assertEquals(50L, range.end());
-        assertEquals(51L, range.size());
+        assertEquals(50L, range.size());
         assertTrue(range.hasRange());
 
     }

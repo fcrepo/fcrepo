@@ -20,6 +20,9 @@ public class Range {
 
     private final long start;
 
+    // Did the Range actually specify a start?
+    private final boolean no_start;
+
     private final long end;
 
     private static final Pattern rangePattern =
@@ -44,10 +47,21 @@ public class Range {
      * Left and right bounded range
      * @param start the start
      * @param end the end
+     * @param no_start whether there was a starting byte
      */
-    private Range(final long start, final long end) {
+    private Range(final long start, final long end, final boolean no_start) {
         this.start = start;
         this.end = end;
+        this.no_start = no_start;
+    }
+
+    /**
+     * Left and right bounded range
+     * @param start the start
+     * @param end the end
+     */
+    private Range(final long start, final long end) {
+        this(start, end, false);
     }
 
     /**
@@ -65,16 +79,18 @@ public class Range {
     public long size() {
         if (end == -1) {
             return -1;
+        } else if (start == 0 && no_start) {
+            return end;
         }
         return end - start + 1;
     }
 
     /**
      * Start of the range
-     * @return start of the range
+     * @return start of the range, or -1 if no start was specified
      */
     public long start() {
-        return start;
+        return no_start ? -1 : start;
     }
 
     /**
@@ -102,11 +118,14 @@ public class Range {
         final String to = matcher.group(2);
 
         final long start;
+        final boolean no_start;
 
         if (from.equals("")) {
             start = 0;
+            no_start = true;
         } else {
             start = parseLong(from);
+            no_start = false;
         }
 
         final long end;
@@ -116,6 +135,6 @@ public class Range {
             end = parseLong(to);
         }
 
-        return new Range(start, end);
+        return new Range(start, end, no_start);
     }
 }

@@ -349,25 +349,43 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
                 final String endAsString;
 
-                if (range.end() == -1) {
+                if (
+                        range.end() == -1 || // Range end is not specified
+                        range.end() > contentSize || // Range end is too large
+                        range.start() == -1 // Range start is not specified
+                ) {
                     endAsString = Long.toString(contentSize - 1);
                 } else {
                     endAsString = Long.toString(range.end());
                 }
 
+                final String startAsString;
+                if (range.start() == -1) {
+                    startAsString = Long.toString(contentSize - 1 - range.size());
+                } else {
+                    startAsString = Long.toString(range.start());
+                }
+
                 final String contentRangeValue =
-                        String.format("bytes %s-%s/%s", range.start(),
+                        String.format("bytes %s-%s/%s", startAsString,
                                 endAsString, contentSize);
 
-                if (range.end() > contentSize ||
-                        (range.end() == -1 && range.start() > contentSize)) {
+
+                if (
+                        (range.end() != -1 && range.start() > range.end()) ||
+                        (range.end() == -1 && range.start() > contentSize)
+                ) {
 
                     builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
                             .header("Content-Range", contentRangeValue);
                 } else {
                     @SuppressWarnings("resource")
                     final RangeRequestInputStream rangeInputStream =
-                            new RangeRequestInputStream(binary.getContent(), range.start(), range.size());
+                            new RangeRequestInputStream(
+                                    binary.getContent(),
+                                    Long.parseLong(startAsString),
+                                    range.size()
+                            );
 
                     builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
                             .header("Content-Range", contentRangeValue)
