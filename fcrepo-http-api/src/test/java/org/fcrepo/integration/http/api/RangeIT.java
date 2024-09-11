@@ -46,13 +46,15 @@ public class RangeIT extends AbstractResourceIT{
     public void testRangeAsContentLength() throws IOException {
         final var pid = getRandomUniqueId();
         final String contentLength = createDatastreamAndGetLength(pid);
-        final var range = "0-" + contentLength;
+        final var returnRange = "0-" + (Integer.parseInt(contentLength) - 1);
+        final var requestRange = "0-" + contentLength;
         final var getRange = getObjMethod(pid);
-        getRange.addHeader("Range", "bytes=" + range);
+        getRange.addHeader("Range", "bytes=" + requestRange);
         try (final var res = execute(getRange)) {
             assertEquals(206, res.getStatusLine().getStatusCode());
             checkForLinkHeader(res, NON_RDF_SOURCE.getURI(), "type");
-            assertEquals("bytes " + range + "/" + contentLength, res.getFirstHeader("Content-Range").getValue());
+            assertEquals("bytes " + returnRange + "/" + contentLength, res.getFirstHeader("Content-Range").getValue());
+            assertEquals(contentLength, res.getFirstHeader("Content-Length").getValue());
         }
     }
 
@@ -60,7 +62,7 @@ public class RangeIT extends AbstractResourceIT{
     public void testRangeTooLong() throws IOException {
         final var pid = getRandomUniqueId();
         final String contentLength = createDatastreamAndGetLength(pid);
-        final var getRangeVal = "0-" + Integer.parseInt(contentLength) + 1;
+        final var getRangeVal = "0-" + (Integer.parseInt(contentLength) + 1);
         final var returnRangeVal = "0-" + (Integer.parseInt(contentLength) - 1);
         final var getRange = getObjMethod(pid);
         getRange.addHeader("Range", "bytes=" + getRangeVal);
@@ -71,6 +73,7 @@ public class RangeIT extends AbstractResourceIT{
                     "bytes " + returnRangeVal + "/" + contentLength,
                     res.getFirstHeader("Content-Range").getValue()
             );
+            assertEquals(contentLength, res.getFirstHeader("Content-Length").getValue());
         }
     }
 
@@ -78,10 +81,10 @@ public class RangeIT extends AbstractResourceIT{
     public void testLastHalf() throws IOException {
         final var pid = getRandomUniqueId();
         final String contentLength = createDatastreamAndGetLength(pid);
-        final var halfContentLength = Math.round((float) Integer.parseInt(contentLength) / 2);
-        final Integer contentLengthInt = Integer.parseInt(contentLength);
+        final int contentLengthInt = Integer.parseInt(contentLength);
+        final var halfContentLength = contentLengthInt / 2;
         final var rangeEnd = contentLengthInt - 1;
-        final var rangeStart = rangeEnd - halfContentLength;
+        final var rangeStart = rangeEnd - halfContentLength + 1;
         final var range = "-" + halfContentLength;
         final var getRange = getObjMethod(pid);
         getRange.addHeader("Range", "bytes=" + range);
@@ -97,7 +100,8 @@ public class RangeIT extends AbstractResourceIT{
     }
 
     private String createDatastreamAndGetLength(final String pid) throws IOException {
-        final String content = RandomStringUtils.random(100, true, true);
+        final var randomLength = (int)((Math.random() + 0.1) * 100);
+        final String content = RandomStringUtils.random(randomLength, true, true);
         createDatastream(pid, content);
         try (final var res = execute(getObjMethod(pid))) {
             assertEquals(200, res.getStatusLine().getStatusCode());
