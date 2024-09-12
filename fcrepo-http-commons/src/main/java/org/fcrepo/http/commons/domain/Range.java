@@ -181,7 +181,7 @@ public class Range {
             // If a valid byte-range-set includes at least one byte-range-spec with a first-byte-pos that is less than
             // the current length of the representation, or at least one suffix-byte-range-spec with a non-zero
             // suffix-length, then the byte-range-set is satisfiable. Otherwise, the byte-range-set is unsatisfiable.
-            this.satisfiable = start < length && (end() == -1 || end > start) && (start != -1 && end != -1);
+            this.satisfiable = start < length && (end() == -1 || end >= start) && (start != -1 && end != -1);
         }
 
         /**

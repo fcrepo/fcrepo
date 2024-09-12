@@ -151,4 +151,14 @@ public class RangeTest {
         assertEquals(9999, rangeOfLength2.end());
         assertEquals(500, rangeOfLength2.size());
     }
+
+    @Test
+    public void testZeroRange() {
+        final Range range = Range.convert("bytes=0-0");
+        final var rangeOfLength = range.rangeOfLength(100);
+        assertEquals(0, rangeOfLength.start());
+        assertEquals(0, rangeOfLength.end());
+        assertEquals(1, rangeOfLength.size());
+        assertTrue(rangeOfLength.isSatisfiable());
+    }
 }
