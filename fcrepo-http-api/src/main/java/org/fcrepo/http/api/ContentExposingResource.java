@@ -6,28 +6,6 @@
 package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.nullToEmpty;
-import static java.net.URI.create;
-import static java.text.MessageFormat.format;
-import static java.util.stream.Collectors.toSet;
-import static java.util.stream.Stream.empty;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
-import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.notAcceptable;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Variant.mediaTypes;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -55,6 +33,29 @@ import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
+
+import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
+import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static javax.ws.rs.core.HttpHeaders.LINK;
+import static javax.ws.rs.core.MediaType.TEXT_HTML;
+import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
+import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
+import static javax.ws.rs.core.Response.created;
+import static javax.ws.rs.core.Response.noContent;
+import static javax.ws.rs.core.Response.notAcceptable;
+import static javax.ws.rs.core.Response.ok;
+import static javax.ws.rs.core.Response.status;
+import static javax.ws.rs.core.Variant.mediaTypes;
+import static java.net.URI.create;
+import static java.text.MessageFormat.format;
+import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Stream.empty;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -126,6 +127,8 @@ import org.fcrepo.kernel.api.services.ResourceTripleService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 import org.fcrepo.kernel.api.utils.ContentDigest;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
@@ -135,9 +138,6 @@ import org.apache.jena.graph.Triple;
 import org.jvnet.hk2.annotations.Optional;
 import org.slf4j.Logger;
 import org.springframework.http.ContentDisposition;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
 
 /**
  * An abstract class that sits between AbstractResource and any resource that
@@ -347,31 +347,30 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
                 final long contentSize = binary.getContentSize();
 
-                final String endAsString;
-
-                if (range.end() == -1) {
-                    endAsString = Long.toString(contentSize - 1);
-                } else {
-                    endAsString = Long.toString(range.end());
-                }
+                final var rangeOfLength = range.rangeOfLength(contentSize);
 
                 final String contentRangeValue =
-                        String.format("bytes %s-%s/%s", range.start(),
-                                endAsString, contentSize);
+                        String.format("bytes %s-%s/%s", rangeOfLength.startAsString(),
+                                rangeOfLength.endAsString(), contentSize);
 
-                if (range.end() > contentSize ||
-                        (range.end() == -1 && range.start() > contentSize)) {
+                if (
+                    !rangeOfLength.isSatisfiable()
+                ) {
 
                     builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
                             .header("Content-Range", contentRangeValue);
                 } else {
                     @SuppressWarnings("resource")
                     final RangeRequestInputStream rangeInputStream =
-                            new RangeRequestInputStream(binary.getContent(), range.start(), range.size());
+                            new RangeRequestInputStream(
+                                    binary.getContent(),
+                                    rangeOfLength.start(),
+                                    rangeOfLength.size()
+                            );
 
                     builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
                             .header("Content-Range", contentRangeValue)
-                            .header(CONTENT_LENGTH, range.size());
+                            .header(CONTENT_LENGTH, rangeOfLength.size());
                 }
 
             } else {
