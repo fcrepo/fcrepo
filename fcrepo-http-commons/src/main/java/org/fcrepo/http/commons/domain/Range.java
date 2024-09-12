@@ -37,7 +37,7 @@ public class Range {
      * Left-bounded range
      * @param start the start
      */
-    public Range(final long start) {
+    protected Range(final long start) {
         this(start, -1L);
     }
 
@@ -55,7 +55,7 @@ public class Range {
      * Does this range actually impose limits
      * @return true if the range imposes limits
      */
-    public boolean hasRange() {
+    protected boolean hasRange() {
         return !(start == -1 && end == -1);
     }
 
@@ -63,7 +63,7 @@ public class Range {
      * Length contained in the range
      * @return length of the range
      */
-    public long size() {
+    protected long size() {
         if (end == -1) {
             return -1;
         } else if (start == -1) {
@@ -76,7 +76,7 @@ public class Range {
      * Start of the range
      * @return start of the range, or -1 if no start was specified
      */
-    public long start() {
+    protected long start() {
         return start;
     }
 
@@ -84,7 +84,7 @@ public class Range {
      * End of the range
      * @return end of the range
      */
-    public long end() {
+    protected long end() {
         return end;
     }
 

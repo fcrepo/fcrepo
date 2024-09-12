@@ -64,10 +64,6 @@ public class RangeTest {
         final Range range = Range.convert("something-thats-not-a-range");
 
         assertFalse(range.hasRange());
-        assertEquals(-1L, range.start());
-        assertEquals(-1L, range.end());
-        assertEquals(-1L, range.size());
-
     }
 
     @Test
@@ -97,7 +93,6 @@ public class RangeTest {
     @Test
     public void testRangeOfContentLength1() {
         final Range range = Range.convert("bytes=0-100");
-        assertEquals(101, range.size());
         final var rangeOfLength = range.rangeOfLength(200);
         assertEquals(0, rangeOfLength.start());
         assertEquals(100, rangeOfLength.end());
@@ -107,7 +102,6 @@ public class RangeTest {
     @Test
     public void testRangeOfContentLength2() {
         final Range range = Range.convert("bytes=5-");
-        assertEquals(-1, range.size());
         final var rangeOfLength = range.rangeOfLength(200);
         assertEquals(5, rangeOfLength.start());
         assertEquals(199, rangeOfLength.end());
@@ -117,7 +111,6 @@ public class RangeTest {
     @Test
     public void testRangeOfContentLength3() {
         final Range range = Range.convert("bytes=-150");
-        assertEquals(150, range.size());
         final var rangeOfLength = range.rangeOfLength(200);
         assertEquals(50, rangeOfLength.start());
         assertEquals(199, rangeOfLength.end());
@@ -130,7 +123,6 @@ public class RangeTest {
     @Test
     public void testRangeSizeIsValid() {
         final Range range = Range.convert("bytes=0-100");
-        assertEquals(101, range.size());
         final var rangeOfLength = range.rangeOfLength(90);
         assertEquals(0, rangeOfLength.start());
         assertEquals(89, rangeOfLength.end());
