@@ -5,7 +5,29 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import org.apache.jena.graph.Triple;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
+import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
+import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
+
+import static java.net.URI.create;
+import static java.util.stream.Collectors.toList;
+
+import java.net.URI;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
+
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
@@ -23,26 +45,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 
-import java.net.URI;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
-
-import static java.net.URI.create;
-import static java.util.stream.Collectors.toList;
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.apache.jena.vocabulary.RDF.type;
-import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
-import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
-import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
+import org.apache.jena.graph.Triple;
 
 /**
  * Implementation of a Fedora resource, containing functionality common to the more concrete resource implementations.
@@ -101,6 +104,8 @@ public class FedoraResourceImpl implements FedoraResource {
     protected final Transaction transaction;
 
     private boolean isArchivalGroup;
+
+    private Path storageRelativePath;
 
     protected FedoraResourceImpl(final FedoraId fedoraId,
                                  final Transaction transaction,
@@ -380,6 +385,11 @@ public class FedoraResourceImpl implements FedoraResource {
         return this.interactionModel;
     }
 
+    @Override
+    public Path getStorageRelativePath() {
+        return this.storageRelativePath;
+    }
+
     /**
      * @param parentId the parentId to set
      */
@@ -477,5 +487,18 @@ public class FedoraResourceImpl implements FedoraResource {
 
     public Optional<FedoraId> getArchivalGroupId() {
         return Optional.ofNullable(archivalGroupId);
+    }
+
+    /**
+     * @param storageRelativePath the path to the content
+     */
+    protected void setStorageRelativePath(final String storageRelativePath) {
+        if (storageRelativePath != null) {
+            final var tempPath = Path.of(storageRelativePath);
+            // This returns the path to the header file in the .fcrepo content directory
+            // i.e. /path/to/resource/v1/content/.fcrepo/fcr-root.json
+            // So we move up 4 directories (names) to get to the resource directory.
+            this.storageRelativePath = tempPath.subpath(0, tempPath.getNameCount() - 4);
+        }
     }
 }

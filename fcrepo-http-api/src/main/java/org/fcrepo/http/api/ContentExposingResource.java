@@ -89,6 +89,7 @@ import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.config.DigestAlgorithm;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.api.services.EtagService;
 import org.fcrepo.http.api.services.HttpRdfService;
 import org.fcrepo.http.commons.api.rdf.HttpTripleUtil;
@@ -164,6 +165,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     public static final String HTTP_HEADER_OVERWRITE_TOMBSTONE = "Overwrite-Tombstone";
 
+    private static final String HTTP_OCFL_PATH = "Fedora-Ocfl-Path";
+
     private static final String FCR_PREFIX = "fcr:";
     private static final Set<String> ALLOWED_FCR_PARTS = Set.of(FCR_METADATA, FCR_ACL);
 
@@ -206,6 +209,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     @Inject
     protected ResourceTripleService resourceTripleService;
+
+    @Inject
+    protected OcflPropsConfig ocflPropsConfig;
 
     protected abstract String externalPath();
 
@@ -669,6 +675,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             }
             servletResponse.addHeader("Accept-Ranges", "bytes");
             servletResponse.addHeader(CONTENT_DISPOSITION, dispositionBuilder.build().toString());
+        }
+        // Add ocflPath header if desired
+        if (ocflPropsConfig.isShowPath()) {
+            final var contentPath = resource.getStorageRelativePath();
+            if (contentPath != null) {
+                servletResponse.addHeader(HTTP_OCFL_PATH, contentPath.toString());
+            }
         }
 
         addLinkAndOptionsHttpHeaders(resource);

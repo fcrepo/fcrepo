@@ -93,6 +93,8 @@ public class MembershipServiceImplTest {
 
     public static final Property PROXY_FOR = createProperty("http://example.com/proxyFor");
 
+    private static final String RELATIVE_RESOURCE_PATH = "some/ocfl/path/v1/content/.fcrepo/fcr-container.json";
+
     @Inject
     private PersistentStorageSessionManager pSessionManager;
     @Mock
@@ -1527,6 +1529,7 @@ public class MembershipServiceImplTest {
         headers.setLastModifiedBy(LAST_MODIFIED_BY);
         headers.setLastModifiedDate(lastModifiedDate);
         headers.setStateToken(STATE_TOKEN);
+        headers.setStorageRelativePath(RELATIVE_RESOURCE_PATH);
         return headers;
     }
 

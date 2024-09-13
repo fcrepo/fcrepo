@@ -165,4 +165,8 @@ public interface ResourceHeaders {
      */
     String getHeadersVersion();
 
+    /**
+     * @return the content path relative to the OCFL object root
+     */
+    String getStorageRelativePath();
 }
