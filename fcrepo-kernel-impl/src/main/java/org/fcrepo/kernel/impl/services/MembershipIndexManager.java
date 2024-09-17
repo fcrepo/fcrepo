@@ -760,6 +760,10 @@ public class MembershipIndexManager {
         jdbcTemplate.update(TRUNCATE_MEMBERSHIP_TX, Map.of());
     }
 
+    public void clearAllTransactions() {
+        jdbcTemplate.update(TRUNCATE_MEMBERSHIP_TX, Map.of());
+    }
+
     /**
      * Log all membership entries, for debugging usage only
      */

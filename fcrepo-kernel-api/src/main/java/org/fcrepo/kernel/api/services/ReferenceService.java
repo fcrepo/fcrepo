@@ -57,6 +57,11 @@ public interface ReferenceService {
     void rollbackTransaction(final Transaction tx);
 
     /**
+     * Clear all transactions in the reference index.
+     */
+    void clearAllTransactions();
+
+    /**
      * Truncates the reference index. This should only be called when rebuilding the index.
      */
     void reset();

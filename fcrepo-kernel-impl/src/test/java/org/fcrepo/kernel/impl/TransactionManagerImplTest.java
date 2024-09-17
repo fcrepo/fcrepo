@@ -7,6 +7,7 @@ package org.fcrepo.kernel.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -230,5 +231,44 @@ public class TransactionManagerImplTest {
         } catch (final TransactionNotFoundException e) {
             //expected
         }
+    }
+
+    @Test
+    public void testCleanupAllTransactions() {
+        final var commitTx = testTxManager.create();
+        commitTx.commit();
+        final var continuingTx = testTxManager.create();
+        final var rollbackTx = testTxManager.create();
+        rollbackTx.rollback();
+        final var expiredTx = testTxManager.create();
+        expiredTx.expire();
+        final var expiredAndRolledBackTx = testTxManager.create();
+        expiredAndRolledBackTx.expire();
+        expiredAndRolledBackTx.rollback();
+
+        testTxManager.cleanupAllTransactions();
+
+        // All transactions must now be gone
+        assertThrows(TransactionClosedException.class, () -> testTxManager.get(commitTx.getId()));
+        assertThrows(TransactionClosedException.class, () -> testTxManager.get(rollbackTx.getId()));
+        assertThrows(TransactionClosedException.class, () -> testTxManager.get(continuingTx.getId()));
+        assertThrows(TransactionClosedException.class, () -> testTxManager.get(expiredTx.getId()));
+        // Committed transaction does not get rolled back
+        verify(pssManager, never()).removeSession(commitTx.getId());
+        // Rolled back transactions does not get rolled back (again)
+        verify(pssManager, never()).removeSession(rollbackTx.getId());
+        // Open and expired transactions get rolled back
+        verify(pssManager).removeSession(continuingTx.getId());
+        verify(pssManager).removeSession(expiredTx.getId());
+        // Unless the expired transaction is already rolled back
+        verify(pssManager, never()).removeSession(expiredAndRolledBackTx.getId());
+    }
+
+    @Test
+    public void testPreCleanTransactions() {
+        testTxManager.preCleanTransactions();
+        verify(containmentIndex).clearAllTransactions();
+        verify(membershipService).clearAllTransactions();
+        verify(referenceService).clearAllTransactions();
     }
 }

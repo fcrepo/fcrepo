@@ -43,6 +43,8 @@ public class ReferenceServiceMetrics implements ReferenceService {
             DB, REFERENCE, OPERATION, "rollbackTransaction");
     private static final Timer resetTimer = Metrics.timer(METRIC_NAME,
             DB, REFERENCE, OPERATION, "reset");
+    private static final Timer clearAllTransactionsTimer = Metrics.timer(METRIC_NAME,
+            DB, REFERENCE, OPERATION, "clearAllTransactions");
 
     @Autowired
     @Qualifier("referenceServiceImpl")
@@ -83,6 +85,13 @@ public class ReferenceServiceMetrics implements ReferenceService {
     public void rollbackTransaction(final Transaction tx) {
         rollbackTransactionTimer.record(() -> {
             referenceServiceImpl.rollbackTransaction(tx);
+        });
+    }
+
+    @Override
+    public void clearAllTransactions() {
+        clearAllTransactionsTimer.record(() -> {
+            referenceServiceImpl.clearAllTransactions();
         });
     }
 

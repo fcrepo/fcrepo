@@ -80,6 +80,11 @@ public interface MembershipService {
     void rollbackTransaction(final Transaction transaction);
 
     /**
+     * Clear all transactions in the membership index.
+     */
+    void clearAllTransactions();
+
+    /**
      * Truncates the membership index. This should only be called when rebuilding the index.
      */
     void reset();
