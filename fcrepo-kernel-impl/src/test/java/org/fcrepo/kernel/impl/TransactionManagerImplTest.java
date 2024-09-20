@@ -6,6 +6,7 @@
 package org.fcrepo.kernel.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
@@ -15,10 +16,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.io.IOException;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
@@ -32,7 +38,9 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 import org.fcrepo.search.api.SearchIndex;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -80,6 +88,12 @@ public class TransactionManagerImplTest {
     @Mock
     private UserTypesCache userTypesCache;
 
+    @Mock
+    private OcflPropsConfig ocflPropsConfig;
+
+    @Rule
+    public TemporaryFolder tempFolder = new TemporaryFolder();
+
     private FedoraPropsConfig fedoraPropsConfig;
 
     @Before
@@ -98,6 +112,7 @@ public class TransactionManagerImplTest {
         setField(testTxManager, "fedoraPropsConfig", fedoraPropsConfig);
         setField(testTxManager, "resourceLockManager", resourceLockManager);
         setField(testTxManager, "userTypesCache", userTypesCache);
+        setField(testTxManager, "ocflPropsConfig", ocflPropsConfig);
         testTx = (TransactionImpl) testTxManager.create();
     }
 
@@ -265,10 +280,19 @@ public class TransactionManagerImplTest {
     }
 
     @Test
-    public void testPreCleanTransactions() {
+    public void testPreCleanTransactions() throws IOException {
+        final var stagingPath = tempFolder.newFolder("staging").toPath();
+        final var stagedPath = stagingPath.resolve("path/to/staged");
+        Files.createDirectories(stagedPath);
+        Files.createFile(stagedPath.resolve("file1.txt"));
+        when(ocflPropsConfig.getFedoraOcflStaging()).thenReturn(stagingPath);
+
         testTxManager.preCleanTransactions();
         verify(containmentIndex).clearAllTransactions();
         verify(membershipService).clearAllTransactions();
         verify(referenceService).clearAllTransactions();
+        try (DirectoryStream<Path> directory = Files.newDirectoryStream(stagingPath)) {
+            assertFalse("Staging directory must be empty", directory.iterator().hasNext());
+        }
     }
 }
