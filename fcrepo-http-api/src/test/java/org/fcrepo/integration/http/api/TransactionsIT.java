@@ -34,6 +34,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -44,6 +45,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -1193,6 +1195,69 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getStatus(getObjMethod(child2)));
         // Now you should be able to delete the parent
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteObjMethod(parent)));
+    }
+
+    @Test
+    public void testTimeoutRefreshedByActions() throws Exception {
+        /* create a tx */
+        final String txLocation = createTransaction();
+        final var originalInstant = Instant.now();
+        final var originalAtomicExpires = retrieveAtomicExpires(txLocation);
+
+        sleep(1000);
+
+        /* create a new object inside the tx */
+        final HttpPost postNew = new HttpPost(serverAddress);
+        postNew.addHeader(ATOMIC_ID_HEADER, txLocation);
+
+        final String newRescLocation;
+        try (final CloseableHttpResponse resp = execute(postNew)) {
+            assertEquals(CREATED.getStatusCode(), resp.getStatusLine().getStatusCode());
+            assertHasAtomicId(txLocation, resp);
+            newRescLocation = getLocation(resp);
+        }
+
+        final var afterCreateInstant = Instant.now();
+        final Instant afterCreateAtomicExpires = retrieveAtomicExpires(txLocation);
+
+        sleep(1000);
+
+        final HttpGet getNewResc = new HttpGet(newRescLocation);
+        getNewResc.addHeader(ATOMIC_ID_HEADER, txLocation);
+        try (final CloseableHttpResponse resp = execute(getNewResc)) {
+            assertEquals(Status.OK.getStatusCode(), getStatus(resp));
+            consume(resp.getEntity());
+        }
+
+        final var afterGetInstant = Instant.now();
+        final Instant afterGetAtomicExpires = retrieveAtomicExpires(txLocation);
+
+
+        assertAtomicExpiresIsInRange(originalInstant, originalAtomicExpires);
+        assertNotEquals("AtomicExpires should have been updated after create",
+                originalAtomicExpires, afterCreateAtomicExpires);
+        assertAtomicExpiresIsInRange(afterCreateInstant, afterCreateAtomicExpires);
+        assertNotEquals("AtomicExpires should have been updated after get",
+                afterCreateAtomicExpires, afterGetAtomicExpires);
+        assertAtomicExpiresIsInRange(afterGetInstant, afterGetAtomicExpires);
+    }
+
+    private Instant retrieveAtomicExpires(final String txLocation) throws IOException {
+        try (final CloseableHttpResponse resp = execute(new HttpGet(txLocation))) {
+            assertEquals(Status.NO_CONTENT.getStatusCode(), getStatus(resp));
+            consume(resp.getEntity());
+            final var expires = resp.getFirstHeader(ATOMIC_EXPIRES_HEADER).getValue();
+            return Instant.from(EXPIRES_RFC_1123_FORMATTER.parse(expires));
+        }
+    }
+
+    private void assertAtomicExpiresIsInRange(final Instant requestTime, final Instant atomicExpires) {
+        final var expected = requestTime.plus(Duration.ofMinutes(3));
+        final var lowerBound = expected.minusSeconds(30);
+        final var upperBound = expected.plusSeconds(30);
+        assertTrue("atomicExpires is not within the range of 3 minutes +/- 30 seconds: request time: "
+                        + requestTime + " expires: "  + atomicExpires,
+                atomicExpires.isAfter(lowerBound) && atomicExpires.isBefore(upperBound));
     }
 
     private void assertConcurrentUpdateFails(final CheckedRunnable runnable) throws Exception {
