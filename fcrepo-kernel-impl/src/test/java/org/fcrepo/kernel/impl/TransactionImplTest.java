@@ -274,8 +274,9 @@ public class TransactionImplTest {
     }
 
     @Test
-    public void testRefresh() {
+    public void testRefresh() throws Exception {
         final Instant previousExpiry = testTx.getExpires();
+        Thread.sleep(1000);
         testTx.refresh();
         assertTrue(testTx.getExpires().isAfter(previousExpiry));
     }
