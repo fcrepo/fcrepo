@@ -6,6 +6,7 @@
 package org.fcrepo.kernel.impl;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.doThrow;
@@ -23,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.base.Stopwatch;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
@@ -82,9 +84,12 @@ public class TransactionImplTest {
     @Mock
     private UserTypesCache userTypesCache;
 
+    private static final long DEFAULT_SESSION_MILLI = 180000;
+    private static final Duration DEFAULT_SESSION_DURATION = Duration.ofMillis(DEFAULT_SESSION_MILLI);
+
     @Before
     public void setUp() {
-        testTx = new TransactionImpl("123", txManager, Duration.ofMillis(180000));
+        testTx = new TransactionImpl("123", txManager, DEFAULT_SESSION_DURATION);
         when(pssManager.getSession(testTx)).thenReturn(psSession);
         when(txManager.getPersistentStorageSessionManager()).thenReturn(pssManager);
         when(txManager.getContainmentIndex()).thenReturn(containmentIndex);
@@ -222,10 +227,39 @@ public class TransactionImplTest {
     }
 
     @Test
-    public void testUpdateExpiry() {
+    public void testUpdateExpiry() throws Exception {
         final Instant previousExpiry = testTx.getExpires();
-        testTx.updateExpiry(Duration.ofSeconds(1));
-        assertTrue(testTx.getExpires().isAfter(previousExpiry));
+        assertEquals(previousExpiry, testTx.getExpires());
+        // Initial expiry should be within 1 second of current time + default session duration
+        assertExpiresIsInRange(testTx, 1);
+
+        Thread.sleep(100);
+        // First update to expiration
+        testTx.updateExpiry(DEFAULT_SESSION_DURATION);
+        final var updatedExpiry = testTx.getExpires();
+        // Expiration should be roughly default session duration from now still
+        assertExpiresIsInRange(testTx, 1);
+        // But the expiry should not match the original expiry
+        assertNotEquals(previousExpiry, updatedExpiry);
+
+        Thread.sleep(100);
+        // Update again after a second, expiration should still be roughly default session duration from now
+        testTx.updateExpiry(DEFAULT_SESSION_DURATION);
+        assertExpiresIsInRange(testTx, 1);
+        // But the expiry should not match the previous updated expiry
+        assertNotEquals(updatedExpiry, testTx.getExpires());
+
+    }
+
+    private void assertExpiresIsInRange(final Transaction testTx, final int plusMinusSeconds) {
+        final var currentInstant = Instant.now();
+        final var expected = currentInstant.plus(DEFAULT_SESSION_DURATION);
+        final var lowerBound = expected.minusSeconds(plusMinusSeconds);
+        final var upperBound = expected.plusSeconds(plusMinusSeconds);
+        final var expires = testTx.getExpires();
+        assertTrue("Expires does not match expected value +- " + plusMinusSeconds + " secs."
+                        + " expected expires: " + expected + ", actual expires: "  + expires,
+                expires.isAfter(lowerBound) && expires.isBefore(upperBound));
     }
 
     @Test(expected = TransactionClosedException.class)
@@ -240,8 +274,9 @@ public class TransactionImplTest {
     }
 
     @Test
-    public void testRefresh() {
+    public void testRefresh() throws Exception {
         final Instant previousExpiry = testTx.getExpires();
+        Thread.sleep(1000);
         testTx.refresh();
         assertTrue(testTx.getExpires().isAfter(previousExpiry));
     }
