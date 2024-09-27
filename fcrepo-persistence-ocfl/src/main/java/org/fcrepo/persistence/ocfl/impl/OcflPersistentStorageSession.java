@@ -358,10 +358,19 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             }
         }
 
-        closeUncommittedSessions();
+        try {
+            closeUncommittedSessions();
 
-        if (commitWasStarted) {
-            rollbackCommittedSessions();
+            if (commitWasStarted) {
+                rollbackCommittedSessions();
+            }
+        } finally {
+            // Always roll back the index changes associated with the transaction
+            try {
+                fedoraOcflIndex.rollback(transaction);
+            } catch (final Exception e) {
+                LOGGER.error("Failed to rollback OCFL index updates in transaction {}", transaction, e);
+            }
         }
 
         this.state = State.ROLLED_BACK;
@@ -419,13 +428,6 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
                 rollbackFailures.add(String.format("Failed to rollback object <%s> in session <%s>: %s",
                         id, session.sessionId(), e.getMessage()));
             }
-        }
-
-        try {
-            fedoraOcflIndex.rollback(transaction);
-        } catch (final Exception e) {
-            rollbackFailures.add(String.format("Failed to rollback OCFL index updates in transaction <%s>: %s",
-                    transaction, e.getMessage()));
         }
 
         //throw an exception if any sessions could not be rolled back.
