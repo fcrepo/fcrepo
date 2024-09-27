@@ -7,6 +7,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.ArgumentMatchers.any;
@@ -215,6 +216,27 @@ public class DbFedoraToOcflObjectIndexTest {
         } catch (final InvalidResourceIdentifierException e) {
             //the exception is expected
         }
+    }
+
+    @Test
+    public void testClearAllTransactions() throws Exception {
+        final var mapping = index.addMapping(session, RESOURCE_ID_1, RESOURCE_ID_1, OCFL_ID);
+        index.commit(session);
+
+        final var mapping2 = index.addMapping(session, RESOURCE_ID_2, RESOURCE_ID_2, OCFL_ID);
+
+        assertEquals(mapping, index.getMapping(session, RESOURCE_ID_1));
+        index.getMapping(readOnlyTx, RESOURCE_ID_1);
+        assertEquals(mapping2, index.getMapping(session, RESOURCE_ID_2));
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(readOnlyTx, RESOURCE_ID_2));
+
+        index.clearAllTransactions();
+
+        index.getMapping(readOnlyTx, RESOURCE_ID_1);
+        // resource 2 only existed in a TX, so it shouldn't be accessible anymore in a session or out of it
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(session, RESOURCE_ID_2));
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(readOnlyTx, RESOURCE_ID_2));
+
     }
 
     private void verifyMapping(final FedoraOcflMapping mapping1, final FedoraId rootResourceId, final String ocflId) {

@@ -375,4 +375,12 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
         }
     }
 
+    @Override
+    public void clearAllTransactions() {
+        try {
+            jdbcTemplate.update(TRUNCATE_TRANSACTIONS, Collections.emptyMap());
+        } catch (final Exception e) {
+            throw new RepositoryRuntimeException("Failed to truncate FedoraToOcfl transactions index tables", e);
+        }
+    }
 }

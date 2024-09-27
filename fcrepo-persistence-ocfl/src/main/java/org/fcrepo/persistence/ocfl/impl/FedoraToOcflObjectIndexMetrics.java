@@ -41,6 +41,8 @@ public class FedoraToOcflObjectIndexMetrics implements FedoraToOcflObjectIndex {
             DB, OCFL, OPERATION, "commit");
     private static final Timer rollbackTimer = Metrics.timer(METRIC_NAME,
             DB, OCFL, OPERATION, "rollback");
+    private static final Timer clearAllTransactionsTimer = Metrics.timer(METRIC_NAME,
+            DB, OCFL, OPERATION, "clearAllTransactions");
 
     @Autowired
     private FedoraToOcflObjectIndex ocflIndexImpl;
@@ -92,6 +94,13 @@ public class FedoraToOcflObjectIndexMetrics implements FedoraToOcflObjectIndex {
     public void rollback(final Transaction session) {
         rollbackTimer.record(() -> {
             ocflIndexImpl.rollback(session);
+        });
+    }
+
+    @Override
+    public void clearAllTransactions() {
+        clearAllTransactionsTimer.record(() -> {
+            ocflIndexImpl.clearAllTransactions();
         });
     }
 
