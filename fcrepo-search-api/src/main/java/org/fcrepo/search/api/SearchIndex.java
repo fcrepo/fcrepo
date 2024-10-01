@@ -58,4 +58,8 @@ public interface SearchIndex {
      */
     void rollbackTransaction(final Transaction tx);
 
+    /**
+     * Clear all transactions in the search index.
+     */
+    void clearAllTransactions();
 }

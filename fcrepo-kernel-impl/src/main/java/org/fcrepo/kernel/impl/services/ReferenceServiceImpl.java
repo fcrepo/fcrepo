@@ -161,6 +161,7 @@ public class ReferenceServiceImpl implements ReferenceService {
             TRANSACTION_COLUMN + " = :transactionId";
 
     private static final String TRUNCATE_TABLE = "TRUNCATE TABLE " + TABLE_NAME;
+    private static final String TRUNCATE_TX_TABLE = "TRUNCATE TABLE " + TRANSACTION_TABLE;
 
     @PostConstruct
     public void setUp() {
@@ -319,9 +320,15 @@ public class ReferenceServiceImpl implements ReferenceService {
     }
 
     @Override
+    public void clearAllTransactions() {
+        jdbcTemplate.update(TRUNCATE_TX_TABLE, Map.of());
+    }
+
+    @Override
     public void reset() {
         try {
             jdbcTemplate.update(TRUNCATE_TABLE, Map.of());
+            jdbcTemplate.update(TRUNCATE_TX_TABLE, Map.of());
         } catch (final Exception e) {
             LOGGER.warn("Unable to reset reference index: {}", e.getMessage());
             throw new RepositoryRuntimeException("Unable to reset reference index", e);

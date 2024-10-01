@@ -781,16 +781,27 @@ public class DbSearchIndexImpl implements SearchIndex {
     public void reset() {
         rdfTypeIdCache.clear();
 
+        executeTruncationBatches(
+                SEARCH_RESOURCE_RDF_TYPE_TABLE,
+                SEARCH_RDF_TYPE_TABLE,
+                SIMPLE_SEARCH_TABLE,
+                SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE,
+                SIMPLE_SEARCH_TRANSACTIONS_TABLE
+        );
+    }
+
+    private void executeTruncationBatches(final String... truncateQueries) {
         try (final var conn = this.dataSource.getConnection();
              final var statement = conn.createStatement()) {
+            // Disable foreign key checks before truncate operations
             for (final var sql : toggleForeignKeyChecks(false)) {
                 statement.addBatch(sql);
             }
-            statement.addBatch(truncateTable(SEARCH_RESOURCE_RDF_TYPE_TABLE));
-            statement.addBatch(truncateTable(SEARCH_RDF_TYPE_TABLE));
-            statement.addBatch(truncateTable(SIMPLE_SEARCH_TABLE));
-            statement.addBatch(truncateTable(SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE));
-            statement.addBatch(truncateTable(SIMPLE_SEARCH_TRANSACTIONS_TABLE));
+            // Truncate tables
+            for (final String query : truncateQueries) {
+                statement.addBatch(truncateTable(query));
+            }
+            // Re-enable foreign key checks after truncate operations
             for (final var sql : toggleForeignKeyChecks(true)) {
                 statement.addBatch(sql);
             }
@@ -798,6 +809,14 @@ public class DbSearchIndexImpl implements SearchIndex {
         } catch (final SQLException e) {
             throw new RepositoryRuntimeException("Failed to truncate search index tables", e);
         }
+    }
+
+    @Override
+    public void clearAllTransactions() {
+        executeTruncationBatches(
+                SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE,
+                SIMPLE_SEARCH_TRANSACTIONS_TABLE
+        );
     }
 
     @Override

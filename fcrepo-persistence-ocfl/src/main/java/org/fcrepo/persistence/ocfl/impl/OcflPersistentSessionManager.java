@@ -5,6 +5,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.persistence.api.PersistentStorageSession;
@@ -17,6 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
+import java.io.IOException;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,6 +51,9 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
 
     @Inject
     private ReindexService reindexService;
+
+    @Inject
+    private OcflPropsConfig ocflPropsConfig;
 
     /**
      * Default constructor
@@ -93,5 +103,42 @@ public class OcflPersistentSessionManager implements PersistentStorageSessionMan
     public PersistentStorageSession removeSession(final String sessionId) {
         LOGGER.debug("Removing storage session {}", sessionId);
         return sessionMap.remove(sessionId);
+    }
+
+    @Override
+    public void clearAllSessions() {
+        LOGGER.debug("Clearing all storage sessions");
+        sessionMap.clear();
+        ocflIndex.clearAllTransactions();
+        try {
+            deleteStagingDirectories();
+        } catch (IOException e) {
+            LOGGER.error("Failed to delete OCFL staging directories", e);
+        }
+    }
+
+    /**
+     * Deletes all of the staging directories within the root staging directory
+     * @throws IOException
+     */
+    private void deleteStagingDirectories() throws IOException {
+        // Delete
+        Files.walkFileTree(ocflPropsConfig.getFedoraOcflStaging(), new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) throws IOException {
+                // Delete the file
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(final Path dir, final IOException exc) throws IOException {
+                // Delete the directory after its contents have been deleted, excluding the root staging directory
+                if (!dir.equals(ocflPropsConfig.getFedoraOcflStaging())) {
+                    Files.delete(dir);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 }

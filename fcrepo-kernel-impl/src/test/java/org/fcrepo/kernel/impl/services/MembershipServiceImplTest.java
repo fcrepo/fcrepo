@@ -1141,6 +1141,33 @@ public class MembershipServiceImplTest {
     }
 
     @Test
+    public void clearAllTransactionsMembershipIndex() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(transaction, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(transaction, dcId);
+
+        final var member1Id = createDCMember(dcId, BASIC_CONTAINER);
+
+        membershipService.commitTransaction(transaction);
+
+        assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        final var member2Id = createDCMember(dcId, RdfLexicon.NON_RDF_SOURCE);
+
+        assertHasMembers(transaction, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
+        assertUncommittedMembershipCount(transaction, membershipRescId, 2);
+
+        membershipService.clearAllTransactions();
+
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
+        assertCommittedMembershipCount(membershipRescId, 1);
+        assertHasMembers(transaction, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+    }
+
+    @Test
     public void populateMembershipHistory_DC_DeletedMember() throws Exception {
         mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
         membershipService.resourceCreated(transaction, membershipRescId);

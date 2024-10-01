@@ -411,6 +411,11 @@ public class MembershipServiceImpl implements MembershipService {
         return changeEntries;
     }
 
+    @Override
+    public void clearAllTransactions() {
+        indexManager.clearAllTransactions();
+    }
+
     /**
      * The properties of a Direct or Indirect Container at a point in time.
      * @author bbpennel
