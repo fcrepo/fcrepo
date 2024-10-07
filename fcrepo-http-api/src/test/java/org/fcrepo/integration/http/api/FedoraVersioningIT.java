@@ -1527,18 +1527,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         assertEquals(OK.getStatusCode(), getStatus(getMethod));
 
         // Get the timemap and all the ldp:contains (which are the mementos)
-        final HttpGet getTimemap = getObjMethod(id + "/" + FCR_VERSIONS);
-        final List<String> mementos = new ArrayList<>();
-        try (final CloseableHttpResponse response = execute(getTimemap)) {
-            final Dataset data = getDataset(response);
-            final DatasetGraph graph = data.asDatasetGraph();
-            assertEquals(OK.getStatusCode(), getStatus(response));
-            final var contains = graph.find(Node.ANY, Node.ANY, CONTAINS.asNode(), Node.ANY);
-            while (contains.hasNext()) {
-                final var memento = contains.next();
-                mementos.add(memento.getObject().getURI());
-            }
-        }
+        final List<String> mementos = getMementos(id);
         // There should be only one memento
         assertEquals(1, mementos.size());
         // Get the memento
@@ -1551,11 +1540,28 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final HttpGet getDeletedContainer = getObjMethod(id);
         assertEquals(GONE.getStatusCode(), getStatus(getDeletedContainer));
         // Check the timemap still exist
-        final HttpGet getDeletedTimemap = getObjMethod(id + "/" + FCR_VERSIONS);
-        assertEquals(OK.getStatusCode(), getStatus(getDeletedTimemap));
-        // Because the two versions (creation and deletion) occur in the same second, we have a single memento.
-        final HttpGet getDeletedMemento = new HttpGet(mementos.get(0));
+        // The set of mementos might have changed after delete, depending on if it happened the same second as create
+        final List<String> mementosAfterDelete = getMementos(id);
+        assertTrue(mementosAfterDelete.size() == 1 || mementosAfterDelete.size() == 2);
+        // The last memento should be gone
+        final HttpGet getDeletedMemento = new HttpGet(mementosAfterDelete.get(mementosAfterDelete.size() - 1));
         assertEquals(GONE.getStatusCode(), getStatus(getDeletedMemento));
+    }
+
+    private List<String> getMementos(final String id) throws IOException {
+        final HttpGet getTimemap = getObjMethod(id + "/" + FCR_VERSIONS);
+        final List<String> mementos = new ArrayList<>();
+        try (final CloseableHttpResponse response = execute(getTimemap)) {
+            final Dataset data = getDataset(response);
+            final DatasetGraph graph = data.asDatasetGraph();
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final var contains = graph.find(Node.ANY, Node.ANY, CONTAINS.asNode(), Node.ANY);
+            while (contains.hasNext()) {
+                final var memento = contains.next();
+                mementos.add(memento.getObject().getURI());
+            }
+        }
+        return mementos;
     }
 
     @Test
