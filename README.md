@@ -32,9 +32,7 @@ as described in the guide to [deploying Fedora](https://wiki.lyrasis.org/display
 Contributions to the Fedora project are always welcome. These may take the form of testing the application, clarifying documentation
 or writing code.
 
-Code contributions will take the form of pull requests to this repository. They also require a signed
-[contributor license agreement](https://wiki.lyrasis.org/display/DSP/Contributor+License+Agreements) on file before
-a pull request can be merged. New developers may wish to review 
+Code contributions will take the form of pull requests to this repository. New developers may wish to review 
 [this guide](https://wiki.lyrasis.org/display/FF/Guide+for+New+Developers)
 as it explains both the process and standards for test coverage, style and documentation.
 
