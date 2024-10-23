@@ -43,6 +43,7 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
     private static final Timer containsResourceTimer = Metrics.timer(METRIC_NAME, OPERATION, "containsResource");
     private static final Timer readHeadersTimer = Metrics.timer(METRIC_NAME, OPERATION, "readHeaders");
     private static final Timer readContentTimer = Metrics.timer(METRIC_NAME, OPERATION, "readContent");
+    private static final Timer readRangeTimer = Metrics.timer(METRIC_NAME, OPERATION, "readRange");
     private static final Timer listVersionsTimer = Metrics.timer(METRIC_NAME, OPERATION, "listVersions");
     private static final Timer commitTimer = Metrics.timer(METRIC_NAME, OPERATION, "commit");
 
@@ -124,6 +125,19 @@ public class FcrepoOcflObjectSessionWrapper implements OcflObjectSession {
         return MetricsHelper.time(readContentTimer, () -> {
             return exec(() -> inner.readContent(resourceId, versionNumber));
         });
+    }
+
+    @Override
+    public ResourceContent readRange(final String resourceId, final long start, final long end) {
+        return MetricsHelper.time(readRangeTimer, () ->
+                exec(() -> inner.readRange(resourceId, start, end)));
+    }
+
+    @Override
+    public ResourceContent readRange(final String resourceId, final String versionNumber,
+                                     final long start, final long end) {
+        return MetricsHelper.time(readRangeTimer, () ->
+                exec(() -> inner.readRange(resourceId, versionNumber, start, end)));
     }
 
     @Override

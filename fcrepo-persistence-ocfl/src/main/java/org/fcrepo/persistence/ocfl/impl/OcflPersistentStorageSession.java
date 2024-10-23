@@ -263,6 +263,22 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
+    public InputStream getBinaryRange(final FedoraId identifier, final Instant version,
+                                      final long start, final long end) throws PersistentStorageException {
+        ensureCommitNotStarted();
+
+        final var mapping = getFedoraOcflMapping(identifier);
+        final var objSession = findOrCreateSession(mapping.getOcflObjectId());
+
+        final var versionNumber = resolveVersionNumber(objSession, identifier, version);
+
+        return objSession.readRange(identifier.getResourceId(), versionNumber, start, end)
+                .getContentStream()
+                .orElseThrow(() -> new PersistentItemNotFoundException("No binary content found for resource "
+                        + identifier.getFullId()));
+    }
+
+    @Override
     public synchronized void prepare() {
         ensureCommitNotStarted();
         if (isReadOnly()) {

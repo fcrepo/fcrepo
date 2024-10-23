@@ -60,7 +60,7 @@
     <logback.version>1.2.13</logback.version>
     <micrometer.version>1.7.4</micrometer.version>
     <netty.version>4.1.68.Final</netty.version>
-    <ocfl-java.version>2.1.0</ocfl-java.version>
+    <ocfl-java.version>2.2.1</ocfl-java.version>
     <prometheus.version>0.10.0</prometheus.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>1.13.0</shiro.version>

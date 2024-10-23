@@ -76,6 +76,19 @@ public interface PersistentStorageSession {
             throws PersistentStorageException;
 
     /**
+     * Get a range of bytes from the binary content for the provided resource.
+     * @param identifier identifier for the resource.
+     * @param version instant identifying the version of the resource to read from. If null, then the head version is
+     *       used.
+     * @param start the start byte position, inclusive
+     * @param end the end byte position, inclusive
+     * @return the requested range of bytes
+     * @throws PersistentStorageException Either a PersistentItemNotFoundException or PersistentSessionClosedException
+     */
+    InputStream getBinaryRange(final FedoraId identifier, final Instant version, final long start, final long end)
+            throws PersistentStorageException;
+
+    /**
      * Returns a list of immutable versions associated with the specified fedora identifier in ascending order
      * by creation time of the version.
      *

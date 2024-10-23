@@ -21,6 +21,13 @@ public interface Binary extends FedoraResource {
     InputStream getContent();
 
     /**
+     * @param start start index of the range, inclusive
+     * @param end end index of the range, inclusive
+     * @return The InputStream of the range of bytes of content associated with this datastream.
+     */
+    InputStream getRange(final long start, final long end);
+
+    /**
      * @return The size in bytes of content associated with this datastream.
      */
     long getContentSize();

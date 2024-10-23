@@ -97,7 +97,6 @@ import org.fcrepo.http.commons.domain.MultiPrefer;
 import org.fcrepo.http.commons.domain.PreferTag;
 import org.fcrepo.http.commons.domain.Range;
 import org.fcrepo.http.commons.domain.ldp.LdpPreferTag;
-import org.fcrepo.http.commons.responses.RangeRequestInputStream;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -366,15 +365,9 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                     builder = status(REQUESTED_RANGE_NOT_SATISFIABLE)
                             .header("Content-Range", contentRangeValue);
                 } else {
-                    @SuppressWarnings("resource")
-                    final RangeRequestInputStream rangeInputStream =
-                            new RangeRequestInputStream(
-                                    binary.getContent(),
-                                    rangeOfLength.start(),
-                                    rangeOfLength.size()
-                            );
+                    final var rangeContent = binary.getRange(rangeOfLength.start(), rangeOfLength.end());
 
-                    builder = status(PARTIAL_CONTENT).entity(rangeInputStream)
+                    builder = status(PARTIAL_CONTENT).entity(rangeContent)
                             .header("Content-Range", contentRangeValue)
                             .header(CONTENT_LENGTH, rangeOfLength.size());
                 }

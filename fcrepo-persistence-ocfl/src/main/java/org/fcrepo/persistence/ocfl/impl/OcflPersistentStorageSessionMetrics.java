@@ -35,6 +35,7 @@ public class OcflPersistentStorageSessionMetrics implements PersistentStorageSes
     private static final Timer getTriplesTimer = Metrics.timer(METRIC_NAME, OPERATION, "getTriples");
     private static final Timer listVersionsTimer = Metrics.timer(METRIC_NAME, OPERATION, "listVersions");
     private static final Timer getContentTimer = Metrics.timer(METRIC_NAME, OPERATION, "getContent");
+    private static final Timer getRangeTimer = Metrics.timer(METRIC_NAME, OPERATION, "getRange");
     private static final Timer prepareTimer = Metrics.timer(METRIC_NAME, OPERATION, "prepare");
     private static final Timer commitTimer = Metrics.timer(METRIC_NAME, OPERATION, "commit");
     private static final Timer rollbackTimer = Metrics.timer(METRIC_NAME, OPERATION, "rollback");
@@ -77,6 +78,14 @@ public class OcflPersistentStorageSessionMetrics implements PersistentStorageSes
             throws PersistentStorageException {
         return MetricsHelper.time(getContentTimer, () -> {
             return delegate.getBinaryContent(identifier, version);
+        });
+    }
+
+    @Override
+    public InputStream getBinaryRange(final FedoraId identifier, final Instant version,
+                                      final long start, final long end) throws PersistentStorageException {
+        return MetricsHelper.time(getRangeTimer, () -> {
+            return delegate.getBinaryRange(identifier, version, start, end);
         });
     }
 
