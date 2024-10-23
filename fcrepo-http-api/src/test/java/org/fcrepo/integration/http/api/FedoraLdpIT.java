@@ -31,6 +31,7 @@ import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
@@ -2279,7 +2280,58 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(get)) {
             assertEquals("Expected 206 Partial Content!", PARTIAL_CONTENT.getStatusCode(), getStatus(response));
             assertEquals("Expected range length (8200)!", "8200", response.getFirstHeader(CONTENT_LENGTH).getValue());
+            assertBodyMatches(response, buf.substring(0, 8200));
         }
+    }
+
+    @Test
+    public void testGetRangeExceedEnd() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        createDatastream(id, "ds1", "12345");
+
+        final HttpGet get = getDSMethod(id, "ds1");
+        // Since the range header is 0 based and inclusive, the end of the range should actually be 4 instead of 5
+        get.setHeader("Range", "bytes=0-5");
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals(PARTIAL_CONTENT.getStatusCode(), getStatus(response));
+            assertEquals("5", response.getFirstHeader(CONTENT_LENGTH).getValue());
+            assertBodyMatches(response, "12345");
+        }
+
+        final HttpGet get2 = getDSMethod(id, "ds1");
+        get2.setHeader("Range", "bytes=0-500");
+        try (final CloseableHttpResponse response = execute(get2)) {
+            assertEquals(PARTIAL_CONTENT.getStatusCode(), getStatus(response));
+            assertEquals("5", response.getFirstHeader(CONTENT_LENGTH).getValue());
+            assertBodyMatches(response, "12345");
+        }
+    }
+
+    @Test
+    public void testGetRangeInvalidBounds() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        createDatastream(id, "ds1", "12345");
+
+        assertRangeNotSatisfiable(id, "ds1", "bytes=10-10");
+        assertRangeNotSatisfiable(id, "ds1", "bytes=-2-4");
+        assertRangeNotSatisfiable(id, "ds1", "bytes=-3--2");
+        assertRangeNotSatisfiable(id, "ds1", "bytes=5-11");
+        assertRangeNotSatisfiable(id, "ds1", "bytes=-");
+    }
+
+    private void assertRangeNotSatisfiable(final String id, final String ds, final String range) throws IOException {
+        final HttpGet get = getDSMethod(id, ds);
+        get.setHeader("Range", range);
+        try (final CloseableHttpResponse response = execute(get)) {
+            assertEquals(REQUESTED_RANGE_NOT_SATISFIABLE.getStatusCode(), getStatus(response));
+        }
+    }
+
+    private void assertBodyMatches(final CloseableHttpResponse response, final String expected) throws IOException {
+        final String body = IOUtils.toString(response.getEntity().getContent(), UTF_8);
+        assertEquals("Response body did not match the expected value", expected, body);
     }
 
     @Test
