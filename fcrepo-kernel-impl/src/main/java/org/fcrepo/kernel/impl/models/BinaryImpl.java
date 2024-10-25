@@ -5,6 +5,7 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import org.apache.commons.io.input.BoundedInputStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
@@ -78,6 +79,26 @@ public class BinaryImpl extends FedoraResourceImpl implements Binary {
                 return new BufferedInputStream(URI.create(getExternalURL()).toURL().openStream());
             } else {
                 return getSession().getBinaryContent(getFedoraId().asResourceId(), getMementoDatetime());
+            }
+        } catch (final PersistentItemNotFoundException e) {
+            throw new ItemNotFoundException("Unable to find content for " + getId()
+                    + " version " + getMementoDatetime(), e);
+        } catch (final PersistentStorageException | IOException e) {
+            throw new RepositoryRuntimeException(e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public InputStream getRange(final long start, final long end) {
+        try {
+            if (isProxy() || isRedirect()) {
+                // non-external streams are already buffered
+                final long length = end + 1;
+                final var stream = new BoundedInputStream(URI.create(getExternalURL()).toURL().openStream(), length);
+                stream.skip(start);
+                return stream;
+            } else {
+                return getSession().getBinaryRange(getFedoraId().asResourceId(), getMementoDatetime(), start, end);
             }
         } catch (final PersistentItemNotFoundException e) {
             throw new ItemNotFoundException("Unable to find content for " + getId()

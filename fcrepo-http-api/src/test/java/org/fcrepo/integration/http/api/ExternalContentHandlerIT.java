@@ -14,6 +14,7 @@ import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.Assert.assertEquals;
@@ -48,6 +49,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.test.context.TestExecutionListeners;
+
+import javax.ws.rs.core.HttpHeaders;
 
 /**
  * @author whikloj
@@ -1109,6 +1112,53 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         final HttpDelete deleteTomb = new HttpDelete(rescLoc + "/" + FedoraTypes.FCR_TOMBSTONE);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTomb));
         assertTrue("External binary must exist after deleting tombstone", localFile.exists());
+    }
+
+    @Test
+    public void testRangeProxyRemoteContentTypeForHttpUri() throws Exception {
+        final var externalLocation = createHttpResource("audio/ogg",
+                "this is some external http content that is audio/ogg");
+        final String finalLocation = getRandomUniqueId();
+
+        // Make an external content resource proxying the above URI.
+        final HttpPut put = putObjMethod(finalLocation);
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", null));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        // Request a range of bytes from the external content
+        final var getObjMethod = getObjMethod(finalLocation);
+        getObjMethod.setHeader("Range", "bytes=8-33");
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(PARTIAL_CONTENT.getStatusCode(), getStatus(response));
+            assertContentType(response, "audio/ogg");
+            assertContentLocation(response, externalLocation);
+
+            assertEquals("26", response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue());
+            assertBodyMatches(response, "some external http content");
+        }
+    }
+
+    @Test
+    public void testRangeProxyForLocalFile() throws IOException {
+        final File externalFile = createExternalLocalFile(TEST_BINARY_CONTENT);
+
+        final String fileUri = externalFile.toURI().toString();
+
+        final String id = getRandomUniqueId();
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(LINK, getExternalContentLinkHeader(fileUri, "proxy", "text/plain"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        final var getObjMethod = getObjMethod(id);
+        getObjMethod.setHeader("Range", "bytes=2-10");
+        try (final CloseableHttpResponse response = execute(getObjMethod)) {
+            assertEquals(PARTIAL_CONTENT.getStatusCode(), getStatus(response));
+            assertContentType(response, "text/plain");
+            assertContentLocation(response, fileUri);
+
+            assertEquals("9", response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue());
+            assertBodyMatches(response, "234567890");
+        }
     }
 
     private HttpPut setupExternalContentPut(final String externalLocation, final String handling,
