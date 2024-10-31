@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo-parent</artifactId>
-    <version>6.6.0-SNAPSHOT</version>
+    <version>6.5.1-RC</version>
     <relativePath>./fcrepo-parent</relativePath>
   </parent>
 
