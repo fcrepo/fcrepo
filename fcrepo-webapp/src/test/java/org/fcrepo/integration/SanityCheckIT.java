@@ -6,6 +6,7 @@
 package org.fcrepo.integration;
 
 import static java.lang.Integer.MAX_VALUE;
+import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -180,5 +181,12 @@ public class SanityCheckIT {
         executeAndVerify(put, SC_CREATED);
 
         executeAndVerify(new HttpGet(url), SC_OK);
+    }
+
+    @Test
+    public void testEncodedSlash() throws IOException {
+        final String targetResource = serverAddress + "/rest/" + randomUUID() + "/admin_set%2Fdefault";
+        final var putTest = new HttpPut(targetResource);
+        executeAndVerify(putTest, SC_CREATED);
     }
 }
