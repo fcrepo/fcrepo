@@ -82,6 +82,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
@@ -5425,6 +5426,40 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(model.contains(createResource(location), schemaAbout, wikiCat));
             assertTrue(model.contains(createResource(location), schemaName, createPlainLiteral("The description")));
             assertTrue(model.contains(wikiCat, schemaName, createPlainLiteral("Cat")));
+        }
+    }
+
+    /**
+     * Ensure there is a fedora:hasParent triple unless server managed triples are omitted.
+     */
+    @Test
+    public void testHasParent() throws IOException {
+        final String parentLocation;
+        final String childLocation;
+        try (final var response = execute(postObjMethod())) {
+            assertEquals(SC_CREATED, response.getStatusLine().getStatusCode());
+            parentLocation = getLocation(response);
+        }
+        final HttpPost childPost = new HttpPost(parentLocation);
+        try (final var response = execute(childPost)) {
+            assertEquals(SC_CREATED, response.getStatusLine().getStatusCode());
+            childLocation = getLocation(response);
+        }
+        final var preferGet = new HttpGet(childLocation);
+        preferGet.addHeader("Prefer", "return=representation; omit=\"" + PREFER_SERVER_MANAGED + "\"");
+        try (final var dataset = getDataset(preferGet)) {
+            final var model = dataset.getDefaultModel();
+            assertFalse(model.contains(createResource(childLocation), HAS_PARENT, createResource(parentLocation)));
+        }
+        final var preferGet2 = new HttpGet(childLocation);
+        preferGet2.addHeader("Prefer", "return=representation; include=\"" + PREFER_SERVER_MANAGED + "\"");
+        try (final var dataset = getDataset(preferGet2)) {
+            final var model = dataset.getDefaultModel();
+            assertTrue(model.contains(createResource(childLocation), HAS_PARENT, createResource(parentLocation)));
+        }
+        try (final var dataset = getDataset(new HttpGet(childLocation))) {
+            final var model = dataset.getDefaultModel();
+            assertTrue(model.contains(createResource(childLocation), HAS_PARENT, createResource(parentLocation)));
         }
     }
 
