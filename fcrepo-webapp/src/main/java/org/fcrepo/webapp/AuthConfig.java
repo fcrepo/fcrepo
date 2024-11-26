@@ -186,6 +186,7 @@ public class AuthConfig {
         final var filter = new InvalidRequestFilter();
         filter.setBlockNonAscii(false);
         filter.setBlockBackslash(false);
+        filter.setBlockEncodedForwardSlash(false);
         filter.setBlockSemicolon(false);
         return filter;
     }
