@@ -82,6 +82,7 @@ public class ResourceTripleServiceImpl implements ResourceTripleService {
         if (preferences.displayReferences()) {
             streams.add(referenceService.getInboundReferences(tx, resource));
             streams.add(membershipService.getMembershipByObject(tx, resource.getFedoraId()));
+            streams.add(containmentTriplesService.getContainedBy(tx, resource));
         }
 
         return streams.stream().reduce(empty(), Stream::concat);

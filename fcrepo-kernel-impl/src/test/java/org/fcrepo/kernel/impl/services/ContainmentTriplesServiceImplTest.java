@@ -10,9 +10,11 @@ import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -147,6 +149,56 @@ public class ContainmentTriplesServiceImplTest {
         // Now commit the transaction and ensure it disappears.
         containmentIndex.commitTransaction(transaction2);
         assertEquals(0, containmentTriplesService.get(readOnlyTx, parentResource).count());
+    }
+
+    @Test
+    public void testGetContainedBasicContainer() {
+        final FedoraId childId = FedoraId.create(UUID.randomUUID().toString());
+        final FedoraResource childResource = mock(FedoraResource.class);
+        when(childResource.getFedoraId()).thenReturn(childId);
+        containmentIndex.addContainedBy(transaction, parentResource.getFedoraId(), childId);
+        assertEquals(1, containmentTriplesService.getContainedBy(transaction, childResource).count());
+        final Model expectedModel = ModelFactory.createDefaultModel();
+        expectedModel.add(createResource(parentResource.getFedoraId().getFullId()), CONTAINS,
+                createResource(childId.getFullId()));
+        final Model received = containmentTriplesService.getContainedBy(transaction, childResource).collect(toModel());
+        matchModels(expectedModel, received);
+    }
+
+    @Test
+    public void testGetContainedNoParent() {
+        assertEquals(0, containmentTriplesService.getContainedBy(transaction, parentResource).count());
+    }
+
+    @Test
+    public void testGetContainedBasicContainerMemento() {
+        final FedoraId childId = FedoraId.create(UUID.randomUUID().toString());
+        final FedoraId childMementoId = childId.asMemento(Instant.now());
+        final FedoraResource mementoResc = mock(FedoraResource.class);
+        when(mementoResc.getFedoraId()).thenReturn(childMementoId);
+        containmentIndex.addContainedBy(transaction, parentResource.getFedoraId(), childMementoId);
+        assertEquals(1, containmentTriplesService.getContainedBy(transaction, mementoResc).count());
+        final Model expectedModel = ModelFactory.createDefaultModel();
+        expectedModel.add(createResource(parentResource.getFedoraId().getFullId()), CONTAINS,
+                createResource(childId.getFullId()));
+        final Model received = containmentTriplesService.getContainedBy(transaction, mementoResc).collect(toModel());
+        matchModels(expectedModel, received);
+    }
+
+    @Test
+    public void testGetContainedBinaryDescription() {
+        final FedoraId childId = FedoraId.create(UUID.randomUUID().toString());
+        final FedoraId descriptionId = childId.asDescription();
+        final FedoraResource descriptionResc = mock(FedoraResource.class);
+        when(descriptionResc.getFedoraId()).thenReturn(descriptionId);
+        containmentIndex.addContainedBy(transaction, parentResource.getFedoraId(), childId);
+        assertEquals(1, containmentTriplesService.getContainedBy(transaction, descriptionResc).count());
+        final Model expectedModel = ModelFactory.createDefaultModel();
+        expectedModel.add(createResource(parentResource.getFedoraId().getFullId()), CONTAINS,
+                createResource(childId.getFullId()));
+        final Model received = containmentTriplesService.getContainedBy(transaction, descriptionResc)
+                .collect(toModel());
+        matchModels(expectedModel, received);
     }
 
     /**

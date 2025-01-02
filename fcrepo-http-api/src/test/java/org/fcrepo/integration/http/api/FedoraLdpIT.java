@@ -2774,6 +2774,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             assertTrue(graph.contains(ANY,
                     createURI(resourcea), createURI("info:xyz#some-other-property"), createURI(resourceb)));
+
+            assertTrue(graph.contains(ANY,
+                    createURI(resource), CONTAINS.asNode(), createURI(resourceb)));
         }
     }
 
@@ -2808,6 +2811,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(getContainer)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY, NodeFactory.createURI(binaryUri), referenceProp,
+                    NodeFactory.createURI(containerUri)));
+            assertTrue(graph.contains(ANY, NodeFactory.createURI(serverAddress), CONTAINS.asNode(),
                     NodeFactory.createURI(containerUri)));
         }
     }
@@ -2876,6 +2881,47 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse(graph.contains(ANY, subjectNode, referenceProp1, targetNode));
             assertFalse(graph.contains(ANY, subjectNode, referenceProp2, targetNode));
+        }
+    }
+
+    @Test
+    public void testInboundReferencesOnRoot() throws Exception {
+        final HttpGet getContainer = new HttpGet(serverAddress);
+        getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            // Root node should not be contained by anything
+            assertFalse(graph.contains(ANY, ANY, CONTAINS.asNode(), ANY));
+        }
+    }
+
+    @Test
+    public void testInboundReferencesOnBinaryDescription() throws Exception {
+        final String id = getRandomUniqueId();
+        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
+        final String dsLocation = createDatastream(id, "x", "xyz");
+
+        final HttpGet getContainer = new HttpGet(dsLocation + "/fcr:metadata");
+        getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, createURI(serverAddress + id), CONTAINS.asNode(), createURI(dsLocation)));
+        }
+    }
+
+    @Test
+    public void testInboundReferencesOnBasicContainer() throws Exception {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        final HttpGet getContainer = new HttpGet(serverAddress + id);
+        getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, createURI(serverAddress), CONTAINS.asNode(), createURI(serverAddress + id)));
         }
     }
 
