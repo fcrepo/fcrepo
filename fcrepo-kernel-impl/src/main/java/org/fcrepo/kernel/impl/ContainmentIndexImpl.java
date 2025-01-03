@@ -545,7 +545,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
 
     @Override
     public String getContainedBy(@Nonnull final Transaction tx, final FedoraId resource) {
-        final String resourceID = resource.isDescription() ? resource.getBaseId() : resource.getFullId();
+        final String resourceID = resource.getFullId();
         final String parentID;
         if (tx.isOpenLongRunning()) {
             parentID = jdbcTemplate.queryForList(PARENT_EXISTS_IN_TRANSACTION, Map.of("child", resourceID,

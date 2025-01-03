@@ -43,9 +43,10 @@ public class ContainmentTriplesServiceImpl implements ContainmentTriplesService 
 
     @Override
     public Stream<Triple> getContainedBy(final Transaction tx, final FedoraResource objectResource) {
-        final var objectId = objectResource.getFedoraId();
+        var objectId = objectResource.getFedoraId();
         final String nodeUri;
         if (objectId.isMemento() || objectId.isDescription()) {
+            objectId = objectId.asBaseId();
             nodeUri = objectId.getBaseId();
         } else {
             nodeUri = objectId.getFullId();

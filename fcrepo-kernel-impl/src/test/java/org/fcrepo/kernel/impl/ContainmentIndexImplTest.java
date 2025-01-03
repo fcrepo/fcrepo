@@ -779,7 +779,7 @@ public class ContainmentIndexImplTest {
         when(child1.getFedoraId()).thenReturn(descriptionId1);
 
         containmentIndex.addContainedBy(shortLivedTx, parent1.getFedoraId(), binaryId1);
-        assertEquals(parent1.getFedoraId().getFullId(), containmentIndex.getContainedBy(shortLivedTx, descriptionId1));
+        assertNull(containmentIndex.getContainedBy(shortLivedTx, descriptionId1));
     }
 }
 
