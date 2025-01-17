@@ -28,6 +28,15 @@ public interface MembershipService {
     RdfStream getMembership(final Transaction transaction, final FedoraId fedoraId);
 
     /**
+     * Return an RdfStream of membership relations of which the provided resource is the object.
+     *
+     * @param transaction transaction
+     * @param fedoraId the object resource to get membership relations for.
+     * @return RdfStream of membership relations.
+     */
+    RdfStream getMembershipByObject(final Transaction transaction, final FedoraId fedoraId);
+
+    /**
      * Update membership properties based on the creation of the specified resource
      *
      * @param transaction transaction

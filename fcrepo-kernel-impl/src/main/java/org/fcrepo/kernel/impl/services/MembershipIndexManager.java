@@ -59,6 +59,7 @@ public class MembershipIndexManager {
 
     private static final String TX_ID_PARAM = "txId";
     private static final String SUBJECT_ID_PARAM = "subjectId";
+    private static final String OBJECT_ID_PARAM = "objectId";
     private static final String NO_END_TIME_PARAM = "noEndTime";
     private static final String ADD_OP_PARAM = "addOp";
     private static final String DELETE_OP_PARAM = "deleteOp";
@@ -102,6 +103,29 @@ public class MembershipIndexManager {
             " ORDER BY property, object_id" +
             " LIMIT :limit OFFSET :offSet";
 
+    private static final String SELECT_MEMBERSHIP_BY_OBJECT_IN_TX =
+            "SELECT subject_id, property" +
+                    " FROM membership m" +
+                    " WHERE object_id = :objectId" +
+                    " AND end_time = :noEndTime" +
+                    " AND NOT EXISTS (" +
+                        " SELECT 1" +
+                        " FROM membership_tx_operations mto" +
+                        " WHERE mto.object_id = :objectId" +
+                        " AND mto.source_id = m.source_id" +
+                        " AND mto.subject_id = m.subject_id" +
+                        " AND mto.tx_id = :txId" +
+                        " AND mto.operation = :deleteOp)" +
+            " UNION" +
+            " SELECT subject_id, property" +
+                    " FROM membership_tx_operations" +
+                    " WHERE object_id = :objectId" +
+                    " AND tx_id = :txId" +
+                    " AND end_time = :noEndTime" +
+                    " AND operation = :addOp" +
+                    " ORDER BY subject_id, property" +
+                    " LIMIT :limit OFFSET :offSet";
+
     private static final String DIRECT_SELECT_MEMBERSHIP =
             "SELECT property, object_id" +
             " FROM membership" +
@@ -109,6 +133,14 @@ public class MembershipIndexManager {
                 " AND end_time = :noEndTime" +
             " ORDER BY property, object_id" +
             " LIMIT :limit OFFSET :offSet";
+
+    private static final String DIRECT_SELECT_MEMBERSHIP_BY_OBJECT =
+            "SELECT subject_id, property" +
+                    " FROM membership" +
+                    " WHERE object_id = :objectId" +
+                    " AND end_time = :noEndTime" +
+                    " ORDER BY subject_id, property" +
+                    " LIMIT :limit OFFSET :offSet";
 
     private static final String SELECT_MEMBERSHIP_MEMENTO_IN_TX =
             "SELECT property, object_id" +
@@ -137,6 +169,33 @@ public class MembershipIndexManager {
             " ORDER BY property, object_id" +
             " LIMIT :limit OFFSET :offSet";
 
+    private static final String SELECT_MEMBERSHIP_BY_OBJECT_MEMENTO_IN_TX =
+            "SELECT subject_id, property" +
+                    " FROM membership m" +
+                    " WHERE m.object_id = :objectId" +
+                    " AND m.start_time <= :mementoTime" +
+                    " AND m.end_time > :mementoTime" +
+                    " AND NOT EXISTS (" +
+                        " SELECT 1" +
+                        " FROM membership_tx_operations mto" +
+                        " WHERE mto.object_id = :objectId" +
+                        " AND mto.source_id = m.source_id" +
+                        " AND mto.property = m.property" +
+                        " AND mto.subject_id = m.subject_id" +
+                        " AND mto.end_time <= :mementoTime" +
+                        " AND mto.tx_id = :txId" +
+                        " AND mto.operation = :deleteOp)" +
+            " UNION" +
+            " SELECT subject_id, property" +
+                    " FROM membership_tx_operations" +
+                    " WHERE object_id = :objectId" +
+                    " AND tx_id = :txId" +
+                    " AND start_time <= :mementoTime" +
+                    " AND end_time > :mementoTime" +
+                    " AND operation = :addOp" +
+                    " ORDER BY subject_id, property" +
+                    " LIMIT :limit OFFSET :offSet";
+
     private static final String DIRECT_SELECT_MEMBERSHIP_MEMENTO =
             "SELECT property, object_id" +
             " FROM membership" +
@@ -145,6 +204,15 @@ public class MembershipIndexManager {
                 " AND end_time > :mementoTime" +
             " ORDER BY property, object_id" +
             " LIMIT :limit OFFSET :offSet";
+
+    private static final String DIRECT_SELECT_MEMBERSHIP_BY_OBJECT_MEMENTO =
+            "SELECT subject_id, property" +
+                    " FROM membership" +
+                    " WHERE object_id = :objectId" +
+                    " AND start_time <= :mementoTime" +
+                    " AND end_time > :mementoTime" +
+                    " ORDER BY subject_id, property" +
+                    " LIMIT :limit OFFSET :offSet";
 
     private static final String SELECT_LAST_UPDATED =
             "SELECT max(last_updated) as last_updated" +
@@ -674,6 +742,51 @@ public class MembershipIndexManager {
                 query = DIRECT_SELECT_MEMBERSHIP_MEMENTO;
             } else {
                 query = DIRECT_SELECT_MEMBERSHIP;
+            }
+        }
+
+        return StreamSupport.stream(new MembershipIterator(query, parameterSource, membershipMapper), false);
+    }
+
+    /**
+     * Get a stream of membership triples with the given object id as the object
+     * @param tx transaction from which membership will be retrieved, or null for no transaction
+     * @param objectId ID of the object
+     * @return Stream of membership triples
+     */
+    public Stream<Triple> getMembershipByObject(final Transaction tx, final FedoraId objectId) {
+        final Node objectNode = NodeFactory.createURI(objectId.getBaseId());
+
+        final RowMapper<Triple> membershipMapper = (rs, rowNum) ->
+                Triple.create(
+                        NodeFactory.createURI(rs.getString("subject_id")),
+                        NodeFactory.createURI(rs.getString("property")),
+                        objectNode);
+
+        final var parameterSource = new MapSqlParameterSource();
+        final String query;
+
+        if (objectId.isMemento()) {
+            parameterSource.addValue(OBJECT_ID_PARAM, objectId.getBaseId());
+            parameterSource.addValue(MEMENTO_TIME_PARAM, formatInstant(objectId.getMementoInstant()));
+        } else {
+            parameterSource.addValue(OBJECT_ID_PARAM, objectId.getFullId());
+            parameterSource.addValue(NO_END_TIME_PARAM, NO_END_TIMESTAMP);
+        }
+
+        if (tx.isOpenLongRunning()) {
+            parameterSource.addValue(TX_ID_PARAM, tx.getId());
+
+            if (objectId.isMemento()) {
+                query = SELECT_MEMBERSHIP_BY_OBJECT_MEMENTO_IN_TX;
+            } else {
+                query = SELECT_MEMBERSHIP_BY_OBJECT_IN_TX;
+            }
+        } else {
+            if (objectId.isMemento()) {
+                query = DIRECT_SELECT_MEMBERSHIP_BY_OBJECT_MEMENTO;
+            } else {
+                query = DIRECT_SELECT_MEMBERSHIP_BY_OBJECT;
             }
         }
 

@@ -191,7 +191,6 @@ import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.springframework.test.context.TestExecutionListeners;
@@ -221,6 +220,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">; rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">; rel=\"type\"";
+    private static final String PROXY_FOR_URI = "http://www.openarchives.org/ore/terms/proxyFor";
     private static final String ARCHIVAL_GROUP_LINK_HEADER = "<" + ARCHIVAL_GROUP.getURI() + ">; rel=\"type\"";
 
     private static final String RESOURCE_LINK_HEADER = "<" + RESOURCE.getURI() + ">; rel=\"type\"";
@@ -2774,6 +2774,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
             assertTrue(graph.contains(ANY,
                     createURI(resourcea), createURI("info:xyz#some-other-property"), createURI(resourceb)));
+
+            assertTrue(graph.contains(ANY,
+                    createURI(resource), CONTAINS.asNode(), createURI(resourceb)));
         }
     }
 
@@ -2808,6 +2811,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(getContainer)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY, NodeFactory.createURI(binaryUri), referenceProp,
+                    NodeFactory.createURI(containerUri)));
+            assertTrue(graph.contains(ANY, NodeFactory.createURI(serverAddress), CONTAINS.asNode(),
                     NodeFactory.createURI(containerUri)));
         }
     }
@@ -2880,6 +2885,47 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testInboundReferencesOnRoot() throws Exception {
+        final HttpGet getContainer = new HttpGet(serverAddress);
+        getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            // Root node should not be contained by anything
+            assertFalse(graph.contains(ANY, ANY, CONTAINS.asNode(), ANY));
+        }
+    }
+
+    @Test
+    public void testInboundReferencesOnBinaryDescription() throws Exception {
+        final String id = getRandomUniqueId();
+        assertEquals(CREATED.getStatusCode(), getStatus(putObjMethod(id)));
+        final String dsLocation = createDatastream(id, "x", "xyz");
+
+        final HttpGet getContainer = new HttpGet(dsLocation + "/fcr:metadata");
+        getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, createURI(serverAddress + id), CONTAINS.asNode(), createURI(dsLocation)));
+        }
+    }
+
+    @Test
+    public void testInboundReferencesOnBasicContainer() throws Exception {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        final HttpGet getContainer = new HttpGet(serverAddress + id);
+        getContainer.setHeader("Prefer", INBOUND_REFERENCE_PREFER_HEADER);
+
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph graph = dataset.asDatasetGraph();
+            assertTrue(graph.contains(ANY, createURI(serverAddress), CONTAINS.asNode(), createURI(serverAddress + id)));
+        }
+    }
+
+    @Test
     public void testReferenceRemovedOnDelete() throws Exception {
         final String id = getRandomUniqueId();
         final String resource = serverAddress + id;
@@ -2932,7 +2978,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
-    @Ignore("Membership/containment not included as inbound references - FCREPO-3589")
     public void testGetObjectReferencesIndirect() throws Exception {
         final String uuid = getRandomUniqueId();
         final String pid1 = uuid + "/parent";
@@ -2943,20 +2988,130 @@ public class FedoraLdpIT extends AbstractResourceIT {
         createObjectAndClose(pid3);
 
         final String memberRelation = "http://pcdm.org/models#hasMember";
+        final String memberRelation2 = "http://example.com/models#anotherMember";
 
         // create an indirect container
-        final HttpPut createContainer = new HttpPut(serverAddress + pid1 + "/members");
+        final String indirectPid1 = pid1 + "/members";
+        createIndirectContainer(indirectPid1, memberRelation, pid1);
+
+        // create proxies for the children in the indirect container
+        createProxy(pid1, indirectPid1, pid2);
+        createProxy(pid1, indirectPid1, pid3);
+
+        // create another indirect container
+        final String indirectPid2 = pid1 + "/members2";
+        createIndirectContainer(indirectPid2, memberRelation2, pid1);
+
+        // create proxies for the children in the indirect container
+        createProxy(pid1, indirectPid2, pid2);
+
+        // retrieve the parent and verify the outbound triples exist
+        final HttpGet getParent =  new HttpGet(serverAddress + pid1);
+        getParent.addHeader(ACCEPT, "application/n-triples");
+        try (final CloseableDataset dataset = getDataset(getParent)) {
+            final DatasetGraph parentGraph = dataset.asDatasetGraph();
+            assertTrue(parentGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid2)));
+            assertTrue(parentGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid3)));
+            assertTrue(parentGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation2),
+                    createURI(serverAddress + pid2)));
+        }
+
+        // retrieve the members container and verify the LDP triples exist
+        final HttpGet getContainer =  new HttpGet(serverAddress + pid1 + "/members");
+        getContainer.addHeader("Prefer", "return=representation;include=\"http://www.w3.org/ns/ldp#PreferMembership\"");
+        getContainer.addHeader(ACCEPT, "application/n-triples");
+        try (final CloseableDataset dataset = getDataset(getContainer)) {
+            final DatasetGraph containerGraph = dataset.asDatasetGraph();
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#hasMemberRelation"),
+                    createURI(memberRelation)));
+
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#insertedContentRelation"),
+                    createURI(PROXY_FOR_URI)));
+
+            assertTrue(containerGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1 + "/members"),
+                    createURI("http://www.w3.org/ns/ldp#membershipResource"),
+                    createURI(serverAddress + pid1)));
+        }
+
+        // retrieve the member and verify inbound triples exist
+        final HttpGet getMember =  new HttpGet(serverAddress + pid2);
+        getMember.addHeader("Prefer", "return=representation; include=\"" + INBOUND_REFERENCES.toString() + "\"");
+        getMember.addHeader(ACCEPT, "application/n-triples");
+        try (final CloseableDataset dataset = getDataset(getMember)) {
+            final DatasetGraph memberGraph = dataset.asDatasetGraph();
+            assertTrue(memberGraph.contains(Node.ANY,
+                    Node.ANY,
+                    createURI(PROXY_FOR_URI),
+                    createURI(serverAddress + pid2)));
+
+            assertTrue(memberGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid2)));
+
+            assertTrue(memberGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation2),
+                    createURI(serverAddress + pid2)));
+
+            assertFalse("Should not contain inbound references to the other child", memberGraph.contains(Node.ANY,
+                    createURI(serverAddress + pid1),
+                    createURI(memberRelation),
+                    createURI(serverAddress + pid3)));
+        }
+    }
+
+    private static String createIndirectContainer(final String indirectPid1, final String memberRelation,
+                                                  final String memberRescPid) throws UnsupportedEncodingException {
+        final HttpPut createContainer = new HttpPut(serverAddress + indirectPid1);
         createContainer.addHeader(CONTENT_TYPE, "text/turtle");
         createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
+        final String membersRDF = "<> <" + HAS_MEMBER_RELATION + "> <" + memberRelation + ">; "
+            + "<" + INSERTED_CONTENT_RELATION + "> <" + PROXY_FOR_URI + ">; "
+            + "<" + MEMBERSHIP_RESOURCE + "> <" + serverAddress + memberRescPid + "> . ";
+        createContainer.setEntity(new StringEntity(membersRDF));
+
+        assertEquals(CREATED.getStatusCode(), getStatus(createContainer));
+        return serverAddress + indirectPid1;
+    }
+
+    @Test
+    public void testGetObjectReferencesDirect() throws Exception {
+        final String uuid = getRandomUniqueId();
+        final String pid1 = uuid + "/parent";
+
+        createObjectAndClose(pid1);
+
+        final String memberRelation = "http://pcdm.org/models#hasMember";
+
+        // create a direct container
+        final String directPid = pid1 + "/members";
+        final HttpPut createContainer = new HttpPut(serverAddress + directPid);
+        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
+        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
         final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
-            + "<http://www.w3.org/ns/ldp#insertedContentRelation> <http://www.openarchives.org/ore/terms/proxyFor>; "
-            + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + pid1 + "> . ";
+                + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + pid1 + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
         assertEquals(CREATED.getStatusCode(), getStatus(createContainer));
 
-        // create proxies for the children in the indirect container
-        createProxy(pid1, pid2);
-        createProxy(pid1, pid3);
+        // create direct children
+        final String pid2 = directPid + "/child1";
+        final String pid3 = directPid + "/child2";
+        createObjectAndClose(pid2);
+        createObjectAndClose(pid3);
 
         // retrieve the parent and verify the outbound triples exist
         final HttpGet getParent =  new HttpGet(serverAddress + pid1);
@@ -2974,27 +3129,21 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
 
         // retrieve the members container and verify the LDP triples exist
-        final HttpGet getContainer =  new HttpGet(serverAddress + pid1 + "/members");
+        final HttpGet getContainer =  new HttpGet(serverAddress + directPid);
         getContainer.addHeader("Prefer", "return=representation;include=\"http://www.w3.org/ns/ldp#PreferMembership\"");
         getContainer.addHeader(ACCEPT, "application/n-triples");
         try (final CloseableDataset dataset = getDataset(getContainer)) {
             final DatasetGraph containerGraph = dataset.asDatasetGraph();
             assertTrue(containerGraph.contains(Node.ANY,
-                    createURI(serverAddress + pid1 + "/members"),
+                    createURI(serverAddress + directPid),
                     createURI("http://www.w3.org/ns/ldp#hasMemberRelation"),
                     createURI(memberRelation)));
 
             assertTrue(containerGraph.contains(Node.ANY,
-                    createURI(serverAddress + pid1 + "/members"),
-                    createURI("http://www.w3.org/ns/ldp#insertedContentRelation"),
-                    createURI("http://www.openarchives.org/ore/terms/proxyFor")));
-
-            assertTrue(containerGraph.contains(Node.ANY,
-                    createURI(serverAddress + pid1 + "/members"),
+                    createURI(serverAddress + directPid),
                     createURI("http://www.w3.org/ns/ldp#membershipResource"),
                     createURI(serverAddress + pid1)));
         }
-
 
         // retrieve the member and verify inbound triples exist
         final HttpGet getMember =  new HttpGet(serverAddress + pid2);
@@ -3002,11 +3151,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         getMember.addHeader(ACCEPT, "application/n-triples");
         try (final CloseableDataset dataset = getDataset(getMember)) {
             final DatasetGraph memberGraph = dataset.asDatasetGraph();
-            assertTrue(memberGraph.contains(Node.ANY,
-                    Node.ANY,
-                    createURI("http://www.openarchives.org/ore/terms/proxyFor"),
-                    createURI(serverAddress + pid2)));
-
             assertTrue(memberGraph.contains(Node.ANY,
                     createURI(serverAddress + pid1),
                     createURI(memberRelation),
@@ -3018,13 +3162,18 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     createURI(serverAddress + pid3)));
         }
     }
-    private static void createProxy(final String parent, final String child) {
-        final HttpPost createProxy = new HttpPost(serverAddress + parent + "/members");
+
+    private static String createProxy(final String parent, final String indirectContainer, final String child)
+            throws IOException {
+        final HttpPost createProxy = new HttpPost(serverAddress + indirectContainer);
         createProxy.addHeader(CONTENT_TYPE, "text/turtle");
-        final String proxyRDF = "<> <http://www.openarchives.org/ore/terms/proxyFor> <" + serverAddress + child + ">;"
+        final String proxyRDF = "<> <" + PROXY_FOR_URI + "> <" + serverAddress + child + ">;"
             + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + parent + "> .";
         createProxy.setEntity(new StringEntity(proxyRDF, UTF_8));
-        assertEquals(CREATED.getStatusCode(), getStatus(createProxy));
+        try (final CloseableHttpResponse postResponse = execute(createProxy)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(postResponse));
+            return getLocation(postResponse);
+        }
     }
 
     @Test
@@ -3767,30 +3916,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         // Create indirect container (c0/members)
         final String indirectContainerId = containerId + "/t";
-        final String indirectContainer;
-        final String ttl = "<> <" + MEMBERSHIP_RESOURCE + "> <" + container + ">;\n"
-                + "<" + HAS_MEMBER_RELATION + "> <info:some/relation>;\n"
-                + "<" + INSERTED_CONTENT_RELATION + "> <info:proxy/for> .\n";
-        final HttpPut put = putObjMethod(containerId + "/t", "text/turtle", ttl);
-        put.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
-        try (final CloseableHttpResponse response = execute(put)) {
-            indirectContainer = getLocation(response);
-        }
+        final String indirectContainer = createIndirectContainer(indirectContainerId,
+                "info:some/relation", containerId);
         assertTrue(getLinkHeaders(getObjMethod(containerId + "/t")).contains(INDIRECT_CONTAINER_LINK_HEADER));
 
         // Add indirect resource to indirect container
-        final HttpPost postIndirectResource = postObjMethod(indirectContainerId);
-        final String irRdf =
-                "<> <info:proxy/in>  <" + container + "> ;\n" +
-                        "   <info:proxy/for> <" + resource + "> .";
-        postIndirectResource.setEntity(new StringEntity(irRdf));
-        postIndirectResource.setHeader(CONTENT_TYPE, "text/turtle");
+        final String indirectResource = createProxy(containerId, indirectContainerId, resourceId);
 
-        final String indirectResource;
-        try (final CloseableHttpResponse postResponse = execute(postIndirectResource)) {
-            indirectResource = getLocation(postResponse);
-            assertEquals("Expected post to succeed", CREATED.getStatusCode(), getStatus(postResponse));
-        }
         // Ensure container has been updated with relationship... indirectly
         try (final CloseableHttpResponse getResponse = execute(new HttpGet(container));
                 final CloseableDataset dataset = getDataset(getResponse)) {
@@ -3805,7 +3937,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals("Expected delete to succeed",
                 NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(indirectResource)));
 
-        // Ensure container has been updated with relationship... indirectly
+        // Ensure container has been updated to remove the relationship... indirectly
         try (final CloseableHttpResponse getResponse1 = execute(new HttpGet(container));
                 final CloseableDataset dataset = getDataset(getResponse1)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
