@@ -104,9 +104,10 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
             triples.add(Triple.create(subject, type.asNode(), createURI(triple.toString())));
         });
 
-        if (!resource.getFedoraId().isRepositoryRoot()) {
+        if (!resource.getFedoraId().isRepositoryRoot() && !resource.isAcl() && !(resource instanceof TimeMap) &&
+                !(resource.getOriginalResource() instanceof Tombstone)) {
             try {
-                final var parent = resource.getParent();
+                final FedoraResource parent = resource.getDescribedResource().getParent();
                 triples.add(Triple.create(subject, HAS_PARENT.asNode(), createURI(resolveId(parent))));
             } catch (final PathNotFoundException e) {
                 // no parent.
