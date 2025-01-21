@@ -826,43 +826,22 @@
         <artifactId>jacoco-maven-plugin</artifactId>
           <executions>
             <execution>
-              <id>default-prepare-agent</id>
+              <id>prepare-agent</id>
               <goals>
                 <goal>prepare-agent</goal>
               </goals>
-
-              <configuration>
-                <destFile>${sonar.jacoco.reportPath}</destFile>
-                <propertyName>jacoco.agent.unit.arg</propertyName>
-                <append>true</append>
-              </configuration>
             </execution>
             <execution>
-              <id>default-prepare-agent-integration</id>
+              <id>prepare-agent-integration</id>
               <goals>
                 <goal>prepare-agent-integration</goal>
               </goals>
               <configuration>
-                <destFile>${sonar.jacoco.itReportPath}</destFile>
-                <propertyName>jacoco.agent.it.arg</propertyName>
-                <append>true</append>
                 <excludes>
                   <exclude>**/*CSS3ParserTokenManager*</exclude>
                   <exclude>**/*StyleAttributes*</exclude>
                 </excludes>
               </configuration>
-            </execution>
-            <execution>
-              <id>default-report</id>
-              <goals>
-                <goal>report</goal>
-              </goals>
-            </execution>
-            <execution>
-              <id>default-report-integration</id>
-              <goals>
-                <goal>report-integration</goal>
-              </goals>
             </execution>
           </executions>
       </plugin>

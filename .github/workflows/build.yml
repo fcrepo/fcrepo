@@ -39,6 +39,10 @@ jobs:
         cache: 'maven'
     - name: Build with Maven
       run: mvn -B -U clean install
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
   postgres-itest:
     runs-on: ubuntu-latest
     strategy:
@@ -72,6 +76,10 @@ jobs:
         cache: 'maven'
     - name: Build with Maven
       run: mvn -B -U -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
   mariadb-itest:
     runs-on: ubuntu-latest
     strategy:
@@ -106,6 +114,10 @@ jobs:
         cache: 'maven'
     - name: Build with Maven
       run: mvn -B -U -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
   mysql-itest:
     runs-on: ubuntu-latest
     strategy:
@@ -140,6 +152,10 @@ jobs:
         cache: 'maven'
     - name: Build with Maven
       run: mvn -B -U -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: [build, postgres-itest, mariadb-itest, mysql-itest]

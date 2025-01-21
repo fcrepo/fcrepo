@@ -47,7 +47,7 @@
     <github-site.plugin.version>0.12</github-site.plugin.version>
     <gpg.plugin.version>3.0.1</gpg.plugin.version>
     <install.plugin.version>2.5.2</install.plugin.version>
-    <jacoco.plugin.version>0.8.7</jacoco.plugin.version>
+    <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
     <jar.plugin.version>3.2.0</jar.plugin.version>
     <javadoc.plugin.version>3.3.1</javadoc.plugin.version>
     <jxr.plugin.version>3.1.1</jxr.plugin.version>
