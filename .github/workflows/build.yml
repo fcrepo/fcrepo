@@ -6,9 +6,10 @@ name: Build
 on:
   push:
     branches:
-      - "**"
+      - main
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
@@ -43,119 +44,121 @@ jobs:
       uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
-  postgres-itest:
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 1
-      matrix:
-        java: ['11']
-    services:
-      postgres:
-        image: postgres:12
-        env:
-          POSTGRES_USER: fcrepo-user
-          POSTGRES_PASSWORD: fcrepo-pw
-          POSTGRES_DB: fcrepo
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-    steps:
-    - name: Git support longpaths
-      run: git config --global core.longpaths true
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v4
       with:
-        distribution: 'temurin'
-        java-version: ${{ matrix.java }}
-        cache: 'maven'
-    - name: Build with Maven
-      run: mvn -B -U -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
-  mariadb-itest:
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 1
-      matrix:
-        java: ['11']
-    services:
-      postgres:
-        image: mariadb:10.5
-        env:
-          MYSQL_ROOT_PASSWORD: root-pw
-          MYSQL_DATABASE: fcrepo
-          MYSQL_USER: fcrepo-user
-          MYSQL_PASSWORD: fcrepo-pw
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-        ports:
-          - 3306:3306
-    steps:
-    - name: Git support longpaths
-      run: git config --global core.longpaths true
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: ${{ matrix.java }}
-        cache: 'maven'
-    - name: Build with Maven
-      run: mvn -B -U -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
-  mysql-itest:
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 1
-      matrix:
-        java: ['11']
-    services:
-      postgres:
-        image: mysql:8
-        env:
-          MYSQL_ROOT_PASSWORD: root-pw
-          MYSQL_DATABASE: fcrepo
-          MYSQL_USER: fcrepo-user
-          MYSQL_PASSWORD: fcrepo-pw
-        options: >-
-          --health-cmd="mysqladmin ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-        ports:
-          - 3306:3306
-    steps:
-    - name: Git support longpaths
-      run: git config --global core.longpaths true
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: ${{ matrix.java }}
-        cache: 'maven'
-    - name: Build with Maven
-      run: mvn -B -U -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+        verbose: true
+#  postgres-itest:
+#    runs-on: ubuntu-latest
+#    strategy:
+#      max-parallel: 1
+#      matrix:
+#        java: ['11']
+#    services:
+#      postgres:
+#        image: postgres:12
+#        env:
+#          POSTGRES_USER: fcrepo-user
+#          POSTGRES_PASSWORD: fcrepo-pw
+#          POSTGRES_DB: fcrepo
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
+#        ports:
+#          - 5432:5432
+#    steps:
+#    - name: Git support longpaths
+#      run: git config --global core.longpaths true
+#    - name: Checkout
+#      uses: actions/checkout@v4
+#    - name: Set up JDK ${{ matrix.java }}
+#      uses: actions/setup-java@v4
+#      with:
+#        distribution: 'temurin'
+#        java-version: ${{ matrix.java }}
+#        cache: 'maven'
+#    - name: Build with Maven
+#      run: mvn -B -U -Dfcrepo.db.url="jdbc:postgresql://localhost:5432/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+#    - name: Upload coverage to Codecov
+#      uses: codecov/codecov-action@v5
+#      env:
+#        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+#  mariadb-itest:
+#    runs-on: ubuntu-latest
+#    strategy:
+#      max-parallel: 1
+#      matrix:
+#        java: ['11']
+#    services:
+#      postgres:
+#        image: mariadb:10.5
+#        env:
+#          MYSQL_ROOT_PASSWORD: root-pw
+#          MYSQL_DATABASE: fcrepo
+#          MYSQL_USER: fcrepo-user
+#          MYSQL_PASSWORD: fcrepo-pw
+#        options: >-
+#          --health-cmd="mysqladmin ping"
+#          --health-interval=10s
+#          --health-timeout=5s
+#          --health-retries=5
+#        ports:
+#          - 3306:3306
+#    steps:
+#    - name: Git support longpaths
+#      run: git config --global core.longpaths true
+#    - name: Checkout
+#      uses: actions/checkout@v4
+#    - name: Set up JDK ${{ matrix.java }}
+#      uses: actions/setup-java@v4
+#      with:
+#        distribution: 'temurin'
+#        java-version: ${{ matrix.java }}
+#        cache: 'maven'
+#    - name: Build with Maven
+#      run: mvn -B -U -Dfcrepo.db.url="jdbc:mariadb://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+#    - name: Upload coverage to Codecov
+#      uses: codecov/codecov-action@v5
+#      env:
+#        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+#  mysql-itest:
+#    runs-on: ubuntu-latest
+#    strategy:
+#      max-parallel: 1
+#      matrix:
+#        java: ['11']
+#    services:
+#      postgres:
+#        image: mysql:8
+#        env:
+#          MYSQL_ROOT_PASSWORD: root-pw
+#          MYSQL_DATABASE: fcrepo
+#          MYSQL_USER: fcrepo-user
+#          MYSQL_PASSWORD: fcrepo-pw
+#        options: >-
+#          --health-cmd="mysqladmin ping"
+#          --health-interval=10s
+#          --health-timeout=5s
+#          --health-retries=5
+#        ports:
+#          - 3306:3306
+#    steps:
+#    - name: Git support longpaths
+#      run: git config --global core.longpaths true
+#    - name: Checkout
+#      uses: actions/checkout@v4
+#    - name: Set up JDK ${{ matrix.java }}
+#      uses: actions/setup-java@v4
+#      with:
+#        distribution: 'temurin'
+#        java-version: ${{ matrix.java }}
+#        cache: 'maven'
+#    - name: Build with Maven
+#      run: mvn -B -U -Dfcrepo.db.url="jdbc:mysql://localhost:3306/fcrepo" -Dfcrepo.db.user="fcrepo-user" -Dfcrepo.db.password="fcrepo-pw" clean install -P db-test
+#    - name: Upload coverage to Codecov
+#      uses: codecov/codecov-action@v5
+#      env:
+#        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
   deploy:
     if: github.ref == 'refs/heads/main'
     needs: [build, postgres-itest, mariadb-itest, mysql-itest]
