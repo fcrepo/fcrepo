@@ -798,7 +798,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.it.arg}</argLine>
+          <argLine>-XX:MaxMetaspaceSize=512m --add-opens=java.base/java.lang=ALL-UNNAMED ${jacoco.agent.it.arg}</argLine>
         </configuration>
       </plugin>
 
