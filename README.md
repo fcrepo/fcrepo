@@ -1,4 +1,4 @@
-![Build](https://github.com/fcrepo/fcrepo/workflows/Build/badge.svg)
+![Build](https://github.com/fcrepo/fcrepo/workflows/Build/badge.svg) [![codecov](https://codecov.io/github/fcrepo/fcrepo/graph/badge.svg?token=GcgUWil0ni)](https://codecov.io/github/fcrepo/fcrepo)
 
 [JavaDocs](http://docs.fcrepo.org/) | 
 [Fedora Wiki](https://wiki.lyrasis.org/display/FF) | 

@@ -798,7 +798,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.it.arg}</argLine>
+          <argLine>-XX:MaxMetaspaceSize=512m --add-opens=java.base/java.lang=ALL-UNNAMED ${jacoco.agent.it.arg}</argLine>
         </configuration>
       </plugin>
 
@@ -830,9 +830,7 @@
               <goals>
                 <goal>prepare-agent</goal>
               </goals>
-
               <configuration>
-                <destFile>${sonar.jacoco.reportPath}</destFile>
                 <propertyName>jacoco.agent.unit.arg</propertyName>
                 <append>true</append>
               </configuration>
@@ -843,7 +841,6 @@
                 <goal>prepare-agent-integration</goal>
               </goals>
               <configuration>
-                <destFile>${sonar.jacoco.itReportPath}</destFile>
                 <propertyName>jacoco.agent.it.arg</propertyName>
                 <append>true</append>
                 <excludes>
@@ -853,16 +850,48 @@
               </configuration>
             </execution>
             <execution>
-              <id>default-report</id>
+              <id>report</id>
+              <phase>verify</phase>
               <goals>
                 <goal>report</goal>
               </goals>
+              <configuration>
+                <outputDirectory>${project.build.directory}/jacoco</outputDirectory>
+                <xml>true</xml>
+                <html>false</html>
+                <csv>false</csv>
+              </configuration>
             </execution>
             <execution>
-              <id>default-report-integration</id>
+              <id>merge-coverage</id>
+              <phase>verify</phase>
               <goals>
-                <goal>report-integration</goal>
+                <goal>merge</goal>
               </goals>
+              <configuration>
+                <fileSets>
+                  <fileSet>
+                    <directory>${project.build.directory}</directory>
+                    <includes>
+                      <include>jacoco.exec</include>
+                      <include>jacoco-it.exec</include>
+                    </includes>
+                  </fileSet>
+                </fileSets>
+                <destFile>${project.build.directory}/jacoco/jacoco-merged.exec</destFile>
+              </configuration>
+            </execution>
+            <execution>
+              <id>generate-report</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+              <configuration>
+                <dataFile>${project.build.directory}/jacoco/jacoco-merged.exec</dataFile>
+                <outputDirectory>${project.build.directory}/jacoco</outputDirectory>
+                <xml>true</xml>
+              </configuration>
             </execution>
           </executions>
       </plugin>
