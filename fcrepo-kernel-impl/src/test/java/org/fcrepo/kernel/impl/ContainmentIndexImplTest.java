@@ -769,6 +769,18 @@ public class ContainmentIndexImplTest {
         // outside of the transaction, it still shouldn't show up
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
     }
+
+    @Test
+    public void testGetContainedByBinaryDescription() {
+        stubObject("parent1");
+        stubObject("child1");
+        final var binaryId1 = child1.getFedoraId();
+        final var descriptionId1 = child1.getFedoraId().asDescription();
+        when(child1.getFedoraId()).thenReturn(descriptionId1);
+
+        containmentIndex.addContainedBy(shortLivedTx, parent1.getFedoraId(), binaryId1);
+        assertNull(containmentIndex.getContainedBy(shortLivedTx, descriptionId1));
+    }
 }
 
 

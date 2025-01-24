@@ -286,6 +286,19 @@ public class MembershipServiceImpl implements MembershipService {
     }
 
     @Override
+    public RdfStream getMembershipByObject(final Transaction tx, final FedoraId fedoraId) {
+        final FedoraId objectId;
+        if (fedoraId.isDescription()) {
+            objectId = fedoraId.asBaseId();
+        } else {
+            objectId = fedoraId;
+        }
+        final var subject = NodeFactory.createURI(objectId.getBaseId());
+        final var membershipStream = indexManager.getMembershipByObject(tx, objectId);
+        return new DefaultRdfStream(subject, membershipStream);
+    }
+
+    @Override
     public void commitTransaction(final Transaction tx) {
         indexManager.commitTransaction(tx);
     }
