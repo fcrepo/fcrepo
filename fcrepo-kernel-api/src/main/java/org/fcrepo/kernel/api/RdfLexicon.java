@@ -109,6 +109,8 @@ public final class RdfLexicon {
             createProperty(REPOSITORY_NAMESPACE + "lastModified");
     public static final Property LAST_MODIFIED_BY =
             createProperty(REPOSITORY_NAMESPACE + "lastModifiedBy");
+    public static final Property HAS_PARENT =
+            createProperty(REPOSITORY_NAMESPACE + "hasParent");
 
     public static final Resource FEDORA_CONTAINER =
             createResource(REPOSITORY_NAMESPACE + "Container");
