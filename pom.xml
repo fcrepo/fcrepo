@@ -77,6 +77,7 @@
     <awaitility.version>4.1.0</awaitility.version>
     <grizzly.version>2.4.4</grizzly.version>
     <junit.version>4.13.2</junit.version>
+    <junit5.version>5.11.4</junit5.version>
     <system-rules.version>1.19.0</system-rules.version>
     <mockito.version>3.12.4</mockito.version>
     <!-- fcrepo5-specific plugins -->
@@ -611,6 +612,12 @@
         <groupId>junit</groupId>
         <artifactId>junit</artifactId>
         <version>${junit.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${junit5.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>

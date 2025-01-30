@@ -9,11 +9,11 @@ import static java.net.URI.create;
 import static org.fcrepo.config.DigestAlgorithm.SHA1;
 import static org.fcrepo.kernel.api.utils.ContentDigest.asURI;
 import static org.fcrepo.kernel.api.utils.ContentDigest.getAlgorithm;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.fcrepo.config.DigestAlgorithm;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * <p>ContentDigestTest class.</p>
@@ -24,32 +24,32 @@ public class ContentDigestTest {
 
     @Test
     public void testSHA_1() {
-        assertEquals("Failed to produce a proper content digest URI!",
-                create("urn:sha1:fake"), asURI(SHA1.getAlgorithm(), "fake"));
+        assertEquals(create("urn:sha1:fake"), asURI(SHA1.getAlgorithm(), "fake"),
+                "Failed to produce a proper content digest URI!");
     }
 
     @Test
     public void testSHA1() {
-        assertEquals("Failed to produce a proper content digest URI!",
-                create("urn:sha1:fake"), asURI("SHA", "fake"));
+        assertEquals(create("urn:sha1:fake"), asURI("SHA", "fake"),
+                "Failed to produce a proper content digest URI!");
     }
 
     @Test
     public void testGetAlgorithm() {
-        assertEquals("Failed to produce a proper digest algorithm!", SHA1.getAlgorithm(),
-                getAlgorithm(asURI(SHA1.getAlgorithm(), "fake")));
+        assertEquals(SHA1.getAlgorithm(), getAlgorithm(asURI(SHA1.getAlgorithm(), "fake")),
+                "Failed to produce a proper digest algorithm!");
     }
 
     @Test
     public void testSHA256() {
-        assertEquals("Failed to produce a proper content digest URI!",
-                create("urn:sha-256:fake"), asURI("SHA-256", "fake"));
+        assertEquals(create("urn:sha-256:fake"), asURI("SHA-256", "fake"),
+                "Failed to produce a proper content digest URI!");
     }
 
     @Test
     public void testMissingAlgorithm() {
-        assertEquals("Failed to produce a proper content digest URI!",
-                create("missing:fake"), asURI("SHA-819", "fake"));
+        assertEquals(create("missing:fake"), asURI("SHA-819", "fake"),
+                "Failed to produce a proper content digest URI!");
     }
 
     @Test
