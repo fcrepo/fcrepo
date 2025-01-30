@@ -5,9 +5,9 @@
  */
 package org.fcrepo.kernel.api.observer;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * <p>EventTypeTest class.</p>
