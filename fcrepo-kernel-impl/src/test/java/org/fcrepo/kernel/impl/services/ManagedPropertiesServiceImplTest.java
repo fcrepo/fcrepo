@@ -12,9 +12,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,8 +32,8 @@ import org.fcrepo.kernel.api.models.WebacAcl;
 
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.RDFNode;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the ManagedPropertiesServiceImpl
@@ -46,7 +46,7 @@ public class ManagedPropertiesServiceImplTest {
     FedoraResource parent = mock(FedoraResource.class);
     final Instant created_date = Instant.now();
 
-    @Before
+    @BeforeEach
     public void setUp() {
         configureResource(resource);
         when(parent.getId()).thenReturn("info:fedora/parent");

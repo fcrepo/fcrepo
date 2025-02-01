@@ -5,7 +5,6 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static junit.framework.TestCase.assertTrue;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
@@ -13,9 +12,11 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -40,16 +41,19 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author bseeger
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class CreateRdfSourceOperationBuilderTest {
 
     private CreateRdfSourceOperationBuilder builder;
@@ -86,7 +90,7 @@ public class CreateRdfSourceOperationBuilderTest {
     @Mock
     private Transaction tx;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         calendar.setTime(Date.from(CREATED_INSTANT));
         Created_xsddatetime = new XSDDateTime(calendar);
@@ -140,7 +144,7 @@ public class CreateRdfSourceOperationBuilderTest {
         assertEquals(MODIFIED_INSTANT, op.getLastModifiedDate());
     }
 
-    @Test(expected = MalformedRdfException.class)
+    @Test
     public void testRelaxedPropertiesNonDate() {
         final var resc = model.getResource(RESOURCE_ID.getResourceId());
         resc.addLiteral(LAST_MODIFIED_DATE, "Notadate");
@@ -148,15 +152,10 @@ public class CreateRdfSourceOperationBuilderTest {
         resc.addLiteral(CREATED_DATE, Created_xsddatetime);
         resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
 
-        final RdfSourceOperation op = buildOperationWithRelaxProperties(model);
-
-        assertEquals(USER_PRINCIPAL, op.getCreatedBy());
-        assertEquals(USER_PRINCIPAL, op.getLastModifiedBy());
-        assertNull(op.getCreatedDate());
-        assertNull(op.getLastModifiedDate());
+        assertThrows(MalformedRdfException.class, () -> buildOperationWithRelaxProperties(model));
     }
 
-    @Test(expected = MalformedRdfException.class)
+    @Test
     public void testRelaxedPropertiesNonDate2() {
         final var resc = model.getResource(RESOURCE_ID.getResourceId());
         resc.addLiteral(LAST_MODIFIED_DATE, Modified_xsddatetime);
@@ -164,12 +163,7 @@ public class CreateRdfSourceOperationBuilderTest {
         resc.addLiteral(CREATED_DATE, "Notadate");
         resc.addLiteral(CREATED_BY, USER_PRINCIPAL);
 
-        final RdfSourceOperation op = buildOperationWithRelaxProperties(model);
-
-        assertEquals(USER_PRINCIPAL, op.getCreatedBy());
-        assertEquals(USER_PRINCIPAL, op.getLastModifiedBy());
-        assertNull(op.getCreatedDate());
-        assertNull(op.getLastModifiedDate());
+        assertThrows(MalformedRdfException.class, () -> buildOperationWithRelaxProperties(model));
     }
 
     @Test
