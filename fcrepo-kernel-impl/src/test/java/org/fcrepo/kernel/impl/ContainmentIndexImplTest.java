@@ -569,6 +569,34 @@ public class ContainmentIndexImplTest {
     }
 
     @Test
+    public void clearAllTransactions() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+        stubObject("parent2");
+        stubObject("child2");
+        stubObject("transaction2");
+
+        // Create two hierarchies, one in a committed transaction and the other in an uncommitted one
+        containmentIndex.addContainedBy(transaction1, parent1.getFedoraId(), child1.getFedoraId());
+        containmentIndex.addContainedBy(transaction2, parent2.getFedoraId(), child2.getFedoraId());
+        containmentIndex.commitTransaction(transaction1);
+
+        assertTrue(containmentIndex.resourceExists(shortLivedTx, child1.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(transaction1, child1.getFedoraId(), false));
+
+        assertFalse(containmentIndex.resourceExists(shortLivedTx, child2.getFedoraId(), false));
+        assertTrue(containmentIndex.resourceExists(transaction2, child2.getFedoraId(), false));
+
+        containmentIndex.clearAllTransactions();
+
+        // Committed containment should persist, but uncommitted should not
+        assertTrue(containmentIndex.resourceExists(shortLivedTx, child1.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(shortLivedTx, child2.getFedoraId(), false));
+        assertFalse(containmentIndex.resourceExists(transaction2, child2.getFedoraId(), false));
+    }
+
+    @Test
     public void testHasResourcesStartingFailure() {
         stubObject("parent1");
         stubObject("child1");
@@ -740,6 +768,18 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(transaction1, parent1.getFedoraId()).count());
         // outside of the transaction, it still shouldn't show up
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
+    }
+
+    @Test
+    public void testGetContainedByBinaryDescription() {
+        stubObject("parent1");
+        stubObject("child1");
+        final var binaryId1 = child1.getFedoraId();
+        final var descriptionId1 = child1.getFedoraId().asDescription();
+        when(child1.getFedoraId()).thenReturn(descriptionId1);
+
+        containmentIndex.addContainedBy(shortLivedTx, parent1.getFedoraId(), binaryId1);
+        assertNull(containmentIndex.getContainedBy(shortLivedTx, descriptionId1));
     }
 }
 

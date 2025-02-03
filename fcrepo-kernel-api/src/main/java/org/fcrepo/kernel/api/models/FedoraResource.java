@@ -6,6 +6,7 @@
 package org.fcrepo.kernel.api.models;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.time.Instant;
 
 import java.util.List;
@@ -235,4 +236,10 @@ public interface FedoraResource {
      * @return the interaction model.
      */
     String getInteractionModel();
+
+    /**
+     * Get the resource's path in storage.
+     * @return the path in storage.
+     */
+    Path getStorageRelativePath();
 }

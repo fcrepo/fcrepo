@@ -18,6 +18,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -463,6 +464,8 @@ public class OcflPersistentStorageSessionTest {
             session1.rollback();
             fail("session1.rollback(...) invocation should fail.");
         }
+
+        verify(index).rollback(any(Transaction.class));
     }
 
     @Test
@@ -533,7 +536,7 @@ public class OcflPersistentStorageSessionTest {
         session1.rollback();
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void rollbackSucceedsOnUncommittedChanges() throws Exception {
         mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
@@ -548,11 +551,11 @@ public class OcflPersistentStorageSessionTest {
         }
         //verify that the resource cannot be found now (since it wasn't committed).
         final OcflPersistentStorageSession newSession = createSession(index, objectSessionFactory);
-        newSession.getTriples(RESOURCE_ID, null);
-        fail("second session.getTriples(...) invocation should have failed.");
+        assertThrows(PersistentStorageException.class, () -> newSession.getTriples(RESOURCE_ID, null));
+        verify(index).rollback(any(Transaction.class));
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void rollbackFailsWhenAlreadyRolledBack() throws Exception {
         mockNoIndex(RESOURCE_ID);
         mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
@@ -579,7 +582,9 @@ public class OcflPersistentStorageSessionTest {
             fail("Operation should not fail.");
         }
 
-        session1.rollback();
+        assertThrows(PersistentStorageException.class, () -> session1.rollback());
+
+        verify(index).rollback(any(Transaction.class));
     }
 
     @Test

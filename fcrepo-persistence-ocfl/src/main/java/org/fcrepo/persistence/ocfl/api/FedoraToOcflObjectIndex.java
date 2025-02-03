@@ -76,5 +76,9 @@ public interface FedoraToOcflObjectIndex {
      */
     void rollback(@Nonnull final Transaction session);
 
+    /**
+     * Clear all transactions in the ocfl index.
+     */
+    void clearAllTransactions();
 }
 

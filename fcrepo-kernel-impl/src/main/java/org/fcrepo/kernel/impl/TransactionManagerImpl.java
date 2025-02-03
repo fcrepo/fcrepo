@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -148,6 +150,42 @@ public class TransactionManagerImpl implements TransactionManager {
             return transaction;
         } else {
             throw new TransactionNotFoundException("No Transaction found with transactionId: " + transactionId);
+        }
+    }
+
+    @PreDestroy
+    public void cleanupAllTransactions() {
+        LOGGER.debug("Shutting down transaction manager, attempt to rollback any incomplete transactions");
+        final var txIt = transactions.entrySet().iterator();
+        while (txIt.hasNext()) {
+            final var txEntry = txIt.next();
+            final var tx = txEntry.getValue();
+
+            if ((tx.isOpen() || tx.hasExpired()) && !tx.isRolledBack()) {
+                LOGGER.debug("Rolling back transaction as part of shutdown {}", tx.getId());
+                try {
+                    tx.rollback();
+                    pSessionManager.removeSession(tx.getId());
+                } catch (final RuntimeException e) {
+                    LOGGER.error("Failed to rollback transaction {}", tx.getId(), e);
+                }
+            }
+        }
+        LOGGER.debug("Finished rollback of all incomplete transactions as part of shut down");
+    }
+
+    @PostConstruct
+    public void preCleanTransactions() {
+        LOGGER.debug("TransactionManagerImpl initialized, cleaning up leftover transaction entries");
+
+        // Clean up any leftover transaction database entries immediately after startup
+        synchronized (transactions) {
+            containmentIndex.clearAllTransactions();
+            membershipService.clearAllTransactions();
+            referenceService.clearAllTransactions();
+            searchIndex.clearAllTransactions();
+            // Also clear any leftover ocfl sessions and staged files
+            pSessionManager.clearAllSessions();
         }
     }
 

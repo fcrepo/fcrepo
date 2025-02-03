@@ -56,6 +56,8 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
             DB, CONTAINMENT, OPERATION, "getContainerIdByPath");
     private static final Timer resetTimer = Metrics.timer(METRIC_NAME,
             DB, CONTAINMENT, OPERATION, "reset");
+    private static final Timer clearAllTransactionsTimer = Metrics.timer(METRIC_NAME,
+            DB, CONTAINMENT, OPERATION, "clearAllTransactions");
     private static final Timer hasResourcesStartingWithTimer = Metrics.timer(METRIC_NAME,
             DB, CONTAINMENT, OPERATION, "hasResourcesStartingWith");
     private static final Timer containmentLastUpdateTimer = Metrics.timer(METRIC_NAME, DB, CONTAINMENT, OPERATION,
@@ -131,6 +133,13 @@ public class ContainmentIndexMetrics implements ContainmentIndex {
     public void rollbackTransaction(final Transaction tx) {
         rollbackTransactionTimer.record(() -> {
             containmentIndexImpl.rollbackTransaction(tx);
+        });
+    }
+
+    @Override
+    public void clearAllTransactions() {
+        clearAllTransactionsTimer.record(() -> {
+            containmentIndexImpl.clearAllTransactions();
         });
     }
 

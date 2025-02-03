@@ -42,9 +42,9 @@ public class ExternalContentHandlerFactoryTest {
     @Test
     public void testValidLinkHeader() {
         final ExternalContentHandler handler = factory.createFromLinks(
-                makeLinks("https://fedora.info/"));
+                makeLinks("https://example.com/"));
 
-        assertEquals("https://fedora.info/", handler.getURL());
+        assertEquals("https://example.com/", handler.getURL());
         assertEquals("text/plain", handler.getContentType());
         assertEquals("proxy", handler.getHandling());
     }
@@ -53,12 +53,12 @@ public class ExternalContentHandlerFactoryTest {
     public void testValidationFailure() {
         doThrow(new ExternalMessageBodyException("")).when(validator).validate(anyString());
 
-        factory.createFromLinks(makeLinks("https://fedora.info/"));
+        factory.createFromLinks(makeLinks("https://example.com/"));
     }
 
     @Test(expected = ExternalMessageBodyException.class)
     public void testMultipleExtLinkHeaders() {
-        final List<String> links = makeLinks("https://fedora.info/", "https://fedora.info/");
+        final List<String> links = makeLinks("https://example.com/", "https://example.com/");
 
         factory.createFromLinks(links);
     }

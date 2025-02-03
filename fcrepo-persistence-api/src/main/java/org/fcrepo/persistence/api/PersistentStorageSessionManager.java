@@ -40,4 +40,8 @@ public interface PersistentStorageSessionManager {
      */
     PersistentStorageSession removeSession(final String sessionId);
 
+    /**
+     * Clears all sessions. This is useful for cleaning up after a shutdown when sessions were not able to rollback.
+     */
+    void clearAllSessions();
 }

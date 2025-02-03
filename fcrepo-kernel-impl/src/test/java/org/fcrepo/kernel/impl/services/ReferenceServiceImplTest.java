@@ -357,4 +357,64 @@ public class ReferenceServiceImplTest {
         referenceService.commitTransaction(transaction);
         assertEquals(0, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
     }
+
+    @Test
+    public void testReset() {
+        assertEquals(0, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
+
+        final Model model = createDefaultModel();
+        model.add(subject1, referenceProp, target);
+        final RdfStream stream = fromModel(subject1.asNode(), model);
+        referenceService.updateReferences(transaction, subject1Id, TEST_USER, stream);
+        referenceService.commitTransaction(transaction);
+        // Now 1 outside or inside the transaction.
+        assertEquals(1, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
+        assertEquals(1, referenceService.getInboundReferences(transaction, targetResource).count());
+
+        // Now add a second, uncommitted reference
+        final Model model2 = createDefaultModel();
+        model2.add(subject2, referenceProp, target);
+        final RdfStream stream2 = fromModel(subject2.asNode(), model2);
+        referenceService.updateReferences(transaction, subject2Id, TEST_USER, stream2);
+        // Outside the tx we only have the previous reference
+        assertEquals(1, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
+        // Inside the tx, we have the new one as well
+        assertEquals(2, referenceService.getInboundReferences(transaction, targetResource).count());
+
+        referenceService.reset();
+
+        // After reset, there should be no references in transactions or outside
+        assertEquals(0, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
+        assertEquals(0, referenceService.getInboundReferences(transaction, targetResource).count());
+    }
+
+    @Test
+    public void testClearAllTransactions() {
+        assertEquals(0, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
+
+        final Model model = createDefaultModel();
+        model.add(subject1, referenceProp, target);
+        final RdfStream stream = fromModel(subject1.asNode(), model);
+        referenceService.updateReferences(transaction, subject1Id, TEST_USER, stream);
+        referenceService.commitTransaction(transaction);
+        // Now 1 outside or inside the transaction.
+        assertEquals(1, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
+        assertEquals(1, referenceService.getInboundReferences(transaction, targetResource).count());
+
+        // Now add a second, uncommitted reference
+        final Model model2 = createDefaultModel();
+        model2.add(subject2, referenceProp, target);
+        final RdfStream stream2 = fromModel(subject2.asNode(), model2);
+        referenceService.updateReferences(transaction, subject2Id, TEST_USER, stream2);
+        // Outside the tx we only have the previous reference
+        assertEquals(1, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
+        // Inside the tx, we have the new one as well
+        assertEquals(2, referenceService.getInboundReferences(transaction, targetResource).count());
+
+        referenceService.clearAllTransactions();
+
+        // After clearing transactions, we should only have the committed reference
+        assertEquals(1, referenceService.getInboundReferences(shortLivedTx, targetResource).count());
+        assertEquals(1, referenceService.getInboundReferences(transaction, targetResource).count());
+    }
 }

@@ -259,7 +259,7 @@ public class TransactionImpl implements Transaction {
         failIfExpired();
         failIfCommitted();
         failIfNotOpen();
-        this.expiration = this.expiration.plus(amountToAdd);
+        this.expiration = Instant.now().plus(amountToAdd);
         return this.expiration;
     }
 

@@ -5,8 +5,31 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
+import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
+import static java.util.Arrays.asList;
+
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
@@ -23,6 +46,9 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
+
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,29 +58,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-
-import javax.inject.Inject;
-import java.net.URI;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import static java.util.Arrays.asList;
-import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author bbpennel
@@ -83,6 +86,8 @@ public class ResourceFactoryImplTest {
     private final static URI DIGEST = URI.create("sha:12345");
 
     private final static Collection<URI> DIGESTS = asList(DIGEST);
+
+    private final static String RELATIVE_RESOURCE_PATH = "some/ocfl/path/v1/content/.fcrepo/fcr-container.json";
 
     @Mock
     private PersistentStorageSessionManager sessionManager;
@@ -382,6 +387,7 @@ public class ResourceFactoryImplTest {
         headers.setLastModifiedBy(LAST_MODIFIED_BY);
         headers.setLastModifiedDate(LAST_MODIFIED_DATE);
         headers.setStateToken(STATE_TOKEN);
+        headers.setStorageRelativePath(RELATIVE_RESOURCE_PATH);
     }
 
     private void assertBinaryFieldsMatch(final FedoraResource resc) {

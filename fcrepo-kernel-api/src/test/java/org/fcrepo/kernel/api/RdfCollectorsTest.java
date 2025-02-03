@@ -7,7 +7,7 @@ package org.fcrepo.kernel.api;
 
 import static java.util.Arrays.asList;
 import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author acoburn

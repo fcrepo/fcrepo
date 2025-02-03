@@ -106,6 +106,11 @@ public interface ContainmentIndex {
     void rollbackTransaction(final Transaction tx);
 
     /**
+     * Clear all transactions in the containment index.
+     */
+    void clearAllTransactions();
+
+    /**
      * Check if the resourceID exists in the containment index. Which should mean it exists.
      *
      * @param tx The transaction, or null if no transaction

@@ -263,6 +263,22 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
     }
 
     @Override
+    public InputStream getBinaryRange(final FedoraId identifier, final Instant version,
+                                      final long start, final long end) throws PersistentStorageException {
+        ensureCommitNotStarted();
+
+        final var mapping = getFedoraOcflMapping(identifier);
+        final var objSession = findOrCreateSession(mapping.getOcflObjectId());
+
+        final var versionNumber = resolveVersionNumber(objSession, identifier, version);
+
+        return objSession.readRange(identifier.getResourceId(), versionNumber, start, end)
+                .getContentStream()
+                .orElseThrow(() -> new PersistentItemNotFoundException("No binary content found for resource "
+                        + identifier.getFullId()));
+    }
+
+    @Override
     public synchronized void prepare() {
         ensureCommitNotStarted();
         if (isReadOnly()) {
@@ -358,10 +374,19 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
             }
         }
 
-        closeUncommittedSessions();
+        try {
+            closeUncommittedSessions();
 
-        if (commitWasStarted) {
-            rollbackCommittedSessions();
+            if (commitWasStarted) {
+                rollbackCommittedSessions();
+            }
+        } finally {
+            // Always roll back the index changes associated with the transaction
+            try {
+                fedoraOcflIndex.rollback(transaction);
+            } catch (final Exception e) {
+                LOGGER.error("Failed to rollback OCFL index updates in transaction {}", transaction, e);
+            }
         }
 
         this.state = State.ROLLED_BACK;
@@ -419,13 +444,6 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
                 rollbackFailures.add(String.format("Failed to rollback object <%s> in session <%s>: %s",
                         id, session.sessionId(), e.getMessage()));
             }
-        }
-
-        try {
-            fedoraOcflIndex.rollback(transaction);
-        } catch (final Exception e) {
-            rollbackFailures.add(String.format("Failed to rollback OCFL index updates in transaction <%s>: %s",
-                    transaction, e.getMessage()));
         }
 
         //throw an exception if any sessions could not be rolled back.

@@ -804,6 +804,11 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     }
 
     @Override
+    public void clearAllTransactions() {
+        jdbcTemplate.update(TRUNCATE_TABLE + TRANSACTION_OPERATIONS_TABLE, Collections.emptyMap());
+    }
+
+    @Override
     public boolean resourceExists(@Nonnull final Transaction tx, final FedoraId fedoraId,
                                   final boolean includeDeleted) {
         // Get the containing ID because fcr:metadata will not exist here but MUST exist if the containing resource does

@@ -82,4 +82,9 @@ public class TestOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     }
 
+    @Override
+    public void clearAllTransactions() {
+
+    }
+
 }
