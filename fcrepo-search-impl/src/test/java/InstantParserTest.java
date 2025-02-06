@@ -4,8 +4,10 @@
  * tree.
  */
 import org.fcrepo.search.impl.InstantParser;
+import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author dbernstein
