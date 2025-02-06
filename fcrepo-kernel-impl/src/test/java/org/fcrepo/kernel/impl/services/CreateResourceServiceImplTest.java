@@ -18,9 +18,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,11 +77,10 @@ import org.apache.jena.datatypes.xsd.XSDDateTime;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.flywaydb.test.annotation.FlywayTest;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Captor;
@@ -87,12 +88,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * @author bseeger
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration("/containmentIndexTest.xml")
 public class CreateResourceServiceImplTest {
 
@@ -104,8 +105,8 @@ public class CreateResourceServiceImplTest {
 
     private final String defaultInteractionModel = DEFAULT_INTERACTION_MODEL.toString();
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    public Path tempFolder;
 
     @Mock
     private PersistentStorageSessionManager psManager;
@@ -174,7 +175,7 @@ public class CreateResourceServiceImplTest {
 
     private FedoraPropsConfig propsConfig = new FedoraPropsConfig();
 
-    @Before
+    @BeforeEach
     @FlywayTest
     public void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -242,43 +243,49 @@ public class CreateResourceServiceImplTest {
     /**
      * Test creating a RDFSource with a NonRDFSource parent.
      */
-    @Test(expected = InteractionModelViolationException.class)
+    @Test
     public void testParentIsBinaryRdf() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
+        assertThrows(InteractionModelViolationException.class,
+                () -> createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model)
+        );
     }
 
     /**
      * Test creating a NonRDFSource with a NonRDFSource parent.
      */
-    @Test(expected = InteractionModelViolationException.class)
+    @Test
     public void testParentIsBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, FILENAME, CONTENT_SIZE, null,
-                DIGESTS, null, null);
+        assertThrows(InteractionModelViolationException.class,
+                () -> createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, FILENAME,
+                        CONTENT_SIZE, null, DIGESTS, null, null)
+        );
     }
 
     /**
      * Test creating an external NonRDFSource with a NonRDFSource parent.
      * TODO: put/post to a binary parent is tested above, might be a duplicate.
      */
-    @Test(expected = InteractionModelViolationException.class)
+    @Test
     public void testParentIsExternal() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
         containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(resourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, FILENAME, CONTENT_SIZE, null,
-                DIGESTS, null, extContent);
+        assertThrows(InteractionModelViolationException.class,
+                () -> createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, FILENAME,
+                        CONTENT_SIZE, null, DIGESTS, null, extContent)
+        );
     }
 
     /**
@@ -486,31 +493,31 @@ public class CreateResourceServiceImplTest {
         assertEquals(expected, model);
     }
 
-    @Test(expected = RequestWithAclLinkHeaderException.class)
+    @Test
     public void testCheckAclLinkHeaderFailDblQ() throws Exception {
         final List<String> links = Arrays.asList("<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"",
                 "<http" + "://example.org/some/location/image.tiff>; " + "rel=\"http://fedora" +
                         ".info/definitions/fcrepo#ExternalContent\"; " + "handling=\"proxy\"; type=\"image/tiff\"",
                 "<http" + "://example.org/some/otherlocation>; rel=\"acl\"");
-        createResourceService.checkAclLinkHeader(links);
+        assertThrows(RequestWithAclLinkHeaderException.class, () -> createResourceService.checkAclLinkHeader(links));
     }
 
-    @Test(expected = RequestWithAclLinkHeaderException.class)
+    @Test
     public void testCheckAclLinkHeaderFailSingleQ() throws Exception {
         final List<String> links = Arrays.asList("<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"",
                 "<http" + "://example.org/some/location/image.tiff>; " + "rel=\"http://fedora" +
                         ".info/definitions/fcrepo#ExternalContent\"; " + "handling=\"proxy\"; type=\"image/tiff\"",
                 "<http" + "://example.org/some/otherlocation>; rel='acl'");
-        createResourceService.checkAclLinkHeader(links);
+        assertThrows(RequestWithAclLinkHeaderException.class, () -> createResourceService.checkAclLinkHeader(links));
     }
 
-    @Test(expected = RequestWithAclLinkHeaderException.class)
+    @Test
     public void testCheckAclLinkHeaderFailNoQ() throws Exception {
         final List<String> links = Arrays.asList("<" + NON_RDF_SOURCE.toString() + ">; rel=\"type\"",
                 "<http" + "://example.org/some/location/image.tiff>; " + "rel=\"http://fedora" +
                         ".info/definitions/fcrepo#ExternalContent\"; " + "handling=\"proxy\"; type=\"image/tiff\"",
                 "<http" + "://example.org/some/otherlocation>; rel=acl");
-        createResourceService.checkAclLinkHeader(links);
+        assertThrows(RequestWithAclLinkHeaderException.class, () -> createResourceService.checkAclLinkHeader(links));
     }
 
     @Test
@@ -525,8 +532,9 @@ public class CreateResourceServiceImplTest {
     public void testCopyExternalBinary() throws Exception {
         final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"));
 
-        tempFolder.create();
-        final File externalFile = tempFolder.newFile();
+        final File externalFile = Files.createFile(
+                tempFolder.resolve("externalFile")
+        ).toFile();
         final String contentString = "some content";
         FileUtils.write(externalFile, contentString, StandardCharsets.UTF_8);
         final URI uri = externalFile.toURI();
@@ -562,8 +570,9 @@ public class CreateResourceServiceImplTest {
     public void testProxyExternalBinary() throws Exception {
         final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"));
 
-        tempFolder.create();
-        final File externalFile = tempFolder.newFile();
+        final File externalFile = Files.createFile(
+            tempFolder.resolve("externalFile")
+        ).toFile();
         final String contentString = "some content";
         FileUtils.write(externalFile, contentString, StandardCharsets.UTF_8);
         final URI uri = externalFile.toURI();

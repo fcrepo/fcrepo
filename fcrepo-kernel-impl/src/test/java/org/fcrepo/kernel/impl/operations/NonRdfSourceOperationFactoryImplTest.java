@@ -5,7 +5,7 @@
  */
 package org.fcrepo.kernel.impl.operations;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import org.apache.commons.io.IOUtils;
@@ -14,11 +14,13 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationBuilder;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -27,7 +29,8 @@ import java.util.UUID;
 /**
  * @author bseeger
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class NonRdfSourceOperationFactoryImplTest {
 
     private NonRdfSourceOperationFactory factory;
@@ -37,7 +40,7 @@ public class NonRdfSourceOperationFactoryImplTest {
     @Mock
     private Transaction transaction;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         when(transaction.getId()).thenReturn("tx-123");
         factory = new NonRdfSourceOperationFactoryImpl();

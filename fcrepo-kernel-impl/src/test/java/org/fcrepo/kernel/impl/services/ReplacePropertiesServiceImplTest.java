@@ -6,8 +6,8 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.apache.jena.vocabulary.DC_11.title;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.times;
@@ -46,21 +46,21 @@ import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.search.api.SearchIndex;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * DeleteResourceServiceTest
  *
  * @author bseeger
  */
-@RunWith(MockitoJUnitRunner.Strict.class)
+@ExtendWith(MockitoExtension.class)
 public class ReplacePropertiesServiceImplTest {
 
     private static final String USER_PRINCIPAL = "fedoraUser";
@@ -113,7 +113,7 @@ public class ReplacePropertiesServiceImplTest {
             "<" + FEDORA_ID + "> <" + title + "> 'fancy title' .\n" +
             "<" + FEDORA_ID + "> <" + title + "> 'another fancy title' .";
 
-    @Before
+    @BeforeEach
     public void setup() {
         propsConfig = new FedoraPropsConfig();
         factory = new RdfSourceOperationFactoryImpl();

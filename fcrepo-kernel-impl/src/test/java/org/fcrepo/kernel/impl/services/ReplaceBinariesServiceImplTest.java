@@ -9,8 +9,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static org.apache.commons.io.IOUtils.toInputStream;
 import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
@@ -21,6 +22,7 @@ import java.io.File;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 
 import org.fcrepo.kernel.api.Transaction;
@@ -42,25 +44,27 @@ import org.fcrepo.search.api.SearchIndex;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author bbpennel
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ReplaceBinariesServiceImplTest {
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    public Path tempFolder;
 
     private static final String USER_PRINCIPAL = "fedoraUser";
 
@@ -104,7 +108,7 @@ public class ReplaceBinariesServiceImplTest {
     @Captor
     private ArgumentCaptor<UpdateNonRdfSourceOperation> operationCaptor;
 
-    @Before
+    @BeforeEach
     public void setup() {
         factory = new NonRdfSourceOperationFactoryImpl();
         setField(service, "factory", factory);
@@ -164,8 +168,9 @@ public class ReplaceBinariesServiceImplTest {
         final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"),
                 URI.create("urn:md5:9893532233caff98cd083a116b013c0b"));
 
-        tempFolder.create();
-        final File externalFile = tempFolder.newFile();
+        final File externalFile = Files.createFile(
+                tempFolder.resolve("externalFile")
+        ).toFile();
         FileUtils.write(externalFile, "some content", StandardCharsets.UTF_8);
         final URI uri = externalFile.toURI();
         when(externalContent.fetchExternalContent()).thenReturn(Files.newInputStream(externalFile.toPath()));
@@ -191,9 +196,10 @@ public class ReplaceBinariesServiceImplTest {
         final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"),
                 URI.create("urn:md5:9893532233caff98cd083a116b013c0b"));
 
-        tempFolder.create();
         final String contentString = "some content";
-        final File externalFile = tempFolder.newFile();
+        final File externalFile = Files.createFile(
+                tempFolder.resolve("externalFile")
+        ).toFile();
         FileUtils.write(externalFile, contentString, StandardCharsets.UTF_8);
         final URI uri = externalFile.toURI();
         when(externalContent.fetchExternalContent()).thenReturn(Files.newInputStream(externalFile.toPath()));
@@ -215,23 +221,26 @@ public class ReplaceBinariesServiceImplTest {
         assertNull(op.getContentStream());
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void replaceBinary_PersistFailure() throws Exception {
         doThrow(new PersistentStorageException("Boom")).when(pSession)
                 .persist(any(ResourceOperation.class));
 
         final var stream = toInputStream("Some content", UTF_8);
 
-        service.perform(tx, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
-                null);
+        assertThrows(RepositoryRuntimeException.class,
+                () -> service.perform(tx, USER_PRINCIPAL, FEDORA_ID, FILENAME, MIME_TYPE, DIGESTS, stream, FILESIZE,
+                null)
+        );
     }
 
     @Test
     public void copyExternalBinary() throws Exception {
         final var realDigests = asList(URI.create("urn:sha1:94e66df8cd09d410c62d9e0dc59d3a884e458e05"));
 
-        tempFolder.create();
-        final File externalFile = tempFolder.newFile();
+        final File externalFile = Files.createFile(
+                tempFolder.resolve("externalFile")
+        ).toFile();
         final String contentString = "some content";
         FileUtils.write(externalFile, contentString, StandardCharsets.UTF_8);
         final URI uri = externalFile.toURI();

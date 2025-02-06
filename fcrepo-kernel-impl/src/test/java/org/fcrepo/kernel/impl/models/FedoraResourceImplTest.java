@@ -20,8 +20,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -44,15 +44,18 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 import org.apache.jena.rdf.model.Model;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author pwinckles
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class FedoraResourceImplTest {
 
     @Mock
@@ -122,7 +125,7 @@ public class FedoraResourceImplTest {
         final var resource = resourceWithMockedTimeMap();
         expectMementos();
         final var match = resource.findMementoByDatetime(instant("20200309172118"));
-        assertNull("Should not find a memento", match);
+        assertNull(match, "Should not find a memento");
     }
 
     @Test

@@ -5,10 +5,10 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -32,18 +32,21 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 
 import org.fcrepo.search.api.SearchIndex;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * <p>TransactionTest class.</p>
  *
  * @author mohideen
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionManagerImplTest {
 
     private TransactionImpl testTx;
@@ -79,7 +82,7 @@ public class TransactionManagerImplTest {
 
     private FedoraPropsConfig fedoraPropsConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         fedoraPropsConfig = new FedoraPropsConfig();
         fedoraPropsConfig.setSessionTimeout(Duration.ofMillis(180000));
@@ -111,20 +114,17 @@ public class TransactionManagerImplTest {
         assertEquals(testTx.getId(), tx.getId());
     }
 
-    @Test(expected = TransactionNotFoundException.class)
+    @Test
     public void testGetTransactionWithInvalidID() {
-        testTxManager.get("invalid-id");
+        assertThrows(TransactionNotFoundException.class, () -> testTxManager.get("invalid-id"));
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testGetExpiredTransaction() throws Exception {
         testTx.expire();
-        try {
-            testTxManager.get(testTx.getId());
-        } finally {
-            // Make sure rollback is triggered
-            verify(psSession).rollback();
-        }
+        assertThrows(TransactionClosedException.class, () -> testTxManager.get(testTx.getId()));
+        // Make sure rollback is triggered
+        verify(psSession).rollback();
     }
 
     @Test
@@ -151,24 +151,15 @@ public class TransactionManagerImplTest {
             //expected
         }
 
-        assertNotNull("Continuing transaction must be present",
-                testTxManager.get(continuingTx.getId()));
+        assertNotNull(testTxManager.get(continuingTx.getId()),
+                "Continuing transaction must be present");
 
         testTxManager.cleanupClosedTransactions();
 
         // Verify that the closed transactions are stick around since they haven't expired yet
-        try {
-            testTxManager.get(commitTx.getId());
-            fail("Transaction must be present but committed");
-        } catch (final TransactionClosedException e) {
-            //expected
-        }
-        try {
-            testTxManager.get(rollbackTx.getId());
-            fail("Transaction must be present but rolled back");
-        } catch (final TransactionClosedException e) {
-            //expected
-        }
+        assertThrows(TransactionClosedException.class, () -> testTxManager.get(commitTx.getId()));
+
+        assertThrows(TransactionClosedException.class, () -> testTxManager.get(rollbackTx.getId()));
 
         // Force expiration of the closed transactions, rather than waiting for it
         commitTx.expire();
@@ -181,21 +172,11 @@ public class TransactionManagerImplTest {
         verify(pssManager).removeSession(rollbackTx.getId());
         verify(pssManager, never()).removeSession(continuingTx.getId());
 
-        try {
-            testTxManager.get(commitTx.getId());
-            fail("Committed transaction was not cleaned up");
-        } catch (final TransactionNotFoundException e) {
-            //expected
-        }
-        try {
-            testTxManager.get(rollbackTx.getId());
-            fail("Rolled back transaction was not cleaned up");
-        } catch (final TransactionNotFoundException e) {
-            //expected
-        }
+        assertThrows(TransactionNotFoundException.class, () -> testTxManager.get(commitTx.getId()));
+        assertThrows(TransactionNotFoundException.class, () -> testTxManager.get(rollbackTx.getId()));
 
-        assertNotNull("Continuing transaction must be present",
-                testTxManager.get(continuingTx.getId()));
+        assertNotNull(testTxManager.get(continuingTx.getId()),
+                "Continuing transaction must be present");
     }
 
     // Check that the scheduled cleanup process rolls back expired transactions, but leaves
@@ -210,24 +191,15 @@ public class TransactionManagerImplTest {
 
         testTxManager.cleanupClosedTransactions();
 
-        try {
-            testTxManager.get(expiringTx.getId());
-            fail("Transaction must be expired");
-        } catch (final TransactionClosedException e) {
-            //expected
-        }
+
+        assertThrows(TransactionClosedException.class, () -> testTxManager.get(expiringTx.getId()));
 
         verify(psSession).rollback();
         verify(pssManager).removeSession(expiringTx.getId());
 
         testTxManager.cleanupClosedTransactions();
 
-        try {
-            testTxManager.get(expiringTx.getId());
-            fail("Expired transaction was not cleaned up");
-        } catch (final TransactionNotFoundException e) {
-            //expected
-        }
+        assertThrows(TransactionNotFoundException.class, () -> testTxManager.get(expiringTx.getId()));
     }
 
     @Test

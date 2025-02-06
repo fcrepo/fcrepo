@@ -18,11 +18,13 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.net.URI;
 import java.time.Instant;
@@ -34,18 +36,19 @@ import java.util.stream.Collectors;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
  * @author pwinckles
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TimeMapImplTest {
 
     @Mock
@@ -64,7 +67,7 @@ public class TimeMapImplTest {
 
     private TimeMapImpl timeMap;
 
-    @Before
+    @BeforeEach
     public void setup() {
         when(transaction.getId()).thenReturn(UUID.randomUUID().toString());
         when(transaction.isShortLived()).thenReturn(true);

@@ -8,12 +8,12 @@ package org.fcrepo.kernel.impl;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -32,22 +32,24 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 
 import org.flywaydb.test.FlywayTestExecutionListener;
 import org.flywaydb.test.annotation.FlywayTest;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 /**
  * @author peichman
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @ContextConfiguration("/containmentIndexTest.xml")
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class, FlywayTestExecutionListener.class })
 public class ContainmentIndexImplTest {
@@ -73,13 +75,10 @@ public class ContainmentIndexImplTest {
     @Inject
     private ContainmentIndexImpl containmentIndex;
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule().silent();
-
     private final Map<String, FedoraResource> id_to_resource = new HashMap<>();
     private final Map<String, Transaction> id_to_transaction = new HashMap<>();
 
-    @Before
+    @BeforeEach
     @FlywayTest
     public void setUp() {
         id_to_resource.put("parent1", parent1);
