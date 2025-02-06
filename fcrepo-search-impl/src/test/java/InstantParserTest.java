@@ -22,13 +22,13 @@ public class InstantParserTest {
             assertEquals("2020-01-01T07:00:00Z", InstantParser.parse("2020-01-01T00:00:00-07:00").toString());
             assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("20200101 00:00:00").toString());
             assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("Wed, 1 Jan 2020 00:00:00 GMT").toString());
-        }
+        });
     }
 
     @Test
     public void testInvalidString() {
         assertThrows(IllegalArgumentException.class, () -> {
             InstantParser.parse("2020-01-01 24").toString();
-        }
+        });
     }
 }
