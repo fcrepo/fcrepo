@@ -15,16 +15,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class InstantParserTest {
     @Test
     public void test() {
-        assertThrows(PersistentStorageException.class, () -> {
-            assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("2020-01-01").toString());
-            assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("20200101").toString());
-            assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("2020-01-01T00:00:00Z").toString());
-            assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("2020-01-01 00:00:00").toString());
-            assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("20200101 00:00:00").toString());
-            assertEquals("2020-01-01T07:00:00Z", InstantParser.parse("2020-01-01T00:00:00-07:00").toString());
-            assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("20200101 00:00:00").toString());
-            assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("Wed, 1 Jan 2020 00:00:00 GMT").toString());
-        });
+        assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("2020-01-01").toString());
+        assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("20200101").toString());
+        assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("2020-01-01T00:00:00Z").toString());
+        assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("2020-01-01 00:00:00").toString());
+        assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("20200101 00:00:00").toString());
+        assertEquals("2020-01-01T07:00:00Z", InstantParser.parse("2020-01-01T00:00:00-07:00").toString());
+        assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("20200101 00:00:00").toString());
+        assertEquals("2020-01-01T00:00:00Z", InstantParser.parse("Wed, 1 Jan 2020 00:00:00 GMT").toString());
     }
 
     @Test
