@@ -5,30 +5,9 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.apache.jena.graph.NodeFactory.createURI;
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
-import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import static java.lang.System.currentTimeMillis;
-
-import java.io.ByteArrayInputStream;
-import java.nio.file.Paths;
-import java.util.UUID;
-
 import io.ocfl.api.MutableOcflRepository;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
-
 import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -53,9 +32,28 @@ import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.cache.NoOpCache;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
+
+import java.io.ByteArrayInputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
+
+import static java.lang.System.currentTimeMillis;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.DELETE;
+import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
+import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.createFilesystemRepository;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * Abstract Reindexer test with common setup and functions.
@@ -97,8 +95,8 @@ public class AbstractReindexerTest {
     @Mock
     protected Transaction transaction;
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    public Path tempFolder;
 
     protected final String session1Id = "session1";
     protected final FedoraId resource1 = FedoraId.create("resource1");
@@ -122,7 +120,7 @@ public class AbstractReindexerTest {
 
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         ocflObjectSessionFactory = new DefaultOcflObjectSessionFactory(repository,
-                tempFolder.newFolder().toPath(), objectMapper, new NoOpCache<>(), new NoOpCache<>(),
+                tempFolder, objectMapper, new NoOpCache<>(), new NoOpCache<>(),
                 CommitType.NEW_VERSION,
                 "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
 

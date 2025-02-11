@@ -5,19 +5,6 @@
  */
 package org.fcrepo.integration.persistence.ocfl.impl;
 
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
@@ -27,17 +14,31 @@ import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentItemConflictException;
 import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.util.Arrays;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * @author mikejritter
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration("/spring-test/fcrepo-config.xml")
 public class OverwriteRdfTombstonePersisterIT {
 
@@ -57,7 +58,7 @@ public class OverwriteRdfTombstonePersisterIT {
     private Transaction tx;
 
 
-    @Before
+    @BeforeEach
     public void setup() {
         rescId = makeRescId();
         tx = mock(Transaction.class);
@@ -234,7 +235,7 @@ public class OverwriteRdfTombstonePersisterIT {
         assertEquals(BASIC_CONTAINER.getURI(), overwrittenHeaders.getInteractionModel());
     }
 
-    @Test(expected = PersistentItemConflictException.class)
+    @Test
     public void changeArchivalGroupTombstoneInteractionModel() {
         final var readSession = sessionManager.getReadOnlySession();
 
@@ -274,12 +275,14 @@ public class OverwriteRdfTombstonePersisterIT {
             .parentId(FedoraId.getRepositoryRootId())
             .build();
 
-        session3.persist(overwriteOp);
-        session3.prepare();
-        session3.commit();
+        assertThrows(PersistentItemConflictException.class, () -> {
+            session3.persist(overwriteOp);
+            session3.prepare();
+            session3.commit();
+        });
     }
 
-    @Test(expected = PersistentItemConflictException.class)
+    @Test
     public void changeAtomicTombstoneInteractionModel() {
         final var readSession = sessionManager.getReadOnlySession();
 
@@ -318,9 +321,11 @@ public class OverwriteRdfTombstonePersisterIT {
             .parentId(FedoraId.getRepositoryRootId())
             .build();
 
-        session3.persist(overwriteOp);
-        session3.prepare();
-        session3.commit();
+        assertThrows(PersistentItemConflictException.class, () -> {
+            session3.persist(overwriteOp);
+            session3.prepare();
+            session3.commit();
+        });
     }
 
     private PersistentStorageSession startWriteSession(final Transaction tx) {

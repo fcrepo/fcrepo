@@ -12,13 +12,15 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.exception.NotFoundException;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,7 +33,8 @@ import static org.mockito.Mockito.when;
  * Purge Persister tests.
  * @author whikloj
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class PurgeResourcePersisterTest {
 
     @Mock
@@ -56,7 +59,7 @@ public class PurgeResourcePersisterTest {
 
     private static String SESSION_ID = "SOME-SESSION-ID";
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         operation = mock(ResourceOperation.class);
         persister = new PurgeResourcePersister(this.index);
@@ -77,7 +80,7 @@ public class PurgeResourcePersisterTest {
         verify(session).deleteResource(resourceId.getResourceId());
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void testPurgeSubPathDoesNotExist() throws Exception {
         final var resourceId = FedoraId.create("info:fedora/an-ocfl-object/some-subpath");
         when(mapping.getOcflObjectId()).thenReturn("some-ocfl-id");
@@ -86,7 +89,7 @@ public class PurgeResourcePersisterTest {
         when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
         doThrow(NotFoundException.class)
             .when(session).deleteResource(resourceId.getResourceId());
-        persister.persist(psSession, operation);
+        assertThrows(PersistentStorageException.class, () -> persister.persist(psSession, operation));
     }
 
 }

@@ -5,18 +5,6 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
-import java.util.UUID;
-
 import org.fcrepo.config.FlywayFactory;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
@@ -24,12 +12,23 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.InvalidResourceIdentifierException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
-
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
  * @author dbernstein
@@ -52,7 +51,7 @@ public class DbFedoraToOcflObjectIndexTest {
 
     private static OcflPropsConfig propsConfig;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws Exception {
         dataSource = new DriverManagerDataSource();
         dataSource.setDriverClassName("org.h2.jdbcx.JdbcDataSource");
@@ -66,7 +65,7 @@ public class DbFedoraToOcflObjectIndexTest {
         index.setup();
     }
 
-    @Before
+    @BeforeEach
     public void setup() {
         index.reset();
         session = Mockito.mock(Transaction.class);
@@ -125,9 +124,9 @@ public class DbFedoraToOcflObjectIndexTest {
         assertEquals(OCFL_ID, mapping1.getOcflObjectId());
     }
 
-    @Test(expected = FedoraOcflMappingNotFoundException.class)
+    @Test
     public void testNotExists() throws Exception {
-        index.getMapping(readOnlyTx, RESOURCE_ID_1);
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(readOnlyTx, RESOURCE_ID_1));
     }
 
     @Test
@@ -155,13 +154,8 @@ public class DbFedoraToOcflObjectIndexTest {
 
         index.commit(session);
 
-        try {
-            // No longer accessible to anyone.
-            index.getMapping(readOnlyTx, RESOURCE_ID_1);
-            fail("expected exception");
-        } catch (final FedoraOcflMappingNotFoundException e) {
-            // expected mapping to not exist
-        }
+        // No longer accessible to anyone, expect mapping to not exist
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(readOnlyTx, RESOURCE_ID_1));
     }
 
     @Test
@@ -169,12 +163,8 @@ public class DbFedoraToOcflObjectIndexTest {
         index.removeMapping(session, RESOURCE_ID_1);
         index.commit(session);
 
-        try {
-            index.getMapping(readOnlyTx, RESOURCE_ID_1);
-            fail("expected exception");
-        } catch (final FedoraOcflMappingNotFoundException e) {
-            // expected mapping to not exist
-        }
+        // expect mapping to not exist
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(readOnlyTx, RESOURCE_ID_1));
     }
 
     @Test
@@ -184,22 +174,12 @@ public class DbFedoraToOcflObjectIndexTest {
         final FedoraOcflMapping expected = new FedoraOcflMapping(ROOT_RESOURCE_ID, OCFL_ID);
         assertEquals(expected, index.getMapping(session, RESOURCE_ID_1));
 
-        try {
-            // Not yet committed
-            index.getMapping(readOnlyTx, RESOURCE_ID_1);
-            fail();
-        } catch (final FedoraOcflMappingNotFoundException e) {
-            // The exception is expected.
-        }
+        // Not yet committed, exception expected
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(readOnlyTx, RESOURCE_ID_1));
 
         index.rollback(session);
 
-        try {
-            index.getMapping(session, RESOURCE_ID_1);
-            fail();
-        } catch (final FedoraOcflMappingNotFoundException e) {
-            // The exception is expected.
-        }
+        assertThrows(FedoraOcflMappingNotFoundException.class, () -> index.getMapping(session, RESOURCE_ID_1));
     }
 
     @Test
@@ -209,13 +189,11 @@ public class DbFedoraToOcflObjectIndexTest {
         for (cnt = 0; cnt < 149; cnt++) {
             root = root + "/" + String.valueOf(cnt);
         }
-        try {
-            final FedoraId tempid = FedoraId.create(root);
+        final var finalRoot = root;
+        assertThrows(InvalidResourceIdentifierException.class, () -> {
+            final FedoraId tempid = FedoraId.create(finalRoot);
             index.addMapping(session, tempid, ROOT_RESOURCE_ID, OCFL_ID);
-            fail();
-        } catch (final InvalidResourceIdentifierException e) {
-            //the exception is expected
-        }
+        });
     }
 
     @Test

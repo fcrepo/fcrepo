@@ -5,25 +5,27 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import org.fcrepo.common.db.DbTransactionExecutor;
+import org.fcrepo.kernel.api.Transaction;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
-import org.fcrepo.common.db.DbTransactionExecutor;
-import org.fcrepo.kernel.api.Transaction;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
 /**
  * Reindex manager tests.
  * @author whikloj
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ReindexManagerTest extends AbstractReindexerTest {
 
     @Mock
@@ -31,7 +33,7 @@ public class ReindexManagerTest extends AbstractReindexerTest {
 
     private ReindexManager reindexManager;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         super.setup();
 
