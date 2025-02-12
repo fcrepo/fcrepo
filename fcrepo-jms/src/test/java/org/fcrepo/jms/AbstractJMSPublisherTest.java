@@ -23,11 +23,11 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 
 import org.fcrepo.kernel.api.observer.Event;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.google.common.eventbus.EventBus;
 
@@ -36,7 +36,7 @@ import com.google.common.eventbus.EventBus;
  *
  * @author awoods
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 abstract class AbstractJMSPublisherTest {
 
     protected abstract AbstractJMSPublisher getPublisher();
@@ -61,7 +61,7 @@ abstract class AbstractJMSPublisherTest {
     @Mock
     private Connection mockConn;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testJMSPublisher = getPublisher();
         setField(testJMSPublisher, "eventFactory", mockEventFactory);

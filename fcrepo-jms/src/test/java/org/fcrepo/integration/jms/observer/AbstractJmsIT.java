@@ -19,7 +19,7 @@ import static org.fcrepo.kernel.api.observer.EventType.INBOUND_REFERENCE;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_CREATION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_DELETION;
 import static org.fcrepo.kernel.api.observer.EventType.RESOURCE_MODIFICATION;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
@@ -64,9 +64,10 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
 import org.awaitility.core.ConditionTimeoutException;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -149,7 +150,8 @@ abstract class AbstractJmsIT implements MessageListener {
     private final HttpIdentifierConverter identifierConverter = new HttpIdentifierConverter(
             UriBuilder.fromUri(TEST_BASE_URL + "/{path: .*}"));
 
-    @Test(timeout = TIMEOUT)
+    @Timeout(TIMEOUT)
+    @Test
     public void testIngestion() {
 
         LOGGER.debug("Expecting a {} event", RESOURCE_CREATION.getType());
@@ -164,7 +166,8 @@ abstract class AbstractJmsIT implements MessageListener {
         });
     }
 
-    @Test(timeout = TIMEOUT)
+    @Timeout(TIMEOUT)
+    @Test
     public void testFileEvents() throws InvalidChecksumException {
         final var fedoraId = FedoraId.create(testFile);
         final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
@@ -193,7 +196,8 @@ abstract class AbstractJmsIT implements MessageListener {
         });
     }
 
-    @Test(timeout = TIMEOUT)
+    @Timeout(TIMEOUT)
+    @Test
     public void testMetadataEvents() {
         final var fedoraId = FedoraId.create(testMeta);
         final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
@@ -215,7 +219,8 @@ abstract class AbstractJmsIT implements MessageListener {
         });
     }
 
-    @Test(timeout = TIMEOUT)
+    @Timeout(TIMEOUT)
+    @Test
     public void testRemoval() throws PathNotFoundException {
         final var fedoraId = FedoraId.create(testRemoved);
         final var externalId = identifierConverter.toExternalId(fedoraId.getFullId());
@@ -236,7 +241,8 @@ abstract class AbstractJmsIT implements MessageListener {
         });
     }
 
-    @Test(timeout = TIMEOUT)
+    @Timeout(TIMEOUT)
+    @Test
     public void testInboundReference() {
         final var id1 = FedoraId.create("/testInboundReference-" + randomUUID().toString());
         final var id2 = FedoraId.create("/testInboundReference-" + randomUUID().toString());
@@ -280,7 +286,7 @@ abstract class AbstractJmsIT implements MessageListener {
         messages.add(message);
     }
 
-    @Before
+    @BeforeEach
     public void acquireConnection() throws JMSException {
         LOGGER.debug(this.getClass().getName() + " acquiring JMS connection.");
         connection = connectionFactory.createConnection();
@@ -291,7 +297,7 @@ abstract class AbstractJmsIT implements MessageListener {
         consumer.setMessageListener(this);
     }
 
-    @After
+    @AfterEach
     public void releaseConnection() throws JMSException {
         // ignore any remaining or queued messages
         consumer.setMessageListener(msg -> { });
