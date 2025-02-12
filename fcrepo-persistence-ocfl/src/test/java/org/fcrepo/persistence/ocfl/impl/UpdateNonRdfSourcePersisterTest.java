@@ -5,6 +5,22 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
+import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
+
 import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -26,22 +42,6 @@ import org.mockito.quality.Strictness;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-
-import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
-import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.withSettings;
 
 /**
  * @author whikloj

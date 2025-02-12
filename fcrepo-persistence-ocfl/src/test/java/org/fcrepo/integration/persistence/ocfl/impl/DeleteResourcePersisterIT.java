@@ -5,6 +5,14 @@
  */
 package org.fcrepo.integration.persistence.ocfl.impl;
 
+import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import io.ocfl.api.MutableOcflRepository;
 import io.ocfl.api.model.ObjectVersionId;
 import org.fcrepo.config.ServerManagedPropsMode;
@@ -23,14 +31,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.UUID;
-
-import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 /**
  * Test delete resource persister for stamping versions of deleted resources in manually versioned repository.
