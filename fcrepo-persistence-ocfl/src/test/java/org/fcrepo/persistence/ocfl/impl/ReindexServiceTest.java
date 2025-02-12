@@ -19,14 +19,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-
 import io.ocfl.api.OcflRepository;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
@@ -39,13 +31,22 @@ import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.storage.ocfl.exception.ValidationException;
 import org.fcrepo.storage.ocfl.validation.ObjectValidator;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  * ReindexService tests.
@@ -53,7 +54,8 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author whikloj
  * @since 6.0.0
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ReindexServiceTest extends AbstractReindexerTest {
 
     private ReindexManager reindexManager;
@@ -72,7 +74,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     private final FedoraId resource1 = FedoraId.create("info:fedora/resource1");
     private final FedoraId resource2 =  FedoraId.create(resource1 + "/resource2");
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         super.setup();
 

@@ -10,17 +10,15 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE_HEAD
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.newResourceHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchCreationHeaders;
 import static org.fcrepo.persistence.common.ResourceHeaderUtils.touchModificationHeaders;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import java.time.Instant;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -29,18 +27,23 @@ import org.fcrepo.kernel.api.operations.UpdateNonRdfSourceHeadersOperation;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.OcflObjectSession;
 import org.fcrepo.storage.ocfl.ResourceHeaders;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import java.time.Instant;
 
 /**
  * @author mikejritter
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class UpdateNonRdfSourceHeadersPersisterTest {
     private static final FedoraId RESOURCE_ID = FedoraId.create("info:fedora/parent/child");
     private static final FedoraId ROOT_RESOURCE_ID = FedoraId.create("info:fedora/parent");
@@ -69,7 +72,7 @@ public class UpdateNonRdfSourceHeadersPersisterTest {
     @Mock
     private Transaction transaction;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         when(psSession.findOrCreateSession(anyString())).thenReturn(session);
         when(index.getMapping(eq(transaction), any())).thenReturn(mapping);
