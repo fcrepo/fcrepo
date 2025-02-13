@@ -18,7 +18,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 
 import com.google.common.base.Strings;
@@ -35,7 +35,7 @@ public abstract class AbstractResourceIT {
     public static final Credentials FEDORA_ADMIN_CREDENTIALS = new UsernamePasswordCredentials("fedoraAdmin",
             "fedoraAdmin");
 
-    @Before
+    @BeforeEach
     public void setLogger() {
         logger = getLogger(this.getClass());
     }
