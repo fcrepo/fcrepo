@@ -5,7 +5,7 @@
  */
 package org.fcrepo.auth.common;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,7 +13,7 @@ import java.util.Set;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author peichman
