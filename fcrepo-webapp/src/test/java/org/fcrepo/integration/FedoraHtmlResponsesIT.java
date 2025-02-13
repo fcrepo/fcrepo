@@ -4,6 +4,7 @@
  * tree.
  */
 package org.fcrepo.integration;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -17,11 +18,8 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 
@@ -35,9 +33,6 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
-import org.junit.jupiter.api.After;
-import org.junit.jupiter.api.Before;
-import org.junit.jupiter.api.Test;
 
 import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
@@ -92,8 +87,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
             .getFirstByXPath("//span[@title='" + REPOSITORY_NAMESPACE + "']/text()")
             .toString();
 
-        assertEquals("Expected to find namespace URIs displayed as their prefixes", "fedora:",
-                        namespaceLabel);
+        assertEquals(namespaceLabel, "fedora:", "Expected to find namespace URIs displayed as their prefixes");
     }
 
     @Test
@@ -124,7 +118,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         try {
             final HtmlPage page1 = webClient.getPage(serverAddress + pid);
-            assertEquals("Page had wrong title!", serverAddress + pid, page1.getTitleText());
+            assertEquals(serverAddress + pid, page1.getTitleText(), "Page had wrong title!");
             return page1;
         } catch (final FailingHttpStatusCodeException e) {
             fail("Did not successfully retrieve created page! Got HTTP code: " + e.getStatusCode());
@@ -143,28 +137,28 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         button.click();
 
         final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress);
-        assertTrue("Didn't see new information in page!", !page1.asText().equals(page.asText()));
+        assertTrue(!page1.asText().equals(page.asText()), "Didn't see new information in page!");
     }
 
     @Test
     public void testCreateNewBasicContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "basic container");
-        assertTrue("Set container type to ldp:BasicContainer", newPage.asText().contains(
-                "http://www.w3.org/ns/ldp#BasicContainer"));
+        assertTrue(newPage.asText().contains("http://www.w3.org/ns/ldp#BasicContainer"),
+                "Set container type to ldp:BasicContainer");
     }
 
     @Test
     public void testCreateNewDirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "direct container");
-        assertTrue("Set container type to ldp:DirectContainer", newPage.asText().contains(
-                "http://www.w3.org/ns/ldp#DirectContainer"));
+        assertTrue(newPage.asText().contains("http://www.w3.org/ns/ldp#DirectContainer"),
+                "Set container type to ldp:DirectContainer");
     }
 
     @Test
     public void testCreateNewIndirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "indirect container");
-        assertTrue("Set container type to ldp:IndirectContainer", newPage.asText().contains(
-                "http://www.w3.org/ns/ldp#IndirectContainer"));
+        assertTrue(newPage.asText().contains("http://www.w3.org/ns/ldp#IndirectContainer"),
+                "Set container type to ldp:IndirectContainer");
     }
 
     @Test
@@ -228,8 +222,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         webClient.waitForBackgroundJavaScriptStartingBefore(10000);
 
         final Page page2 = webClient.getPage(serverAddress + pid);
-        assertEquals("Didn't get a 410!", 410, page2.getWebResponse()
-                .getStatusCode());
+        assertEquals(410, page2.getWebResponse()
+                .getStatusCode(), "Didn't get a 410!");
 
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
@@ -243,8 +237,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage page = webClient.getPage(serverAddress + pid);
         final DomElement viewVersions = page.getElementById("view_versions");
         final Page versionsPage = viewVersions.click();
-        assertEquals("Didn't get a 200!", 200, versionsPage.getWebResponse()
-                                                    .getStatusCode());
+        assertEquals(versionsPage.getWebResponse().getStatusCode(), 200, "Didn't get a 200!");
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
 
@@ -269,9 +262,9 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         postSparqlUpdateUsingHttpClient(updateSparql, pid);
 
         final HtmlPage objectPage = javascriptlessWebClient.getPage(serverAddress + pid);
-        assertEquals("Title should be set.", "Object Title",
-                     objectPage.getFirstByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()")
-                             .toString());
+        assertEquals("Object Title", objectPage.getFirstByXPath(
+                    "//span[@property='http://purl.org/dc/elements/1.1/title']/text()").toString(),
+                     "Title should be set.");
 
         TimeUnit.SECONDS.sleep(1);
         final String updateSparql2 = "PREFIX dc: <http://purl.org/dc/elements/1.1/>\n" +
@@ -285,7 +278,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
                 javascriptlessWebClient.getPage(serverAddress + pid + "/fcr:versions");
         final List<DomAttr> versionLinks =
             castList(versions.getByXPath("//a[@class='version_link']/@href"));
-        assertEquals("There should be three versions.", 3, versionLinks.size());
+        assertEquals(3, versionLinks.size(), "There should be three versions.");
 
         // get the labels
         // will look like "Version from 2013-00-0T00:00:00.000Z"
@@ -310,11 +303,11 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
             castList(secondRevision
                     .getByXPath("//span[@property='http://purl.org/dc/elements/1.1/title']/text()"));
 
-        assertEquals("Version one should have one title.", 1, v1Titles.size());
-        assertEquals("Version two should have one title.", 1, v2Titles.size());
-        assertNotEquals("Each version should have a different title.", v1Titles.get(0), v2Titles.get(0));
-        assertEquals("First version should be preserved.", "Object Title", v1Titles.get(0).getWholeText());
-        assertEquals("Second version should be preserved.", "Updated Title", v2Titles.get(0).getWholeText());
+        assertEquals(1, v1Titles.size(), "Version one should have one title.");
+        assertEquals(1, v2Titles.size(), "Version two should have one title.");
+        assertNotEquals(v1Titles.get(0), v2Titles.get(0), "Each version should have a different title.");
+        assertEquals("Object Title", v1Titles.get(0).getWholeText(), "First version should be preserved.");
+        assertEquals("Updated Title", v2Titles.get(0).getWholeText(), "Second version should be preserved.");
     }
 
     private static void postSparqlUpdateUsingHttpClient(final String sparql, final String pid) throws IOException {
@@ -323,8 +316,8 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final StringEntity entity = new StringEntity(sparql, StandardCharsets.UTF_8);
         method.setEntity(entity);
         final HttpResponse response = client.execute(method);
-        assertEquals("Expected successful response.", 204,
-                response.getStatusLine().getStatusCode());
+        assertEquals(204, response.getStatusLine().getStatusCode(),
+                "Expected successful response.");
     }
 
     @Test
