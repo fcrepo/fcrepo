@@ -4,7 +4,10 @@
  * tree.
  */
 package org.fcrepo.integration;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
@@ -13,11 +16,14 @@ import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.junit.jupiter.api.After;
+import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.Test;
+
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -29,9 +35,9 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.After;
+import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.Test;
 
 import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
@@ -62,7 +68,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
     private WebClient webClient;
     private WebClient javascriptlessWebClient;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         webClient = getDefaultWebClient();
 
@@ -70,7 +76,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         javascriptlessWebClient.getOptions().setJavaScriptEnabled(false);
     }
 
-    @After
+    @AfterEach
     public void cleanUp() {
         webClient.close();
         javascriptlessWebClient.close();

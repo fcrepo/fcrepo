@@ -4,7 +4,6 @@
  * tree.
  */
 package org.fcrepo.integration;
-
 import static java.lang.Integer.MAX_VALUE;
 import static java.util.UUID.randomUUID;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
@@ -15,12 +14,15 @@ import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.AssertEquals;
 
 import java.io.IOException;
 import java.net.URI;
 import java.util.Objects;
 
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 import com.google.common.base.Strings;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -33,8 +35,8 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Before;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,7 +66,7 @@ public class SanityCheckIT {
 
     private Logger logger;
 
-    @Before
+    @BeforeEach
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
     }
