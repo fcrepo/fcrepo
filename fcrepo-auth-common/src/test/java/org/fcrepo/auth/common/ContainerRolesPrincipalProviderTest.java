@@ -7,7 +7,7 @@ package org.fcrepo.auth.common;
 
 import static com.google.common.collect.Sets.newHashSet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -130,8 +130,12 @@ public class ContainerRolesPrincipalProviderTest {
 
         final Set<Principal> principals = provider.getPrincipals(request);
         final Principal principal = principals.iterator().next();
+        final Principal principalWithDifferentClass = mock(Principal.class);
+        when(principalWithDifferentClass.getName()).thenReturn("a");
 
-        assertNotEquals(principal, mock(Principal.class), "Principals should not be equal if not the same class");
+        // This test is verifying that the .equals method rejects any principal class other than HttpHeaderPrincipal
+        assertFalse(principal.equals(principalWithDifferentClass),
+                "Principals should not be equal if not the same class");
     }
 
 }
