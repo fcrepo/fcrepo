@@ -98,8 +98,14 @@ jobs:
           --health-start-period=10s
           --health-timeout=5s
           --health-retries=5
+          --ulimit memlock=262144
         ports:
           - 3306:3306
+        healthcheck:
+          test: ["CMD", "mysqladmin", "ping"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
     steps:
     - name: Git support longpaths
       run: git config --global core.longpaths true
