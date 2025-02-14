@@ -20,13 +20,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
-        java: ['11']
+        java: ['11', '21']
         experimental: [false]
-        # JDK 17  build testing. Allowed to fail as marked experimental
-        include:
-          - java: 17
-            os: ubuntu-latest
-            experimental: true
     steps:
     - name: Git support longpaths
       run: git config --global core.longpaths true
@@ -49,10 +44,11 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        java: ['11']
+        java: ['11', '21']
+        postgres: ['13', '14', '15', '16']
     services:
       postgres:
-        image: postgres:12
+        image: postgres:${{ matrix.postgres }}
         env:
           POSTGRES_USER: fcrepo-user
           POSTGRES_PASSWORD: fcrepo-pw
@@ -86,10 +82,11 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        java: ['11']
+        java: ['11', '21']
+        mariadb: ['11.4']
     services:
       postgres:
-        image: mariadb:10.5
+        image: mariadb:${{ matrix.mariadb }}
         env:
           MYSQL_ROOT_PASSWORD: root-pw
           MYSQL_DATABASE: fcrepo
@@ -124,10 +121,11 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        java: ['11']
+        java: ['11', '21']
+        mysql: ['8.0']
     services:
       postgres:
-        image: mysql:8
+        image: mysql:${{ matrix.mysql }}
         env:
           MYSQL_ROOT_PASSWORD: root-pw
           MYSQL_DATABASE: fcrepo
