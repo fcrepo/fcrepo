@@ -5,24 +5,24 @@
  */
 package org.fcrepo.auth.common;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.servlet.http.HttpServletRequest;
 
 import static org.fcrepo.auth.common.DelegateHeaderPrincipalProvider.DELEGATE_HEADER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 /**
  * @author awoods
  * @since 10/31/15
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DelegateHeaderPrincipalProviderTest {
 
     private final DelegateHeaderPrincipalProvider provider = new DelegateHeaderPrincipalProvider();
@@ -33,14 +33,14 @@ public class DelegateHeaderPrincipalProviderTest {
     @Test
     public void testGetDelegate0() {
         when(request.getHeader(DELEGATE_HEADER)).thenReturn(null);
-        assertNull("No delegates should return null", provider.getDelegate(request));
+        assertNull(provider.getDelegate(request), "No delegates should return null");
     }
 
     @Test
     public void testGetDelegate1() {
         final String user = "user1";
         when(request.getHeader(DELEGATE_HEADER)).thenReturn(user);
-        assertNotNull("Should be a delegate!", provider.getDelegate(request));
+        assertNotNull(provider.getDelegate(request), "Should be a delegate!");
         assertEquals(user, provider.getDelegate(request).getName());
     }
 }
