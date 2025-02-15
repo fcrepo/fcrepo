@@ -83,7 +83,7 @@ jobs:
       max-parallel: 1
       matrix:
         java: ['11', '21']
-        mariadb: ['11.4']
+        mariadb: ['10', 'lts']
     services:
       mariadb:
         image: mariadb:${{ matrix.mariadb }}
@@ -93,7 +93,7 @@ jobs:
           MARIADB_USER: fcrepo-user
           MARIADB_PASSWORD: fcrepo-pw
         options: >-
-          --health-cmd="mysqladmin ping"
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
           --health-interval=10s
           --health-start-period=10s
           --health-timeout=5s
