@@ -17,7 +17,9 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -40,9 +42,11 @@ import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.riot.RiotException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
@@ -50,15 +54,13 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>RdfStreamStreamingOutputTest class.</p>
  *
  * @author ajs6f
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RdfStreamStreamingOutputTest {
 
     private RdfStreamStreamingOutput testRdfStreamStreamingOutput;
@@ -81,7 +83,7 @@ public class RdfStreamStreamingOutputTest {
     private static final Logger LOGGER =
             getLogger(RdfStreamStreamingOutputTest.class);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testRdfStreamStreamingOutput =
             new RdfStreamStreamingOutput(testRdfStream, testNamespaces, testMediaType);
@@ -98,7 +100,7 @@ public class RdfStreamStreamingOutputTest {
             new RdfStreamStreamingOutput(input, testNamespaces, testMediaType).write(output);
             try ( final InputStream resultStream = new ByteArrayInputStream(output.toByteArray())) {
                 final Model result = createDefaultModel().read(resultStream, null);
-                assertTrue("Didn't find our test triple!", result.contains(result.asStatement(expected)));
+                assertTrue(result.contains(result.asStatement(expected)), "Didn't find our test triple!");
             }
         }
     }
@@ -163,7 +165,7 @@ public class RdfStreamStreamingOutputTest {
                 createLiteral("french string", "fr")));
     }
 
-    @Test(expected = WebApplicationException.class)
+    @Test
     public void testWriteWithException() throws IOException {
 
         final FutureCallback<Void> callback = new FutureCallback<Void>() {
@@ -175,15 +177,17 @@ public class RdfStreamStreamingOutputTest {
 
             @Override
             public void onFailure(final Throwable e) {
-                LOGGER.debug("Got exception:", e.getMessage());
-                assertTrue("Got wrong kind of exception!", e instanceof RiotException);
+                LOGGER.debug("Got exception: {}", e.getMessage());
+                assertInstanceOf(RiotException.class, e, "Got wrong kind of exception!");
             }
         };
         addCallback(testRdfStreamStreamingOutput, callback, MoreExecutors.directExecutor());
-        try (final OutputStream mockOutputStream = mock(OutputStream.class, (Answer<Object>) invocation -> {
-            throw new RiotException("Expected.");
-        })) {
-            testRdfStreamStreamingOutput.write(mockOutputStream);
-        }
+        assertThrows(WebApplicationException.class, () -> {
+            try (final OutputStream mockOutputStream = mock(OutputStream.class, (Answer<Object>) invocation -> {
+                throw new RiotException("Expected.");
+            })) {
+                testRdfStreamStreamingOutput.write(mockOutputStream);
+            }
+        });
     }
 }

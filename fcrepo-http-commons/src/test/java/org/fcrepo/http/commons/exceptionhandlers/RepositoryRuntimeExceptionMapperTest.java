@@ -5,10 +5,9 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
@@ -16,13 +15,19 @@ import javax.ws.rs.ext.Providers;
 
 import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author cabeer
  */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RepositoryRuntimeExceptionMapperTest {
 
     @Mock
@@ -33,10 +38,8 @@ public class RepositoryRuntimeExceptionMapperTest {
     @Mock
     private ExceptionMapper<RepositoryException> mockProvider;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        initMocks(this);
-
         testObj = new RepositoryRuntimeExceptionMapper(mockProviders);
     }
 

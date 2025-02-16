@@ -7,14 +7,14 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import javax.ws.rs.core.Response;
 
 import org.fcrepo.kernel.api.exception.RepositoryException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author escowles
@@ -24,7 +24,7 @@ public class RepositoryExceptionMapperTest {
 
     private RepositoryExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new RepositoryExceptionMapper();
     }

@@ -10,7 +10,7 @@ import static javax.ws.rs.core.UriBuilder.fromUri;
 import static org.apache.http.entity.ContentType.parse;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +42,6 @@ public abstract class TestHelpers {
     }
 
     public static UriInfo getUriInfoImpl() {
-        // UriInfo ui = mock(UriInfo.class,withSettings().verboseLogging());
         final UriInfo ui = mock(UriInfo.class);
 
         final Answer<UriBuilder> answer = new Answer<UriBuilder>() {
@@ -66,7 +65,7 @@ public abstract class TestHelpers {
 
     private static String getRdfSerialization(final HttpEntity entity) {
         final Lang lang = contentTypeToLang(parse(entity.getContentType().getValue()).getMimeType());
-        assertNotNull("Entity is not an RDF serialization", lang);
+        assertNotNull(lang, "Entity is not an RDF serialization");
         return lang.getName();
     }
 

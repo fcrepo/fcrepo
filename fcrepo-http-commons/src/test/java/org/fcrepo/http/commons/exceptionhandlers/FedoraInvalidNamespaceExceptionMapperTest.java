@@ -5,16 +5,16 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.junit.Assert.assertEquals;
-import javax.ws.rs.core.Response;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 
 import org.fcrepo.kernel.api.exception.FedoraInvalidNamespaceException;
 
-import org.junit.Before;
-import org.junit.Test;
+import javax.ws.rs.core.Response;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * <p>
@@ -28,7 +28,7 @@ public class FedoraInvalidNamespaceExceptionMapperTest {
 
     private FedoraInvalidNamespaceExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new FedoraInvalidNamespaceExceptionMapper();
     }

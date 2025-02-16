@@ -5,6 +5,8 @@
  */
 package org.fcrepo.http.commons.webxml.bind;
 
+import java.util.Objects;
+
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -37,12 +39,8 @@ public class Listener extends Displayable {
     public boolean equals(final Object object) {
         if (object instanceof Listener) {
             final Listener that = (Listener) object;
-            final boolean className =
-                (this.className == null) ? that.className == null
-                    : this.className.equals(that.className);
-            final boolean displayName =
-                (this.displayName == null) ? that.displayName == null
-                    : this.displayName.equals(that.displayName);
+            final boolean className = Objects.equals(this.className, that.className);
+            final boolean displayName = Objects.equals(this.displayName, that.displayName);
             return className && displayName;
         }
         return false;

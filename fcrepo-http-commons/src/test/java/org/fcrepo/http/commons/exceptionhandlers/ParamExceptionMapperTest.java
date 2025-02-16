@@ -5,14 +5,14 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 import org.glassfish.jersey.server.ParamException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.ws.rs.core.Response;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 /**
  * {@link org.fcrepo.http.commons.exceptionhandlers.ParamExceptionMapper}
@@ -24,7 +24,7 @@ public class ParamExceptionMapperTest {
 
     private ParamExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new ParamExceptionMapper();
     }
