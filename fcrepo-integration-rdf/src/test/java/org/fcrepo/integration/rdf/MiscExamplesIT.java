@@ -4,8 +4,7 @@
  * tree.
  */
 package org.fcrepo.integration.rdf;
-
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author cabeer

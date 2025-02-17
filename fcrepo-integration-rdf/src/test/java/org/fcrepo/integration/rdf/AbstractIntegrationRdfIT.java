@@ -38,9 +38,9 @@ import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author cabeer
@@ -103,11 +103,11 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             }
 
 
-            assertTrue(description, isomorphicWith);
+            assertTrue(isomorphicWith, description);
 
             return response;
         } catch (final IOException e) {
-            assertTrue("Got IOException " + e, false);
+            assertTrue(false, "Got IOException " + e);
             return null;
         }
     }
@@ -170,7 +170,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
 
     protected void checkResponse(final HttpResponse response, final Response.StatusType expected) {
         final int actual = response.getStatusLine().getStatusCode();
-        assertEquals("Didn't get a CREATED response!", expected.getStatusCode(), actual);
+        assertEquals(expected.getStatusCode(), actual, "Didn't get a CREATED response!");
     }
 
     protected String getContentFromClasspath(final String path) throws IOException {

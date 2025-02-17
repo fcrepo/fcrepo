@@ -9,11 +9,11 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -21,7 +21,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author bbpennel
@@ -48,12 +48,12 @@ public class RdfNamespaceMappingIT extends AbstractResourceIT {
         try (final CloseableHttpResponse getResponse = execute(httpGet)) {
             model.read(getResponse.getEntity().getContent(), subjectURI, "TURTLE");
 
-            assertFalse("Should not contain unregistered namespace mapping",
-                    model.getNsPrefixMap().containsKey("asdf"));
+            assertFalse(model.getNsPrefixMap().containsKey("asdf"),
+                    "Should not contain unregistered namespace mapping");
 
             final Resource resc = model.getResource(subjectURI);
-            assertTrue("Must return property from unregistered namespace",
-                    resc.hasLiteral(createProperty("http://asdf.org/foo"), "bar"));
+            assertTrue(resc.hasLiteral(createProperty("http://asdf.org/foo"), "bar"),
+                    "Must return property from unregistered namespace");
         }
     }
 
@@ -69,14 +69,14 @@ public class RdfNamespaceMappingIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpGet)) {
             model.read(response.getEntity().getContent(), subjectURI, "TURTLE");
 
-            assertTrue("Should contain fedora namespace prefix",
-                    model.getNsPrefixMap().containsKey("fedora"));
-            assertTrue("Should contain rdf namespace prefix",
-                    model.getNsPrefixMap().containsKey("rdf"));
+            assertTrue(model.getNsPrefixMap().containsKey("fedora"),
+                    "Should contain fedora namespace prefix");
+            assertTrue(model.getNsPrefixMap().containsKey("rdf"),
+                    "Should contain rdf namespace prefix");
 
             final Resource resc = model.getResource(subjectURI);
-            assertTrue("Must contain property using register namespaces",
-                    resc.hasProperty(RDF_TYPE, FEDORA_CONTAINER));
+            assertTrue(resc.hasProperty(RDF_TYPE, FEDORA_CONTAINER),
+                    "Must contain property using register namespaces");
         }
     }
 
@@ -102,11 +102,11 @@ public class RdfNamespaceMappingIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpGet)) {
             model.read(response.getEntity().getContent(), subjectURI, rdfLang);
 
-            assertTrue("Should contain fedora namespace prefix",
-                    model.getNsPrefixMap().containsKey("fedora"));
+            assertTrue(model.getNsPrefixMap().containsKey("fedora"),
+                    "Should contain fedora namespace prefix");
 
-            assertFalse("Must not contain prefix for registered but unused namespace",
-                    model.getNsPrefixMap().containsKey("unused"));
+            assertFalse(model.getNsPrefixMap().containsKey("unused"),
+                    "Must not contain prefix for registered but unused namespace");
         }
     }
 
@@ -122,12 +122,12 @@ public class RdfNamespaceMappingIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(httpGet)) {
             model.read(response.getEntity().getContent(), subjectURI, "NTRIPLES");
 
-            assertTrue("No namespaces should be returned",
-                    model.getNsPrefixMap().isEmpty());
+            assertTrue(model.getNsPrefixMap().isEmpty(),
+                    "No namespaces should be returned");
 
             final Resource resc = model.getResource(subjectURI);
-            assertTrue("Must contain property using register namespaces",
-                    resc.hasProperty(RDF_TYPE, FEDORA_CONTAINER));
+            assertTrue(resc.hasProperty(RDF_TYPE, FEDORA_CONTAINER),
+                    "Must contain property using register namespaces");
         }
     }
 }
