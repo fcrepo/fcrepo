@@ -4,11 +4,13 @@
  * tree.
  */
 package org.fcrepo.integration.rdf;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.Assert.assertFalse;
 
 import static javax.ws.rs.core.Response.Status.CREATED;
-
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +19,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.jena.query.Dataset;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author cabeer
