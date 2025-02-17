@@ -4,10 +4,6 @@
  * tree.
  */
 package org.fcrepo.integration.rdf;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static org.junit.jupiter.api.Assertions.assertFalse;
