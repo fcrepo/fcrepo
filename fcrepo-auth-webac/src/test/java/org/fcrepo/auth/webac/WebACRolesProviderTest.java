@@ -15,9 +15,10 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
@@ -47,19 +48,22 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author acoburn
  * @since 9/3/15
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class WebACRolesProviderTest {
 
     private WebACRolesProvider roleProvider;
@@ -90,7 +94,7 @@ public class WebACRolesProviderTest {
 
     private Cache<String, Optional<ACLHandle>> authHandleCache;
 
-    @Before
+    @BeforeEach
     public void setUp() throws RepositoryException {
         authHandleCache = Caffeine.newBuilder().build();
         propsConfig = new AuthPropsConfig();
@@ -156,10 +160,10 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent in the role map", 1, roles.size());
-        assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent in the role map");
+        assertEquals(2, roles.get(agent).size(), "The agent should have exactly two modes");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     @Test
@@ -191,11 +195,11 @@ public class WebACRolesProviderTest {
         // The default root ACL should be used for authorization instead of the parent ACL
         final String rootAgent = "user06a";
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
-        assertEquals("Contains no agents in the role map!", 1, roles.size());
-        assertNull("Contains agent " + agent + " from ACL in parent node!", roles.get(agent));
-        assertEquals("Should have agent " + rootAgent + " from the root ACL!", 1, roles.get(rootAgent).size());
-        assertTrue("Should have read mode for agent " + rootAgent + " from the root ACL!",
-                roles.get(rootAgent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "Contains no agents in the role map!");
+        assertNull(roles.get(agent), "Contains agent " + agent + " from ACL in parent node!");
+        assertEquals(1, roles.get(rootAgent).size(), "Should have agent " + rootAgent + " from the root ACL!");
+        assertTrue(roles.get(rootAgent).contains(WEBAC_MODE_READ_VALUE),
+                "Should have read mode for agent " + rootAgent + " from the root ACL!");
     }
 
     @Test
@@ -218,10 +222,10 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent in the role map", 1, roles.size());
-        assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent in the role map");
+        assertEquals(2, roles.get(agent).size(), "The agent should have exactly two modes");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     @Test
@@ -262,10 +266,10 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent in the role map", 1, roles.size());
-        assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent in the role map");
+        assertEquals(2, roles.get(agent).size(), "The agent should have exactly two modes");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     @Test
@@ -287,9 +291,9 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent in the roles map", 1, roles.size());
-        assertEquals("The agent should have exactly one mode", 1, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent in the roles map");
+        assertEquals(1, roles.get(agent).size(), "The agent should have exactly one mode");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     @Test
@@ -310,9 +314,9 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertEquals(1, roles.get(agent).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     @Test
@@ -333,11 +337,9 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be only one valid role", 1, roles.size());
-        assertEquals("The foaf:Agent should have exactly one valid mode", 1,
-                     roles.get(agent).size());
-        assertTrue("The foaf:Agent should be able to write",
-                   roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be only one valid role");
+        assertEquals(1, roles.get(agent).size(), "The foaf:Agent should have exactly one valid mode");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The foaf:Agent should be able to write");
     }
 
     @Test
@@ -357,11 +359,11 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be only one valid role", 1, roles.size());
-        assertEquals("The acl:AuthenticatedAgent should have exactly one valid mode", 1,
-                     roles.get(aclAuthenticatedAgent).size());
-        assertTrue("The acl:AuthenticatedAgent should be able to write",
-                   roles.get(aclAuthenticatedAgent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be only one valid role");
+        assertEquals(1, roles.get(aclAuthenticatedAgent).size(),
+                "The acl:AuthenticatedAgent should have exactly one valid mode");
+        assertTrue(roles.get(aclAuthenticatedAgent).contains(WEBAC_MODE_READ_VALUE),
+                "The acl:AuthenticatedAgent should be able to write");
     }
 
     @Test
@@ -382,12 +384,12 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly two agents", 2, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
-        assertEquals("The agent should have two modes", 2, roles.get(agent2).size());
-        assertTrue("The agent should be able to read", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(2, roles.size(), "There should be exactly two agents");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertEquals(2, roles.get(agent2).size(), "The agent should have two modes");
+        assertTrue(roles.get(agent2).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent2).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to write");
     }
 
     @Test
@@ -410,11 +412,11 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly two agents", 2, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
-        assertEquals("The agent should have one mode", 1, roles.get(agent2).size());
-        assertTrue("The agent should be able to read", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(2, roles.size(), "There should be exactly two agents");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertEquals(1, roles.get(agent2).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent2).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     @Test
@@ -435,9 +437,9 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     /* (non-Javadoc)
@@ -473,10 +475,10 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly two agents", 2, roles.size());
-        assertEquals("The agent should have two modes", 2, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent1).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(2, roles.size(), "There should be exactly two agents");
+        assertEquals(2, roles.get(agent1).size(), "The agent should have two modes");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     /* (non-Javadoc)
@@ -530,9 +532,10 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be only one valid role", 1, roles.size());
-        assertEquals("The foafAgent should have exactly one valid mode", 1, roles.get(foafAgent).size());
-        assertTrue("The foafAgent should be able to write", roles.get(foafAgent).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(1, roles.size(), "There should be only one valid role");
+        assertEquals(1, roles.get(foafAgent).size(), "The foafAgent should have exactly one valid mode");
+        assertTrue(roles.get(foafAgent).contains(WEBAC_MODE_WRITE_VALUE),
+                "The foafAgent should be able to write");
     }
 
     @Test
@@ -547,11 +550,11 @@ public class WebACRolesProviderTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void noAclTestMalformedRdf2() {
 
         when(mockResource.getAcl()).thenReturn(null);
@@ -562,7 +565,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         propsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/logback-test.xml"));
-        roleProvider.getRoles(mockResource, mockTransaction);
+        assertThrows(RuntimeException.class, () -> roleProvider.getRoles(mockResource, mockTransaction));
     }
 
     @Test
@@ -577,9 +580,9 @@ public class WebACRolesProviderTest {
         propsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-root-authorization.ttl"));
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     private static RdfStream getRdfStreamFromResource(final String resourcePath, final Lang lang) {
