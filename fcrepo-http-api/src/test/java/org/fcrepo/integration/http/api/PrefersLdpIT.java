@@ -33,10 +33,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -55,7 +55,7 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**
@@ -393,11 +393,11 @@ public class PrefersLdpIT extends AbstractResourceIT {
              final CloseableDataset dataset = getDataset(response)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertFalse("Didn't expect members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+            assertFalse(graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext(), "Didn't expect members");
             final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't matched",
-                    preferenceApplied.contains(preferHeader2));
-            assertTrue("Missing a user RDF triple", graph.contains(ANY, resource, DCTITLE, ANY));
+            assertTrue(preferenceApplied.contains(preferHeader2),
+                    "Preference-Applied header doesn't matched");
+            assertTrue(graph.contains(ANY, resource, DCTITLE, ANY), "Missing a user RDF triple");
         }
         // Now try with Omit minimal
         final HttpGet getOmit = new HttpGet(uri);
@@ -407,11 +407,11 @@ public class PrefersLdpIT extends AbstractResourceIT {
              final CloseableDataset dataset = getDataset(response)) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Expected members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+            assertTrue(graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext(), "Expected members");
             final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't matched",
-                    preferenceApplied.contains(preferOmitHeader));
-            assertFalse("Should not return user RDF triples", graph.contains(ANY, resource, DCTITLE, ANY));
+            assertTrue(preferenceApplied.contains(preferOmitHeader),
+                    "Preference-Applied header doesn't matched");
+            assertFalse(graph.contains(ANY, resource, DCTITLE, ANY), "Should not return user RDF triples");
         }
     }
 
@@ -431,15 +431,15 @@ public class PrefersLdpIT extends AbstractResourceIT {
         assertNotEquals(withChildEtag, omitEtag);
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected no members", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+            assertTrue(graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext(),
+                    "Expected server managed");
+            assertFalse(graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext(), "Expected no members");
         }
     }
 
@@ -463,21 +463,21 @@ public class PrefersLdpIT extends AbstractResourceIT {
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", preferLink(null, PREFER_CONTAINMENT.toString()));
         final String omitEtag = getEtag(getObjMethod);
-        assertNotEquals("Should not match initial because of membership", initialEtag, omitEtag);
+        assertNotEquals(initialEtag, omitEtag, "Should not match initial because of membership");
         assertNotEquals(withMemberEtag, omitEtag);
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
-            assertTrue("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed", graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing contained", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+            assertTrue(graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext(), "Didn't find member resources");
+            assertTrue(graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext(), "Expected server managed");
+            assertTrue(graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext(),
+                    "Expected server managed");
+            assertFalse(graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext(), "Expected nothing contained");
         }
     }
 
@@ -499,28 +499,28 @@ public class PrefersLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", preferLink(null, PREFER_SERVER_MANAGED.toString()));
-        assertNotEquals("Etag should not match with SMTs excluded", withMemberEtag, getEtag(getObjMethod));
+        assertNotEquals(withMemberEtag, getEtag(getObjMethod), "Etag should not match with SMTs excluded");
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
             // Membership is now consider system managed and so is removed with the rest.
-            assertFalse("Didn't find member resources", graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertFalse(graph.find(ANY, resource, LDP_MEMBER.asNode(), ANY).hasNext(), "Didn't find member resources");
+            assertFalse(graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, ANY, BASIC_CONTAINER.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext(),
+                    "Expected nothing server managed");
         }
     }
 
@@ -541,11 +541,11 @@ public class PrefersLdpIT extends AbstractResourceIT {
 
         final HttpGet getObjMethod = getObjMethod(id);
         getObjMethod.addHeader("Prefer", preferLink(PREFER_CONTAINMENT.toString(), PREFER_SERVER_MANAGED.toString()));
-        assertNotEquals("Etag should not match with SMTs excluded", withMemberEtag, getEtag(getObjMethod));
+        assertNotEquals(withMemberEtag, getEtag(getObjMethod), "Etag should not match with SMTs excluded");
         try (final CloseableDataset dataset = getDataset(getObjMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(serverAddress + id);
-            assertTrue("Didn't find ldp containment", graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext());
+            assertTrue(graph.find(ANY, resource, CONTAINS.asNode(), ANY).hasNext(), "Didn't find ldp containment");
         }
     }
 
@@ -561,18 +561,18 @@ public class PrefersLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(versionedResourceURI);
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertFalse("Expected nothing server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertFalse(graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext(),
+                    "Expected nothing server managed");
+            assertFalse(graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext(),
+                    "Expected nothing server managed");
         }
     }
 
@@ -585,18 +585,18 @@ public class PrefersLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(mementoGetMethod)) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             final Node resource = createURI(versionedResourceURI);
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext());
-            assertTrue("Expected server managed",
-                    graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext());
+            assertTrue(graph.find(ANY, resource, ANY, CONTAINER.asNode()).hasNext(),
+                    "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, RDF_SOURCE.asNode()).hasNext(),
+                    "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, FEDORA_CONTAINER.asNode()).hasNext(),
+                    "Expected server managed");
+            assertTrue(graph.find(ANY, resource, ANY, FEDORA_RESOURCE.asNode()).hasNext(),
+                    "Expected server managed");
+            assertTrue(graph.find(ANY, resource, CREATED_DATE.asNode(), ANY).hasNext(),
+                    "Expected server managed");
+            assertTrue(graph.find(ANY, resource, LAST_MODIFIED_DATE.asNode(), ANY).hasNext(),
+                    "Expected server managed");
         }
     }
 
@@ -622,12 +622,12 @@ public class PrefersLdpIT extends AbstractResourceIT {
         assertNotEquals(withoutEmbedEtag, getEtag(httpGet));
         try (final CloseableHttpResponse response = execute(httpGet)) {
             final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't match", preferenceApplied.contains(preferEmbed));
+            assertTrue(preferenceApplied.contains(preferEmbed), "Preference-Applied header doesn't match");
 
             final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
-            assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
-                    createURI(serverAddress + id + "/" + binaryId),
-                    title.asNode(), createLiteral("this is a title")));
+            assertTrue(graphStore.contains(ANY, createURI(serverAddress + id + "/" + binaryId),
+                    title.asNode(), createLiteral("this is a title")),
+                    "Property on child binary should be found!" + graphStore);
         }
     }
 
@@ -654,18 +654,18 @@ public class PrefersLdpIT extends AbstractResourceIT {
         httpGet.setHeader("Prefer", preferEmbed);
         try (final CloseableHttpResponse response = execute(httpGet)) {
             final Collection<String> preferenceApplied = getHeader(response, "Preference-Applied");
-            assertTrue("Preference-Applied header doesn't match", preferenceApplied.contains(preferEmbed));
+            assertTrue(preferenceApplied.contains(preferEmbed), "Preference-Applied header doesn't match");
 
             final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
-            assertTrue("Property on child binary should be found!" + graphStore, graphStore.contains(ANY,
-                    createURI(serverAddress + level1),
-                    title.asNode(), createLiteral("First level")));
-            assertFalse("Property from embedded resource's own child should not be found.",
-                    graphStore.contains(ANY,
-                            createURI(serverAddress + level2),
-                            title.asNode(), createLiteral("Second level")
-                    )
-            );
+            assertTrue(graphStore.contains(ANY, createURI(serverAddress + level1),
+                    title.asNode(), createLiteral("First level")),
+                    "Property on child binary should be found!" + graphStore);
+            assertFalse(graphStore.contains(ANY,
+                                        createURI(serverAddress + level2),
+                                        title.asNode(), createLiteral("Second level")
+                                ),
+                    "Property from embedded resource's own child should not be found."
+                        );
         }
     }
 }

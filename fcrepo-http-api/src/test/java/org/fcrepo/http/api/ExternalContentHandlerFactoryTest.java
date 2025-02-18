@@ -6,7 +6,8 @@
 package org.fcrepo.http.api;
 
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 
@@ -15,17 +16,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.core.Link;
+
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author bbpennel
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ExternalContentHandlerFactoryTest {
 
     @Mock
@@ -33,7 +35,7 @@ public class ExternalContentHandlerFactoryTest {
 
     private ExternalContentHandlerFactory factory;
 
-    @Before
+    @BeforeEach
     public void init() {
         factory = new ExternalContentHandlerFactory();
         factory.setValidator(validator);
@@ -49,18 +51,18 @@ public class ExternalContentHandlerFactoryTest {
         assertEquals("proxy", handler.getHandling());
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testValidationFailure() {
         doThrow(new ExternalMessageBodyException("")).when(validator).validate(anyString());
 
-        factory.createFromLinks(makeLinks("https://example.com/"));
+        assertThrows(ExternalMessageBodyException.class, () -> factory.createFromLinks(makeLinks("https://example.com/")));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testMultipleExtLinkHeaders() {
         final List<String> links = makeLinks("https://example.com/", "https://example.com/");
 
-        factory.createFromLinks(links);
+        assertThrows(ExternalMessageBodyException.class, () -> factory.createFromLinks(links));
     }
 
     private List<String> makeLinks(final String... uris) {

@@ -39,10 +39,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -88,17 +88,17 @@ import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.RDF;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * @author Mike Durbin
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @TestExecutionListeners(
         listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
@@ -112,7 +112,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         providedDate.add(Calendar.YEAR, -20);
     }
 
-    @Before
+    @BeforeEach
     public void switchToRelaxedMode() {
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.RELAXED);
     }
@@ -448,7 +448,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         // Instant one day after the day we are trying to set.
         final var newDatePlusOneInstant = Instant.from(ISO_INSTANT.parse(newDate))
                 .plus(1, ChronoUnit.DAYS);
-                final var patchBinaryDescription = new HttpPatch(binaryUri + "/" + FCR_METADATA);
+        final var patchBinaryDescription = new HttpPatch(binaryUri + "/" + FCR_METADATA);
         patchBinaryDescription.setHeader(CONTENT_TYPE, "application/sparql-update");
         patchBinaryDescription.setEntity(new StringEntity("DELETE { <> <" + RDF.type + "> ?type ; " +
                 "<" + CREATED_DATE + "> ?date . } INSERT { <> <" + RDF.type + "> <" + DIRECT_CONTAINER + "> ; " +
@@ -549,7 +549,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         confirmResponseBodyNTriplesAreEqual(originalBody, newBody);
     }
 
-    @After
+    @AfterEach
     public void switchToStrictMode() {
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
     }
@@ -568,7 +568,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
                     }
                     roundtrippedGraph.delete(q);
                 }
-                assertTrue("Roundtripped graph had extra quads! " + roundtrippedGraph, roundtrippedGraph.isEmpty());
+                assertTrue(roundtrippedGraph.isEmpty(), "Roundtripped graph had extra quads! " + roundtrippedGraph);
             }
         }
     }
@@ -712,7 +712,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         return getInstance(getTimeZone("UTC"));
     }
 
-    private class ResultGraphWrapper {
+    private static class ResultGraphWrapper {
 
         private final DatasetGraph graph;
         private final Node nodeUri;
@@ -732,14 +732,16 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
         }
 
         public ResultGraphWrapper mustHave(final Node predicate, final Node object) {
-            assertTrue(predicate.getLocalName() + " should have been set to " + object.getLiteral().toString()
-                    + "!\nStatements:\n" + statements, graph.contains(ANY, nodeUri, predicate, object));
+            assertTrue(graph.contains(ANY, nodeUri, predicate, object),
+                    predicate.getLocalName() + " should have been set to " + object.getLiteral().toString()
+                                + "!\nStatements:\n" + statements);
             return this;
         }
 
         public ResultGraphWrapper mustNotHave(final Node predicate, final Node object) {
-            assertFalse(predicate.getLocalName() + " should not have been set to " + object.getLiteral().toString()
-                    + "!", graph.contains(ANY, nodeUri, predicate, object));
+            assertFalse(graph.contains(ANY, nodeUri, predicate, object),
+                    predicate.getLocalName() + " should not have been set to " + object.getLiteral().toString()
+                                + "!");
             return this;
         }
 

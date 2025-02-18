@@ -8,10 +8,12 @@ package org.fcrepo.http.api;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.InvalidConditionExpressionException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.ws.rs.core.UriBuilder;
 import java.util.ArrayList;
@@ -20,14 +22,15 @@ import java.util.Arrays;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Operator.EQ;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class FedoraSearchTest {
 
     private HttpIdentifierConverter converter;
@@ -38,7 +41,7 @@ public class FedoraSearchTest {
 
     private UriBuilder uriBuilder;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         uriBuilder = UriBuilder.fromUri(uriTemplate);
         converter = new HttpIdentifierConverter(uriBuilder);
@@ -58,8 +61,8 @@ public class FedoraSearchTest {
             final var con = FedoraSearch.parse(condition, converter);
             assertNotNull(con.getField());
             assertNotNull(con.getOperator());
-            assertEquals("unexpected object for condition: " + con, "info:fedora/test",
-                    con.getObject());
+            assertEquals("info:fedora/test", con.getObject(),
+                    "unexpected object for condition: " + con);
         }
 
         verifyEquals(FedoraSearch.parse("fedora_id=*", converter), FEDORA_ID, EQ, "*");
@@ -86,8 +89,7 @@ public class FedoraSearchTest {
             final var con = FedoraSearch.parse(condition, converter);
             assertNotNull(con.getField());
             assertNotNull(con.getOperator());
-            assertEquals("unexpected object for condition: " + con, "test",
-                    con.getObject());
+            assertEquals("test", con.getObject(), "unexpected object for condition: " + con);
         }
     }
 
@@ -100,11 +102,7 @@ public class FedoraSearchTest {
         };
 
         for (final String condition : conditions) {
-            try {
-                FedoraSearch.parse(condition, converter);
-                fail("Condition should have failed: " + condition);
-            } catch (final Exception ex) {
-            }
+            assertThrows(Exception.class, () -> FedoraSearch.parse(condition, converter));
         }
     }
 

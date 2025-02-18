@@ -12,11 +12,13 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.services.PurgeResourceService;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import javax.servlet.ServletContext;
 import javax.ws.rs.core.Request;
@@ -27,7 +29,7 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.spy;
@@ -38,7 +40,8 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 /**
  * @author cabeer
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class FedoraTombstonesTest {
 
     private final String path = "/test/object";
@@ -71,7 +74,7 @@ public class FedoraTombstonesTest {
     @Mock
     private ResourceFactory resourceFactory;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         testObj = spy(new FedoraTombstones(path));

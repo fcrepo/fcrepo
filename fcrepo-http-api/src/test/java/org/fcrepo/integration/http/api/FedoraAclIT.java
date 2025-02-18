@@ -23,12 +23,13 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 
 import javax.ws.rs.core.Link;
@@ -42,8 +43,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**
@@ -58,7 +59,7 @@ public class FedoraAclIT extends AbstractResourceIT {
     private String subjectUri;
     private String id;
 
-    @Before
+    @BeforeEach
     public void init() {
         id = getRandomUniqueId();
         subjectUri = serverAddress + id;
@@ -145,11 +146,10 @@ public class FedoraAclIT extends AbstractResourceIT {
     public void testPatchAclDelete() throws Exception {
         final String aclURI = subjectUri + "/" + FCR_ACL;
         createObjectAndClose(id);
-        final HttpPut putAcl = putObjMethod(id + "/" + FCR_ACL);
-        putAcl.setHeader(CONTENT_TYPE, "text/turtle");
-        putAcl.setEntity(new StringEntity("@prefix acl: <http://www.w3.org/ns/auth/acl#> . " +
+        final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> . " +
                 "<#authorization> a acl:Authorization ; acl:agent \"user3\" ; acl:mode acl:Read ; " +
-                "acl:accessTo <" + subjectUri + "> ; acl:default <" + subjectUri + "> ."));
+                "acl:accessTo <" + subjectUri + "> ; acl:default <" + subjectUri + "> .";
+        final HttpPut putAcl = putAcl(id + "/" + FCR_ACL, aclBody);
         assertEquals(CREATED.getStatusCode(), getStatus(putAcl));
 
         final Node subjectNode = createURI(subjectUri);
@@ -221,9 +221,7 @@ public class FedoraAclIT extends AbstractResourceIT {
     public void testPutACLBadRdf() throws IOException {
         createObjectAndClose(id);
 
-        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
-        put.setHeader(CONTENT_TYPE, "text/turtle");
-        put.setEntity(new StringEntity("<> a junk:Object ;"));
+        final HttpPut put = putAcl(subjectUri + "/" + FCR_ACL, "<> a junk:Object ;");
         assertEquals(BAD_REQUEST.getStatusCode(), getStatus(put));
     }
 
@@ -291,15 +289,15 @@ public class FedoraAclIT extends AbstractResourceIT {
     @Test
     public void testDeleteDefaultRootAcl() {
         final String rootAclUri = serverAddress + FCR_ACL;
-        assertEquals("DELETE should fail for default generated root ACL.",
-                CONFLICT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)),
+                "DELETE should fail for default generated root ACL.");
     }
 
     @Test
     public void testPatchDefaultRootAcl() {
         final String rootAclUri = serverAddress + FCR_ACL;
-        assertEquals("PATCH should fail for default generated root ACL.",
-                CONFLICT.getStatusCode(), getStatus(new HttpPatch(rootAclUri)));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPatch(rootAclUri)),
+                "PATCH should fail for default generated root ACL.");
     }
 
     @Test
@@ -323,48 +321,42 @@ public class FedoraAclIT extends AbstractResourceIT {
     @Test
     public void testAddModifyDeleteUserDefinedDefaultRootAcl() throws Exception {
         final String rootAclUri = serverAddress + FCR_ACL;
-        final HttpPut put = new HttpPut(rootAclUri);
         final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
                                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
                                "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
                                "\n" +
                                "<#readAccess> a acl:Authorization ;\n" +
                                "    acl:mode acl:Read .";
-
-        put.setEntity(new StringEntity(aclBody));
-        put.setHeader("Content-Type", "text/turtle");
+        final HttpPut put = putAcl(rootAclUri, aclBody);
 
         // Test PUT
-        assertEquals("PUT a new ACL should succeed.",
-                CREATED.getStatusCode(), getStatus(put));
+        assertEquals(CREATED.getStatusCode(), getStatus(put),
+                "PUT a new ACL should succeed.");
 
         // Test PATCH
         final HttpPatch patch = new HttpPatch(rootAclUri);
         patch.addHeader(CONTENT_TYPE, "application/sparql-update");
         patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
                                             "INSERT { <#readAccess> acl:mode acl:Write . } WHERE { }"));
-        assertEquals("PATCH should succeed for default generated root ACL.",
-                NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch),
+                "PATCH should succeed for default generated root ACL.");
 
         // Test DELETE
-        assertEquals("DELETE should succeed for user-defined default root ACL.",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(rootAclUri)),
+                "DELETE should succeed for user-defined default root ACL.");
     }
 
     @Test
     public void testCreateAclWithBody() throws Exception {
         createObjectAndClose(id);
 
-        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
         final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
                                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
                                "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
                                "\n" +
                                "<#readAccess> a acl:Authorization ;\n" +
                                "    acl:mode acl:Read .";
-
-        put.setEntity(new StringEntity(aclBody));
-        put.setHeader("Content-Type", "text/turtle");
+        final HttpPut put = putAcl(subjectUri + "/" + FCR_ACL, aclBody);
 
         final String aclLocation;
         try (final CloseableHttpResponse response = execute(put)) {
@@ -390,16 +382,13 @@ public class FedoraAclIT extends AbstractResourceIT {
     public void testCreateAclWithoutAccessToSetsDefaultTarget() throws Exception {
         createObjectAndClose(id);
 
-        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
         final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
                                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
                                "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
                                "\n" +
                                "<#readAccess> a acl:Authorization ;\n" +
                                "    acl:mode acl:Read .";
-
-        put.setEntity(new StringEntity(aclBody));
-        put.setHeader("Content-Type", "text/turtle");
+        final HttpPut put = putAcl(subjectUri + "/" + FCR_ACL, aclBody);
 
         final String aclLocation;
         try (final CloseableHttpResponse response = execute(put)) {
@@ -424,7 +413,6 @@ public class FedoraAclIT extends AbstractResourceIT {
     public void testCreateAclWithAccessTo() throws Exception {
         createObjectAndClose(id);
 
-        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
         final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
                                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
                                "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
@@ -432,11 +420,7 @@ public class FedoraAclIT extends AbstractResourceIT {
                                "<#readAccess> a acl:Authorization ;\n" +
                                "    acl:mode acl:Read ;\n" +
                                "    acl:accessTo <http://example.com/> .";
-        System.out.println("ACLBODY");
-        System.out.println(aclBody);
-
-        put.setEntity(new StringEntity(aclBody));
-        put.setHeader("Content-Type", "text/turtle");
+        final HttpPut put = putAcl(subjectUri + "/" + FCR_ACL, aclBody);
 
         final String aclLocation;
         try (final CloseableHttpResponse response = execute(put)) {
@@ -469,18 +453,15 @@ public class FedoraAclIT extends AbstractResourceIT {
     public void testCreateAclWithAccessToClass() throws Exception {
         createObjectAndClose(id);
 
-        final HttpPut put = new HttpPut(subjectUri + "/" + FCR_ACL);
         final String aclBody = "@prefix acl: <http://www.w3.org/ns/auth/acl#> .\n" +
-                               "@prefix webac: <http://fedora.info/definitions/v4/webac#> .\n" +
-                               "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
-                               "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
-                               "\n" +
-                               "<#readAccess> a acl:Authorization ;\n" +
-                               "    acl:mode acl:Read ;\n" +
-                               "    acl:accessToClass webac:Acl .";
-
-        put.setEntity(new StringEntity(aclBody));
-        put.setHeader("Content-Type", "text/turtle");
+                "@prefix webac: <http://fedora.info/definitions/v4/webac#> .\n" +
+                "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n" +
+                "@prefix ldp: <http://www.w3.org/ns/ldp#> .\n" +
+                "\n" +
+                "<#readAccess> a acl:Authorization ;\n" +
+                "    acl:mode acl:Read ;\n" +
+                "    acl:accessToClass webac:Acl .";
+        final HttpPut put = putAcl(subjectUri + "/" + FCR_ACL, aclBody);
 
         final String aclLocation;
         try (final CloseableHttpResponse response = execute(put)) {
@@ -557,5 +538,19 @@ public class FedoraAclIT extends AbstractResourceIT {
         final var getHtml = getObjMethod(FCR_ACL);
         getHtml.addHeader(ACCEPT, "text/html");
         assertEquals(OK.getStatusCode(), getStatus(getHtml));
+    }
+
+    /**
+     * Create a HttpPut with a text/turtle body
+     * @param url The URL to PUT to
+     * @param aclBody The body of the PUT request
+     * @return HttpPut
+     */
+    private HttpPut putAcl(final String url, final String aclBody) {
+        final String aclLocation = (!url.startsWith(serverAddress) ? serverAddress : "") + url;
+        final HttpPut put = new HttpPut(aclLocation);
+        put.setEntity(new StringEntity(aclBody, StandardCharsets.UTF_8));
+        put.setHeader("Content-Type", "text/turtle");
+        return put;
     }
 }

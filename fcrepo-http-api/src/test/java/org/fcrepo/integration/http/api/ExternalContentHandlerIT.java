@@ -17,12 +17,14 @@ import static javax.ws.rs.core.Response.Status.OK;
 import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static javax.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpHeaders.CONTENT_LENGTH;
@@ -44,10 +46,9 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.context.TestExecutionListeners;
 
 import javax.ws.rs.core.HttpHeaders;
@@ -61,8 +62,8 @@ import javax.ws.rs.core.HttpHeaders;
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class ExternalContentHandlerIT extends AbstractResourceIT {
 
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    public Path tempFolder;
 
     private static final String NON_RDF_SOURCE_LINK_HEADER = "<" + NON_RDF_SOURCE.getURI() + ">;rel=\"type\"";
 
@@ -78,11 +79,6 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     private static final CloseableHttpClient noFollowClient = HttpClientBuilder.create()
             .disableRedirectHandling().build();
-
-    @Before
-    public void setup() throws Exception {
-        tempFolder.create();
-    }
 
     @Test
     public void testProxyRemoteContentTypeForHttpUri() throws Exception {
@@ -275,10 +271,10 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.contains(TEST_SHA_DIGEST_HEADER_VALUE));
-            assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE));
+            assertTrue(digesterHeaderValue.contains(TEST_SHA_DIGEST_HEADER_VALUE),
+                    "SHA-1 Fixity Checksum doesn't match");
+            assertTrue(digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE),
+                    "MD5 fixity checksum doesn't match");
         }
 
         // GET request with Want-Digest
@@ -290,32 +286,34 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.contains(TEST_SHA_DIGEST_HEADER_VALUE));
-            assertTrue("MD5 fixity checksum doesn't match",
-                    digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE));
+            assertTrue(digesterHeaderValue.contains(TEST_SHA_DIGEST_HEADER_VALUE),
+                    "SHA-1 Fixity Checksum doesn't match");
+            assertTrue(digesterHeaderValue.contains(TEST_MD5_DIGEST_HEADER_VALUE),
+                    "MD5 fixity checksum doesn't match");
         }
     }
 
     private File createExternalLocalFile(final String content) throws IOException {
-        final File externalFile = tempFolder.newFile();
+        final File externalFile = Files.createFile(
+                tempFolder.resolve("external-file-" + getRandomUniqueId() + ".txt")
+        ).toFile();
         try (final FileWriter fw = new FileWriter(externalFile)) {
             fw.write(content);
         }
         return externalFile;
     }
 
-    private void checkExternalDataStreamResponseHeader(final HttpUriRequest req, final String contenLocation,
+    private void checkExternalDataStreamResponseHeader(final HttpUriRequest req, final String contentLocation,
             final String shaValue) throws IOException {
         try (final CloseableHttpResponse response = execute(req)) {
             assertEquals(OK.getStatusCode(), response.getStatusLine().getStatusCode());
             assertTrue(response.getHeaders(DIGEST).length > 0);
-            if (StringUtils.isNoneBlank(contenLocation)) {
-                assertEquals(contenLocation, getContentLocation(response));
+            if (StringUtils.isNoneBlank(contentLocation)) {
+                assertEquals(contentLocation, getContentLocation(response));
             }
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            assertTrue("Fixity Checksum doesn't match",
-                    digesterHeaderValue.equals(shaValue));
+            assertTrue(digesterHeaderValue.equals(shaValue),
+                    "Fixity Checksum doesn't match");
         }
     }
 
@@ -405,11 +403,11 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertTrue(response.getHeaders(DIGEST).length > 0);
 
             final String digesterHeaderValue = response.getHeaders(DIGEST)[0].getValue();
-            assertTrue("SHA-1 Fixity Checksum doesn't match",
-                    digesterHeaderValue.contains(sha1));
+            assertTrue(digesterHeaderValue.contains(sha1),
+                    "SHA-1 Fixity Checksum doesn't match");
             if (md5 != null) {
-                assertTrue("MD5 fixity checksum doesn't match",
-                        digesterHeaderValue.contains(md5));
+                assertTrue(digesterHeaderValue.contains(md5),
+                        "MD5 fixity checksum doesn't match");
             }
         }
     }
@@ -472,7 +470,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "redirect", null));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = noFollowClient.execute(get)) {
                 assertEquals(TEMPORARY_REDIRECT.getStatusCode(), getStatus(getResponse));
@@ -492,7 +490,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, getExternalContentLinkHeader(fileUri, "proxy", "text/plain"));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
@@ -516,7 +514,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, getExternalContentLinkHeader(localPath, "copy", "text/plain"));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
 
             // fetch the copy of the object
             final HttpGet get = new HttpGet(getLocation(response));
@@ -541,7 +539,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, getExternalContentLinkHeader(copyLocation, "copy", "text/plain"));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
 
             // fetch the copy of the object
             final HttpGet get = new HttpGet(getLocation(response));
@@ -565,7 +563,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, getExternalContentLinkHeader(origLocation, "proxy", null));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
@@ -588,7 +586,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(origLocation, "proxy", "text/plain"));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             final HttpGet get = new HttpGet(getLocation(response));
             try (final CloseableHttpResponse getResponse = execute(get)) {
                 assertEquals(OK.getStatusCode(), getStatus(getResponse));
@@ -607,8 +605,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, getExternalContentLinkHeader("http://example.com/test", "junk", "image/jpeg"));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a BAD REQUEST error!", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Didn't get a BAD REQUEST error!");
             assertBodyContains(response, "External content link header url is malformed");
         }
     }
@@ -619,8 +616,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader("http://example.com/junk", "junk", "image/jpeg"));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Didn't get a BAD REQUEST error!");
             assertBodyContains(response, "External content link header url is malformed");
         }
     }
@@ -632,8 +628,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader(LINK, getExternalContentLinkHeader("http://example.com/junk", null, "image/jpeg"));
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Didn't get a BAD REQUEST error!");
             assertBodyContains(response, "External content link header url is malformed");
         }
     }
@@ -648,8 +643,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "copy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Didn't get a BAD REQUEST error!");
             assertBodyContains(response, "Unable to access external binary");
         }
     }
@@ -664,8 +658,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "copy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Didn't get a BAD_REQUEST response!", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Didn't get a BAD REQUEST error!");
             assertBodyContains(response, "Unable to access external binary");
         }
     }
@@ -680,8 +673,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "proxy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Expected failure on creation", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Expected failure on creation");
             assertBodyContains(response, "Unable to access external binary");
         }
     }
@@ -696,8 +688,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "proxy", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Expected failure on creation", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Expected failure on creation");
             assertBodyContains(response, "Unable to access external binary");
         }
     }
@@ -712,8 +703,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentPath, "redirect", null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Expected failure on creation", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Expected failure on creation");
             assertBodyContains(response, "Unable to access external binary");
         }
     }
@@ -734,7 +724,9 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
     }
 
     private void verifyNotFoundLocalFile(final String handling) throws Exception {
-        final File nonexistentFile = tempFolder.newFile();
+        final File nonexistentFile = Files.createFile(
+                tempFolder.resolve("nonexistent-file-" + getRandomUniqueId() + ".txt")
+        ).toFile();
         nonexistentFile.delete();
         final String nonexistentUri = nonexistentFile.toURI().toString();
 
@@ -744,8 +736,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPost.addHeader(LINK, getExternalContentLinkHeader(nonexistentUri, handling, null));
 
         try (final CloseableHttpResponse response = execute(httpPost)) {
-            assertEquals("Expected failure on creation", BAD_REQUEST.getStatusCode(),
-                    getStatus(response));
+            assertEquals(BAD_REQUEST.getStatusCode(), getStatus(response), "Expected failure on creation");
             assertBodyContains(response, "Path did not match any allowed external content paths");
         }
     }
@@ -759,7 +750,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
 
             // fetch the copy of the object
             final HttpGet get = new HttpGet(getLocation(response));
@@ -792,7 +783,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
 
             // fetch the copy of the object
             final HttpGet get = new HttpGet(getLocation(response));
@@ -813,7 +804,7 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         httpPut.addHeader("Digest", TEST_SHA_DIGEST_HEADER_VALUE);
 
         try (final CloseableHttpResponse response = execute(httpPut)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             assertIsProxyBinary(getLocation(response), externalLocation, TEST_BINARY_CONTENT, "text/plain");
         }
     }
@@ -1107,11 +1098,11 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
         final HttpDelete delete = new HttpDelete(rescLoc);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
         assertDeleted(id);
-        assertTrue("External binary must exist after resource deletion", localFile.exists());
+        assertTrue(localFile.exists(), "External binary must exist after resource deletion");
 
         final HttpDelete deleteTomb = new HttpDelete(rescLoc + "/" + FedoraTypes.FCR_TOMBSTONE);
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(deleteTomb));
-        assertTrue("External binary must exist after deleting tombstone", localFile.exists());
+        assertTrue(localFile.exists(), "External binary must exist after deleting tombstone");
     }
 
     @Test
@@ -1243,29 +1234,29 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
 
     private void assertBodyContains(final CloseableHttpResponse response, final String expected) throws IOException {
         final String body = IOUtils.toString(response.getEntity().getContent(), UTF_8);
-        assertTrue("Expected response to contain '" + expected + "' but was '" + body + "'",
-                body.contains(expected));
+        assertTrue(body.contains(expected),
+                "Expected response to contain '" + expected + "' but was '" + body + "'");
     }
 
     private void assertBodyMatches(final CloseableHttpResponse response, final String expected) throws IOException {
         final String body = IOUtils.toString(response.getEntity().getContent(), UTF_8);
-        assertEquals("Response body did not match the expected value", expected, body);
+        assertEquals(expected, body, "Response body did not match the expected value");
     }
 
     private void assertContentLength(final CloseableHttpResponse response, final long expectedLength) {
-        assertEquals("Content-length header did not match", expectedLength, Long.parseLong(response
-                .getFirstHeader(CONTENT_LENGTH).getValue()));
+        assertEquals(expectedLength, Long.parseLong(response.getFirstHeader(CONTENT_LENGTH).getValue()),
+                "Content-length header did not match");
     }
 
     private void assertContentType(final CloseableHttpResponse response, final String expected) {
-        assertEquals("Content-type header did not match", expected, response.getFirstHeader(CONTENT_TYPE).getValue());
+        assertEquals(expected, response.getFirstHeader(CONTENT_TYPE).getValue(), "Content-type header did not match");
     }
 
     private void assertContentLocation(final CloseableHttpResponse response, final String expectedLoc) {
-        assertEquals("Content location header did not match", expectedLoc, getContentLocation(response));
+        assertEquals(expectedLoc, getContentLocation(response), "Content location header did not match");
     }
 
     private void assertLocation(final CloseableHttpResponse response, final String expectedLoc) {
-        assertEquals("Location header did not match", expectedLoc, getLocation(response));
+        assertEquals(expectedLoc, getLocation(response), "Location header did not match");
     }
 }
