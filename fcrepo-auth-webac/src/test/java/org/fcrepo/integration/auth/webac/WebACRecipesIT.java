@@ -80,10 +80,7 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.glassfish.grizzly.utils.Charsets;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
@@ -99,9 +96,6 @@ import org.springframework.test.context.TestExecutionListeners;
 public class WebACRecipesIT extends AbstractResourceIT {
 
     private static final Logger logger = LoggerFactory.getLogger(WebACRecipesIT.class);
-
-    @RegisterExtension
-    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     private final ContentType turtleContentType = ContentType.create("text/turtle", "UTF-8");
 
@@ -177,12 +171,10 @@ public class WebACRecipesIT extends AbstractResourceIT {
         setAuth(request, "fedoraAdmin");
         request.setEntity(body);
         request.setHeader(body.getContentType());
-        final CloseableHttpResponse response = execute(request);
-        assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
-        final String location = response.getFirstHeader("Location").getValue();
-        logger.info("Created binary at {}", location);
-        return location;
-
+        try (final CloseableHttpResponse response = execute(request)) {
+            assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
+            return response.getFirstHeader("Location").getValue();
+        }
     }
 
     private String ingestDatastream(final String path, final String ds) throws IOException {

@@ -46,7 +46,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.fcrepo.kernel.api.FedoraTypes;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.context.TestExecutionListeners;
