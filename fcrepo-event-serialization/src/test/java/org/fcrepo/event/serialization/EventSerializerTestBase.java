@@ -5,7 +5,6 @@
  */
 
 package org.fcrepo.event.serialization;
-import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -26,6 +25,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -44,6 +45,7 @@ import org.mockito.Mock;
  * @author dbernstein
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EventSerializerTestBase {
 
     @Mock
