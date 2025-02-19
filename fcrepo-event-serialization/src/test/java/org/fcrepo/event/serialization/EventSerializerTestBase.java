@@ -5,6 +5,9 @@
  */
 
 package org.fcrepo.event.serialization;
+import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import static java.time.Instant.ofEpochMilli;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -14,8 +17,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.ACTIVITY_STREAMS_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
@@ -23,6 +24,8 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
@@ -30,9 +33,7 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.SimpleSelector;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>
@@ -42,7 +43,7 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author acoburn
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class EventSerializerTestBase {
 
     @Mock
