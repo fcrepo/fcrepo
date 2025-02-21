@@ -32,12 +32,12 @@ import static org.fcrepo.http.commons.session.TransactionConstants.TX_ENDPOINT_R
 import static org.fcrepo.http.commons.session.TransactionConstants.TX_PREFIX;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -77,9 +77,9 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.flywaydb.core.Flyway;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -106,7 +106,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
     private Flyway flyway;
 
-    @Before
+    @BeforeEach
     public void setup() {
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
         containmentIndex = getBean("containmentIndex", ContainmentIndex.class);
@@ -116,7 +116,7 @@ public class TransactionsIT extends AbstractResourceIT {
         flyway = getBean(Flyway.class);
     }
 
-    @After
+    @AfterEach
     public void after() {
         objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
         flyway.clean();
@@ -147,8 +147,7 @@ public class TransactionsIT extends AbstractResourceIT {
                 txId = txMatcher.group(1);
             }
 
-            assertNotNull("Expected Location header to send us to root node path within the transaction",
-                    txId);
+            assertNotNull(txId, "Expected Location header to send us to root node path within the transaction");
 
             final String commitUri = serverAddress + TX_PREFIX + txId;
             checkForLinkHeader(response, commitUri, TX_COMMIT_REL);
@@ -181,7 +180,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
         sleep(REAP_INTERVAL * 2);
         try {
-            assertEquals("Transaction did not expire", GONE.getStatusCode(), getStatus(new HttpGet(location)));
+            assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(location)), "Transaction did not expire");
         } finally {
             propsConfig.setSessionTimeout(Duration.ofMillis(180000));
         }
@@ -189,7 +188,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
     private void assertHeaderIsRfc1123Date(final CloseableHttpResponse response, final String headerName) {
         final Header header = response.getFirstHeader(headerName);
-        assertNotNull("Header " + headerName + " was not set", header);
+        assertNotNull(header, "Header " + headerName + " was not set");
         try {
             EXPIRES_RFC_1123_FORMATTER.parse(header.getValue());
         } catch (final DateTimeParseException e) {
@@ -216,20 +215,20 @@ public class TransactionsIT extends AbstractResourceIT {
             assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newLocation), ANY, ANY));
         }
         /* fetch the created tx from the endpoint */
-        assertEquals("Expected to not find our object within the scope of the transaction",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)),
+                "Expected to not find our object within the scope of the transaction");
 
         /* and rollback */
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(txLocation)));
 
-        assertEquals("Rolled back transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txLocation)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(txLocation)),
+                "Rolled back transaction should be gone");
 
-        assertEquals("Expected to not find our object after rollback",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)),
+                "Expected to not find our object after rollback");
 
-        assertEquals("Expected to not find our object in transaction after rollback",
-                CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), txLocation)));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(newLocation), txLocation)),
+                "Expected to not find our object in transaction after rollback");
     }
 
     @Test
@@ -291,8 +290,8 @@ public class TransactionsIT extends AbstractResourceIT {
             assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newLocation), ANY, ANY));
         }
         /* fetch the created tx from the endpoint */
-        assertEquals("Expected to not find our object within the scope of the transaction",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)),
+                "Expected to not find our object within the scope of the transaction");
 
         // Drop the entire containment table in order to cause an error.
         dropContainment();
@@ -300,11 +299,11 @@ public class TransactionsIT extends AbstractResourceIT {
         // Commit transaction -- should fail
         assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
-        assertEquals("Rolled back transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txLocation)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(txLocation)),
+                "Rolled back transaction should be gone");
 
-        assertEquals("Expected to not find our object after rollback",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)),
+                "Expected to not find our object after rollback");
 
         assertObjectDoesNotExistOnDisk(FedoraId.create(resourceId));
     }
@@ -330,19 +329,19 @@ public class TransactionsIT extends AbstractResourceIT {
             assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newLocation), ANY, ANY));
         }
         /* fetch the created tx from the endpoint */
-        assertEquals("Expected to not find our object within the scope of the transaction",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(newLocation)),
+                "Expected to not find our object within the scope of the transaction");
 
         addConflictingContainmentRecord(resourceId);
 
         // Commit transaction -- doesn't fail as the conflicting record overwrites the old one.
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
-        assertEquals("Committed transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txLocation)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(txLocation)),
+                "Committed transaction should be gone");
 
-        assertEquals("Expected to not find our object after rollback",
-                OK.getStatusCode(), getStatus(new HttpGet(newLocation)));
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(newLocation)),
+                "Expected to not find our object after rollback");
     }
 
     @Test
@@ -371,8 +370,8 @@ public class TransactionsIT extends AbstractResourceIT {
         // Commit transaction
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
 
-        assertEquals("Committed transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)),
+                "Committed transaction should be gone");
 
         assertBinaryContent("test 1 -- updated!", bin1, null);
         assertBinaryContent("test 2 -- I'm new!", bin2, null);
@@ -411,15 +410,15 @@ public class TransactionsIT extends AbstractResourceIT {
         // Commit transaction -- should fail
         assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
 
-        assertEquals("Rolled back transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)),
+                "Rolled back transaction should be gone");
 
         // bin1 was not rolled back
         assertBinaryContent("test 1 -- updated!", bin1, null);
 
         // bin2 was rolled back
-        assertEquals("Expected to not find our object after rollback",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)),
+                "Expected to not find our object after rollback");
         assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
 
         // bin1 was not committed
@@ -457,15 +456,15 @@ public class TransactionsIT extends AbstractResourceIT {
         // Commit transaction -- should fail
         assertEquals(CONFLICT.getStatusCode(), getStatus(new HttpPut(txLocation2)));
 
-        assertEquals("Rolled back transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(txLocation2)),
+                "Rolled back transaction should be gone");
 
         // bin1 was rolled back
         assertBinaryContent("test 1", bin1, null);
 
         // bin2 was rolled back
-        assertEquals("Expected to not find our object after rollback",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(serverAddress + bin2)),
+                "Expected to not find our object after rollback");
         assertObjectDoesNotExistOnDisk(FedoraId.create(bin2));
 
         // bin1 was not committed
@@ -503,19 +502,19 @@ public class TransactionsIT extends AbstractResourceIT {
         }
 
         /* fetch the object-in-tx outside of the tx */
-        assertEquals("Expected to not find our object within the scope of the transaction",
-                NOT_FOUND.getStatusCode(), getStatus(new HttpGet(datasetLoc)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(new HttpGet(datasetLoc)),
+                "Expected to not find our object within the scope of the transaction");
         /* and commit */
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
 
         /* fetch the object-in-tx outside of the tx after it has been committed */
         try (final CloseableDataset dataset = getDataset(new HttpGet(datasetLoc))) {
-            assertTrue("Expected to  find our object after the transaction was committed",
-                    dataset.asDatasetGraph().contains(ANY, createURI(datasetLoc), ANY, ANY));
+            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(datasetLoc), ANY, ANY),
+                    "Expected to  find our object after the transaction was committed");
         }
 
-        assertEquals("Expect conflict when trying to retrieve from committed transaction",
-                CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(datasetLoc), txLocation)));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(addTxTo(new HttpGet(datasetLoc), txLocation)),
+                "Expect conflict when trying to retrieve from committed transaction");
     }
 
     @Test
@@ -554,9 +553,9 @@ public class TransactionsIT extends AbstractResourceIT {
 
     private void assertHasAtomicId(final String txId, final CloseableHttpResponse resp) {
         final Header header = resp.getFirstHeader(ATOMIC_ID_HEADER);
-        assertNotNull("No atomic id header present in response", header);
+        assertNotNull(header, "No atomic id header present in response");
 
-        assertEquals("Header did not match the expected atomic id", txId, header.getValue());
+        assertEquals(txId, header.getValue(), "Header did not match the expected atomic id");
     }
 
     /**
@@ -583,18 +582,18 @@ public class TransactionsIT extends AbstractResourceIT {
         final String newTitle = "this is a new title";
         method.setEntity(new StringEntity("INSERT { <> <http://purl.org/dc/elements/1.1/title> \"" + newTitle +
                 "\" } WHERE {}"));
-        assertEquals("Didn't get a NO CONTENT status!", NO_CONTENT.getStatusCode(), getStatus(method));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(method), "Didn't get a NO CONTENT status!");
 
         /* make sure the change was made within the tx */
         try (final CloseableDataset dataset = getDataset(addTxTo(new HttpGet(newObjectLocation), txLocation))) {
-            assertTrue("The sparql update did not succeed within a transaction", dataset.asDatasetGraph().contains(ANY,
-                    createURI(newObjectLocation), title.asNode(), createLiteral(newTitle)));
+            assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newObjectLocation), title.asNode(),
+                    createLiteral(newTitle)), "The sparql update did not succeed within a transaction");
         }
 
         // Verify that the change is not visible outside the TX
         try (final CloseableDataset dataset = getDataset(new HttpGet(newObjectLocation))) {
-            assertFalse("Sparql update changes must not be visible out of tx", dataset.asDatasetGraph().contains(ANY,
-                    createURI(newObjectLocation), title.asNode(), createLiteral(newTitle)));
+            assertFalse(dataset.asDatasetGraph().contains(ANY, createURI(newObjectLocation), title.asNode(),
+                    createLiteral(newTitle)), "Sparql update changes must not be visible out of tx");
         }
 
         /* commit */
@@ -602,8 +601,8 @@ public class TransactionsIT extends AbstractResourceIT {
 
         /* it must exist after commit */
         try (final CloseableDataset dataset = getDataset(new HttpGet(newObjectLocation))) {
-            assertTrue("The inserted triple does not exist after the transaction has committed",
-                    dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteral(newTitle)));
+            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteral(newTitle)),
+                    "The inserted triple does not exist after the transaction has committed");
         }
     }
 
@@ -611,8 +610,8 @@ public class TransactionsIT extends AbstractResourceIT {
     public void testGetNonExistingObject() throws IOException {
         final String txLocation = createTransaction();
         final String newObjectLocation = serverAddress + "idontexist";
-        assertEquals("Status should be NOT FOUND", NOT_FOUND.getStatusCode(),
-                getStatus(addTxTo(new HttpGet(newObjectLocation), txLocation)));
+        assertEquals(NOT_FOUND.getStatusCode(), getStatus(addTxTo(new HttpGet(newObjectLocation), txLocation)),
+                "Status should be NOT FOUND");
     }
 
     /*
@@ -623,20 +622,20 @@ public class TransactionsIT extends AbstractResourceIT {
         final String txLocation = createTransaction();
         final String location;
         try (final CloseableHttpResponse resp = execute(addTxTo(new HttpPost(serverAddress), txLocation))) {
-            assertTrue("Last-Modified must be present during a transaction", resp.containsHeader("Last-Modified"));
-            assertTrue("ETag must be present during a transaction", resp.containsHeader("ETag"));
-            assertTrue("Expected an X-State-Token header", resp.getHeaders("X-State-Token").length > 0);
+            assertTrue(resp.containsHeader("Last-Modified"), "Last-Modified must be present during a transaction");
+            assertTrue(resp.containsHeader("ETag"), "ETag must be present during a transaction");
+            assertTrue(resp.getHeaders("X-State-Token").length > 0, "Expected an X-State-Token header");
             // Assert Cache-Control headers are present to invalidate caches
             location = getLocation(resp);
         }
         try (final CloseableHttpResponse resp = execute(addTxTo(new HttpGet(location), txLocation))) {
-            assertTrue("Last-Modified must be present during a transaction", resp.containsHeader("Last-Modified"));
-            assertTrue("ETag must be present during a transaction", resp.containsHeader("ETag"));
-            assertTrue("Expected an X-State-Token header", resp.getHeaders("X-State-Token").length > 0);
+            assertTrue(resp.containsHeader("Last-Modified"), "Last-Modified must be present during a transaction");
+            assertTrue(resp.containsHeader("ETag"), "ETag must be present during a transaction");
+            assertTrue(resp.getHeaders("X-State-Token").length > 0, "Expected an X-State-Token header");
             final Header[] headers = resp.getHeaders(CACHE_CONTROL);
-            assertEquals("Two cache control headers expected: ", 2, headers.length);
-            assertEquals("must-revalidate expected", "must-revalidate", headers[0].getValue());
-            assertEquals("max-age=0 expected", "max-age=0", headers[1].getValue());
+            assertEquals(2, headers.length, "Two cache control headers expected: ");
+            assertEquals("must-revalidate", headers[0].getValue(), "must-revalidate expected");
+            assertEquals("max-age=0", headers[1].getValue(), "max-age=0 expected");
             consume(resp.getEntity());
         }
     }
@@ -709,9 +708,9 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(delete));
 
         /* fetch the object-deleted-in-tx outside of the tx */
-        assertEquals("Expected to find our object outside the scope of the tx,"
-                + " despite it being deleted in the uncommitted transaction.",
-                OK.getStatusCode(), getStatus(new HttpGet(objectLocation)));
+        assertEquals(OK.getStatusCode(), getStatus(new HttpGet(objectLocation)),
+                "Expected to find our object outside the scope of the tx,"
+                + " despite it being deleted in the uncommitted transaction.");
 
         /* Try to mark the object as not deletable outside the context of the transaction */
         final HttpPatch postProp = new HttpPatch(objectLocation);
@@ -723,8 +722,8 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(CONFLICT.getStatusCode(), getStatus(postProp));
 
         /* commit that transaction */
-        assertEquals("Transaction is still atomic with regards to the object!",
-                NO_CONTENT.getStatusCode(), getStatus(new HttpPut(deleterTxLocation)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(deleterTxLocation)),
+                "Transaction is still atomic with regards to the object!");
     }
 
     @Test
@@ -1002,8 +1001,8 @@ public class TransactionsIT extends AbstractResourceIT {
         commitTransaction(txLocation);
 
         final var response = getResource(containerId, null);
-        assertTrue("title should have been updated", response.contains("new title"));
-        assertFalse("concurrent update should not have been applied", response.contains("concurrent update!"));
+        assertTrue(response.contains("new title"), "title should have been updated");
+        assertFalse(response.contains("concurrent update!"), "concurrent update should not have been applied");
         propsConfig.setIncludeTransactionOnConflict(false);
     }
 
@@ -1234,11 +1233,11 @@ public class TransactionsIT extends AbstractResourceIT {
 
 
         assertAtomicExpiresIsInRange(originalInstant, originalAtomicExpires);
-        assertNotEquals("AtomicExpires should have been updated after create",
-                originalAtomicExpires, afterCreateAtomicExpires);
+        assertNotEquals(originalAtomicExpires, afterCreateAtomicExpires,
+                "AtomicExpires should have been updated after create");
         assertAtomicExpiresIsInRange(afterCreateInstant, afterCreateAtomicExpires);
-        assertNotEquals("AtomicExpires should have been updated after get",
-                afterCreateAtomicExpires, afterGetAtomicExpires);
+        assertNotEquals(afterCreateAtomicExpires, afterGetAtomicExpires,
+                "AtomicExpires should have been updated after get");
         assertAtomicExpiresIsInRange(afterGetInstant, afterGetAtomicExpires);
     }
 
@@ -1255,9 +1254,9 @@ public class TransactionsIT extends AbstractResourceIT {
         final var expected = requestTime.plus(Duration.ofMinutes(3));
         final var lowerBound = expected.minusSeconds(30);
         final var upperBound = expected.plusSeconds(30);
-        assertTrue("atomicExpires is not within the range of 3 minutes +/- 30 seconds: request time: "
-                        + requestTime + " expires: "  + atomicExpires,
-                atomicExpires.isAfter(lowerBound) && atomicExpires.isBefore(upperBound));
+        assertTrue(atomicExpires.isAfter(lowerBound) && atomicExpires.isBefore(upperBound),
+                "atomicExpires is not within the range of 3 minutes +/- 30 seconds: request time: "
+                        + requestTime + " expires: "  + atomicExpires);
     }
 
     private void assertConcurrentUpdateFails(final CheckedRunnable runnable) throws Exception {
@@ -1266,12 +1265,12 @@ public class TransactionsIT extends AbstractResourceIT {
             fail("Request should fail because the resource should be locked by another transaction.");
         } catch (final HttpResponseException e) {
             assertEquals(CONFLICT.getStatusCode(), e.getStatusCode());
-            assertTrue("concurrent update exception",
-                       e.getReasonPhrase().contains("updated by another transaction"));
-            assertEquals("transaction id in response", propsConfig.includeTransactionOnConflict(),
-                         e.getReasonPhrase().contains("existingTransactionId"));
-            assertEquals("transaction id in response", propsConfig.includeTransactionOnConflict(),
-                         e.getReasonPhrase().contains("conflictingTransactionId"));
+            assertTrue(e.getReasonPhrase().contains("updated by another transaction"),
+                    "concurrent update exception");
+            assertEquals(propsConfig.includeTransactionOnConflict(),
+                    e.getReasonPhrase().contains("existingTransactionId"),"transaction id in response");
+            assertEquals(propsConfig.includeTransactionOnConflict(),
+                    e.getReasonPhrase().contains("conflictingTransactionId"),"transaction id in response");
         }
     }
 
@@ -1285,19 +1284,15 @@ public class TransactionsIT extends AbstractResourceIT {
             final boolean exists = dataset.asDatasetGraph().contains(ANY,
                     createURI(serverAddress + uri), createURI(propertyUri), createLiteral(propertyValue));
             if (shouldExist) {
-                assertTrue(assertionMessage, exists);
+                assertTrue(exists, assertionMessage);
             } else {
-                assertFalse(assertionMessage, exists);
+                assertFalse(exists, assertionMessage);
             }
         }
     }
 
     private void assertObjectDoesNotExistOnDisk(final FedoraId fedoraId) {
-        assertFalse(String.format("Expected %s to not exist on disk", fedoraId), objectExistsOnDisk(fedoraId));
-    }
-
-    private void assertObjectExistsOnDisk(final FedoraId fedoraId) {
-        assertTrue(String.format("Expected %s to exist on disk", fedoraId), objectExistsOnDisk(fedoraId));
+        assertFalse(objectExistsOnDisk(fedoraId), String.format("Expected %s to not exist on disk", fedoraId));
     }
 
     private boolean objectExistsOnDisk(final FedoraId fedoraId) {
@@ -1310,7 +1305,7 @@ public class TransactionsIT extends AbstractResourceIT {
                                      final String id,
                                      final String txLocation) throws IOException {
         final var actual = getResource(id, txLocation);
-        assertEquals("Expected binary content for " + id, expected, actual);
+        assertEquals(expected, actual, "Expected binary content for " + id);
     }
 
     private void putAg(final String id, final String txLocation) throws IOException {

@@ -5,6 +5,8 @@
  */
 package org.fcrepo.http.commons.webxml.bind;
 
+import java.util.Objects;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -45,12 +47,8 @@ public class Param extends Describable {
     public boolean equals(final Object object) {
         if (this.getClass().equals(object.getClass())) {
             final Param that = (Param) object;
-            final boolean name =
-                (this.name == null) ? that.name == null : this.name
-                        .equals(that.name);
-            final boolean value =
-                (this.value == null) ? that.value == null : this.value
-                        .equals(that.value);
+            final boolean name = Objects.equals(this.name, that.name);
+            final boolean value = Objects.equals(this.value, that.value);
             return name && value;
         }
         return false;

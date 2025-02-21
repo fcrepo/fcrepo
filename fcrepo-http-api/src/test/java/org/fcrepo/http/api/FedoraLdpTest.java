@@ -47,12 +47,14 @@ import org.fcrepo.kernel.api.services.DeleteResourceService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.ResourceTripleService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -122,10 +124,10 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -150,7 +152,8 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
  * @author cabeer
  * @author ajs6f
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class FedoraLdpTest {
 
     private final String path = "/some/path";
@@ -249,7 +252,7 @@ public class FedoraLdpTest {
 
     private static final Logger log = getLogger(FedoraLdpTest.class);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = spy(new FedoraLdp(path));
 
@@ -417,12 +420,12 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("HEAD");
         final Response actual = testObj.head(false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
-        assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
-        assertTrue("Should have a Preference-Applied header", mockResponse.containsHeader("Preference-Applied"));
-        assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
-        assertTrue("Should be an LDP Resource",
-                mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
+        assertTrue(mockResponse.containsHeader(LINK), "Should have a Link header");
+        assertTrue(mockResponse.containsHeader("Allow"), "Should have an Allow header");
+        assertTrue(mockResponse.containsHeader("Preference-Applied"), "Should have a Preference-Applied header");
+        assertTrue(mockResponse.containsHeader("Vary"), "Should have a Vary header");
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""),
+                "Should be an LDP Resource");
     }
 
     @Test
@@ -431,16 +434,16 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("HEAD");
         final Response actual = testObj.head(false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
-        assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
-        assertTrue("Should have a Preference-Applied header", mockResponse.containsHeader("Preference-Applied"));
-        assertTrue("Should have a Vary header", mockResponse.containsHeader("Vary"));
-        assertTrue("Should be an LDP Resource",
-                   mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
+        assertTrue(mockResponse.containsHeader(LINK), "Should have a Link header");
+        assertTrue(mockResponse.containsHeader("Allow"), "Should have an Allow header");
+        assertTrue(mockResponse.containsHeader("Preference-Applied"), "Should have a Preference-Applied header");
+        assertTrue(mockResponse.containsHeader("Vary"), "Should have a Vary header");
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""),
+                "Should be an LDP Resource");
 
         final var rootUri = identifierConverter.toExternalId(FedoraId.create(FEDORA_ID_PREFIX).getFullId());
-        assertTrue("Should have an Archival Group Link",
-                   mockResponse.getHeaders(LINK).contains("<" + rootUri + ">; rel=\"archival-group\""));
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" + rootUri + ">; rel=\"archival-group\""),
+                "Should have an Archival Group Link");
     }
 
     @Test
@@ -449,9 +452,9 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("HEAD");
         final Response actual = testObj.head(false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
-        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader(
-                FedoraLdp.HTTP_HEADER_ACCEPT_PATCH));
+        assertTrue(mockResponse.containsHeader("Accept-Post"), "Should advertise Accept-Post flavors");
+        assertTrue(mockResponse.containsHeader(
+                        FedoraLdp.HTTP_HEADER_ACCEPT_PATCH), "Should advertise Accept-Patch flavors");
     }
 
     @Test
@@ -464,8 +467,8 @@ public class FedoraLdpTest {
     }
 
     private void assertShouldBeAnLDPBasicContainer() {
-        assertTrue("Should be an LDP BasicContainer",
-                mockResponse.getHeaders(LINK).contains("<" + BASIC_CONTAINER.getURI() + ">; rel=\"type\""));
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" + BASIC_CONTAINER.getURI() + ">; rel=\"type\""),
+                "Should be an LDP BasicContainer");
     }
 
     @Test
@@ -489,8 +492,8 @@ public class FedoraLdpTest {
     }
 
     private void assertShouldBeAnLDPDirectContainer() {
-        assertTrue("Should be an LDP DirectContainer",
-                mockResponse.getHeaders(LINK).contains("<" + DIRECT_CONTAINER.getURI() + ">; rel=\"type\""));
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" + DIRECT_CONTAINER.getURI() + ">; rel=\"type\""),
+                "Should be an LDP DirectContainer");
     }
 
     @Test
@@ -504,8 +507,8 @@ public class FedoraLdpTest {
     }
 
     private void assertShouldBeAnLDPIndirectContainer() {
-        assertTrue("Should be an LDP IndirectContainer",
-                mockResponse.getHeaders(LINK).contains("<" + INDIRECT_CONTAINER.getURI() + ">; rel=\"type\""));
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" + INDIRECT_CONTAINER.getURI() + ">; rel=\"type\""),
+                "Should be an LDP IndirectContainer");
     }
 
     @Test
@@ -529,7 +532,7 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("HEAD");
         final Response actual = testObj.head(false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertFalse("Should not advertise Fedora-Ocfl-Path header", mockResponse.containsHeader("Fedora-Ocfl-Path"));
+        assertFalse(mockResponse.containsHeader("Fedora-Ocfl-Path"), "Should not advertise Fedora-Ocfl-Path header");
     }
 
     @Test
@@ -539,33 +542,33 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("HEAD");
         final Response actual = testObj.head(false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should advertise Fedora-Ocfl-Path header", mockResponse.containsHeader("Fedora-Ocfl-Path"));
+        assertTrue(mockResponse.containsHeader("Fedora-Ocfl-Path"), "Should advertise Fedora-Ocfl-Path header");
     }
 
     private void assertContentLengthGreaterThan0(final String contentLength) {
-        assertTrue("Should have a content length header greater than 0", Integer.parseInt(contentLength) > 0);
+        assertTrue(Integer.parseInt(contentLength) > 0, "Should have a content length header greater than 0");
     }
 
     private void assertShouldContainLinkToBinaryDescription() {
         final String described = identifierConverter.toDomain(binaryPath + "/fcr:metadata");
-        assertTrue("Should contain a link to the binary description",
-                mockResponse.getHeaders(LINK)
-                        .contains("<" + described + ">; rel=\"describedby\""));
+        assertTrue(mockResponse.getHeaders(LINK)
+                                .contains("<" + described + ">; rel=\"describedby\""),
+                "Should contain a link to the binary description");
     }
 
     private void assertShouldNotAdvertiseAcceptPatchFlavors() {
-        assertFalse("Should not advertise Accept-Patch flavors", mockResponse.containsHeader(HTTP_HEADER_ACCEPT_PATCH));
+        assertFalse(mockResponse.containsHeader(HTTP_HEADER_ACCEPT_PATCH), "Should not advertise Accept-Patch flavors");
     }
 
     private void assertShouldNotAdvertiseAcceptPostFlavors() {
-        assertFalse("Should not advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
+        assertFalse(mockResponse.containsHeader("Accept-Post"), "Should not advertise Accept-Post flavors");
     }
 
     private void assertShouldHaveAcceptExternalContentHandlingHeader() {
-        assertTrue("Should have Accept-External-Content-Handling header",
-                mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
-        assertEquals("Should support copy, redirect, and proxy", "copy,redirect,proxy",
-                mockResponse.getHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT));
+        assertTrue(mockResponse.containsHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT),
+                "Should have Accept-External-Content-Handling header");
+        assertEquals("copy,redirect,proxy", mockResponse.getHeader(FedoraLdp.ACCEPT_EXTERNAL_CONTENT),
+                "Should support copy, redirect, and proxy");
     }
 
     @Test
@@ -597,8 +600,8 @@ public class FedoraLdpTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Response actual = testObj.head(false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP RDFSource",
-            mockResponse.getHeaders(LINK).contains(buildLink(RDF_SOURCE.getURI(), "type")));
+        assertTrue(mockResponse.getHeaders(LINK).contains(buildLink(RDF_SOURCE.getURI(), "type")),
+                "Should be an LDP RDFSource");
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();
@@ -606,13 +609,13 @@ public class FedoraLdpTest {
     }
 
     private void assertShouldContainLinkToTheBinary() {
-        assertTrue("Should contain a link to the binary",
-                mockResponse.getHeaders(LINK)
-                        .contains("<" + identifierConverter.toDomain(binaryPath) + ">; rel=\"describes\""));
+        assertTrue(mockResponse.getHeaders(LINK)
+                                .contains("<" + identifierConverter.toDomain(binaryPath) + ">; rel=\"describes\""),
+                "Should contain a link to the binary");
     }
 
     private void assertShouldAdvertiseAcceptPatchFlavors() {
-        assertTrue("Should advertise Accept-Patch flavors", mockResponse.containsHeader(HTTP_HEADER_ACCEPT_PATCH));
+        assertTrue(mockResponse.containsHeader(HTTP_HEADER_ACCEPT_PATCH), "Should advertise Accept-Patch flavors");
     }
 
     @Test
@@ -620,7 +623,7 @@ public class FedoraLdpTest {
         setResource(FedoraResource.class);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
+        assertTrue(mockResponse.containsHeader("Allow"), "Should have an Allow header");
         assertShouldHaveAcceptExternalContentHandlingHeader();
     }
 
@@ -629,7 +632,7 @@ public class FedoraLdpTest {
         setResource(Container.class);
         final Response actual = testObj.options();
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
+        assertTrue(mockResponse.containsHeader("Accept-Post"), "Should advertise Accept-Post flavors");
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldHaveAcceptExternalContentHandlingHeader();
     }
@@ -670,16 +673,17 @@ public class FedoraLdpTest {
         when(resourceFactory.getResource((Transaction)any(), any(FedoraId.class))).thenReturn(resource);
         final Response actual = testObj.getResource(null, false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should have a Link header", mockResponse.containsHeader(LINK));
-        assertTrue("Should have an Allow header", mockResponse.containsHeader("Allow"));
-        assertTrue("Should be an LDP Resource",
-                mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""));
+        assertTrue(mockResponse.containsHeader(LINK), "Should have a Link header");
+        assertTrue(mockResponse.containsHeader("Allow"), "Should have an Allow header");
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" + RESOURCE + ">; rel=\"type\""),
+                "Should be an LDP Resource");
 
         try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
             final Model model = entity.stream.collect(toModel());
             final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
-            assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                    "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")));
+            assertTrue(rdfNodes.containsAll(ImmutableSet.of(
+                                "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")),
+                    "Expected RDF contexts missing");
         }
     }
 
@@ -689,14 +693,15 @@ public class FedoraLdpTest {
         when(mockRequest.getMethod()).thenReturn("GET");
         final Response actual = testObj.getResource(null, false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
-        assertTrue("Should advertise Accept-Post flavors", mockResponse.containsHeader("Accept-Post"));
+        assertTrue(mockResponse.containsHeader("Accept-Post"), "Should advertise Accept-Post flavors");
         assertShouldAdvertiseAcceptPatchFlavors();
 
         try (final RdfNamespacedStream entity = (RdfNamespacedStream) actual.getEntity()) {
             final Model model = entity.stream.collect(toModel());
             final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
-            assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                    "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")));
+            assertTrue(rdfNodes.containsAll(ImmutableSet.of(
+                                "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")),
+                    "Expected RDF contexts missing");
         }
     }
 
@@ -756,13 +761,9 @@ public class FedoraLdpTest {
         when(mockRequest.evaluatePreconditions(any(EntityTag.class))).thenReturn(builder);
 
         // Execute the method under test.  Preconditions should fail, resulting in an exception being thrown.
-        try {
-            testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
-                    mockTransaction, true);
-            fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
-        } catch (final PreconditionException e) {
-            // expected
-        }
+        assertThrows(PreconditionException.class,
+                () -> testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
+                mockTransaction, true));
 
         // an entity body should _not_ be set under these conditions
         verify(mockRequest).evaluatePreconditions(any(EntityTag.class));
@@ -795,13 +796,10 @@ public class FedoraLdpTest {
         when(mockRequest.evaluatePreconditions(any(Date.class))).thenReturn(builder);
 
         // Execute the method under test.  Preconditions should fail, resulting in an exception being thrown.
-        try {
-            testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
-                    mockTransaction, true);
-            fail("Expected " + PreconditionException.class.getName() + " to be thrown.");
-        } catch (final PreconditionException e) {
-            // expected
-        }
+        assertThrows(PreconditionException.class,
+                () -> testObj.evaluateRequestPreconditions(mockRequest, mockResponse, testObj.resource(),
+                mockTransaction, true));
+
 
         // an entity body should _not_ be set under these conditions
         verify(mockRequest).evaluatePreconditions(any(Date.class));
@@ -829,8 +827,8 @@ public class FedoraLdpTest {
 
             final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
             log.debug("Received RDF nodes: {}", rdfNodes);
-            assertTrue("Should include references contexts",
-                    rdfNodes.stream().anyMatch(containsPattern("REFERENCES")::apply));
+            assertTrue(rdfNodes.stream().anyMatch(containsPattern("REFERENCES")::apply),
+                    "Should include references contexts");
         }
     }
 
@@ -851,8 +849,8 @@ public class FedoraLdpTest {
     }
 
     private void assertShouldBeAnLDPNonRDFSource() {
-        assertTrue("Should be an LDP NonRDFSource",
-                mockResponse.getHeaders(LINK).contains("<" + NON_RDF_SOURCE + ">; rel=\"type\""));
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" + NON_RDF_SOURCE + ">; rel=\"type\""),
+                "Should be an LDP NonRDFSource");
         assertShouldNotAdvertiseAcceptPostFlavors();
     }
 
@@ -871,13 +869,13 @@ public class FedoraLdpTest {
         when(mockResource.getContent()).thenReturn(toInputStream("xyz", UTF_8));
         final Response actual = testObj.getResource(null, false);
         assertEquals(TEMPORARY_REDIRECT.getStatusCode(), actual.getStatus());
-        assertTrue("Should be an LDP NonRDFSource", mockResponse.getHeaders(LINK).contains("<" +
-                NON_RDF_SOURCE + ">; rel=\"type\""));
+        assertTrue(mockResponse.getHeaders(LINK).contains("<" +
+                        NON_RDF_SOURCE + ">; rel=\"type\""), "Should be an LDP NonRDFSource");
         assertShouldContainLinkToBinaryDescription();
         assertEquals(new URI(url), actual.getLocation());
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testGetWithExternalMessageMissingURLBinary() throws Exception {
         when(extContentHandlerFactory.createFromLinks(anyList()))
                 .thenThrow(new ExternalMessageBodyException(""));
@@ -890,17 +888,19 @@ public class FedoraLdpTest {
                 .toString()
                 .replaceAll("<.*>", "< >");
 
-        testObj.createObject(null, null, null, null, singletonList(badExternal), null);
+        assertThrows(ExternalMessageBodyException.class,
+                () -> testObj.createObject(null, null, null, null, singletonList(badExternal), null));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testPostWithExternalMessageBadHandling() throws Exception {
         when(extContentHandlerFactory.createFromLinks(anyList()))
                 .thenThrow(new ExternalMessageBodyException(""));
 
          final String badExternal = Link.fromUri("http://test.com")
             .rel(EXTERNAL_CONTENT.toString()).param("handling", "boogie").type("text/plain").build().toString();
-        testObj.createObject(null, null, null, null, singletonList(badExternal), null);
+        assertThrows(ExternalMessageBodyException.class,
+                () -> testObj.createObject(null, null, null, null, singletonList(badExternal), null));
     }
 
     @Test
@@ -920,8 +920,8 @@ public class FedoraLdpTest {
         final Response actual = testObj.getResource(null, false);
         assertEquals(OK.getStatusCode(), actual.getStatus());
 
-        assertTrue("Should be an LDP RDFSource",
-            mockResponse.getHeaders(LINK).contains(buildLink(RDF_SOURCE.getURI(), "type")));
+        assertTrue(mockResponse.getHeaders(LINK).contains(buildLink(RDF_SOURCE.getURI(), "type")),
+                "Should be an LDP RDFSource");
         assertShouldNotAdvertiseAcceptPostFlavors();
         assertShouldAdvertiseAcceptPatchFlavors();
         assertShouldContainLinkToTheBinary();
@@ -930,8 +930,9 @@ public class FedoraLdpTest {
         final Model model = ((RdfNamespacedStream) actual.getEntity()).stream.collect(toModel());
         final List<String> rdfNodes = model.listObjects().mapWith(RDFNode::toString).toList();
         log.info("Found RDF objects\n{}", rdfNodes);
-        assertTrue("Expected RDF contexts missing", rdfNodes.containsAll(ImmutableSet.of(
-                "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")));
+        assertTrue(rdfNodes.containsAll(ImmutableSet.of(
+                        "LDP_CONTAINMENT", "PROPERTIES", "SERVER_MANAGED", "LDP_MEMBERSHIP")),
+                "Expected RDF contexts missing");
     }
 
     private void assertShouldAllowOnlyResourceDescriptionMethods() {
@@ -943,7 +944,7 @@ public class FedoraLdpTest {
 
         allowedMethods.removeAll(validMethods);
 
-        assertEquals("Allow header contains invalid methods: " + allowedMethods, 0, allowedMethods.size());
+        assertEquals(0, allowedMethods.size(), "Allow header contains invalid methods: " + allowedMethods);
     }
 
     @Test
@@ -971,10 +972,11 @@ public class FedoraLdpTest {
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
-    @Test(expected = CannotCreateResourceException.class)
+    @Test
     public void testPutNewObjectLdpr() throws Exception {
-        testObj.createOrReplaceObjectRdf(null, null, null, null,
-                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null, null);
+        assertThrows(CannotCreateResourceException.class,
+                () -> testObj.createOrReplaceObjectRdf(null, null, null, null,
+                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null, null));
     }
 
     @Test
@@ -1025,15 +1027,16 @@ public class FedoraLdpTest {
                 any(Model.class));
     }
 
-    @Test(expected = ClientErrorException.class)
+    @Test
     public void testPutWithStrictIfMatchHandling() throws Exception {
 
         when(mockHttpConfiguration.putRequiresIfMatch()).thenReturn(true);
         when(resourceFactory.getResource(mockTransaction, pathId)).thenReturn(mockContainer);
         when(resourceHelper.doesResourceExist(mockTransaction, pathId, true)).thenReturn(true);
 
-        testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
-                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null, null);
+        assertThrows(ClientErrorException.class,
+                () -> testObj.createOrReplaceObjectRdf(NTRIPLES_TYPE,
+                toInputStream("_:a <info:x> _:c .", UTF_8), null, null, null, null, null));
 
     }
 
@@ -1067,21 +1070,21 @@ public class FedoraLdpTest {
         );
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testPatchWithoutContent() throws MalformedRdfException, IOException {
-        testObj.updateSparql(null);
+        assertThrows(BadRequestException.class, () -> testObj.updateSparql(null));
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testPatchWithMissingContent() throws MalformedRdfException, IOException {
         setResource(Container.class);
-        testObj.updateSparql(toInputStream("", UTF_8));
+        assertThrows(BadRequestException.class, () -> testObj.updateSparql(toInputStream("", UTF_8)));
     }
 
-    @Test(expected = BadRequestException.class)
+    @Test
     public void testPatchBinary() throws MalformedRdfException, IOException {
         setResource(Binary.class);
-        testObj.updateSparql(toInputStream("", UTF_8));
+        assertThrows(BadRequestException.class, () -> testObj.updateSparql(toInputStream("", UTF_8)));
     }
 
     @Test
@@ -1105,17 +1108,18 @@ public class FedoraLdpTest {
         assertEquals(CREATED.getStatusCode(), actual.getStatus());
     }
 
-    @Test(expected = UnsupportedMediaTypeException.class)
+    @Test
     public void testCreateNewObjectWithSparql() throws Exception {
         final var resource = setResource(Container.class);
         final var finalId = pathId.resolve("b");
         when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(resource);
-        final Response actual = testObj.createObject(null,
+        assertThrows(UnsupportedMediaTypeException.class, () ->
+        testObj.createObject(null,
                 MediaType.valueOf(contentTypeSPARQLUpdate),
                 "b",
                 toInputStream("INSERT DATA { <> <http://example.org/somePredicate> \"x\" }", UTF_8),
                 null,
-                null);
+                null));
     }
 
     @Test
@@ -1159,8 +1163,8 @@ public class FedoraLdpTest {
         }
     }
 
-    @Ignore("Insufficient space root exception not thrown and checkForInsufficientStorageException is not called")
-    @Test(expected = InsufficientStorageException.class)
+    @Disabled("Insufficient space root exception not thrown and checkForInsufficientStorageException is not called")
+    @Test
     public void testCreateNewBinaryWithInsufficientResources() throws Exception {
         final var finalId = pathId.resolve("b");
         when(resourceFactory.getResource((Transaction)any(), eq(finalId))).thenReturn(mockBinary);
@@ -1171,7 +1175,8 @@ public class FedoraLdpTest {
             doThrow(ex).when(createResourceService).perform(any(), anyString(), eq(finalId), anyString(),
                     anyString(), any(Long.class), anyList(), isNull(), any(InputStream.class), isNull());
 
-            testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, nonRDFSourceLink, null);
+            assertThrows(InsufficientStorageException.class, () ->
+            testObj.createObject(null, APPLICATION_OCTET_STREAM_TYPE, "b", content, nonRDFSourceLink, null));
         }
     }
 
@@ -1322,19 +1327,21 @@ public class FedoraLdpTest {
         }
     }
 
-    @Test(expected = CannotCreateResourceException.class)
+    @Test
     public void testLDPRNotImplemented() throws Exception {
         final var resource = setResource(Container.class);
         when(resourceFactory.getResource(mockTransaction, pathId.resolve("x"))).thenReturn(resource);
+        assertThrows(CannotCreateResourceException.class, () ->
         testObj.createObject(null, null, "x", null,
-                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null);
+                singletonList("<http://www.w3.org/ns/ldp#Resource>; rel=\"type\""), null));
     }
 
-    @Test(expected = ClientErrorException.class)
+    @Test
     public void testLDPRNotImplementedInvalidLink() throws Exception {
         final var resource = setResource(Container.class);
         when(resourceFactory.getResource(mockTransaction, pathId.resolve("x"))).thenReturn(resource);
-        testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null);
+        assertThrows(ClientErrorException.class, () ->
+        testObj.createObject(null, null, "x", null, singletonList("<http://foo;rel=\"type\""), null));
     }
 
     @Test

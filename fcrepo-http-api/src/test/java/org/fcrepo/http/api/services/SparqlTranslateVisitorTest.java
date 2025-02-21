@@ -5,7 +5,7 @@
  */
 package org.fcrepo.http.api.services;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,16 +24,16 @@ import org.apache.jena.update.UpdateFactory;
 import org.apache.jena.update.UpdateRequest;
 import org.apache.jena.vocabulary.DCTerms;
 import org.apache.jena.vocabulary.DC_11;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Tests for SparqlTranslateVisitor
  * @author whikloj
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class SparqlTranslateVisitorTest {
 
     private static final String URI_BASE = "http://localhost:8080/rest/";
@@ -54,7 +54,7 @@ public class SparqlTranslateVisitorTest {
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         makeVisitor(UUID.randomUUID().toString());
     }

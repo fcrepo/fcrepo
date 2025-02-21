@@ -6,12 +6,12 @@
 package org.fcrepo.integration.http.api;
 
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**

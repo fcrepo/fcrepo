@@ -6,14 +6,14 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import static javax.ws.rs.core.Response.Status.FORBIDDEN;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.security.AccessControlException;
 
 import javax.ws.rs.core.Response;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * <p>AccessControlJavaSecurityExceptionMapperTest class.</p>
@@ -25,7 +25,7 @@ public class AccessControlJavaSecurityExceptionMapperTest {
 
     private AccessControlJavaSecurityExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new AccessControlJavaSecurityExceptionMapper();
     }

@@ -8,7 +8,7 @@ package org.fcrepo.integration.http.api;
 
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -21,9 +21,9 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
@@ -44,12 +44,12 @@ public class ConcurrencyIT extends AbstractResourceIT {
 
     private static ExecutorService executor;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         executor = Executors.newFixedThreadPool(THREAD_COUNT);
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         executor.shutdown();
     }
@@ -90,8 +90,8 @@ public class ConcurrencyIT extends AbstractResourceIT {
 
         final var total = succeeded.get() + failed.get();
 
-        assertEquals(String.format("%s requests out of %s failed", failed.get(), total),
-                0, failed.get());
+        assertEquals(0, failed.get(),
+                String.format("%s requests out of %s failed", failed.get(), total));
     }
 
     private boolean postCreateContainer() {

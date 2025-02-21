@@ -8,8 +8,8 @@ package org.fcrepo.http.api.services;
 import static org.fcrepo.config.ServerManagedPropsMode.STRICT;
 import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
@@ -24,27 +24,30 @@ import javax.ws.rs.core.UriBuilder;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-import org.junit.runner.RunWith;
-
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.RdfStream;
-import org.mockito.junit.MockitoJUnitRunner;
+
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * Unit tests for HttpRdfService
  * @author bseeger
  * @since 2019-11-08
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class HttpRdfServiceTest {
 
     private HttpIdentifierConverter idTranslator;
@@ -83,7 +86,7 @@ public class HttpRdfServiceTest {
         idTranslator = new HttpIdentifierConverter(UriBuilder.fromUri(HTTP_BASE_URI + "{path: .*}"));
     }
 
-    @Before
+    @BeforeEach
     public void setUp() {
         setField(httpRdfService, "fedoraPropsConfig", fedoraPropsConfig);
     }

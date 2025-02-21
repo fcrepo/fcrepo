@@ -17,15 +17,14 @@ import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static javax.ws.rs.core.Response.Status.NO_CONTENT;
 import static javax.ws.rs.core.Response.Status.OK;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -154,7 +153,6 @@ public class OcflPersistenceIT extends AbstractResourceIT {
     /*
      * Tests upsert mapping in fedoraToOcflIndex
      */
-    @Ignore("Needs upsert in containment index - https://jira.lyrasis.org/browse/FCREPO-3369")
     @Test
     public void testUpsertMappingOcflIndex() throws Exception {
         // Create a container.

@@ -12,8 +12,8 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
@@ -49,7 +49,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.jena.graph.Node;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**

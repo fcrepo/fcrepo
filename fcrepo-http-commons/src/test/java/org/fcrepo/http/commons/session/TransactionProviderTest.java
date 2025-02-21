@@ -6,31 +6,35 @@
 
 package org.fcrepo.http.commons.session;
 
-import org.fcrepo.kernel.api.Transaction;
-import org.fcrepo.kernel.api.TransactionManager;
-import org.glassfish.jersey.internal.PropertiesDelegate;
-import org.glassfish.jersey.server.ContainerRequest;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriInfo;
-import java.net.URI;
-
 import static java.net.URI.create;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionManager;
+import org.glassfish.jersey.internal.PropertiesDelegate;
+import org.glassfish.jersey.server.ContainerRequest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.core.SecurityContext;
+import javax.ws.rs.core.UriInfo;
+import java.net.URI;
+
+
 /**
  * @author pwinckles
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionProviderTest {
 
     @Mock
@@ -42,7 +46,7 @@ public class TransactionProviderTest {
     @Mock
     private Transaction transaction;
 
-    @Before
+    @BeforeEach
     public void setup() {
         when(transactionManager.create()).thenReturn(transaction);
     }

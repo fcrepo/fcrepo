@@ -9,8 +9,8 @@ import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.Response.Status.CREATED;
 import static javax.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.contains;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 
@@ -18,7 +18,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.util.EntityUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**
@@ -99,7 +99,7 @@ public class FedoraHtmlIT extends AbstractResourceIT {
         method.addHeader(ACCEPT, "text/html");
         try (final CloseableHttpResponse response = execute(method)) {
             final String html = EntityUtils.toString(response.getEntity());
-            assertTrue(html, contains(html, "class=\"fcrepo_root\""));
+            assertTrue(contains(html, "class=\"fcrepo_root\""), html);
         }
     }
 

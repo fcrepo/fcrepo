@@ -16,9 +16,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -40,8 +40,8 @@ import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.TypeMapper;
@@ -64,7 +64,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
     private OcflPropsConfig ocflConfig;
     private OcflRepository ocflRepo;
 
-    @Before
+    @BeforeEach
     public void setup() {
         ocflConfig = getBean(OcflPropsConfig.class);
         ocflRepo = getBean(OcflRepository.class);
@@ -93,7 +93,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
 
         final HttpPut put = putObjMethod(id, "text/plain", "text-body");
         put.setHeader("Digest", "md5=" + digestValue);
-        assertEquals("Did not create successfully!", CREATED.getStatusCode(), getStatus(put));
+        assertEquals(CREATED.getStatusCode(), getStatus(put), "Did not create successfully!");
 
         final HttpGet getFixity = getObjMethod(id);
         getFixity.setHeader("Want-Digest", "md5");
@@ -202,7 +202,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         try (final CloseableHttpResponse response = execute(postVersion)) {
             assertEquals(CREATED.getStatusCode(), getStatus(response));
             final String locationHeader = getLocation(response);
-            assertNotNull("No version location header found", locationHeader);
+            assertNotNull(locationHeader, "No version location header found");
             return locationHeader;
         }
     }
@@ -212,7 +212,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
         final String digest = response.getFirstHeader("Digest").getValue();
         final Map<String, String> digestHeaders = decodeDigestHeader(digest);
         assertTrue(digestHeaders.containsKey(digestName));
-        assertEquals("Mismatch on " + digestName + " value", digestValue, digestHeaders.get(digestName));
+        assertEquals(digestValue, digestHeaders.get(digestName), "Mismatch on " + digestName + " value");
     }
 
 }

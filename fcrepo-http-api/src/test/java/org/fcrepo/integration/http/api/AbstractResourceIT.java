@@ -47,13 +47,13 @@ import org.fcrepo.http.commons.test.util.ContainerWrapper;
 import org.fcrepo.kernel.api.auth.ACLHandle;
 
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
-import org.junit.Before;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.HttpHeaders;
@@ -111,9 +111,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
@@ -122,7 +122,7 @@ import static org.slf4j.LoggerFactory.getLogger;
  * @author awoods
  * @author ajs6f
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration("/spring-test/test-container.xml")
 public abstract class AbstractResourceIT {
 
@@ -158,7 +158,7 @@ public abstract class AbstractResourceIT {
                 .collect(Collectors.toMap(a -> a[0], a -> a.length > 1 ? a[1] : ""));
     }
 
-    @Before
+    @BeforeEach
     public void setLogger() throws InterruptedException {
         // must wait for the repo to be initialized
         final var initializer = getBean(RepositoryInitializer.class);
@@ -639,7 +639,7 @@ public abstract class AbstractResourceIT {
                         "> <" + propertyUri + "> " + value + " } WHERE { }";
         postProp.setEntity(new StringEntity(updateString));
         final CloseableHttpResponse dcResp = execute(postProp);
-        assertEquals(dcResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(dcResp));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(dcResp));
         postProp.releaseConnection();
         return dcResp;
     }
@@ -653,7 +653,7 @@ public abstract class AbstractResourceIT {
                 "INSERT { <" + serverAddress + id + "> <" + propertyUri + "> \"" + value + "\" } WHERE { }";
         postProp.setEntity(new StringEntity(updateString));
         final CloseableHttpResponse dcResp = execute(postProp);
-        assertEquals(dcResp.getStatusLine().toString(), NO_CONTENT.getStatusCode(), getStatus(dcResp));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(dcResp));
         postProp.releaseConnection();
         return dcResp;
     }
@@ -812,9 +812,9 @@ public abstract class AbstractResourceIT {
 
     protected static void assertConstrainedByPresent(final CloseableHttpResponse response) {
         final Collection<String> linkHeaders = getLinkHeaders(response);
-        assertTrue("Constrained by link header not present",
-                linkHeaders.stream().map(Link::valueOf)
-                        .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())));
+        assertTrue(linkHeaders.stream().map(Link::valueOf)
+                        .anyMatch(l -> l.getRel().equals(CONSTRAINED_BY.getURI())),
+                "Constrained by link header not present");
     }
 
 
