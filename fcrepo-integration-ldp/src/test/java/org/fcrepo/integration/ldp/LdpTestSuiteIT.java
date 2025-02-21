@@ -10,8 +10,8 @@ import static java.lang.Integer.parseInt;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.HttpHeaders.LINK;
 import static javax.ws.rs.core.Response.Status.CREATED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -33,15 +33,15 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.w3.ldp.testsuite.LdpTestSuite;
 
 /**
  * @author cabeer
  * @since 10/6/14
  */
-@Ignore // TODO fix  this test
+@Disabled // TODO fix  this test
 public class LdpTestSuiteIT {
 
     public static final String LDP_NAMESPACE = "http://www.w3.org/ns/ldp#";
@@ -108,7 +108,7 @@ public class LdpTestSuiteIT {
             options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
             final LdpTestSuite testSuite = new LdpTestSuite(options);
             testSuite.run();
-            assertTrue("The LDP test suite is only informational", true);
+            assertTrue(true, "The LDP test suite is only informational");
         }
     }
 
@@ -135,7 +135,7 @@ public class LdpTestSuiteIT {
             options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
             final LdpTestSuite testSuite = new LdpTestSuite(options);
             testSuite.run();
-            assertTrue("The LDP test suite is only informational", true);
+            assertTrue(true, "The LDP test suite is only informational");
         }
     }
 
@@ -163,7 +163,7 @@ public class LdpTestSuiteIT {
             options.put("read-only-prop", "http://fedora.info/definitions/v4/repository#uuid");
             final LdpTestSuite testSuite = new LdpTestSuite(options);
             testSuite.run();
-            assertTrue("The LDP test suite is only informational", true);
+            assertTrue(true, "The LDP test suite is only informational");
         }
     }
 }
