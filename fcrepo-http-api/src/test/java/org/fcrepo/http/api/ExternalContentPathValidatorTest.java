@@ -329,7 +329,7 @@ public class ExternalContentPathValidatorTest {
 
     /*
      * Test ignored because it takes around 10+ seconds to poll for events on MacOS:
-     * httpshttps://bugs.openjdk.org/browse/JDK-8293067 Can be enabled for one off testing
+     * https://bugs.openjdk.org/browse/JDK-8293067 Can be enabled for one off testing
      */
     @Disabled("Test is ignored due to file event timing")
     @Test
