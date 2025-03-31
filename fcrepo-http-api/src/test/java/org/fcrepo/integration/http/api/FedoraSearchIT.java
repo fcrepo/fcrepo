@@ -211,10 +211,11 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var now = instant.toString();
 
         final var tomorrow = instant.plus(Duration.ofDays(1));
+        final var earlier = instant.minus(Duration.ofMillis(500));
         final var resources = createResources(id, count);
         assertEquals(1, resources.size());
         final var externalFedoraId = resources.get(0);
-        final var lessThanNow = MODIFIED + encode("<") + now;
+        final var lessThanNow = MODIFIED + encode("<") + earlier;
         final var greaterThanNow = MODIFIED + encode(">") + now;
         final var lessThanTomorrow = MODIFIED + encode("<") + tomorrow;
         final var greaterThanTomorrow = MODIFIED + encode(">") + tomorrow;

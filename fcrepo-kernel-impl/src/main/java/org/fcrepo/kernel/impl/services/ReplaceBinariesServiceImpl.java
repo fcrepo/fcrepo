@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 
 import javax.inject.Inject;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -105,9 +106,14 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             pSession.persist(replaceOp);
             this.searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));
             recordEvent(tx, fedoraId, replaceOp);
+            if (contentBody != null) {
+                contentBody.close();
+            }
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(format("failed to replace binary %s",
                     fedoraId), ex);
+        } catch (final IOException ex) {
+            LOGGER.warn("Error closing input stream for binary {}: {}", fedoraId, ex.getMessage());
         }
     }
 
