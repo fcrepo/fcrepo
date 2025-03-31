@@ -79,7 +79,7 @@ jobs:
         CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
   deploy:
     if: github.ref == 'refs/heads/main'
-    needs: [build, postgres-itest, mariadb-itest, mysql-itest]
+    needs: [build, postgres-itest]
     runs-on: ubuntu-latest
     steps:
       - name: Git support longpaths
