@@ -216,7 +216,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
         assertEquals(1, resources.size());
         final var externalFedoraId = resources.get(0);
         final var lessThanNow = MODIFIED + encode("<") + earlier;
-        final var greaterThanNow = MODIFIED + encode(">") + now;
+        final var greaterThanNow = MODIFIED + encode(">") + earlier;
         final var lessThanTomorrow = MODIFIED + encode("<") + tomorrow;
         final var greaterThanTomorrow = MODIFIED + encode(">") + tomorrow;
 
