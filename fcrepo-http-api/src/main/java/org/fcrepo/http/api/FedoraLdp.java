@@ -584,13 +584,7 @@ public class FedoraLdp extends ContentExposingResource {
             return createUpdateResponse(getFedoraResource(transaction, fedoraId), created.get());
         } finally {
             transaction.releaseResourceLocksIfShortLived();
-            if (requestBodyStream != null) {
-                try {
-                    requestBodyStream.close();
-                } catch (final IOException e) {
-                    LOGGER.error("Error closing request body stream", e);
-                }
-            }
+            IOUtils.closeQuietly(requestBodyStream);
         }
     }
 
@@ -786,13 +780,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
         } finally {
             transaction.releaseResourceLocksIfShortLived();
-            if (requestBodyStream != null) {
-                try {
-                    requestBodyStream.close();
-                } catch (final IOException e) {
-                    LOGGER.error("Error closing request body stream", e);
-                }
-            }
+            IOUtils.closeQuietly(requestBodyStream);
         }
     }
 
