@@ -581,10 +581,10 @@ public class FedoraLdp extends ContentExposingResource {
                 }
 
             LOGGER.debug("Finished creating resource with path: {}", externalPath());
-
             return createUpdateResponse(getFedoraResource(transaction, fedoraId), created.get());
         } finally {
             transaction.releaseResourceLocksIfShortLived();
+            IOUtils.closeQuietly(requestBodyStream);
         }
     }
 
@@ -780,6 +780,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
         } finally {
             transaction.releaseResourceLocksIfShortLived();
+            IOUtils.closeQuietly(requestBodyStream);
         }
     }
 

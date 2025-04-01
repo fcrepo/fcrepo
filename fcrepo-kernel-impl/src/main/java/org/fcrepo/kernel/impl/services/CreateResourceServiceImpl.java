@@ -34,6 +34,7 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Link;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -74,66 +75,68 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                         final String contentType, final String filename,
                         final long contentSize, final List<String> linkHeaders, final Collection<URI> digest,
                         final InputStream requestBody, final ExternalContent externalContent) {
-        final PersistentStorageSession pSession = this.psManager.getSession(tx);
-        checkAclLinkHeader(linkHeaders);
-        // Locate a containment parent of fedoraId, if exists.
-        final FedoraId parentId = containmentIndex.getContainerIdByPath(tx, fedoraId, true);
-        checkParent(pSession, parentId);
+        try (var contentInputStream = (externalContent != null && externalContent.isCopy()) ?
+                externalContent.fetchExternalContent() : requestBody) {
+            final PersistentStorageSession pSession = this.psManager.getSession(tx);
+            checkAclLinkHeader(linkHeaders);
+            // Locate a containment parent of fedoraId, if exists.
+            final FedoraId parentId = containmentIndex.getContainerIdByPath(tx, fedoraId, true);
+            checkParent(pSession, parentId);
 
-        final CreateNonRdfSourceOperationBuilder builder;
-        String mimeType = contentType;
-        long size = contentSize;
-        if (externalContent == null || externalContent.isCopy()) {
-            var contentInputStream = requestBody;
-            if (externalContent != null) {
-                LOGGER.debug("External content COPY '{}', '{}'", fedoraId, externalContent.getURL());
-                contentInputStream = externalContent.fetchExternalContent();
+            final CreateNonRdfSourceOperationBuilder builder;
+            String mimeType = contentType;
+            long size = contentSize;
+            if (externalContent == null || externalContent.isCopy()) {
+                if (externalContent != null) {
+                    LOGGER.debug("External content COPY '{}', '{}'", fedoraId, externalContent.getURL());
+                }
+                builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(tx, fedoraId, contentInputStream);
+            } else {
+                builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(tx, fedoraId,
+                        externalContent.getHandling(), externalContent.getURI());
+                if (contentSize == -1L) {
+                    size = externalContent.getContentSize();
+                }
+                if (!digest.isEmpty()) {
+                    final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
+                            externalContent.fetchExternalContent(),
+                            digest,
+                            Collections.emptyList());
+                    multiDigestWrapper.checkFixity();
+                }
             }
 
-            builder = nonRdfSourceOperationFactory.createInternalBinaryBuilder(tx, fedoraId, contentInputStream);
-        } else {
-            builder = nonRdfSourceOperationFactory.createExternalBinaryBuilder(tx, fedoraId,
-                    externalContent.getHandling(), externalContent.getURI());
-            if (contentSize == -1L) {
-                size = externalContent.getContentSize();
+            if (externalContent != null && externalContent.getContentType() != null) {
+                mimeType = externalContent.getContentType();
             }
-            if (!digest.isEmpty()) {
-                final var multiDigestWrapper = new MultiDigestInputStreamWrapper(
-                        externalContent.fetchExternalContent(),
-                        digest,
-                        Collections.emptyList());
-                multiDigestWrapper.checkFixity();
+
+            final ResourceOperation createOp = builder
+                    .parentId(parentId)
+                    .userPrincipal(userPrincipal)
+                    .contentDigests(digest)
+                    .mimeType(mimeType)
+                    .contentSize(size)
+                    .filename(filename)
+                    .build();
+
+            lockParent(tx, pSession, parentId);
+            tx.lockResourceAndGhostNodes(fedoraId);
+
+            try {
+                pSession.persist(createOp);
+            } catch (final PersistentStorageException exc) {
+                throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
             }
+
+            // Populate the description for the new binary
+            createDescription(tx, pSession, userPrincipal, fedoraId);
+            addToContainmentIndex(tx, parentId, fedoraId);
+            membershipService.resourceCreated(tx, fedoraId);
+            addToSearchIndex(tx, fedoraId, pSession);
+            recordEvent(tx, fedoraId, createOp);
+        } catch (IOException ex) {
+            LOGGER.error("Error closing input stream: {}", ex.getMessage());
         }
-
-        if (externalContent != null && externalContent.getContentType() != null) {
-            mimeType = externalContent.getContentType();
-        }
-
-        final ResourceOperation createOp = builder
-                .parentId(parentId)
-                .userPrincipal(userPrincipal)
-                .contentDigests(digest)
-                .mimeType(mimeType)
-                .contentSize(size)
-                .filename(filename)
-                .build();
-
-        lockParent(tx, pSession, parentId);
-        tx.lockResourceAndGhostNodes(fedoraId);
-
-        try {
-            pSession.persist(createOp);
-        } catch (final PersistentStorageException exc) {
-            throw new RepositoryRuntimeException(String.format("failed to create resource %s", fedoraId), exc);
-        }
-
-        // Populate the description for the new binary
-        createDescription(tx, pSession, userPrincipal, fedoraId);
-        addToContainmentIndex(tx, parentId, fedoraId);
-        membershipService.resourceCreated(tx, fedoraId);
-        addToSearchIndex(tx, fedoraId, pSession);
-        recordEvent(tx, fedoraId, createOp);
     }
 
     private void createDescription(final Transaction tx,

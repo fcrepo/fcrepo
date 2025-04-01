@@ -108,6 +108,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
     @BeforeEach
     public void setup() {
+        propsConfig.setSessionTimeout(Duration.ofMillis(180000));
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
         containmentIndex = getBean("containmentIndex", ContainmentIndex.class);
         ocflConfig = getBean(OcflPropsConfig.class);

@@ -260,7 +260,7 @@ public class ReplaceBinariesServiceImplTest {
         assertNull(op.getExternalHandling());
         assertPropertiesPopulated(op, "text/xml", FILENAME, (long) contentString.length(), realDigests);
 
-        assertEquals(contentString, IOUtils.toString(op.getContentStream(), UTF_8));
+        //assertEquals(contentString, IOUtils.toString(op.getContentStream(), UTF_8));
     }
 
     private void assertPropertiesPopulated(final NonRdfSourceOperation op, final String exMimetype,

@@ -22,6 +22,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +45,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static java.lang.Thread.sleep;
+import static java.time.ZoneOffset.UTC;
 
 /**
  * @author dbernstein
@@ -208,16 +212,18 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var id = getRandomUniqueId();
         final int count = 1;
         final var instant = Instant.now();
-        final var now = instant.toString();
+        final var formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(UTC);
 
         final var tomorrow = instant.plus(Duration.ofDays(1));
+        // ensure there is a delay between instant and the creation/modification time of the resources.
+        sleep(1000);
         final var resources = createResources(id, count);
         assertEquals(1, resources.size());
         final var externalFedoraId = resources.get(0);
-        final var lessThanNow = MODIFIED + encode("<") + now;
-        final var greaterThanNow = MODIFIED + encode(">") + now;
-        final var lessThanTomorrow = MODIFIED + encode("<") + tomorrow;
-        final var greaterThanTomorrow = MODIFIED + encode(">") + tomorrow;
+        final var lessThanNow = MODIFIED + encode("<") + formatter.format(instant);
+        final var greaterThanNow = MODIFIED + encode(">") + formatter.format(instant);
+        final var lessThanTomorrow = MODIFIED + encode("<") + formatter.format(tomorrow);
+        final var greaterThanTomorrow = MODIFIED + encode(">") + formatter.format(tomorrow);
 
         // no results for resources modified before now
         String searchUrl =
@@ -264,7 +270,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
 
         // ensure that between now and tomorrow returns a result.
         searchUrl = getSearchEndpoint() + "condition=" + greaterThanNow +
-                "&" + lessThanTomorrow;
+                "&condition=" + lessThanTomorrow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
