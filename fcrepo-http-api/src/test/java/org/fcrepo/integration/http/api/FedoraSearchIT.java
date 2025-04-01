@@ -46,6 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static java.lang.Thread.sleep;
 import static java.time.ZoneOffset.UTC;
 
 /**
@@ -214,6 +215,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(UTC);
 
         final var tomorrow = instant.plus(Duration.ofDays(1));
+        // ensure there is a delay between instant and the creation/modification time of the resources.
+        sleep(1000);
         final var resources = createResources(id, count);
         assertEquals(1, resources.size());
         final var externalFedoraId = resources.get(0);
