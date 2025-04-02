@@ -46,7 +46,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        java: ['11', '21']
+        java: ['21']
         postgres: ['13', '14', '15', '16', '17']
     services:
       postgres:
@@ -85,7 +85,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        java: ['11', '21']
+        java: ['21']
         mariadb: ['10', 'lts']
     services:
       mariadb:
@@ -127,7 +127,7 @@ jobs:
     strategy:
       max-parallel: 1
       matrix:
-        java: ['11', '21']
+        java: ['21']
         mysql: ['8.0']
     services:
       mysql:
