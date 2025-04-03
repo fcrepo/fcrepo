@@ -42,7 +42,7 @@ jobs:
       max-parallel: 1
       matrix:
         java: ['21']
-        postgres: ['13, '17']
+        postgres: ['13', '17']
     services:
       postgres:
         image: postgres:${{ matrix.postgres }}
