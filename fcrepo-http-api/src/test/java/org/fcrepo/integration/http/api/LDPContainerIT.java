@@ -42,6 +42,8 @@ import javax.ws.rs.core.Response.Status;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -698,7 +700,17 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
         final var mementos2 = listMementoIds(membershipRescId);
         assertEquals(1, mementos2.size());
-        awaitAssertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        var proxyLastModified = getLastModified(proxy1Uri);
+        var mementoLastModified = mementoUriToTimestamp(mementos2.get(0));
+        var mementoAndProxyModifiedAtSameTime = proxyLastModified.equals(mementoLastModified);
+
+        // If the memento and proxy last modified are the same, then the memento will have membership
+        if (mementoAndProxyModifiedAtSameTime) {
+            awaitAssertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        } else {
+            // Otherwise, the update is out of range of the memento so there won't be any membership on the memento
+            assertMementoHasNoMembership(mementos2.get(0), PCDM_HAS_MEMBER_PROP);
+        }
 
         TimeUnit.MILLISECONDS.sleep(1000);
 
@@ -708,7 +720,13 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
         final var mementos3 = listMementoIds(membershipRescId);
         assertEquals(1, mementos3.size());
-        awaitAssertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        // Memento membership will still depend on timing of when the membershipResc was versioned
+        if (mementoAndProxyModifiedAtSameTime) {
+            awaitAssertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        } else {
+            // Otherwise, the update is out of range of the memento so there won't be any membership on the memento
+            assertMementoHasNoMembership(mementos3.get(0), PCDM_HAS_MEMBER_PROP);
+        }
 
         final var txUri = createTransaction();
         final String member3Id = createBasicContainer(null, getRandomUniqueId(), txUri);
@@ -722,6 +740,24 @@ public class LDPContainerIT extends AbstractResourceIT {
         // Commit tx
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member3Id);
+    }
+
+    private String getLastModified(final String uri) throws Exception {
+        final var headReq = new HttpHead(uri);
+        try (final CloseableHttpResponse response = execute(headReq)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            return response.getFirstHeader("Last-Modified").getValue();
+        }
+    }
+
+    private String mementoUriToTimestamp(final String mementoUri) {
+        var mementoId = mementoUri.substring(mementoUri.lastIndexOf('/') + 1);
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        // Define the formatter for the desired output format
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
+        LocalDateTime dateTime = LocalDateTime.parse(mementoId, inputFormatter);
+        // Format the parsed timestamp to match the first string's format
+        return dateTime.format(outputFormatter);
     }
 
     private void changeProxyMember(final String proxyUri, final String oldMember, final String newMember,
