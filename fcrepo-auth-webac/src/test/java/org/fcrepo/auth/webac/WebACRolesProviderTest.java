@@ -43,7 +43,6 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -95,7 +94,7 @@ public class WebACRolesProviderTest {
     private Cache<String, Optional<ACLHandle>> authHandleCache;
 
     @BeforeEach
-    public void setUp() throws RepositoryException {
+    public void setUp() {
         authHandleCache = Caffeine.newBuilder().build();
         propsConfig = new AuthPropsConfig();
         roleProvider = new WebACRolesProvider();
@@ -116,7 +115,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void noAclTest() throws RepositoryException {
+    public void noAclTest() {
         final String accessTo = "/dark/archive/sunshine";
 
         when(mockResource.getAcl()).thenReturn(null);
@@ -137,7 +136,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl01ParentTest() throws RepositoryException {
+    public void acl01ParentTest() {
         final String agent = "user01";
         final String parentPath = "/webacl_box1";
         final String accessTo = parentPath + "/foo";
@@ -167,7 +166,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl21NoDefaultACLStatementTest() throws RepositoryException {
+    public void acl21NoDefaultACLStatementTest() {
         final String agent = "user21";
         final String parentPath = "/resource_acl_no_inheritance";
         final String accessTo = parentPath + "/foo";
@@ -203,7 +202,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl01Test1() throws RepositoryException, PathNotFoundException {
+    public void acl01Test1() throws PathNotFoundException {
         final String agent = "user01";
         final String accessTo = "/webacl_box1";
         final String acl = "/acls/01/acl.ttl";
@@ -229,7 +228,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl01Test2() throws RepositoryException, PathNotFoundException {
+    public void acl01Test2() throws PathNotFoundException {
         final String accessTo = "/webacl_box2";
         final String acl = "/acls/01/acl.ttl";
 
@@ -248,7 +247,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl02Test() throws RepositoryException {
+    public void acl02Test() {
         final String agent = "Editors";
         final String accessTo = "/box/bag/collection";
         final String acl = "/acls/02/acl.ttl";
@@ -273,7 +272,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl03Test1() throws RepositoryException, PathNotFoundException {
+    public void acl03Test1() throws PathNotFoundException {
         final String agent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/03/acl.ttl";
@@ -297,7 +296,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl03Test2() throws RepositoryException, PathNotFoundException {
+    public void acl03Test2() throws PathNotFoundException {
         final String agent = "Restricted";
         final String accessTo = "/dark/archive";
         final String acl = "/acls/03/acl.ttl";
@@ -320,7 +319,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void foafAgentTest() throws RepositoryException, PathNotFoundException {
+    public void foafAgentTest() throws PathNotFoundException {
         final String agent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/foaf-agent";
         final String acl = "/acls/03/foaf-agent.ttl";
@@ -343,7 +342,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void authenticatedAgentTest() throws RepositoryException, PathNotFoundException {
+    public void authenticatedAgentTest() throws PathNotFoundException {
         final String aclAuthenticatedAgent = "http://www.w3.org/ns/auth/acl#AuthenticatedAgent";
         final String accessTo = "/authenticated-agent";
         final String acl = "/acls/03/authenticated-agent.ttl";
@@ -367,7 +366,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl04Test() throws RepositoryException, PathNotFoundException {
+    public void acl04Test() throws PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String agent2 = "Editors";
         final String accessTo = "/public_collection";
@@ -393,7 +392,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl05Test() throws RepositoryException, PathNotFoundException {
+    public void acl05Test() throws PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String agent2 = "Admins";
         final String accessTo = "/mixedCollection";
@@ -420,7 +419,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl05Test2() throws RepositoryException, PathNotFoundException {
+    public void acl05Test2() throws PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/someOtherCollection";
         final String acl = "/acls/05/acl.ttl";
@@ -448,7 +447,7 @@ public class WebACRolesProviderTest {
      * therefore retrieve two agents.
      */
     @Test
-    public void acl09Test1() throws RepositoryException, PathNotFoundException {
+    public void acl09Test1() throws PathNotFoundException {
         final String agent1 = "person1";
         final String accessTo = "/anotherCollection";
 
@@ -487,7 +486,7 @@ public class WebACRolesProviderTest {
      * foaf:Group and therefore should retrieve zero agents.
      */
     @Test
-    public void acl09Test2() throws RepositoryException, PathNotFoundException {
+    public void acl09Test2() throws PathNotFoundException {
         final String accessTo = "/anotherCollection";
 
         final String groupResource = "/group/foo";
@@ -515,7 +514,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl17Test1() throws RepositoryException, PathNotFoundException {
+    public void acl17Test1() throws PathNotFoundException {
         final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/17/acl.ttl";
