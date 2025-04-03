@@ -63,14 +63,6 @@ public class DefaultRdfStream extends WrappingStream<Triple> implements RdfStrea
                 stream(spliteratorUnknownSize(model.listStatements(), IMMUTABLE), false).map(Statement::asTriple));
     }
 
-    /**
-     * Concatenate a Triple stream to the existing stream
-     * @param stream additional triples
-     */
-    protected void concat(final Stream<Triple> stream) {
-        this.stream = Stream.concat(this.stream, stream);
-    }
-
     @Override
     public Node topic() {
         return node;
