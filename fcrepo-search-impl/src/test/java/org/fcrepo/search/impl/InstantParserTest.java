@@ -1,9 +1,9 @@
+package org.fcrepo.search.impl;
 /*
  * The contents of this file are subject to the license and copyright
  * detailed in the LICENSE and NOTICE files at the root of the source
  * tree.
  */
-import org.fcrepo.search.impl.InstantParser;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
