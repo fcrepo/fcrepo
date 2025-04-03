@@ -81,7 +81,7 @@ jobs:
       max-parallel: 1
       matrix:
         java: ['21']
-        mariadb: ['10', 'lts']
+        mariadb: ['lts']
     services:
       mariadb:
         image: mariadb:${{ matrix.mariadb }}
