@@ -700,9 +700,9 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
         final var mementos2 = listMementoIds(membershipRescId);
         assertEquals(1, mementos2.size());
-        var proxyLastModified = getLastModified(proxy1Uri);
-        var mementoLastModified = mementoUriToTimestamp(mementos2.get(0));
-        var mementoAndProxyModifiedAtSameTime = proxyLastModified.equals(mementoLastModified);
+        final var proxyLastModified = getLastModified(proxy1Uri);
+        final var mementoLastModified = mementoUriToTimestamp(mementos2.get(0));
+        final var mementoAndProxyModifiedAtSameTime = proxyLastModified.equals(mementoLastModified);
 
         // If the memento and proxy last modified are the same, then the memento will have membership
         if (mementoAndProxyModifiedAtSameTime) {
@@ -751,11 +751,11 @@ public class LDPContainerIT extends AbstractResourceIT {
     }
 
     private String mementoUriToTimestamp(final String mementoUri) {
-        var mementoId = mementoUri.substring(mementoUri.lastIndexOf('/') + 1);
-        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        final var mementoId = mementoUri.substring(mementoUri.lastIndexOf('/') + 1);
+        final var inputFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         // Define the formatter for the desired output format
-        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
-        LocalDateTime dateTime = LocalDateTime.parse(mementoId, inputFormatter);
+        final var outputFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
+        final var dateTime = LocalDateTime.parse(mementoId, inputFormatter);
         // Format the parsed timestamp to match the first string's format
         return dateTime.format(outputFormatter);
     }
