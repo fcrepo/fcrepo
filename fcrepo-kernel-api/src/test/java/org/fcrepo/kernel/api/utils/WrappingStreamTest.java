@@ -165,8 +165,11 @@ public class WrappingStreamTest {
         final var first = stream.findFirst();
         assertTrue(first.isPresent());
         assertEquals(objectA, first.get().getObject());
-        assertFalse(first.get().getObject().equals(objectB) || first.get().getObject().equals(objectB));
-        stream = generateTextStream();
+        assertFalse(first.get().getObject().equals(objectB) || first.get().getObject().equals(objectC));
+    }
+
+    @Test
+    public void testFindFirstButNotFirst() {
         final var first1 = stream.filter(s -> !s.getObject().equals(objectA)).findFirst();
         assertTrue(first1.isPresent());
         assertEquals(objectB, first1.get().getObject());
