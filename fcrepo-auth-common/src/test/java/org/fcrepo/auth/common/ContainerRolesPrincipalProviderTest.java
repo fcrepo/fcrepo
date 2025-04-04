@@ -19,17 +19,21 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * Tests for {@link ContainerRolesPrincipalProvider}.
  *
  * @author Kevin S. Clarke
  */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ContainerRolesPrincipalProviderTest {
 
     @Mock
@@ -37,20 +41,12 @@ public class ContainerRolesPrincipalProviderTest {
 
     private ContainerRolesPrincipalProvider provider;
 
-    private AutoCloseable closeable;
-
     /**
      * Sets up ContainerRolesPrincipalProviderTest's tests.
      */
     @BeforeEach
     public void setUp() {
-        closeable = MockitoAnnotations.openMocks(this);
         provider = new ContainerRolesPrincipalProvider();
-    }
-
-    @AfterEach
-    public void close() throws Exception {
-        closeable.close();
     }
 
     /**

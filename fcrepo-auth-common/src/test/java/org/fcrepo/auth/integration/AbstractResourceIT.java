@@ -18,15 +18,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 import static java.lang.Integer.parseInt;
 
@@ -48,12 +46,10 @@ public abstract class AbstractResourceIT {
         logger = LoggerFactory.getLogger(this.getClass());
     }
 
-    @Configuration
-    static class TestConfig {
-        @Bean
-        public Cache<String, Optional<ACLHandle>> authHandleCache() {
-            return Caffeine.newBuilder().weakValues().expireAfterAccess(10, TimeUnit.SECONDS)
-                    .maximumSize(10).build();
+    static class TestAuthHandleCacheConfig {
+        public Cache<String, Optional<ACLHandle>> init() {
+            return Caffeine.newBuilder().weakValues().expireAfterAccess(Duration.ZERO)
+                    .maximumSize(0).build();
         }
     }
 

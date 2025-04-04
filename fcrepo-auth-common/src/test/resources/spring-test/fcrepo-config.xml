@@ -64,4 +64,9 @@
   <!-- Fedora's lightweight internal event bus. Currently memory-resident.-->
   <bean name="fedoraInternalEventBus" class="com.google.common.eventbus.EventBus"/>
 
+  <bean name="testAuthHandleCache" class="org.fcrepo.auth.integration.AbstractResourceIT.TestAuthHandleCacheConfig" />
+
+  <bean name="authHandleCache" factory-bean="testAuthHandleCache"
+        class="com.github.benmanes.caffeine.cache.Cache" factory-method="init" />
+
 </beans>
