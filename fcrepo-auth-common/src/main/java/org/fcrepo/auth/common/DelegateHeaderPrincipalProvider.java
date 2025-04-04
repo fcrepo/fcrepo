@@ -78,7 +78,7 @@ public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider
     public Principal getDelegate(final HttpServletRequest request) {
         final Set<Principal> principals = getPrincipals(request);
         // No delegate
-        if (principals.size() == 0) {
+        if (principals.isEmpty()) {
             return null;
         }
 
