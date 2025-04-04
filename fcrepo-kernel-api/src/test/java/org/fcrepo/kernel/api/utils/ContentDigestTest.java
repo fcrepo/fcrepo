@@ -62,4 +62,10 @@ public class ContentDigestTest {
     public void testFromAlgorithmMissing() {
         assertEquals(DigestAlgorithm.MISSING, DigestAlgorithm.fromAlgorithm("what"));
     }
+
+    @Test
+    public void testAsUriBytes() {
+        final byte[] bytes = "fake".getBytes();
+        assertEquals(create("urn:sha1:66616b65"), asURI("SHA", bytes));
+    }
 }

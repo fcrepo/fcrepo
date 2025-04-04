@@ -56,7 +56,6 @@ import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.auth.WebACAuthorization;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -449,37 +448,32 @@ public class WebACRolesProvider {
      * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
      */
     Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl) {
-        try {
 
-            final FedoraResource aclResource = resource.getAcl();
+        final FedoraResource aclResource = resource.getAcl();
 
-            if (aclResource != null) {
-                final List<WebACAuthorization> authorizations =
-                    getAuthorizations(aclResource, ancestorAcl);
-                if (authorizations.size() > 0) {
-                    return Optional.of(
-                        new ACLHandleImpl(resource, authorizations));
-                }
+        if (aclResource != null) {
+            final List<WebACAuthorization> authorizations =
+                getAuthorizations(aclResource, ancestorAcl);
+            if (authorizations.size() > 0) {
+                return Optional.of(
+                    new ACLHandleImpl(resource, authorizations));
             }
+        }
 
-            FedoraResource container = resource.getContainer();
-            // The resource is not ldp:contained by anything, so checked its described resource.
-            if (container == null && (resource instanceof NonRdfSourceDescription || resource instanceof TimeMap)) {
-                final var described = resource.getDescribedResource();
-                if (!Objects.equals(resource, described)) {
-                    container = described;
-                }
+        FedoraResource container = resource.getContainer();
+        // The resource is not ldp:contained by anything, so checked its described resource.
+        if (container == null && (resource instanceof NonRdfSourceDescription || resource instanceof TimeMap)) {
+            final var described = resource.getDescribedResource();
+            if (!Objects.equals(resource, described)) {
+                container = described;
             }
-            if (container == null) {
-                LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
-                return Optional.empty();
-            } else {
-                LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getId());
-                return getEffectiveAcl(container, true);
-            }
-        } catch (final RepositoryException ex) {
-            LOGGER.debug("Exception finding effective ACL: {}", ex.getMessage());
+        }
+        if (container == null) {
+            LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
             return Optional.empty();
+        } else {
+            LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getId());
+            return getEffectiveAcl(container, true);
         }
     }
 

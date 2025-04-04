@@ -5,7 +5,6 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.slf4j.Logger;
 
 import javax.ws.rs.core.Response;
@@ -36,10 +35,6 @@ public class WildcardExceptionMapper implements
 
     @Override
     public Response toResponse(final Exception e) {
-        if (e.getCause() instanceof SessionMissingException) {
-            return new SessionMissingExceptionMapper()
-                    .toResponse((SessionMissingException) e.getCause());
-        }
 
         LOGGER.warn("Unmapped exception", e);
         return serverError().entity(

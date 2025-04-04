@@ -37,7 +37,7 @@ public class RepositoryRuntimeExceptionMapper implements
         this.providers = providers;
     }
 
-    private static final Logger LOGGER = getLogger(RepositoryExceptionMapper.class);
+    private static final Logger LOGGER = getLogger(RepositoryRuntimeExceptionMapper.class);
 
     @Override
     public Response toResponse(final RepositoryRuntimeException e) {

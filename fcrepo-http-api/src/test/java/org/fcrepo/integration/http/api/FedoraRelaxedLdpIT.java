@@ -61,7 +61,7 @@ import javax.xml.bind.DatatypeConverter;
 
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
-import org.fcrepo.kernel.api.utils.GraphDifferencer;
+import org.fcrepo.http.api.utils.GraphDifferencer;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;

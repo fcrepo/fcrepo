@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Providers;
 
-import org.fcrepo.kernel.api.exception.RepositoryException;
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ public class RepositoryRuntimeExceptionMapperTest {
     private RepositoryRuntimeExceptionMapper testObj;
 
     @Mock
-    private ExceptionMapper<RepositoryException> mockProvider;
+    private ExceptionMapper<RepositoryConfigurationException> mockProvider;
 
     @BeforeEach
     public void setUp() {
@@ -45,8 +45,8 @@ public class RepositoryRuntimeExceptionMapperTest {
 
     @Test
     public void testToResponseWithHandledRepositoryException() {
-        when(mockProviders.getExceptionMapper(RepositoryException.class)).thenReturn(mockProvider);
-        final RepositoryException cause = new RepositoryException("xyz");
+        when(mockProviders.getExceptionMapper(RepositoryConfigurationException.class)).thenReturn(mockProvider);
+        final RepositoryConfigurationException cause = new RepositoryConfigurationException("xyz");
         final RepositoryRuntimeException ex = new RepositoryRuntimeException(cause.getMessage(), cause);
         testObj.toResponse(ex);
         verify(mockProvider).toResponse(cause);
