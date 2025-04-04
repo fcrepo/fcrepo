@@ -1,0 +1,44 @@
+{
+    "name" : "repo",
+    "jndiName" : "",
+    "workspaces" : {
+        "predefined" : ["default"],
+        "default" : "default",
+        "allowCreation" : true,
+        "cacheSize" : 10000
+    },
+    "clustering" : {
+        "clusterName" : "fcrepo-cluster",
+        "configuration" : "${fcrepo.jgroups.configuration:config/clustered-postgresql/jgroups.xml}"
+    },
+    "storage" : {
+        "persistence": {
+            "type" : "db",
+            "connectionUrl": "jdbc:postgresql://${fcrepo.postgresql.host:localhost}:${fcrepo.postgresql.port:5432}/${fcrepo.postgresql.database:fcrepo}",
+            "driver" : "org.postgresql.Driver",
+            "username" : "${fcrepo.postgresql.username}",
+            "password" : "${fcrepo.postgresql.password}",
+            "poolSize" : "20"
+        },
+        "binaryStorage" : {
+            "type" : "file",
+            "directory" : "${fcrepo.binary.directory:target/binaries}",
+            "minimumBinarySizeInBytes" : 4096
+        }
+    },
+    "security" : {
+        "anonymous" : {
+            "roles" : ["readonly","readwrite","admin"],
+            "useOnFailedLogin" : false
+        },
+        "providers" : [
+            { "classname" : "org.fcrepo.auth.common.BypassSecurityServletAuthenticationProvider" }
+        ]
+    },
+    "garbageCollection" : {
+        "threadPool" : "modeshape-gc",
+        "initialTime" : "00:00",
+        "intervalInHours" : 24
+    },
+    "node-types" : ["fedora-node-types.cnd"]
+}
