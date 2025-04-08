@@ -55,7 +55,7 @@ abstract class AbstractPrincipalProvider implements PrincipalProvider {
         PrincipalCollection principals = currentUser.getPrincipals();
 
         final Set<Principal> newPrincipals = getPrincipals(hsRequest);
-        if (newPrincipals.size() > 0) {
+        if (!newPrincipals.isEmpty()) {
             final Set<Principal> currentPrincipals;
             if (principals == null || principals.asList().isEmpty()) {
                 log.debug("Shiro Principal object is not found!");
