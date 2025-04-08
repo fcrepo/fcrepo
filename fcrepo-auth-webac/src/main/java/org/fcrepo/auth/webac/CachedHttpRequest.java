@@ -59,7 +59,7 @@ public class CachedHttpRequest extends HttpServletRequestWrapper {
         return this.reader;
     }
 
-    private static class CustomServletInputStream extends ServletInputStream {
+    protected static class CustomServletInputStream extends ServletInputStream {
 
         private final ByteArrayInputStream buffer;
 
