@@ -3,7 +3,7 @@
  * detailed in the LICENSE and NOTICE files at the root of the source
  * tree.
  */
-package org.fcrepo.kernel.api.utils;
+package org.fcrepo.http.api.utils;
 
 import java.util.stream.Stream;
 
