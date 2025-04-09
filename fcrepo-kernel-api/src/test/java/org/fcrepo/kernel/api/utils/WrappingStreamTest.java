@@ -347,6 +347,24 @@ public class WrappingStreamTest {
         assertFalse(stream.noneMatch(s -> s.getObject().equals(objectA)));
     }
 
+    @Test
+    public void testToArray() {
+        final var array = stream.toArray();
+        assertEquals(3, array.length);
+        assertInstanceOf(Triple.class, array[0]);
+        assertInstanceOf(Triple.class, array[1]);
+        assertInstanceOf(Triple.class, array[2]);
+    }
+
+    @Test
+    public void testToArrayGenerator() {
+        final var array = stream.toArray(Triple[]::new);
+        assertEquals(3, array.length);
+        assertInstanceOf(Triple.class, array[0]);
+        assertInstanceOf(Triple.class, array[1]);
+        assertInstanceOf(Triple.class, array[2]);
+    }
+
     static class TestWrappingStream extends WrappingStream<Triple> {
 
         public TestWrappingStream(final Stream<Triple> stream) {
