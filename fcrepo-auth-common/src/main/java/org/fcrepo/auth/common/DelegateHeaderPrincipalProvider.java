@@ -91,7 +91,7 @@ public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider
     }
 
     @Override
-    protected Principal createPrincipal(final String name) {
+    public Principal createPrincipal(final String name) {
         return new DelegatedHeaderPrincipal(name.trim());
     }
 

@@ -1,3 +1,8 @@
+/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
 package org.fcrepo.auth.webac;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -110,8 +115,8 @@ public class CachedHttpRequestTest {
         }
 
         @Override
-        public void setReadListener(ReadListener readListener) {
-
+        public void setReadListener(final ReadListener readListener) {
+            // no-op
         }
 
         @Override
