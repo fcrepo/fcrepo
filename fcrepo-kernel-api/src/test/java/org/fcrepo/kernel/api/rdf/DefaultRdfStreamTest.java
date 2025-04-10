@@ -20,6 +20,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -134,6 +136,74 @@ public class DefaultRdfStreamTest extends WrappingStreamTest {
                     CREATED_DATE.asNode(),
                     createLiteral("2023-10-01T00:00:00Z", XSDDatatype.XSDdateTime)
             )));
+        }
+    }
+
+    @Test
+    public void testSort() {
+        try (final var stream = generateTextStream()) {
+            assertEquals(3, stream.count());
+        }
+        try (final var stream = generateTextStream()) {
+            assertEquals(3, stream.sorted().count());
+        }
+        try (final var stream = generateTextStream()) {
+            assertEquals(3, stream.sorted(Comparator.comparing(a -> a.getObject().toString()))
+                    .count());
+        }
+    }
+
+    @Test
+    public void testDistinct() {
+        try (final var stream = generateTextStream()) {
+            assertEquals(3, stream.count());
+        }
+        try (final var stream = generateTextStream()) {
+            assertEquals(3, stream.distinct().count());
+        }
+    }
+
+    @Test
+    public void testSkip() {
+        try (final var stream = generateTextStream()) {
+            assertEquals(3, stream.count());
+        }
+        try (final var stream = generateTextStream()) {
+            assertEquals(2, stream.skip(1).count());
+        }
+        try (final var stream = generateTextStream()) {
+            assertEquals(0, stream.skip(3).count());
+        }
+    }
+
+    @Test
+    public void testLimit() {
+        try (final var stream = generateTextStream()) {
+            assertEquals(3, stream.count());
+        }
+        try (final var stream = generateTextStream()) {
+            assertEquals(2, stream.limit(2).count());
+        }
+        try (final var stream = generateTextStream()) {
+            assertEquals(0, stream.limit(0).count());
+        }
+    }
+
+    @Test
+    public void testPeek() {
+        try (final var stream = generateTextStream()) {
+            assertEquals(3, stream.count());
+        }
+        try (final var stream = generateTextStream()) {
+            final List<String> peeks = new ArrayList<>();
+            final List<Triple> peeked = stream.peek(
+                    triple -> peeks.add(triple.getObject().getLiteral().getValue().toString()))
+                    .collect(toList());
+            assertEquals(3, peeked.size());
+            assertEquals(3, peeks.size());
+            assertEquals("a", peeks.get(0));
+            assertEquals("b", peeks.get(1));
+            assertEquals("c", peeks.get(2));
         }
     }
 }
