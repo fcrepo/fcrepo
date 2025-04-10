@@ -13,9 +13,14 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_CONTROL;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EMBED_CONTAINED;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,15 +28,21 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
 import static java.util.stream.Stream.of;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
+import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.RDF;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.subject.Subject;
@@ -45,6 +56,7 @@ import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -78,15 +90,21 @@ public class WebACFilterTest {
 
     private static final String testAclPath = testPath + "/fcr:acl";
 
+    private static final String testMembershipPath = "/testMembership";
+
     private static final URI testURI = URI.create(baseURL + testPath);
 
     private static final URI testAclURI = URI.create(baseURL + testAclPath);
 
     private static final URI testChildURI = URI.create(baseURL + testChildPath);
 
+    private static final URI testMembershipURI = URI.create(baseURL + testMembershipPath);
+
     private static final FedoraId testId = FedoraId.create(testPath);
 
     private static final FedoraId testChildId = FedoraId.create(testChildPath);
+
+    private static final FedoraId testMembershipId = FedoraId.create(testMembershipPath);
 
     @Mock
     private SecurityManager mockSecurityManager;
@@ -108,28 +126,10 @@ public class WebACFilterTest {
 
     private FedoraResource mockRoot;
 
+    private FedoraResource mockMembershipResource;
+
     @InjectMocks
     private final WebACFilter webacFilter = new WebACFilter();
-
-    private static final WebACPermission readPermission = new WebACPermission(WEBAC_MODE_READ, testURI);
-
-    private static final WebACPermission appendPermission = new WebACPermission(WEBAC_MODE_APPEND, testURI);
-
-    private static final WebACPermission writePermission = new WebACPermission(WEBAC_MODE_WRITE, testURI);
-
-    private static final WebACPermission controlPermission = new WebACPermission(WEBAC_MODE_CONTROL, testURI);
-
-    private static final WebACPermission readAclPermission = new WebACPermission(WEBAC_MODE_READ, testAclURI);
-    private static final WebACPermission appendAclPermission = new WebACPermission(WEBAC_MODE_APPEND, testAclURI);
-    private static final WebACPermission writeAclPermission = new WebACPermission(WEBAC_MODE_WRITE, testAclURI);
-    private static final WebACPermission controlAclPermission = new WebACPermission(WEBAC_MODE_CONTROL, testAclURI);
-
-    // We are dealing with internal IDs.
-    private static final WebACPermission readChildPermission = new WebACPermission(WEBAC_MODE_READ,
-            URI.create(testChildId.getFullId()));
-    private static final WebACPermission appendChildPermission = new WebACPermission(WEBAC_MODE_APPEND, testChildURI);
-    private static final WebACPermission writeChildPermission = new WebACPermission(WEBAC_MODE_WRITE, testChildURI);
-    private static final WebACPermission controlChildPermission = new WebACPermission(WEBAC_MODE_CONTROL, testChildURI);
 
     private MockHttpServletRequest request;
 
@@ -171,6 +171,7 @@ public class WebACFilterTest {
         mockChildContainer = Mockito.mock(Container.class);
         mockBinary = Mockito.mock(Binary.class);
         mockRoot = Mockito.mock(Container.class);
+        mockMembershipResource = Mockito.mock(Container.class);
 
         when(mockTransactionManager.get(transactionId)).thenReturn(mockTransaction);
 
@@ -188,6 +189,10 @@ public class WebACFilterTest {
         when(mockChildContainer.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
         when(mockBinary.getTypes()).thenReturn(Arrays.asList(URI.create(NON_RDF_SOURCE.toString())));
         when(mockBinary.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
+        when(mockMembershipResource.getTypes()).thenReturn(List.of(URI.create(BASIC_CONTAINER.getURI())));
+        when(mockMembershipResource.getInteractionModel()).thenReturn(BASIC_CONTAINER.getURI());
+
+        when(mockMembershipResource.getContainer()).thenReturn(mockRoot);
 
         final List<URI> rootTypes = new ArrayList<>();
         of("RepositoryRoot", "Resource", "Container").forEach(x -> rootTypes.add(URI.create(REPOSITORY_NAMESPACE +
@@ -199,6 +204,15 @@ public class WebACFilterTest {
         setupContainerResource();
     }
 
+    @AfterEach
+    public void clearSubject() {
+        // unbind the subject to the thread
+        threadState.restore();
+    }
+
+    /**
+     * Make mockContainer returned for testId and mockChildContainer for testChildId
+     */
     private void setupContainerResource() throws Exception {
         when(mockResourceFactory.getResource(mockTransaction, testId))
                 .thenReturn(mockContainer);
@@ -208,10 +222,53 @@ public class WebACFilterTest {
         when(mockChildContainer.getFedoraId()).thenReturn(testChildId);
     }
 
+    /**
+     * Make mockBinary returned for testId
+     */
     private void setupBinaryResource() throws Exception {
         when(mockResourceFactory.getResource(mockTransaction, testId))
                 .thenReturn(mockBinary);
         when(mockBinary.getFedoraId()).thenReturn(testId);
+    }
+
+    /**
+     * Make mockContainer as direct container and mockChildContainer as the target of it's hasMemberRelation.
+     */
+    private void setupDirectResource() throws Exception {
+        setupContainerResource();
+        when(mockContainer.getTypes()).thenReturn(List.of(
+                URI.create(FEDORA_CONTAINER.toString()),
+                URI.create(DIRECT_CONTAINER.getURI()),
+                URI.create(RDF_SOURCE.getURI())
+        ));
+        when(mockContainer.getInteractionModel()).thenReturn(DIRECT_CONTAINER.toString());
+        when(mockResourceFactory.getResource(any(Transaction.class), eq(testMembershipId)))
+                .thenReturn(mockMembershipResource);
+        final var containerSubject = NodeFactory.createURI(testId.getFullId());
+        final List<Triple> containerTriples = List.of(
+            Triple.create(
+                containerSubject,
+                NodeFactory.createURI(MEMBERSHIP_RESOURCE.getURI()),
+                NodeFactory.createURI(testMembershipURI.toString())
+            ),
+            Triple.create(
+                containerSubject,
+                RDF.type.asNode(),
+                RDF_SOURCE.asNode()
+            )
+        );
+        final var membershipSubject = NodeFactory.createURI(testMembershipId.getFullId());
+        final List<Triple> targetTriples = List.of(
+            Triple.create(
+                membershipSubject,
+                RDF.type.asNode(),
+                NodeFactory.createURI(RDF_SOURCE.getURI())
+            )
+        );
+        when(mockMembershipResource.getTriples())
+                .thenReturn(new DefaultRdfStream(membershipSubject, targetTriples.stream()));
+        when(mockContainer.getTriples()).thenReturn(new DefaultRdfStream(containerSubject, containerTriples.stream()));
+        when(mockResourceFactory.getChildren(any(), eq(testId))).thenReturn(Stream.of(mockChildContainer));
     }
 
     private void setupAdminUser() {
@@ -225,11 +282,7 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
-        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
-
+        setUpPermissions(testURI, false, false, false, false);
     }
 
     private void setupAuthUserReadOnly() {
@@ -237,11 +290,7 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
-        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
-
+        setUpPermissions(testURI, false, true, false, false);
     }
 
     private void setupAuthUserAppendOnly() {
@@ -249,12 +298,8 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
-        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
-
+        setUpPermissions(testURI, false, false, true, false);
+        setUpPermissions(testChildURI, false, false, true, false);
     }
 
     private void setupAuthUserReadAppend() {
@@ -262,11 +307,8 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
-        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
+        setUpPermissions(testURI, false, true, true, false);
+        setUpPermissions(testChildURI, false, false, true, false);
     }
 
     private void setupAuthUserReadWrite() {
@@ -274,10 +316,7 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(writePermission)).thenReturn(true);
-        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
+        setUpPermissions(testURI, true, true, false, false);
     }
 
     private void setupAuthUserAclControl() {
@@ -285,10 +324,7 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readAclPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(appendAclPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(writeAclPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(controlAclPermission)).thenReturn(true);
+        setUpPermissions(testAclURI, false, false, false, true);
     }
 
     private void setupAuthUserNoAclControl() {
@@ -296,10 +332,7 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readAclPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendAclPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(writeAclPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(controlAclPermission)).thenReturn(false);
+        setUpPermissions(testAclURI, true, true, true, false);
     }
 
     private void setupAuthUserReadAppendWrite() {
@@ -307,12 +340,8 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(writePermission)).thenReturn(true);
-        when(mockSubject.isPermitted(controlPermission)).thenReturn(true);
-
+        setUpPermissions(testURI, true, true, true, true);
+        setUpPermissions(testChildURI, false, false, true, false);
     }
 
     private void setupAuthUserReadParentAndChildren(final boolean accessToChild) {
@@ -320,15 +349,26 @@ public class WebACFilterTest {
         when(mockSubject.isAuthenticated()).thenReturn(true);
         when(mockSubject.hasRole(FEDORA_ADMIN_ROLE)).thenReturn(false);
         when(mockSubject.hasRole(FEDORA_USER_ROLE)).thenReturn(true);
-        when(mockSubject.isPermitted(readPermission)).thenReturn(true);
-        when(mockSubject.isPermitted(appendPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(writePermission)).thenReturn(false);
-        when(mockSubject.isPermitted(controlPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(readChildPermission)).thenReturn(accessToChild);
-        when(mockSubject.isPermitted(appendChildPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(writeChildPermission)).thenReturn(false);
-        when(mockSubject.isPermitted(controlChildPermission)).thenReturn(false);
-        when(mockResourceFactory.getChildren(any(), eq(testId))).thenReturn(List.of(mockChildContainer).stream());
+        setUpPermissions(testURI, false, true, false, false);
+        // Contained resources are checked using internal URIs.
+        setUpPermissions(URI.create(testChildId.getFullId()), false, accessToChild, false, false);
+        when(mockResourceFactory.getChildren(any(), eq(testId))).thenReturn(Stream.of(mockChildContainer));
+    }
+
+    /**
+     * Setup Shiro isPermitted results.
+     * @param targetUri The target URI
+     * @param writePerm Do you have WRITE permissions to the target URI?
+     * @param readPerm Do you have READ permissions to the target URI?
+     * @param appendPerm Do you have APPEND permissions to the target URI?
+     * @param controlPerm Do you have CONTROL permissions to the target URI?
+     */
+    private void setUpPermissions(final URI targetUri, final boolean writePerm, final boolean readPerm,
+                                  final boolean appendPerm, final boolean controlPerm) {
+        when(mockSubject.isPermitted(new WebACPermission(WEBAC_MODE_READ, targetUri))).thenReturn(readPerm);
+        when(mockSubject.isPermitted(new WebACPermission(WEBAC_MODE_APPEND, targetUri))).thenReturn(appendPerm);
+        when(mockSubject.isPermitted(new WebACPermission(WEBAC_MODE_WRITE, targetUri))).thenReturn(writePerm);
+        when(mockSubject.isPermitted(new WebACPermission(WEBAC_MODE_CONTROL, targetUri))).thenReturn(controlPerm);
     }
 
     private void setupEmbeddedResourceHeader() {
@@ -866,9 +906,312 @@ public class WebACFilterTest {
         assertEquals(SC_FORBIDDEN, response.getStatus());
     }
 
-    @AfterEach
-    public void clearSubject() {
-        // unbind the subject to the thread
-        threadState.restore();
+    /**
+     * Test to verify a user with read/write access POSTing to a direct container
+     */
+    @Test
+    public void testDoPostDirectContainerOk() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        request.setContentType("application/n-triples");
+        // membership resource (mockMembership) also need read/write permission
+        setUpPermissions(testMembershipURI, true, true, true, true);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    /**
+     * Test a user with read only permissions failing to POST to a direct container
+     */
+    @Test
+    public void testDoPostDirectContainerFailed() throws Exception {
+        setupAuthUserReadOnly();
+        setupDirectResource();
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        request.setContentType("application/n-triples");
+        // membership resource (mockMembership) also need read permission
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test when a user has permission to the testPath but not to the membership resource
+     */
+    @Test
+    public void testDoPostDirectContainerMembershipFail() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        request.setContentType("application/n-triples");
+        // membership resource (mockMembership) only gets read permission
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test to verify a user with read/write access PUTing to a direct container.
+     * When PUTting we check if the parent is a direct container.
+     */
+    @Test
+    public void testDoPutDirectContainerOk() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+
+        request.setRequestURI(testChildPath);
+        request.setMethod("PUT");
+        request.setContentType("application/n-triples");
+        // membership resource (mockMembership) also need read/write permission
+        setUpPermissions(testMembershipURI, true, true, true, true);
+        setUpPermissions(testChildURI, true, true, true, true);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    /**
+     * Test a user with read only permissions failing to PUT to a direct container
+     */
+    @Test
+    public void testDoPutDirectContainerFailed() throws Exception {
+        setupAuthUserReadOnly();
+        setupDirectResource();
+        request.setRequestURI(testChildPath);
+        request.setMethod("PUT");
+        request.setContentType("application/n-triples");
+        // membership resource (mockMembership) also need read/write permission
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        setUpPermissions(testChildURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test when a user has permission to the testPath but not to the membership resource
+     */
+    @Test
+    public void testDoPutDirectContainerMembershipFail() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+        request.setRequestURI(testChildPath);
+        request.setMethod("PUT");
+        request.setContentType("application/n-triples");
+        // membership resource (mockMembership) only gets read permission
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        // child resource (mockChild) only gets read/write permissions
+        setUpPermissions(testChildURI, true, true, true, true);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test to verify a user with read/write access PATCHing to a direct container
+     */
+    @Test
+    public void testDoPatchDirectContainerOk() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+
+        request.setRequestURI(testPath);
+        request.setMethod("PATCH");
+        request.setContentType("application/sparql-update");
+        final String content = "INSERT { <> <" + MEMBERSHIP_RESOURCE + "> <" + testMembershipURI + "> } WHERE { }";
+        request.setContent(content.getBytes(StandardCharsets.UTF_8));
+        // Give full writes to the membership resource
+        setUpPermissions(testMembershipURI, true, true, true, true);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    /**
+     * Test a user with read only permissions failing to PATCH to a direct container
+     */
+    @Test
+    public void testDoPatchDirectContainerFailed() throws Exception {
+        setupAuthUserReadOnly();
+        setupDirectResource();
+
+        request.setRequestURI(testPath);
+        request.setMethod("PATCH");
+        request.setContentType("application/sparql-update");
+        final String content = "INSERT { <> <" + MEMBERSHIP_RESOURCE + "> <" + testMembershipURI + "> } WHERE { }";
+        request.setContent(content.getBytes(StandardCharsets.UTF_8));
+        // Give read only on the membership resource
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test a user with read/write permissions failing to PATCH to a direct container, because we don't have
+     * write permissions on the membership resource.
+     */
+    @Test
+    public void testDoPatchDirectContainerMembershipFailed() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+
+        request.setRequestURI(testPath);
+        request.setMethod("PATCH");
+        request.setContentType("application/sparql-update");
+        final String content = "INSERT { <> <" + MEMBERSHIP_RESOURCE + "> <" + testMembershipURI + "> } WHERE { }";
+        request.setContent(content.getBytes(StandardCharsets.UTF_8));
+        // Give read only on the membership resource
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test to verify a user with read/write access DELETEing to a direct container
+     */
+    @Test
+    public void testDoDeleteDirectContainerOk() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+
+        request.setRequestURI(testPath);
+        request.setMethod("DELETE");
+        // Give full writes to the membership resource
+        setUpPermissions(testMembershipURI, true, true, true, true);
+        // Need access to contained resources to delete them, contained resources are checked using internal URIs.
+        setUpPermissions(URI.create(testChildId.getFullId()), true, true, true, true);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    /**
+     * Test a user with read only permissions failing to DELETE to a direct container
+     */
+    @Test
+    public void testDoDeleteDirectContainerFailed() throws Exception {
+        setupAuthUserReadOnly();
+        setupDirectResource();
+
+        request.setRequestURI(testPath);
+        request.setMethod("DELETE");
+        // Give read only on the membership resource
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test a user with read/write permissions failing to DELETE to a direct container, because we don't have
+     * write permissions on the membership resource.
+     */
+    @Test
+    public void testDoDeleteDirectContainerMembershipFailed() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+
+        request.setRequestURI(testPath);
+        request.setMethod("DELETE");
+        // Give read only on the membership resource
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test to verify a user with read/write access DELETEing a direct container member
+     */
+    @Test
+    public void testDoDeleteDirectContainerMemberOk() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+
+        request.setRequestURI(testChildPath);
+        request.setMethod("DELETE");
+        // Give full writes to the membership resource
+        setUpPermissions(testMembershipURI, true, true, true, true);
+        // Need access to contained resources to delete them, contained resources are checked using internal URIs.
+        setUpPermissions(testChildURI, true, true, true, true);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    /**
+     * Test to verify a user with read/write access DELETEing a direct container member
+     */
+    @Test
+    public void testDoDeleteDirectContainerMemberFailed() throws Exception {
+        setupAuthUserReadWrite();
+        setupDirectResource();
+
+        request.setRequestURI(testChildPath);
+        request.setMethod("DELETE");
+        // Give full writes to the membership resource
+        setUpPermissions(testMembershipURI, true, true, true, true);
+        // Need access to contained resources to delete them, contained resources are checked using internal URIs.
+        setUpPermissions(testChildURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test creating a direct container with permissions to the membership resource
+     */
+    @Test
+    public void testCreateDirectContainerOk() throws Exception {
+        setupAuthUserReadWrite();
+        setupContainerResource();
+
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        request.setContentType("text/turtle");
+        request.addHeader("Link", "<" + DIRECT_CONTAINER.getURI() + ">; rel=\"type\"");
+        final var content = "<> a <" + DIRECT_CONTAINER.getURI() + "> ; " +
+                "<" + MEMBERSHIP_RESOURCE.getURI() + "> <" + testMembershipURI + "> .";
+        request.setContent(content.getBytes(StandardCharsets.UTF_8));
+        setUpPermissions(testMembershipURI, true, true, true, true);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_OK, response.getStatus());
+    }
+
+    /**
+     * Test creating a direct container without permissions to the membership resource
+     */
+    @Test
+    public void testCreateDirectContainerFailed() throws Exception {
+        setupAuthUserReadWrite();
+        setupContainerResource();
+
+        request.setRequestURI(testPath);
+        request.setMethod("POST");
+        request.setContentType("text/turtle");
+        request.addHeader("Link", "<" + DIRECT_CONTAINER.getURI() + ">; rel=\"type\"");
+        final var content = "<> a <" + DIRECT_CONTAINER.getURI() + "> ; " +
+                "<" + MEMBERSHIP_RESOURCE.getURI() + "> <" + testMembershipURI + "> .";
+        request.setContent(content.getBytes(StandardCharsets.UTF_8));
+        setUpPermissions(testMembershipURI, false, true, false, false);
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_FORBIDDEN, response.getStatus());
+    }
+
+    /**
+     * Test a request with an invalid Memento URI.
+     */
+    @Test
+    public void testInvalidMementoRequest() throws Exception {
+        request.setRequestURI(testPath + "/" + FCR_VERSIONS + "/1234567890");
+        request.setMethod("GET");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_BAD_REQUEST, response.getStatus());
+    }
+
+    /**
+     * Test a request with an invalid resource identifier.
+     */
+    @Test
+    public void testInvalidResourceIdentifier() throws Exception {
+        request.setRequestURI(testPath + "/" + FCR_VERSIONS + "/1/" + FCR_VERSIONS + "/123456");
+        request.setMethod("GET");
+        webacFilter.doFilter(request, response, filterChain);
+        assertEquals(SC_BAD_REQUEST, response.getStatus());
     }
 }
