@@ -10,6 +10,8 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
 import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_MEMBER_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
@@ -19,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
@@ -31,9 +36,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
@@ -43,10 +50,13 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+
+import org.apache.jena.vocabulary.RDF;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.Rule;
 import org.junit.jupiter.api.Test;
@@ -582,6 +592,132 @@ public class WebACRolesProviderTest {
         assertEquals(1, roles.size(), "There should be exactly one agent");
         assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
         assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+    }
+
+    /**
+     * Test getting the permissions for the transaction provider.
+     */
+    @Test
+    public void testTxProvider() {
+        final String agent1 = "testUser";
+
+        when(mockResource.getAcl()).thenReturn(null);
+
+        final var id = FedoraId.create("fcr:txt");
+        when(mockResource.getId()).thenReturn(id.getFullId());
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(id, mockResource, mockTransaction);
+
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertNull(roles.get(agent1), "The agent should not be in the roles");
+        assertEquals(1, roles.get(FOAF_AGENT_VALUE).size(), "The foaf:agent should have one mode");
+    }
+
+    /**
+     * Derefence an internal agentGroup URI to an ACL resource.
+     */
+    @Test
+    public void testDereferenceAgentGroupFailure() throws PathNotFoundException {
+        final var id = FedoraId.create("agent-group-flat");
+        final var aclId = FedoraId.create("agent-group-list-flat");
+        final String acl = "/acls/agent-group-flat.ttl";
+
+        when(mockResource.getId()).thenReturn(id.getFullId());
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockAclResource.getTriples()).thenReturn(getRdfStreamFromResource(acl, TTL));
+        when(mockResourceFactory.getResource(any(Transaction.class), eq(aclId))).thenThrow(PathNotFoundException.class);
+        assertThrows(PathNotFoundRuntimeException.class, () -> roleProvider.getRoles(mockResource, mockTransaction));
+    }
+
+    /**
+     * Dereference an internal agentGroup that is set as foaf:Agent.
+     */
+    @Test
+    public void testDereferenceAgentGroupFoafAgent() {
+        final var id = FedoraId.create("some-test");
+        final String acl = "/acls/acl-agentgroup-foaf-agent.ttl";
+
+        when(mockResource.getId()).thenReturn(id.getFullId());
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockAclResource.getTriples())
+                .thenReturn(getRdfStreamFromResource(acl, TTL));
+        final var roles =  roleProvider.getRoles(mockResource, mockTransaction);
+        assertEquals(0, roles.size(), "There should be no roles agent");
+    }
+
+    /**
+     * Dereference an internal agentGroup that has a hashuri to a vcard:Group.
+     */
+    @Test
+    public void testDereferenceAgentGroupHashUri() throws PathNotFoundException {
+        final var id = FedoraId.create("some-test");
+        final String acl = "/acls/acl-agentgroup-with-hashuri.ttl";
+        final FedoraId aclId = FedoraId.create("agent-group");
+
+        final var mockGroupResource = mock(FedoraResource.class);
+        when(mockGroupResource.getId()).thenReturn(aclId.getFullId());
+        when(mockGroupResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockGroupResource.getTriples()).thenReturn(
+                new DefaultRdfStream(NodeFactory.createURI("#list"),
+                    Stream.of(
+                        Triple.create(NodeFactory.createURI("#list"),
+                        RDF.type.asNode(),
+                        NodeFactory.createURI(VCARD_GROUP_VALUE)),
+                        Triple.create(NodeFactory.createURI("#list"),
+                        NodeFactory.createURI(VCARD_MEMBER_VALUE),
+                        NodeFactory.createLiteral("Bob"))
+                    )
+                )
+        );
+        when(mockResourceFactory.getResource(any(Transaction.class), eq(aclId))).thenReturn(mockGroupResource);
+
+        when(mockResource.getId()).thenReturn(id.getFullId());
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockAclResource.getTriples())
+                .thenReturn(getRdfStreamFromResource(acl, TTL));
+
+        final var roles =  roleProvider.getRoles(mockResource, mockTransaction);
+        assertEquals(1, roles.size(), "There should be one role agent");
+        assertEquals(1, roles.get("Bob").size(), "The agent should have one mode");
+        assertEquals(WEBAC_MODE_READ_VALUE, roles.get("Bob").iterator().next());
+    }
+
+    /**
+     * Test getting roles for an agent with a base URI.
+     */
+    @Test
+    public void testGetAgentWithBaseUri() {
+        final String agent = "info:fedora/users#Bob";
+        final String accessTo = "/box/bag/collection";
+        final String acl = "/acls/acl-agent-with-baseuri.ttl";
+
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.getId()).thenReturn(addPrefix(acl));
+        when(mockResource.getId()).thenReturn(addPrefix(accessTo));
+        when(mockAclResource.getTriples())
+                .thenReturn(getRdfStreamFromResource(acl, TTL));
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockAclResource.getId()).thenReturn(addPrefix(accessTo) + "/fcr:acl");
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+
+        roleProvider.setUserBaseUri("info:fedora/users#");
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
+
+        assertEquals(2, roles.size(), "There should be two agents in the role map");
+        assertEquals(2, roles.get(agent).size(), "The full agents should have exactly two modes");
+        assertEquals(2, roles.get("Bob").size(), "The stripped agent should have exactly two modes");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
+        assertTrue(roles.get("Bob").contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get("Bob").contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     private static RdfStream getRdfStreamFromResource(final String resourcePath, final Lang lang) {
