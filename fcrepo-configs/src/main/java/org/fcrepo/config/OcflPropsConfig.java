@@ -171,8 +171,11 @@ public class OcflPropsConfig extends BasePropsConfig {
             LOGGER.info("Fedora OCFL root: {}", ocflRepoRoot);
             createDirectories(ocflRepoRoot);
         } else if (storage == Storage.OCFL_S3) {
-            Objects.requireNonNull(ocflS3Bucket,
-                    String.format("The property %s must be set when OCFL S3 storage is used", FCREPO_OCFL_S3_BUCKET));
+            if (ocflS3Bucket == null || ocflS3Bucket.isBlank()) {
+                throw new IllegalArgumentException(
+                        String.format("The property %s must be set when OCFL S3 storage is used",
+                                FCREPO_OCFL_S3_BUCKET));
+            }
 
             LOGGER.info("Fedora AWS access key: {}", awsAccessKey);
             LOGGER.info("Fedora AWS secret key set: {}", Objects.isNull(awsSecretKey));
