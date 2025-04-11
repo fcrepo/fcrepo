@@ -97,19 +97,19 @@ public class DatabaseConfigTest {
         final DataSource dataSource = databaseConfig.dataSource();
         assertNotNull(dataSource);
         assertTrue(dataSource instanceof HikariDataSource);
-        
+
         final HikariDataSource hikariDs = (HikariDataSource) dataSource;
         assertEquals("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", hikariDs.getJdbcUrl());
         assertEquals("org.h2.Driver", hikariDs.getDriverClassName());
     }
-    
+
     @Test
     public void testTxManager() throws Exception {
         final DataSource dataSource = databaseConfig.dataSource();
         final PlatformTransactionManager txManager = databaseConfig.txManager(dataSource);
         assertNotNull(txManager);
     }
-    
+
     @Test
     public void testTxTemplate() throws Exception {
         final DataSource dataSource = databaseConfig.dataSource();
@@ -117,7 +117,7 @@ public class DatabaseConfigTest {
         final TransactionTemplate txTemplate = databaseConfig.txTemplate(txManager);
         assertNotNull(txTemplate);
     }
-    
+
     @Test
     public void testFlyway() throws Exception {
         final DataSource dataSource = databaseConfig.dataSource();
@@ -142,7 +142,7 @@ public class DatabaseConfigTest {
         final var propertiesPath = tmpDir.resolve("db.properties");
 
         // Write basic properties to the file
-        Properties props = new Properties();
+        final Properties props = new Properties();
         props.setProperty("driverClassName", "org.h2.Driver");
         props.setProperty("maximumPoolSize", "15");
         props.setProperty("connectionTimeout", "4000");
@@ -165,16 +165,16 @@ public class DatabaseConfigTest {
         assertEquals(15, hikariDs.getMaximumPoolSize());
         assertEquals(4000, hikariDs.getConnectionTimeout());
     }
-    
+
     @Test
     public void testCustomPropertiesConfiguration() throws Exception {
         setField(databaseConfig, "maxPoolSize", 20);
         setField(databaseConfig, "checkoutTimeout", 5000);
-        
+
         final DataSource dataSource = databaseConfig.dataSource();
         assertNotNull(dataSource);
         assertTrue(dataSource instanceof HikariDataSource);
-        
+
         final HikariDataSource hikariDs = (HikariDataSource) dataSource;
         assertEquals(20, hikariDs.getMaximumPoolSize());
         assertEquals(5000, hikariDs.getConnectionTimeout());
