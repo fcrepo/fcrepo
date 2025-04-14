@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+permissions:
+  id-token: write # Add this permission for OIDC authentication
+  contents: read  # Needed for checkout
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
