@@ -5,12 +5,12 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,6 +38,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -46,6 +48,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
+import software.amazon.awssdk.services.s3.S3AsyncClient;
 
 import javax.sql.DataSource;
 import java.io.IOException;
@@ -72,6 +75,12 @@ public class OcflPersistenceConfigTest {
 
     @Mock
     private MeterRegistry meterRegistry;
+
+    @Captor
+    private ArgumentCaptor<S3AsyncClient> s3ClientCaptor;
+
+    @Captor
+    private ArgumentCaptor<S3AsyncClient> s3CrtClientCaptor;
 
     @InjectMocks
     private OcflPersistenceConfig ocflPersistenceConfig;
@@ -213,44 +222,17 @@ public class OcflPersistenceConfigTest {
     }
 
     @Test
-    public void testS3ClientCreation() throws Exception {
-        when(ocflPropsConfig.getAwsRegion()).thenReturn("us-east-1");
-        when(ocflPropsConfig.getS3Endpoint()).thenReturn("https://s3.example.org");
-        when(ocflPropsConfig.isPathStyleAccessEnabled()).thenReturn(true);
-        when(ocflPropsConfig.getAwsAccessKey()).thenReturn("testKey");
-        when(ocflPropsConfig.getAwsSecretKey()).thenReturn("testSecret");
-        when(ocflPropsConfig.getS3ConnectionTimeout()).thenReturn(30);
-        when(ocflPropsConfig.getS3ReadTimeout()).thenReturn(30);
-        when(ocflPropsConfig.getS3WriteTimeout()).thenReturn(30);
-        when(ocflPropsConfig.getS3MaxConcurrency()).thenReturn(100);
-
-        final var s3ClientMethod = OcflPersistenceConfig.class.getDeclaredMethod("s3Client");
-        s3ClientMethod.setAccessible(true);
-
-        assertDoesNotThrow(() -> s3ClientMethod.invoke(ocflPersistenceConfig));
-    }
-
-    @Test
-    public void testS3CrtClientCreation() throws Exception {
-        when(ocflPropsConfig.getAwsRegion()).thenReturn("us-east-1");
-        when(ocflPropsConfig.getS3Endpoint()).thenReturn("https://s3.example.org");
-        when(ocflPropsConfig.getAwsAccessKey()).thenReturn("testKey");
-        when(ocflPropsConfig.getAwsSecretKey()).thenReturn("testSecret");
-        when(ocflPropsConfig.isOcflS3ChecksumEnabled()).thenReturn(true);
-
-        final var s3CrtClientMethod = OcflPersistenceConfig.class.getDeclaredMethod("s3CrtClient");
-        s3CrtClientMethod.setAccessible(true);
-
-        assertDoesNotThrow(() -> s3CrtClientMethod.invoke(ocflPersistenceConfig));
-    }
-
-    @Test
     public void testS3RepositoryCreation() throws IOException {
         // Configure for S3 storage
         when(ocflPropsConfig.getStorage()).thenReturn(Storage.OCFL_S3);
         when(ocflPropsConfig.getOcflS3Bucket()).thenReturn("test-bucket");
         when(ocflPropsConfig.getOcflS3Prefix()).thenReturn("fedora/");
         when(ocflPropsConfig.isOcflS3DbEnabled()).thenReturn(true);
+
+        when(ocflPropsConfig.getS3Endpoint()).thenReturn("https://s3.example.org");
+        when(ocflPropsConfig.getAwsAccessKey()).thenReturn("testKey");
+        when(ocflPropsConfig.getAwsSecretKey()).thenReturn("testSecret");
+        when(ocflPropsConfig.isOcflS3ChecksumEnabled()).thenReturn(true);
 
         // Need to provide mock values for S3 client configuration
         when(ocflPropsConfig.getAwsRegion()).thenReturn("us-east-1");
@@ -259,8 +241,20 @@ public class OcflPersistenceConfigTest {
         when(ocflPropsConfig.getS3WriteTimeout()).thenReturn(30);
         when(ocflPropsConfig.getS3MaxConcurrency()).thenReturn(100);
 
-        // This will fail in the S3 client creation since we can't fully mock AWS services,
-        // but we can verify that the right path is taken
-        assertThrows(NullPointerException.class, () -> ocflPersistenceConfig.repository());
+        try (final var ocflUtilsMock = Mockito.mockStatic(OcflPersistentStorageUtils.class)) {
+            final var repoMock = mock(MutableOcflRepository.class);
+            ocflUtilsMock.when(() -> OcflPersistentStorageUtils.createS3Repository(
+                    any(DataSource.class), any(), any(), anyString(), anyString(), any(Path.class),
+                    any(DigestAlgorithm.class), anyBoolean(), anyBoolean(), anyBoolean()))
+                    .thenReturn(repoMock);
+
+            ocflPersistenceConfig.repository();
+
+            ocflUtilsMock.verify(() -> OcflPersistentStorageUtils.createS3Repository(
+                    any(DataSource.class), any(S3AsyncClient.class), any(S3AsyncClient.class),
+                    anyString(), anyString(), any(Path.class),
+                    any(DigestAlgorithm.class), anyBoolean(), anyBoolean(), anyBoolean()
+            ));
+        }
     }
 }
