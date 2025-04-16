@@ -47,6 +47,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,6 +66,12 @@ public class OcflPersistenceConfigTest {
 
     @Mock
     private MetricsConfig metricsConfig;
+
+    @Mock
+    private DataSource dataSource;
+
+    @Mock
+    private MeterRegistry meterRegistry;
 
     @InjectMocks
     private OcflPersistenceConfig ocflPersistenceConfig;
