@@ -79,8 +79,8 @@
     <junit.version>4.13.2</junit.version>
     <junit5.version>5.11.4</junit5.version>
     <system-rules.version>1.19.0</system-rules.version>
-    <mockito.version>3.12.4</mockito.version>
-    <mockito.junit5.version>5.15.2</mockito.junit5.version>
+    <mockito.version>5.17.0</mockito.version>
+    <mockito.junit5.version>5.17.0</mockito.junit5.version>
     <!-- fcrepo5-specific plugins -->
     <enforcer.plugin.version>3.0.0</enforcer.plugin.version>
     <war.plugin.version>3.3.2</war.plugin.version>
