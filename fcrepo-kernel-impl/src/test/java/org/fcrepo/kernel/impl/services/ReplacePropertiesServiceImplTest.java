@@ -10,14 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import java.time.Instant;
-import java.util.List;
-
+import org.apache.commons.io.IOUtils;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.RdfCollectors;
@@ -28,6 +30,7 @@ import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
+import org.fcrepo.kernel.api.operations.NonRdfSourceOperation;
 import org.fcrepo.kernel.api.operations.NonRdfSourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperation;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
@@ -38,13 +41,6 @@ import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.UpdateRdfSourceOperation;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.ResourceFactory;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.search.api.SearchIndex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +50,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
 
 /**
  * DeleteResourceServiceTest
@@ -104,6 +102,10 @@ public class ReplacePropertiesServiceImplTest {
 
     @Captor
     private ArgumentCaptor<RdfSourceOperation> operationCaptor;
+
+    @Captor
+    private ArgumentCaptor<NonRdfSourceOperation> nonRdfOperationCaptor;
+
 
     private FedoraPropsConfig propsConfig;
 
@@ -169,19 +171,13 @@ public class ReplacePropertiesServiceImplTest {
         verify(tx).lockResource(agId);
         verify(tx).lockResource(binaryId);
         verify(tx).lockResource(descId);
-        verify(pSession, times(2)).persist(operationCaptor.capture());
+        verify(pSession).persist(operationCaptor.capture());
+        verify(pSession).persist(nonRdfOperationCaptor.capture());
 
-        final var updateOp = getOperation(operationCaptor.getAllValues(), UpdateRdfSourceOperation.class);
+        final var updateOp = operationCaptor.getValue();
         assertEquals(descId, updateOp.getResourceId());
+        final var nonRdfOp = nonRdfOperationCaptor.getValue();
+        assertEquals(binaryId, nonRdfOp.getResourceId());
     }
-
-    private <T extends RdfSourceOperation> T getOperation(final List<RdfSourceOperation> ops, final Class<T> clazz) {
-        return ops.stream()
-            .filter(clazz::isInstance)
-            .findFirst()
-            .map(clazz::cast)
-            .orElseThrow();
-    }
-
 }
 
