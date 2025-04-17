@@ -3,19 +3,20 @@
  * detailed in the LICENSE and NOTICE files at the root of the source
  * tree.
  */
-package org.fcrepo.persistence.ocfl.utils;
+package org.fcrepo.common.test.utils;
 
 import org.mockito.Mockito;
 import org.springframework.beans.factory.FactoryBean;
 
 /**
+ * Utility for creating Mockito mocks as Spring beans, used in context files.
  * @author bbpennel
  */
 public class MockitoMockFactoryBean<T> implements FactoryBean<T> {
 
     private Class<T> type;
 
-    public void setType(Class<T> type) {
+    public void setType(final Class<T> type) {
         this.type = type;
     }
 

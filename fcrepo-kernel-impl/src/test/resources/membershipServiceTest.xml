@@ -33,16 +33,16 @@
         <property name="dataSource" ref="dataSource" />
     </bean>
     
-    <bean id="eventAccumulator" class="org.mockito.Mockito" factory-method="mock">
-        <constructor-arg value="org.fcrepo.kernel.api.observer.EventAccumulator"/>
+    <bean id="eventAccumulator" class="org.fcrepo.common.test.utils.MockitoMockFactoryBean">
+        <property name="type" value="org.fcrepo.kernel.api.observer.EventAccumulator"/>
     </bean>
 
     <bean id="membershipIndexManager" class="org.fcrepo.kernel.impl.services.MembershipIndexManager" depends-on="flyway">
         <property name="dataSource" ref="dataSource" />
     </bean>
 
-    <bean id="persistentStorageSessionManager" class="org.mockito.Mockito" factory-method="mock">
-        <constructor-arg value="org.fcrepo.persistence.api.PersistentStorageSessionManager" />
+    <bean id="persistentStorageSessionManager" class="org.fcrepo.common.test.utils.MockitoMockFactoryBean">
+        <property name="type" value="org.fcrepo.persistence.api.PersistentStorageSessionManager" />
     </bean>
     
     <bean id="resourceFactory" class="org.fcrepo.kernel.impl.models.ResourceFactoryImpl">
