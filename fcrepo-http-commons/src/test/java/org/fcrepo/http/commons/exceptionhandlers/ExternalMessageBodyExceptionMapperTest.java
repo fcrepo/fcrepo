@@ -5,6 +5,7 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import org.fcrepo.http.commons.AbstractResourceTest;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,31 +13,54 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.mockito.Mock;
+import java.net.URI;
+import java.net.URISyntaxException;
 
+
+import javax.inject.Inject;
+import javax.servlet.ServletContext;
+//import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 /**
- * ClientErrorExceptionMapperTest
+ * ExternalMessageBodyExceptionMapperTest
  *
  * @author dan.field@lyrasis.org
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class ExternalMessageBodyExceptionMapperTest {
+public class ExternalMessageBodyExceptionMapperTest extends AbstractResourceTest {
 
     private ExternalMessageBodyExceptionMapper testObj;
 
+    @Mock
+    private UriInfo uriInfo;
+
+    @Mock
+    private ServletContext context;
+
+    @Inject
     @BeforeEach
     public void setUp() {
+        super.setUp();
         testObj = new ExternalMessageBodyExceptionMapper();
+        setField(testObj, "context", context);
+        setField(testObj, "uriInfo", uriInfo);
     }
 
+    @Inject
     @Test
-    public void testToResponse() {
-        final ExternalMessageBodyException input = new ExternalMessageBodyException("Access Denied");
+    public void testToResponse() throws URISyntaxException {
+        when(context.getContextPath()).thenReturn("/");
+        when(uriInfo.getBaseUri()).thenReturn(new URI("/"));
+        final ExternalMessageBodyException input = new ExternalMessageBodyException("External Message Body");
         final Response actual = testObj.toResponse(input);
         assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
     }
