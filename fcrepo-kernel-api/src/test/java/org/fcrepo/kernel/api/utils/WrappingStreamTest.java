@@ -10,6 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import static java.util.Spliterator.ORDERED;
+import static java.util.Spliterator.SIZED;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
@@ -135,6 +138,16 @@ public class WrappingStreamTest {
         final var collected = stream.collect(Collectors.toList());
         assertEquals(3, collected.size());
         assertInstanceOf(List.class, collected);
+    }
+
+    @Test
+    public void testCollectExtended() {
+        final var result = stream.collect(
+                StringBuilder::new,  // Supplier
+                (sb, t) -> sb.append(t.getObject().getLiteral().getValue()),  // Accumulator
+                StringBuilder::append   // Combiner (for parallelism)
+        );
+        assertEquals("abc", result.toString());
     }
 
     @Test
@@ -363,6 +376,78 @@ public class WrappingStreamTest {
         assertInstanceOf(Triple.class, array[0]);
         assertInstanceOf(Triple.class, array[1]);
         assertInstanceOf(Triple.class, array[2]);
+    }
+
+    @Test
+    public void testReduceIdentity() {
+        final var reduced = stream.reduce(Triple.create(subject, predicate, NodeFactory.createLiteral("")),
+                (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
+                        NodeFactory.createLiteral(
+                                s1.getObject().getLiteral().getValue().toString() +
+                                        s2.getObject().getLiteral().getValue().toString()
+                        )));
+        assertEquals("abc", reduced.getObject().getLiteral().getValue().toString());
+    }
+
+    @Test
+    public void testReduce() {
+        final var reduced = stream.reduce(
+                (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
+                        NodeFactory.createLiteral(
+                                s1.getObject().getLiteral().getValue().toString() +
+                                        s2.getObject().getLiteral().getValue().toString()
+                        )));
+        final var reducedString = reduced.map(s -> s.getObject().getLiteral().getValue().toString());
+        assertEquals("abc", reducedString.orElse(""));
+    }
+
+    @Test
+    public void testReduceWithCombiner() {
+        final var identity = Triple.create(subject, predicate, NodeFactory.createLiteral(""));
+
+        final var reduced = stream.reduce(
+                identity,
+                (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
+                        NodeFactory.createLiteral(
+                                s1.getObject().getLiteral().getValue().toString() +
+                                        s2.getObject().getLiteral().getValue().toString()
+                        )),
+                (t1, t2) -> Triple.create(t1.getSubject(), t1.getPredicate(),
+                        NodeFactory.createLiteral(
+                                t1.getObject().getLiteral().getValue().toString() +
+                                        t2.getObject().getLiteral().getValue().toString()
+                        ))
+        );
+
+        assertEquals("abc", reduced.getObject().getLiteral().getValue().toString());
+    }
+
+    @Test
+    public void testIterator() {
+        final var iterator = stream.iterator();
+        assertTrue(iterator.hasNext());
+        assertEquals(objectA, iterator.next().getObject());
+        assertTrue(iterator.hasNext());
+        assertEquals(objectB, iterator.next().getObject());
+        assertTrue(iterator.hasNext());
+        assertEquals(objectC, iterator.next().getObject());
+        assertFalse(iterator.hasNext());
+    }
+
+    @Test
+    public void testSplitIterator() {
+        final var iterator = stream.spliterator();
+        assertTrue(iterator.hasCharacteristics(ORDERED));
+        assertTrue(iterator.hasCharacteristics(SIZED));
+        assertEquals(3, iterator.estimateSize());
+        assertEquals(3, iterator.getExactSizeIfKnown());
+    }
+
+    @Test
+    public void testIsParallel() {
+        assertFalse(stream.isParallel());
+        final var stream2 = stream.parallel();
+        assertTrue(stream2.isParallel());
     }
 
     static class TestWrappingStream extends WrappingStream<Triple> {
