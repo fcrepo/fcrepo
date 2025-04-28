@@ -14,7 +14,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 
@@ -23,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
- * ClientErrorExceptionMapperTest
+ * ConcurrentUpdateExceptionMapperTest
  *
  * @author dan.field@lyrasis.org
  */
@@ -43,7 +42,6 @@ public class ConcurrentUpdateExceptionMapperTest {
         setField(testObj, "config", config);
     }
 
-    @Inject
     @Test
     public void testToResponse() {
         final ConcurrentUpdateException input = new ConcurrentUpdateException("Resource",

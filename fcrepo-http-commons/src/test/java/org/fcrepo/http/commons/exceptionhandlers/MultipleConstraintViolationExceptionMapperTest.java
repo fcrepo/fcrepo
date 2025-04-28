@@ -52,21 +52,24 @@ public class MultipleConstraintViolationExceptionMapperTest {
         testObj = new MultipleConstraintViolationExceptionMapper();
         setField(testObj, "context", context);
         setField(testObj, "uriInfo", uriInfo);
-        when(context.getContextPath()).thenReturn("/");
-        when(uriInfo.getBaseUri()).thenReturn(new URI("/"));
+        when(context.getContextPath()).thenReturn("/fcrepo");
+        when(uriInfo.getBaseUri()).thenReturn(new URI("http://localhost/fcrepo/static"));
     }
 
     @Test
     public void testBuildConstraintLink() {
-        final URI testLink = URI.create("http://localhost/fcrepo/static/constraints/MultipleConstraintViolationException.rdf");
+        final URI testLink = URI.create(
+                "http://localhost/fcrepo/static/constraints/MultipleConstraintViolationException.rdf");
 
         final List<ConstraintViolationException> constraints = new ArrayList<>();
         final ConstraintViolationException firstException = new ConstraintViolationException("First Exception");
         final ConstraintViolationException secondException = new ConstraintViolationException("Second Exception");
         constraints.add(firstException);
         constraints.add(secondException);
-        final MultipleConstraintViolationException multipleConstraintsException = new MultipleConstraintViolationException(constraints);
-        final Link link = MultipleConstraintViolationExceptionMapper.buildConstraintLink(multipleConstraintsException, context, uriInfo);
+        final MultipleConstraintViolationException multipleConstraintsException =
+                new MultipleConstraintViolationException(constraints);
+        final Link link = MultipleConstraintViolationExceptionMapper.buildConstraintLink(
+                multipleConstraintsException, context, uriInfo);
 
         assertEquals(link.getRel(), CONSTRAINED_BY.getURI());
         assertEquals(link.getUri(), testLink);
@@ -79,7 +82,8 @@ public class MultipleConstraintViolationExceptionMapperTest {
         final ConstraintViolationException secondException = new ConstraintViolationException("Second Exception");
         constraints.add(firstException);
         constraints.add(secondException);
-        final MultipleConstraintViolationException multipleConstraintsException = new MultipleConstraintViolationException(constraints);
+        final MultipleConstraintViolationException multipleConstraintsException =
+                new MultipleConstraintViolationException(constraints);
         final Response actual = testObj.toResponse(multipleConstraintsException);
 
         assertEquals(actual.getStatus(), CONFLICT.getStatusCode() );

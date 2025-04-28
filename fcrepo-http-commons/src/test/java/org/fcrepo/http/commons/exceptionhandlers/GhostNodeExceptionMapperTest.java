@@ -19,10 +19,9 @@ import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.Response.Status.CONFLICT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 /**
- * ClientErrorExceptionMapperTest
+ * GhostNodeExceptionMapperTest
  *
  * @author dan.field@lyrasis.org
  */
@@ -39,10 +38,8 @@ public class GhostNodeExceptionMapperTest {
     public void setUp() {
         testObj = new GhostNodeExceptionMapper();
         config = new FedoraPropsConfig();
-        setField(testObj, "config", config);
     }
 
-    @Inject
     @Test
     public void testToResponse() {
         final GhostNodeException input = new GhostNodeException("Exception Message");

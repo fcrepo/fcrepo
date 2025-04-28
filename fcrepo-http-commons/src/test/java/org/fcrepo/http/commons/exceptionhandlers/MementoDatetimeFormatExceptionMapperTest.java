@@ -5,11 +5,9 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
+import org.fcrepo.kernel.api.exception.MementoDatetimeFormatException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import org.glassfish.jersey.message.internal.HeaderValueException;
-import org.glassfish.jersey.message.internal.HeaderValueException.Context;
 
 import javax.ws.rs.core.Response;
 
@@ -17,24 +15,24 @@ import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * <p>HeaderValueExceptionMapperTest class.</p>
+ * <p>MementoDatetimeFormatExceptionMapperTest class.</p>
  *
  * @author dan.field@lyrasis.org
  */
-public class HeaderValueExceptionMapperTest {
+public class MementoDatetimeFormatExceptionMapperTest {
 
-    private HeaderValueExceptionMapper testObj;
+    private MementoDatetimeFormatExceptionMapper testObj;
 
     @BeforeEach
     public void setUp() {
-        testObj = new HeaderValueExceptionMapper();
+        testObj = new MementoDatetimeFormatExceptionMapper();
     }
 
     @Test
     public void testToResponse() {
-        final HeaderValueException input = new HeaderValueException("Header Value",
-                                            new Exception("nested exception"),
-                                            Context.OUTBOUND);
+        final MementoDatetimeFormatException input = new MementoDatetimeFormatException(
+                                                            "Memento Format Exception",
+                                                            new Exception("nested exception"));
         final Response actual = testObj.toResponse(input);
         assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
     }
