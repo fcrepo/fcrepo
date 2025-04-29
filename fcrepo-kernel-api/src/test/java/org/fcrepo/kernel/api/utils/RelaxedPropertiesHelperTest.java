@@ -20,6 +20,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.Calendar;
 import java.util.List;
@@ -37,6 +39,8 @@ import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
+import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.impl.ModelCom;
 import org.apache.jena.rdf.model.impl.ResourceImpl;
 import org.apache.jena.vocabulary.RDF;
@@ -91,9 +95,61 @@ public class RelaxedPropertiesHelperTest {
     }
 
     @Test
+    public void testGetCreatedDateInvalidType() {
+        final var createdDate = ResourceFactory.createPlainLiteral("2023-10-01T00:00:00Z");
+        fedoraResource.removeAll(CREATED_DATE);
+        fedoraResource.addProperty(CREATED_DATE, createdDate);
+        assertThrows(MalformedRdfException.class, () -> {
+            RelaxedPropertiesHelper.getCreatedDate(fedoraResource);
+        });
+    }
+
+    @Test
+    public void testGetCreatedDateThrowsExceptionOnDuplicatePredicates() {
+        final var resource = mock(Resource.class);
+
+        // Create duplicate statements for CREATED_BY
+        final var statement1 = mock(Statement.class);
+        final var statement2 = mock(Statement.class);
+        when(statement1.getObject()).thenReturn(ResourceFactory.createTypedLiteral("2023-10-01T00:00:00Z",
+                XSDDatatype.XSDdateTime));
+        when(statement2.getObject()).thenReturn(ResourceFactory.createTypedLiteral("2020-12-03T00:00:00Z",
+                XSDDatatype.XSDdateTime));
+
+        // Mock the listProperties method to return duplicate statements
+        final var stmtIterator = mock(StmtIterator.class);
+        when(stmtIterator.hasNext()).thenReturn(true, true, false);
+        when(stmtIterator.next()).thenReturn(statement1, statement2);
+        when(resource.listProperties(CREATED_DATE)).thenReturn(stmtIterator);
+
+        // Assert that the exception is thrown
+        assertThrows(MalformedRdfException.class, () -> RelaxedPropertiesHelper.getCreatedDate(resource));
+    }
+
+    @Test
     public void testGetCreatedBy() {
         final var createdBy = RelaxedPropertiesHelper.getCreatedBy(fedoraResource);
         assertEquals("test-user", createdBy);
+    }
+
+    @Test
+    public void testGetCreatedByThrowsExceptionOnDuplicatePredicates() {
+        final var resource = mock(Resource.class);
+
+        // Create duplicate statements for CREATED_BY
+        final var statement1 = mock(Statement.class);
+        final var statement2 = mock(Statement.class);
+        when(statement1.getObject()).thenReturn(ResourceFactory.createPlainLiteral("user1"));
+        when(statement2.getObject()).thenReturn(ResourceFactory.createPlainLiteral("user2"));
+
+        // Mock the listProperties method to return duplicate statements
+        final var stmtIterator = mock(StmtIterator.class);
+        when(stmtIterator.hasNext()).thenReturn(true, true, false);
+        when(stmtIterator.next()).thenReturn(statement1, statement2);
+        when(resource.listProperties(CREATED_BY)).thenReturn(stmtIterator);
+
+        // Assert that the exception is thrown
+        assertThrows(MalformedRdfException.class, () -> RelaxedPropertiesHelper.getCreatedBy(resource));
     }
 
     @Test

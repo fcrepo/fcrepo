@@ -10,6 +10,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.common.utils.ExcludeFromGeneratedJacocoReport;
 
 /**
  * A read-only tx that never expires and cannot be committed.
@@ -28,11 +29,13 @@ public class ReadOnlyTransaction implements Transaction {
         // empty
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void commit() {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void commitIfShortLived() {
         // no-op
@@ -43,11 +46,13 @@ public class ReadOnlyTransaction implements Transaction {
         return false;
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void rollback() {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void fail() {
         // no-op
@@ -68,6 +73,7 @@ public class ReadOnlyTransaction implements Transaction {
         return true;
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void ensureCommitting() {
         // no-op
@@ -88,11 +94,13 @@ public class ReadOnlyTransaction implements Transaction {
         return true;
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void setShortLived(final boolean shortLived) {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void expire() {
         // no-op
@@ -113,26 +121,31 @@ public class ReadOnlyTransaction implements Transaction {
         return Instant.now().plus(Duration.ofMinutes(1));
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void refresh() {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void lockResource(final FedoraId resourceId) {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void lockResourceNonExclusive(final FedoraId resourceId) {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void lockResourceAndGhostNodes(final FedoraId resourceId) {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void releaseResourceLocksIfShortLived() {
         // no-op
@@ -143,16 +156,19 @@ public class ReadOnlyTransaction implements Transaction {
         runnable.run();
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void setBaseUri(final String baseUri) {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void setUserAgent(final String userAgent) {
         // no-op
     }
 
+    @ExcludeFromGeneratedJacocoReport
     @Override
     public void suppressEvents() {
         // no-op
