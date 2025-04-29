@@ -69,9 +69,6 @@ public class ReindexResourcePersisterTest {
         when(nonReindexOp.getType()).thenReturn(CREATE);
         when(nonReindexOp.getResourceId()).thenReturn(RESOURCE_ID);
         when(nonReindexOp.getTransaction()).thenReturn(transaction);
-
-        // Set up the non-reindex operation
-        when(nonReindexOp.getType()).thenReturn(CREATE);
     }
 
     @Test
