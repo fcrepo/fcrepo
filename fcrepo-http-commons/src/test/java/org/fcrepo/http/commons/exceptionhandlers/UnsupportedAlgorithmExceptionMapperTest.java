@@ -30,7 +30,7 @@ public class UnsupportedAlgorithmExceptionMapperTest {
 
     @Test
     public void testToResponse() {
-        final UnsupportedAlgorithmException input = new UnsupportedAlgorithmException("Access Denied",
+        final UnsupportedAlgorithmException input = new UnsupportedAlgorithmException("Unsupported Algorithm",
                                                 new Exception("nested exception"));
         final Response actual = testObj.toResponse(input);
         assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
