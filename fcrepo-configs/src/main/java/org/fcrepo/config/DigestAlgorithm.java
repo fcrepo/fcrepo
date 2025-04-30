@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 /**
- * Digest Algorith enum
+ * Digest Algorithm enum
  * @author cbeer
  *
  * Moved to its own class for Fedora 6.0.0

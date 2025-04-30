@@ -518,11 +518,7 @@ public class FedoraId {
         }
         if (processID.contains(FCR_VERSIONS)) {
             final String[] versionSplits = split(processID, FCR_VERSIONS);
-            if (versionSplits.length > 2) {
-                throw new InvalidResourceIdentifierException(String.format(
-                        "Path <%s> is invalid. May not contain multiple %s parts.",
-                        fullPath, FCR_VERSIONS));
-            } else if (versionSplits.length == 2 && versionSplits[1].isEmpty()) {
+            if (versionSplits.length == 2 && versionSplits[1].isEmpty()) {
                 this.isTimemap = true;
             } else {
                 final String afterVersion = versionSplits[1];

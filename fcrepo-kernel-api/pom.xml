@@ -93,6 +93,13 @@
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-common</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+      <type>test-jar</type>
+    </dependency>
 
   </dependencies>
 </project>
