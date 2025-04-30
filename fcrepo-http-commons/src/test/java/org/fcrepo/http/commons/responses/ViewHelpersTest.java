@@ -345,4 +345,14 @@ public class ViewHelpersTest {
         assertTrue(testObj.isRootResource(mem, root), "Root should be a Repository Root");
         assertFalse(testObj.isRootResource(mem, child), "Child should not be a Repository Root");
     }
+
+    @Test
+    public void testVersionLabel() {
+        final Model model = createDefaultModel();
+        model.setNsPrefix("fedora", REPOSITORY_NAMESPACE);
+        final Graph mem = model.getGraph();
+        final Node root = createURI("http://localhost/root/20011231050505");
+
+        assertEquals("Mon, 31 Dec 2001 05:05:05 GMT", testObj.getVersionLabel(mem, root));
+    }
 }

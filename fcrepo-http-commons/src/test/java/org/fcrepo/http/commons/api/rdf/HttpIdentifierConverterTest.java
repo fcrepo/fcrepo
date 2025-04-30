@@ -325,7 +325,7 @@ public class HttpIdentifierConverterTest {
     @Test
     public void testTranslateInternalUri() {
         final String testUri = "/some/uri";
-        assertEquals("/uri", converter.translateUri(testUri));
+        assertEquals(uriBase + "/uri", converter.translateUri(testUri));
     }
 
     @Test
