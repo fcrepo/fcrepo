@@ -128,10 +128,9 @@ class BinaryImplTest {
         final InputStream contentStream = new ByteArrayInputStream(TEST_CONTENT.getBytes());
         when(mockSession.getBinaryContent(eq(fedoraId), isNull())).thenReturn(contentStream);
 
-        final InputStream result = binary.getContent();
-
-        assertNotNull(result);
-        assertEquals(TEST_CONTENT, IOUtils.toString(result, StandardCharsets.UTF_8));
+        try (final InputStream result = binary.getContent()) {
+            assertEquals(TEST_CONTENT, IOUtils.toString(result, StandardCharsets.UTF_8));
+        }
     }
 
     @Test
@@ -155,7 +154,9 @@ class BinaryImplTest {
         binary.setExternalHandling(PROXY);
         binary.setExternalUrl(testExternalFile.toUri().toString());
 
-        assertEquals(TEST_CONTENT, IOUtils.toString(binary.getContent()));
+        try (var binaryStream = binary.getContent()) {
+            assertEquals(TEST_CONTENT, IOUtils.toString(binaryStream, StandardCharsets.UTF_8));
+        }
     }
 
     @Test
@@ -163,7 +164,9 @@ class BinaryImplTest {
         binary.setExternalHandling(REDIRECT);
         binary.setExternalUrl(testExternalFile.toUri().toString());
 
-        assertEquals("test content", IOUtils.toString(binary.getContent(), StandardCharsets.UTF_8));
+        try (var binaryStream = binary.getContent()) {
+            assertEquals(TEST_CONTENT, IOUtils.toString(binaryStream, StandardCharsets.UTF_8));
+        }
     }
 
     @Test
@@ -172,10 +175,9 @@ class BinaryImplTest {
         when(mockSession.getBinaryRange(eq(fedoraId), isNull(), eq(2L), eq(5L)))
                 .thenReturn(contentStream);
 
-        final InputStream result = binary.getRange(2L, 5L);
-
-        assertNotNull(result);
-        assertEquals(TEST_CONTENT, IOUtils.toString(result, StandardCharsets.UTF_8));
+        try (final InputStream result = binary.getRange(2L, 5L)) {
+            assertEquals(TEST_CONTENT, IOUtils.toString(result, StandardCharsets.UTF_8));
+        }
     }
 
     @Test
@@ -191,7 +193,9 @@ class BinaryImplTest {
         binary.setExternalHandling(PROXY);
         binary.setExternalUrl(testExternalFile.toUri().toString());
 
-        assertEquals("st conten", IOUtils.toString(binary.getRange(2L, 10L)));
+        try (var inputStream = binary.getRange(2L, 10L)) {
+            assertEquals("st conten", IOUtils.toString(inputStream, StandardCharsets.UTF_8));
+        }
     }
 
     @Test
