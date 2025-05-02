@@ -11,6 +11,7 @@ import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -39,7 +40,9 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -139,6 +142,95 @@ public class TimeMapImplTest {
                 Triple.create(timeMapUri, RdfLexicon.CONTAINS.asNode(), node(mementos.get(0))),
                 Triple.create(timeMapUri, RdfLexicon.MEMENTO_ORIGINAL_RESOURCE.asNode(),
                         NodeFactory.createURI(defaultId))));
+    }
+
+    @Test
+    public void shouldReturnCorrectInteractionModel() {
+        final String interactionModel = timeMap.getInteractionModel();
+        assertEquals(RdfLexicon.CONTAINER.getURI(), interactionModel);
+    }
+
+    @Test
+    public void shouldListMementoDatetimes() throws Exception {
+        final var version1 = instant("20200225131900");
+        final var version2 = instant("20200226131900");
+
+        mockListVersions(defaultId, version1, version2);
+
+        final List<Instant> mementoDatetimes = timeMap.listMementoDatetimes();
+        assertEquals(2, mementoDatetimes.size());
+        assertTrue(mementoDatetimes.contains(version1));
+        assertTrue(mementoDatetimes.contains(version2));
+    }
+
+    @Test
+    public void shouldNotBeOriginalResource() {
+        assertFalse(timeMap.isOriginalResource());
+    }
+
+    @Test
+    public void shouldReturnSameTimeMapWhenGettingTimeMap() {
+        assertSame(timeMap, timeMap.getTimeMap());
+    }
+
+    @Test
+    public void shouldReturnCorrectSystemTypesForRdf() {
+        final List<URI> rdfTypes = timeMap.getSystemTypes(true);
+
+        // Check that RDF types contain expected values
+        assertTrue(rdfTypes.contains(URI.create(RdfLexicon.RESOURCE.getURI())));
+        assertTrue(rdfTypes.contains(URI.create(RdfLexicon.CONTAINER.getURI())));
+        assertTrue(rdfTypes.contains(URI.create(RdfLexicon.RDF_SOURCE.getURI())));
+
+        assertEquals(3, rdfTypes.size());
+    }
+
+    @Test
+    public void shouldReturnCorrectSystemTypesForNonRdf() {
+        final List<URI> headerTypes = timeMap.getSystemTypes(false);
+        // Header types should include all RDF types plus timemap type
+        assertTrue(headerTypes.contains(URI.create(RdfLexicon.RESOURCE.getURI())));
+        assertTrue(headerTypes.contains(URI.create(RdfLexicon.CONTAINER.getURI())));
+        assertTrue(headerTypes.contains(URI.create(RdfLexicon.RDF_SOURCE.getURI())));
+        assertTrue(headerTypes.contains(URI.create(RdfLexicon.VERSIONING_TIMEMAP.getURI())));
+
+        assertEquals(4, headerTypes.size());
+    }
+
+    @Test
+    public void shouldReturnEmptyUserTypes() {
+        final List<URI> userTypes = timeMap.getUserTypes();
+        assertTrue(userTypes.isEmpty());
+    }
+
+    @Test
+    public void shouldReturnChildrenWithRecursiveParameter() throws PersistentStorageException, PathNotFoundException {
+        final var version1 = instant("20200225131900");
+        final var version2 = instant("20200226131900");
+
+        mockListVersions(defaultId, version1, version2);
+
+        // Test with explicit recursive parameter
+        final var childrenWithExplicitTrue = timeMap.getChildren(true);
+        assertEquals(2, childrenWithExplicitTrue.count());
+
+        final var childrenWithExplicitFalse = timeMap.getChildren(false);
+        assertEquals(2, childrenWithExplicitFalse.count());
+    }
+
+    @Test
+    public void shouldThrowPathNotFoundRuntimeExceptionWhenMementoNotFound() throws Exception {
+        final var version1 = instant("20200225131900");
+
+        // Set up session to return a list with one version
+        when(session.listVersions(FedoraId.create(defaultId))).thenReturn(List.of(version1));
+
+        final FedoraId mementoID = FedoraId.create(defaultId, FCR_VERSIONS, instantStr(version1));
+
+        // Make the resource factory throw PathNotFoundException when trying to get this resource
+        when(resourceFactory.getResource(transaction, mementoID)).thenThrow(new PathNotFoundException("Not found"));
+
+        assertThrows(PathNotFoundRuntimeException.class, () -> timeMap.getChildren().collect(Collectors.toList()));
     }
 
     private List<FedoraResource> mockListVersions(final String id, final Instant... versions)

@@ -363,7 +363,8 @@ public class TransactionImpl implements Transaction {
         });
     }
 
-    private void updateState(final TransactionState newState) {
+    // protected for testing
+    protected void updateState(final TransactionState newState) {
         this.state = newState;
     }
 
