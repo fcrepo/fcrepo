@@ -10,7 +10,6 @@ import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -154,7 +153,7 @@ class BinaryImplTest {
         binary.setExternalHandling(PROXY);
         binary.setExternalUrl(testExternalFile.toUri().toString());
 
-        try (var binaryStream = binary.getContent()) {
+        try (final var binaryStream = binary.getContent()) {
             assertEquals(TEST_CONTENT, IOUtils.toString(binaryStream, StandardCharsets.UTF_8));
         }
     }
@@ -164,7 +163,7 @@ class BinaryImplTest {
         binary.setExternalHandling(REDIRECT);
         binary.setExternalUrl(testExternalFile.toUri().toString());
 
-        try (var binaryStream = binary.getContent()) {
+        try (final var binaryStream = binary.getContent()) {
             assertEquals(TEST_CONTENT, IOUtils.toString(binaryStream, StandardCharsets.UTF_8));
         }
     }
@@ -193,7 +192,7 @@ class BinaryImplTest {
         binary.setExternalHandling(PROXY);
         binary.setExternalUrl(testExternalFile.toUri().toString());
 
-        try (var inputStream = binary.getRange(2L, 10L)) {
+        try (final var inputStream = binary.getRange(2L, 10L)) {
             assertEquals("st conten", IOUtils.toString(inputStream, StandardCharsets.UTF_8));
         }
     }
