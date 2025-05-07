@@ -12,6 +12,8 @@ import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.config.SystemInfoConfig;
 import org.fcrepo.http.commons.responses.RdfNamespacedStream;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.search.api.PaginationInfo;
+import org.fcrepo.search.api.SearchResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,13 +26,18 @@ import org.mockito.stubbing.Answer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
@@ -38,6 +45,7 @@ import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.mock;
@@ -55,6 +63,8 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 public class SearchResultProviderTest {
 
     private final SearchResultProvider testProvider = new SearchResultProvider();
+
+    private SearchResult testData;
 
     @Mock
     private UriInfo mockUriInfo;
@@ -75,6 +85,10 @@ public class SearchResultProviderTest {
         final var base_uri = "http://localhost:8080/rest/";
         final URI baseUri = URI.create(base_uri);
         final UriBuilder baseUriBuilder = UriBuilder.fromUri(baseUri);
+        final List<Map<String, Object>> items = List.of(Map.of("foo","bar"));
+        final var pagination = new PaginationInfo(1, 0, 1);
+        testData = new SearchResult(items, pagination);
+
         when(mockUriInfo.getBaseUri()).thenReturn(baseUri);
         when(mockUriInfo.getBaseUriBuilder()).thenReturn(baseUriBuilder);
         when(mockSystemInfoConfig.getGitCommit()).thenReturn("some-commit");
@@ -134,6 +148,12 @@ public class SearchResultProviderTest {
                 return "I am pretending to merge a template for you.";
             }
         }).when(mockTemplate).merge(isA(Context.class), isA(Writer.class));
+        testProvider.writeTo(testData, RdfNamespacedStream.class, mock(Type.class),
+                new Annotation[]{}, MediaType.valueOf("text/html"),
+                new MultivaluedHashMap<>(), outStream);
+        final byte[] results = outStream.toByteArray();
+        assertTrue(results.length > 0, "Got no output from serialization!");
+
     }
 
 }
