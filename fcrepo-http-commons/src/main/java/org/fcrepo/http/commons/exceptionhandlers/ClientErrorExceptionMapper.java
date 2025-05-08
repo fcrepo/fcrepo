@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 
 import static javax.ws.rs.core.Response.fromResponse;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

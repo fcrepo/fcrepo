@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.codec.Charsets;
+import java.nio.charset.StandardCharsets;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -114,7 +114,7 @@ public class FedoraTombstonesIT extends AbstractResourceIT {
     public void testDisallowedMethods() throws Exception {
         final String id = getRandomUniqueId();
         final HttpPut putMethod = putObjMethod(id);
-        final HttpEntity body = new StringEntity("<> <http://example.org#title> 'a title'", Charsets.UTF_8);
+        final HttpEntity body = new StringEntity("<> <http://example.org#title> 'a title'", StandardCharsets.UTF_8);
         putMethod.setEntity(body);
         putMethod.setHeader(CONTENT_TYPE, "text/turtle");
         assertEquals(CREATED.getStatusCode(), getStatus(putMethod));

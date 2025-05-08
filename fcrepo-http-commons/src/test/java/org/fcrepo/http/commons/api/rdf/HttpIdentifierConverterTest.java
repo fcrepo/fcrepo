@@ -322,6 +322,24 @@ public class HttpIdentifierConverterTest {
         assertEquals(expectedId, fedoraId);
     }
 
+    @Test
+    public void testTranslateInternalUri() {
+        final String testUri = "/some/uri";
+        assertEquals(uriBase + "/uri", converter.translateUri(testUri));
+    }
+
+    @Test
+    public void testTranslateExternalUri() {
+        final String testUri = "http://example.com/some/uri";
+        assertEquals(testUri, converter.translateUri(testUri));
+    }
+
+    @Test
+    public void testBuildHashUri() {
+        final String testUri = "/uri#hashuri";
+        assertEquals(uriBase + testUri, converter.toDomain(testUri));
+    }
+
     /**
      * Utility function to get a UUID.
      * @return a UUID.
