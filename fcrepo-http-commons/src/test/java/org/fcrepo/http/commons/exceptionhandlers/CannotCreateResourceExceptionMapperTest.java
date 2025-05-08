@@ -5,21 +5,22 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import java.net.URI;
-import javax.ws.rs.core.Link;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.api.exception.CannotCreateResourceException;
 
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
+import static org.fcrepo.http.commons.test.util.TestHelpers.setField;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImpl;
-import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import javax.servlet.ServletContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -33,25 +34,27 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class CannotCreateResourceExceptionMapperTest {
 
+    @Mock
     private UriInfo mockInfo;
 
+    @Mock
     private ServletContext mockContext;
+
+    private CannotCreateResourceExceptionMapper testObj;
 
     @BeforeEach
     public void setUp() {
+        testObj = new CannotCreateResourceExceptionMapper();
         this.mockInfo = getUriInfoImpl();
         this.mockContext = getServletContextImpl();
+        setField(testObj, "uriInfo", mockInfo);
+        setField(testObj, "context", mockContext);
     }
 
     @Test
-    public void testBuildConstraintLink() {
-        final URI testLink = URI.create("http://localhost/fcrepo/static/constraints/CannotCreateResourceException.rdf");
-
-        final CannotCreateResourceException ex = new CannotCreateResourceException("This is an error.");
-
-        final Link link = CannotCreateResourceExceptionMapper.buildConstraintLink(ex, mockContext, mockInfo);
-
-        assertEquals(link.getRel(), CONSTRAINED_BY.getURI());
-        assertEquals(link.getUri(), testLink);
+    public void testToResponse() {
+            final CannotCreateResourceException input = new CannotCreateResourceException("Exception Message");
+            final Response actual = testObj.toResponse(input);
+            assertEquals(BAD_REQUEST.getStatusCode(), actual.getStatus());
     }
 }
