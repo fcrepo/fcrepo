@@ -10,7 +10,6 @@ import org.fcrepo.kernel.api.exception.GhostNodeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 
 import static javax.ws.rs.core.Response.Status.CONFLICT;
@@ -23,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class GhostNodeExceptionMapperTest {
 
-    @Inject
     private FedoraPropsConfig config;
 
     private GhostNodeExceptionMapper testObj;
