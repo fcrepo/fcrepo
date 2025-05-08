@@ -10,13 +10,8 @@
   <artifactId>fcrepo-common</artifactId>
   <name>Fedora Repository Common Module</name>
   <description>Common, generally useful utilities</description>
-  <packaging>bundle</packaging>
-  <properties>
-    <osgi.export.packages>
-      org.fcrepo.common.*;version=${project.version}
-    </osgi.export.packages>
-  </properties>
-  
+  <packaging>jar</packaging>
+
   <dependencies>
     <dependency>
       <groupId>org.slf4j</groupId>
@@ -52,10 +47,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
