@@ -8,39 +8,7 @@
   <artifactId>fcrepo-http-commons</artifactId>
   <name>Fedora Repository HTTP Commons Module</name>
   <description>The Fedora Commons repository HTTP commons module: Provides HTTP (JAX-RS) resources and helpers for use in assembling HTTP APIs over the Fedora Commons repository framework.</description>
-  <packaging>bundle</packaging>
-
-  <properties>
-    <osgi.import.packages>
-      org.fcrepo.kernel.api
-
-      javax.annotation,
-      javax.inject,
-      javax.servlet.http,
-      javax.ws.rs.*,
-      
-      com.fasterxml.jackson.core,
-      org.apache.jena.*,
-      com.google.common.*,
-      org.apache.jena.riot,
-      org.apache.commons.codec.*,
-      org.apache.commons.io.*,
-      org.apache.commons.lang3,
-      org.glassfish.hk2.*,
-      org.glassfish.jersey.*,
-      org.jvnet.hk2.annotations,
-
-      org.springframework.beans.*,
-      org.springframework.context,
-      org.springframework.stereotype,
-      org.springframework.web.context,
-
-      *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.http.commons.*;version=${project.version},
-    </osgi.export.packages>
-  </properties>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
@@ -328,10 +296,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
       <plugin>
         <artifactId>maven-jar-plugin</artifactId>
         <executions>

@@ -10,17 +10,7 @@
   <artifactId>fcrepo-persistence-api</artifactId>
   <name>Fedora Repository Persistence API Module</name>
   <description>Provides a common interface for persistence operations</description>
-  <packaging>bundle</packaging>
-  <properties>
-    <osgi.import.packages>
-      org.apache.jena.*,
-
-      *   
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.persistence.api.*;version=${project.version}
-    </osgi.export.packages>
-  </properties>
+  <packaging>jar</packaging>
   
   <dependencies>
     <dependency>
@@ -38,10 +28,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>

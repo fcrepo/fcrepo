@@ -13,17 +13,7 @@
     it possible to define fine-grained repository access controls on individual resources or
     classes of resources to specific users and/or groups.
   </description>
-  <packaging>bundle</packaging>
-
-  <properties>
-    <!-- OSGi -->
-    <osgi.import.packages>
-      *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.auth.webac;version=${project.version}
-    </osgi.export.packages>
-  </properties>
+  <packaging>jar</packaging>
 
   <repositories>
     <repository>
@@ -249,11 +239,6 @@
       <plugin>
         <groupId>com.github.github</groupId>
         <artifactId>site-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
 
       <plugin>

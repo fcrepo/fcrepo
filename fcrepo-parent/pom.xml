@@ -25,10 +25,6 @@
     <!-- scm, site distribution names -->
     <project_name>${project.artifactId}</project_name>
     <project_organization>fcrepo</project_organization>
-    <!-- OSGi -->
-    <osgi.import.packages />
-    <osgi.private.packages />
-    <osgi.export.packages />
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <!-- plugin versions -->
@@ -199,25 +195,6 @@
               </goals>
             </execution>
           </executions>
-        </plugin>
-
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>${bundle.plugin.version}</version>
-          <extensions>true</extensions>
-          <configuration>
-            <instructions>
-              <Bundle-Name>${project.artifactId}</Bundle-Name>
-              <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-              <Export-Package>${osgi.export.packages}</Export-Package>
-              <Import-Package>${osgi.import.packages}</Import-Package>
-              <Private-Package>${osgi.private.packages}</Private-Package>
-              <Implementation-Title>${project.name}</Implementation-Title>
-              <Implementation-Version>${project.version}</Implementation-Version>
-              <Embed-Transitive>true</Embed-Transitive>
-            </instructions>
-          </configuration>
         </plugin>
 
         <plugin>

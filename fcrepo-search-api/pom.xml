@@ -9,26 +9,7 @@
   <name>Fedora Repository Search API</name>
   <description>Fedora Repository Search API interfaces and classes</description>
 
-  <packaging>bundle</packaging>
-
-  <properties>
-    <osgi.import.packages>
-      javax.inject,
-      *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.search.api.*;version=${project.version}
-    </osgi.export.packages>
-  </properties>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
