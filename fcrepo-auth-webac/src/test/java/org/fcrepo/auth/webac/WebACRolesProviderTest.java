@@ -58,9 +58,7 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 
 import org.apache.jena.vocabulary.RDF;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -95,9 +93,6 @@ public class WebACRolesProviderTest {
 
     @Mock
     private FedoraResource mockAgentClassResource;
-
-    @Rule
-    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
 
     private AuthPropsConfig propsConfig;
 

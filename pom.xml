@@ -37,6 +37,7 @@
     <flyway.test.version>9.5.0</flyway.test.version>
     <guava.version>32.0.0-jre</guava.version>
     <h2database.version>2.2.220</h2database.version>
+    <hamcrest.version>3.0</hamcrest.version>
     <hikari.version>5.0.0</hikari.version>
     <hk2.version>2.6.1</hk2.version>
     <htmlunit.version>2.53.0</htmlunit.version>
@@ -74,11 +75,10 @@
     <mysql.version>8.0.28</mysql.version>
     <mariadb.version>2.7.4</mariadb.version>
     <!-- test gear -->
-    <awaitility.version>4.1.0</awaitility.version>
+    <awaitility.version>4.3.0</awaitility.version>
     <grizzly.version>2.4.4</grizzly.version>
     <junit.version>4.13.2</junit.version>
     <junit5.version>5.11.4</junit5.version>
-    <system-rules.version>1.19.0</system-rules.version>
     <mockito.version>5.17.0</mockito.version>
     <mockito.junit5.version>5.17.0</mockito.junit5.version>
     <!-- fcrepo5-specific plugins -->
@@ -623,14 +623,8 @@
       </dependency>
       <dependency>
         <groupId>org.hamcrest</groupId>
-        <artifactId>hamcrest-all</artifactId>
-        <version>1.3</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.github.stefanbirkner</groupId>
-        <artifactId>system-rules</artifactId>
-        <version>${system-rules.version}</version>
+        <artifactId>hamcrest</artifactId>
+        <version>${hamcrest.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -650,14 +644,6 @@
         <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
         <scope>test</scope>
-        <exclusions>
-          <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls
-            in the more recent 1.3 -->
-          <exclusion>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
