@@ -250,6 +250,14 @@
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>
 
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- this is needed if the module depends on mockito starting in Java 21. -->
+          <argLine>${argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+        </configuration>
+      </plugin>
+
     </plugins>
   </build>
 

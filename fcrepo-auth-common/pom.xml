@@ -190,7 +190,7 @@
           <!--Singleton ServletContainerAuthenticationProvider-->
           <reuseForks>false</reuseForks>
         </configuration>
-      </plugin>   
+      </plugin>
     </plugins>
   </build>
 </project>
