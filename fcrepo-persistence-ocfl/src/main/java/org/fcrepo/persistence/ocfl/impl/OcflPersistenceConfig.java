@@ -131,6 +131,10 @@ public class OcflPersistenceConfig {
             builder.endpointOverride(URI.create(ocflPropsConfig.getS3Endpoint()));
         }
 
+        if (ocflPropsConfig.isPathStyleAccessEnabled()) {
+            builder.forcePathStyle(true);
+        }
+
         if (StringUtils.isNoneBlank(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())) {
             builder.credentialsProvider(StaticCredentialsProvider.create(
                     AwsBasicCredentials.create(ocflPropsConfig.getAwsAccessKey(), ocflPropsConfig.getAwsSecretKey())));
