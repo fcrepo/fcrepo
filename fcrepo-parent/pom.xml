@@ -42,7 +42,7 @@
     <dependency.plugin.version>3.2.0</dependency.plugin.version>
     <deploy.plugin.version>2.8.2</deploy.plugin.version>
     <doxia-markdown.plugin.version>1.8</doxia-markdown.plugin.version>
-    <failsafe.plugin.version>3.0.0-M3</failsafe.plugin.version>
+    <failsafe.plugin.version>3.5.3</failsafe.plugin.version>
     <fcrepo-build-tools.version>6.0.0</fcrepo-build-tools.version>
     <github-site.plugin.version>0.12</github-site.plugin.version>
     <gpg.plugin.version>3.0.1</gpg.plugin.version>
@@ -60,7 +60,7 @@
     <scm-provider-gitexe.plugin.version>1.12.0</scm-provider-gitexe.plugin.version>
     <site.plugin.version>3.9.1</site.plugin.version>
     <source.plugin.version>3.2.1</source.plugin.version>
-    <surefire.plugin.version>2.22.2</surefire.plugin.version>
+    <surefire.plugin.version>3.5.3</surefire.plugin.version>
     <versions.plugin.version>2.8.1</versions.plugin.version>
     <!-- jacoco and sonar configuration -->
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
@@ -69,6 +69,8 @@
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
     <sonatype.host>s01.oss.sonatype.org</sonatype.host>
+    <!-- to allow argLine late replacement in surefire -->
+    <argLine />
   </properties>
 
   <build>
@@ -357,7 +359,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${surefire.plugin.version}</version>
           <configuration>
-            <argLine>-Xms512m -Xmx1024m</argLine>
+            <argLine>${argLine} -Xms512m -Xmx1024m</argLine>
           </configuration>
         </plugin>
 
