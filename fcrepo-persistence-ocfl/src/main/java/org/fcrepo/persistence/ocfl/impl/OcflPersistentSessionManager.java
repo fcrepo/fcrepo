@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;

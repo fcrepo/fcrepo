@@ -79,10 +79,10 @@
       <artifactId>jetty-webapp</artifactId>
       <version>${jetty.version}</version>
       <exclusions>
-        <exclusion>
+        <!--<exclusion>
           <groupId>org.eclipse.jetty.orbit</groupId>
           <artifactId>javax.servlet</artifactId>
-        </exclusion>
+        </exclusion>-->
       </exclusions>
     </dependency>
 
@@ -104,7 +104,7 @@
 
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring5</artifactId>
+      <artifactId>jersey-spring6</artifactId>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -243,8 +243,8 @@
       gear. Otherwise it will get loaded during test phase, but because this is
       just an API, the tests will not be able to execute. -->
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
       <scope>provided</scope>
     </dependency>
 

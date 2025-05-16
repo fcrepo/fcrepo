@@ -57,7 +57,7 @@ import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collection;

@@ -19,8 +19,8 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 
 import io.ocfl.api.OcflRepository;
 import org.apache.jena.rdf.model.Resource;

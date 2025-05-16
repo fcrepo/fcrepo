@@ -119,9 +119,8 @@
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring5</artifactId>
+      <artifactId>jersey-spring6</artifactId>
       <scope>test</scope>
-      <version>${jersey.version}</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
@@ -131,6 +130,13 @@
       <groupId>org.glassfish.hk2</groupId>
       <artifactId>hk2-api</artifactId>
       <version>${hk2.version}</version>
+      <exclusions>
+        <exclusion>
+          <!-- comes in with jersey -->
+          <groupId>jakarta.annotation</groupId>
+          <artifactId>jakarta.annotation-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
@@ -172,8 +178,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.velocity</groupId>
@@ -186,13 +193,13 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
     </dependency>
 
     <dependency>
@@ -233,10 +240,6 @@
         <exclusion>
           <groupId>org.apache.struts</groupId>
           <artifactId>struts-tiles</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>javax.servlet</groupId>
-          <artifactId>servlet-api</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -281,8 +284,8 @@
     </dependency>
     <!--  modules needed for Java 11 support EE modules. -->
     <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
     </dependency>
     <dependency>
       <groupId>com.sun.xml.bind</groupId>

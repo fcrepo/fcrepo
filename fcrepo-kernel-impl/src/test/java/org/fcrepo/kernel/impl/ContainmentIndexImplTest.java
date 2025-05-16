@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;

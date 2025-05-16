@@ -92,7 +92,7 @@ public class NonRdfSourceDescriptionImpl extends FedoraResourceImpl implements N
         final Node describedID = createURI(this.getDescribedResource().getId());
         final Stream<Triple> triples = super.getTriples().map(t -> {
             if (t.getSubject().hasURI(this.getId())) {
-                return new Triple(describedID, t.getPredicate(), t.getObject());
+                return Triple.create(describedID, t.getPredicate(), t.getObject());
             } else {
                 return t;
             }

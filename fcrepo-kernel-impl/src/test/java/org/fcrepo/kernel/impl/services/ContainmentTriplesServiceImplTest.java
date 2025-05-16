@@ -17,7 +17,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import java.time.Instant;
 import java.util.UUID;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;

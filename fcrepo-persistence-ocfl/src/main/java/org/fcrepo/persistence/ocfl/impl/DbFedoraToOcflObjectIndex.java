@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;

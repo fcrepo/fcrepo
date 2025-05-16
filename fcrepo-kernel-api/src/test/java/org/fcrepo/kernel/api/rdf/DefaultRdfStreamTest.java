@@ -6,10 +6,10 @@
 package org.fcrepo.kernel.api.rdf;
 
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
 import static java.util.stream.Stream.of;
 
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
@@ -49,27 +49,27 @@ public class DefaultRdfStreamTest extends WrappingStreamTest {
     @Override
     protected WrappingStream<Triple> generateFloatStream() {
         return new DefaultRdfStream(createURI("subject"), Stream.of(
-                new Triple(subject, predicate, objectFloat1),
-                new Triple(subject, predicate, objectFloat2),
-                new Triple(subject, predicate, objectFloat3)
+                Triple.create(subject, predicate, objectFloat1),
+                Triple.create(subject, predicate, objectFloat2),
+                Triple.create(subject, predicate, objectFloat3)
         ));
     }
 
     @Override
     protected WrappingStream<Triple> generateTextStream() {
         return new DefaultRdfStream(createURI("subject"), Stream.of(
-                new Triple(subject, predicate, objectA),
-                new Triple(subject, predicate, objectB),
-                new Triple(subject, predicate, objectC)
+                Triple.create(subject, predicate, objectA),
+                Triple.create(subject, predicate, objectB),
+                Triple.create(subject, predicate, objectC)
         ));
     }
 
     @Override
     protected WrappingStream<Triple> generateIntStream() {
         return new DefaultRdfStream(createURI("subject"), Stream.of(
-                new Triple(subject, predicate, objectInt1),
-                new Triple(subject, predicate, objectInt2),
-                new Triple(subject, predicate, objectInt3)
+                Triple.create(subject, predicate, objectInt1),
+                Triple.create(subject, predicate, objectInt2),
+                Triple.create(subject, predicate, objectInt3)
         ));
     }
 
@@ -78,7 +78,7 @@ public class DefaultRdfStreamTest extends WrappingStreamTest {
         final Node subject = createURI("subject");
         try (final RdfStream stream = new DefaultRdfStream(subject, getTriples(subject).stream())) {
 
-            final List<String> objs = stream.map(Triple::getObject).map(Node::getURI).collect(toList());
+            final List<String> objs = stream.map(Triple::getObject).map(Node::getURI).toList();
 
             assertEquals(6, objs.size());
             assertEquals("obj1", objs.get(0));
@@ -95,7 +95,7 @@ public class DefaultRdfStreamTest extends WrappingStreamTest {
             .flatMap(x -> new DefaultRdfStream(x, getTriples(x).stream()))
             .map(Triple::getObject)
             .map(Node::getURI)
-            .collect(toList());
+            .toList();
 
         assertEquals(18, objs.size());
         assertEquals("obj1", objs.get(0));
@@ -106,12 +106,12 @@ public class DefaultRdfStreamTest extends WrappingStreamTest {
         final Node prop1 = createURI("prop1");
         final Node prop2 = createURI("prop2");
         return asList(
-                new Triple(subject, prop1, createURI("obj1")),
-                new Triple(subject, prop1, createURI("obj2")),
-                new Triple(subject, prop1, createURI("obj3")),
-                new Triple(subject, prop2, createURI("obj1")),
-                new Triple(subject, prop2, createURI("obj2")),
-                new Triple(subject, prop2, createURI("obj3")));
+                Triple.create(subject, prop1, createURI("obj1")),
+                Triple.create(subject, prop1, createURI("obj2")),
+                Triple.create(subject, prop1, createURI("obj3")),
+                Triple.create(subject, prop2, createURI("obj1")),
+                Triple.create(subject, prop2, createURI("obj2")),
+                Triple.create(subject, prop2, createURI("obj3")));
     }
 
     @Test
@@ -127,14 +127,15 @@ public class DefaultRdfStreamTest extends WrappingStreamTest {
         model.add(new StatementImpl(subject, RDF.type, createResource("http://example.org/Type")));
         try (final var stream = DefaultRdfStream.fromModel(subject.asNode(), model)) {
             assertEquals(subject.asNode(), stream.topic());
-            final List<Triple> objects = stream.collect(toList());
+            final List<Triple> objects = stream.toList();
             assertEquals(3, objects.size());
-            assertTrue(objects.contains(new Triple(subject.asNode(), RDF.type.asNode(), createURI("http://example.org/Type"))));
-            assertTrue(objects.contains(new Triple(subject.asNode(), CREATED_BY.asNode(), createLiteral("test-user"))));
-            assertTrue(objects.contains(new Triple(
+            assertTrue(objects.contains(Triple.create(subject.asNode(), RDF.type.asNode(), createURI("http://example.org/Type"))));
+            assertTrue(objects.contains(Triple.create(subject.asNode(), CREATED_BY.asNode(),
+                    createLiteralString("test-user"))));
+            assertTrue(objects.contains(Triple.create(
                     subject.asNode(),
                     CREATED_DATE.asNode(),
-                    createLiteral("2023-10-01T00:00:00Z", XSDDatatype.XSDdateTime)
+                    createLiteralByValue("2023-10-01T00:00:00Z", XSDDatatype.XSDdateTime)
             )));
         }
     }
@@ -197,8 +198,8 @@ public class DefaultRdfStreamTest extends WrappingStreamTest {
         try (final var stream = generateTextStream()) {
             final List<String> peeks = new ArrayList<>();
             final List<Triple> peeked = stream.peek(
-                    triple -> peeks.add(triple.getObject().getLiteral().getValue().toString()))
-                    .collect(toList());
+                    triple -> peeks.add(triple.getObject().getLiteralValue().toString()))
+                    .toList();
             assertEquals(3, peeked.size());
             assertEquals(3, peeks.size());
             assertEquals("a", peeks.get(0));

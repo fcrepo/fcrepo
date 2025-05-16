@@ -10,10 +10,10 @@ import io.micrometer.jersey2.server.DefaultJerseyTagsProvider;
 import io.micrometer.jersey2.server.MetricsApplicationEventListener;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import javax.servlet.ServletContext;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Feature;
-import javax.ws.rs.core.FeatureContext;
+import jakarta.servlet.ServletContext;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Feature;
+import jakarta.ws.rs.core.FeatureContext;
 
 /**
  * Enables Micrometer metrics on Jersey APIs (still must be annotated with @Timed)

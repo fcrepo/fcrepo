@@ -6,7 +6,7 @@
 package org.fcrepo.kernel.api.utils;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.vocabulary.RDF.Init.type;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
@@ -139,7 +139,7 @@ public class RelaxedPropertiesHelper {
      * @param triple the triple to check.
      */
     public static void checkTripleForDisallowed(final Triple triple) {
-        if (triple.getPredicate().equals(type().asNode()) && !triple.getObject().isVariable() &&
+        if (triple.getPredicate().equals(type.asNode()) && !triple.getObject().isVariable() &&
                 !triple.getObject().isURI()) {
             // The object of a rdf:type triple is not a variable and not a URI.
             throw new MalformedRdfException(
@@ -159,15 +159,20 @@ public class RelaxedPropertiesHelper {
             }
             throw new ServerManagedPropertyException(message);
         } else if (triple.getPredicate().toString().equals(RdfLexicon.HAS_MIME_TYPE.getURI())) {
-            final String mimetype = triple.getObject().toString(false);
-            if (!mimetype.startsWith("?")) {
+            final var object = triple.getObject();
+            if (object.isLiteral() || object.isURI()) {
+                final String mimetype;
+                if (object.isURI()) {
+                    mimetype = object.getURI();
+                } else {
+                    mimetype = object.getLiteralValue().toString();
+                }
                 try {
                     MediaType.parse(mimetype);
                 } catch (final Exception ex) {
                     throw new MalformedRdfException("Invalid value for '" + RdfLexicon.HAS_MIME_TYPE +
                             "' encountered : " + mimetype, ex);
                 }
-
             }
         }
     }
