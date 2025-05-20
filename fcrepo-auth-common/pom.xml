@@ -8,19 +8,7 @@
   <artifactId>fcrepo-auth-common</artifactId>
   <name>Fedora Repository Authorization Commons Module</name>
   <description>Provides unified policy enforcement points for various access control implementations.</description>
-  <packaging>bundle</packaging>
-
-  <properties>
-    <osgi.import.packages>
-      javax.servlet.http,
-      
-
-      *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.auth.common;version=${project.version}
-    </osgi.export.packages>
-  </properties>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
@@ -203,10 +191,6 @@
           <reuseForks>false</reuseForks>
         </configuration>
       </plugin>   
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
     </plugins>
   </build>
 </project>
