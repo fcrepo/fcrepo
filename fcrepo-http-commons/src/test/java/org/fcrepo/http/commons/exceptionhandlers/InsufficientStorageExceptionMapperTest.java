@@ -7,7 +7,7 @@ package org.fcrepo.http.commons.exceptionhandlers;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.fcrepo.kernel.api.exception.InsufficientStorageException;
 

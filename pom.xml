@@ -32,6 +32,7 @@
     <commons-collections.version>3.2.2</commons-collections.version>
     <commons-io.version>2.19.0</commons-io.version>
     <commons-lang.version>3.17.0</commons-lang.version>
+    <commons-text.version>1.13.1</commons-text.version>
     <failsafe.version>2.4.4</failsafe.version>
     <flyway.version>11.8.2</flyway.version>
     <flyway.test.version>10.0.0</flyway.test.version>
@@ -39,7 +40,7 @@
     <h2database.version>2.2.220</h2database.version>
     <hamcrest.version>3.0</hamcrest.version>
     <hikari.version>5.0.0</hikari.version>
-    <hk2.version>4.0.0-M3</hk2.version>
+    <hk2.version>3.1.1</hk2.version>
     <htmlunit.version>2.53.0</htmlunit.version>
     <httpclient.version>4.5.14</httpclient.version>
     <httpmime.version>4.5.14</httpmime.version>
@@ -53,25 +54,27 @@
     <javax.annotation.version>1.3.2</javax.annotation.version>
     <javaee-api.version>8.0.1</javaee-api.version>
     <javaee.xml.version>2.3.1</javaee.xml.version>
-    <jaxb.core.version>2.3.0.1</jaxb.core.version>
-    <jaxb.impl.version>2.3.1</jaxb.impl.version>
+    <jaxb.version>4.0.5</jaxb.version>
     <jackson2.version>2.15.0</jackson2.version>
     <jackson2.databind.version>2.15.0</jackson2.databind.version>
     <jboss-logging.version>3.4.2.Final</jboss-logging.version>
-    <jena.version>5.4.0</jena.version>
-    <jersey.version>4.0.0-M2</jersey.version>
-    <jetty.version>9.4.44.v20210927</jetty.version>
+    <jena.version>4.10.0</jena.version>
+    <jersey.version>3.1.10</jersey.version>
+    <jetty.version>11.0.25</jetty.version>
     <jgroups.version>5.1.9.Final</jgroups.version>
     <jsonld.version>0.13.6</jsonld.version>
     <logback.version>1.4.14</logback.version>
-    <micrometer.version>1.7.4</micrometer.version>
+    <micrometer.version>1.15.0</micrometer.version>
+    <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
     <netty.version>4.1.68.Final</netty.version>
     <ocfl-java.version>2.2.1</ocfl-java.version>
-    <prometheus.version>0.10.0</prometheus.version>
+    <prometheus.version>1.3.6</prometheus.version>
+    <prometheus.jmx.version>1.0.1</prometheus.jmx.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
-    <shiro.version>1.13.0</shiro.version>
+    <shiro.version>2.0.4</shiro.version>
     <slf4j.version>2.0.17</slf4j.version>
     <spring.version>6.2.7</spring.version>
+    <titanium.version>1.6.0</titanium.version>
     <xerces.version>2.12.2</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
@@ -87,7 +90,7 @@
     <mockito.version>5.17.0</mockito.version>
     <mockito.junit5.version>5.17.0</mockito.junit5.version>
     <!-- fcrepo5-specific plugins -->
-    <enforcer.plugin.version>3.0.0</enforcer.plugin.version>
+    <enforcer.plugin.version>3.4.1</enforcer.plugin.version>
     <war.plugin.version>3.3.2</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
     <fcrepo.test.context.path />
@@ -141,6 +144,34 @@
             <groupId>jakarta.activation</groupId>
             <artifactId>jakarta.activation-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>jakarta.websocket</groupId>
+            <artifactId>jakarta.websocket-client-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jakarta.websocket</groupId>
+            <artifactId>jakarta.websocket-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jakarta.el</groupId>
+            <artifactId>jakarta.el-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jakarta.faces</groupId>
+            <artifactId>jakarta.faces-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jakarta.interceptor</groupId>
+            <artifactId>jakarta.interceptor-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.cdi-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>jakarta.enterprise</groupId>
+            <artifactId>jakarta.enterprise.lang-model</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <!--  modules needed for Java 11 support EE modules. -->
@@ -152,13 +183,19 @@
 	  <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-core</artifactId>
-        <version>${jaxb.core.version}</version>
+        <version>${jaxb.version}</version>
 	  </dependency>
-	  <dependency>
+      <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-impl</artifactId>
-        <version>${jaxb.impl.version}</version>
-         </dependency>
+        <version>${jaxb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>${jaxb.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>jakarta.annotation</groupId>
         <artifactId>jakarta.annotation-api</artifactId>
@@ -184,11 +221,45 @@
         <groupId>org.glassfish.jersey.ext</groupId>
         <artifactId>jersey-spring6</artifactId>
         <version>${jersey.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.glassfish.hk2.external</groupId>
+            <artifactId>aopalliance-repackaged</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>hk2-utils</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>hk2-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>hk2</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.glassfish.hk2.external</groupId>
-        <artifactId>jakarta.inject</artifactId>
-        <version>${jakarta.inject.version}</version>
+        <groupId>org.glassfish.jersey.media</groupId>
+        <artifactId>jersey-media-json-jackson</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <!-- define these versions to make the hk2 versions consistent -->
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2</artifactId>
+        <version>${hk2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2-locator</artifactId>
+        <version>${hk2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>spring-bridge</artifactId>
+        <version>${hk2.version}</version>
       </dependency>
       <dependency>
         <groupId>jakarta.servlet</groupId>
@@ -288,8 +359,57 @@
             <artifactId>log4j</artifactId>
           </exclusion>
           <exclusion>
-            <groupId>jakarta.servlet</groupId>
-            <artifactId>jakarta.servlet-api</artifactId>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.velocity</groupId>
+        <artifactId>velocity-tools</artifactId>
+        <version>2.0</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>dom4j</groupId>
+            <artifactId>dom4j</artifactId>
+          </exclusion>
+          <!-- velocity is already bringing in commons-collections-3.2.1, whereas velocity-tools
+            is bringing in 3.2 -->
+          <exclusion>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-digester</groupId>
+            <artifactId>commons-digester</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.struts</groupId>
+            <artifactId>struts-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.struts</groupId>
+            <artifactId>struts-taglib</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.struts</groupId>
+            <artifactId>struts-tiles</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -347,24 +467,21 @@
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
-        <artifactId>micrometer-jersey2</artifactId>
+        <artifactId>micrometer-registry-prometheus</artifactId>
         <version>${micrometer.version}</version>
         <exclusions>
-          <exclusion>
-            <groupId>org.glassfish.jersey.inject</groupId>
-            <artifactId>jersey-hk2</artifactId>
-          </exclusion>
+
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>io.micrometer</groupId>
-        <artifactId>micrometer-registry-prometheus</artifactId>
-        <version>${micrometer.version}</version>
+        <groupId>io.prometheus</groupId>
+        <artifactId>prometheus-metrics-core</artifactId>
+        <version>${prometheus.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient_servlet</artifactId>
-        <version>${prometheus.version}</version>
+        <groupId>org.glassfish.jersey.ext</groupId>
+        <artifactId>jersey-micrometer</artifactId>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>com.github.ben-manes.caffeine</groupId>
@@ -413,6 +530,14 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-commons</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-observation</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -423,6 +548,10 @@
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-observation</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -496,6 +625,11 @@
         <version>${commons-codec.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-text</artifactId>
+        <version>${commons-text.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.httpcomponents</groupId>
         <artifactId>httpcore</artifactId>
         <version>${httpcore.version}</version>
@@ -537,8 +671,8 @@
         <version>${mariadb.version}</version>
       </dependency>
       <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
         <version>${mysql.version}</version>
         <exclusions>
           <exclusion>
@@ -594,29 +728,10 @@
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-core</artifactId>
+        <artifactId>shiro-bom</artifactId>
         <version>${shiro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-spring</artifactId>
-        <version>${shiro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.servlet.jsp</groupId>
-            <artifactId>jsp-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.el</groupId>
-            <artifactId>el-api</artifactId>
-          </exclusion>
-        </exclusions>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
@@ -699,6 +814,11 @@
         <version>${grizzly.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.glassfish.jersey.containers</groupId>
+        <artifactId>jersey-container-grizzly2-http</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.glassfish.jersey.test-framework.providers</groupId>
         <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
         <version>${jersey.version}</version>
@@ -779,6 +899,11 @@
           <groupId>org.eclipse.jetty</groupId>
           <artifactId>jetty-maven-plugin</artifactId>
           <version>${jetty.version}</version>
+          <configuration>
+            <webApp>
+              <contextPath>/</contextPath>
+            </webApp>
+          </configuration>
         </plugin>
 
         <plugin>
@@ -843,7 +968,7 @@
             This line enables code-coverage. However, it also blows the build's permgen.
             Fix me!
           -->
-          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.unit.arg}</argLine>
+          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.unit.arg} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
         </configuration>
       </plugin>
 

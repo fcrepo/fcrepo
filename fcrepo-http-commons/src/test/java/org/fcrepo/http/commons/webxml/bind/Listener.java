@@ -7,15 +7,15 @@ package org.fcrepo.http.commons.webxml.bind;
 
 import java.util.Objects;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
  * <p>Listener class.</p>
  *
  * @author awoods
  */
-@XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
+@XmlRootElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
         name = "listener")
 public class Listener extends Displayable {
 
@@ -27,7 +27,7 @@ public class Listener extends Displayable {
         this.className = className;
     }
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "listener-class")
     String className;
 

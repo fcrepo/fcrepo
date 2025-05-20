@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX;
 import static com.google.common.collect.Lists.transform;
 import static java.util.UUID.randomUUID;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 

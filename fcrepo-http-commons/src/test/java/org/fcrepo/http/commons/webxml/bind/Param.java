@@ -7,9 +7,9 @@ package org.fcrepo.http.commons.webxml.bind;
 
 import java.util.Objects;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 
 /**
  * <p>Param class.</p>
@@ -19,11 +19,11 @@ import javax.xml.bind.annotation.XmlElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Param extends Describable {
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "param-name")
     String name;
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "param-value")
     String value;
 

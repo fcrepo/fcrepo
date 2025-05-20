@@ -5,12 +5,13 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
-import static javax.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
 
+import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
@@ -141,7 +142,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(stmtIt.hasNext());
             assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
-            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
         }
 
 
@@ -159,7 +160,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(stmtIt.hasNext());
             assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("BAD_CHECKSUM")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
-            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
         }
     }
 
@@ -180,7 +181,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(stmtIt.hasNext());
             assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
-            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteral("3", IntegerType)));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
         }
     }
 

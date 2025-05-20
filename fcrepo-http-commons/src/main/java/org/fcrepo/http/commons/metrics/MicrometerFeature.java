@@ -6,8 +6,8 @@
 package org.fcrepo.http.commons.metrics;
 
 import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.jersey2.server.DefaultJerseyTagsProvider;
-import io.micrometer.jersey2.server.MetricsApplicationEventListener;
+import org.glassfish.jersey.micrometer.server.DefaultJerseyTagsProvider;
+import org.glassfish.jersey.micrometer.server.MetricsApplicationEventListener;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import jakarta.servlet.ServletContext;

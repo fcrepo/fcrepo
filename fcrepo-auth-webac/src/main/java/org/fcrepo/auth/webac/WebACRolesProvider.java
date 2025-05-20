@@ -47,8 +47,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.kernel.api.Transaction;

@@ -31,24 +31,25 @@
     <build-helper.plugin.version>3.2.0</build-helper.plugin.version>
     <bundle.plugin.version>5.1.2</bundle.plugin.version>
     <changelog.plugin.version>2.3</changelog.plugin.version>
-    <checkstyle.plugin.version>3.1.2</checkstyle.plugin.version>
-    <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>
-    <clean.plugin.version>3.1.0</clean.plugin.version>
-    <compiler.plugin.version>3.8.1</compiler.plugin.version>
-    <dependency.plugin.version>3.2.0</dependency.plugin.version>
+    <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
+    <clean.plugin.version>3.4.1</clean.plugin.version>
+    <compiler.plugin.version>3.14.0</compiler.plugin.version>
+    <dependency.plugin.version>3.8.1</dependency.plugin.version>
     <deploy.plugin.version>2.8.2</deploy.plugin.version>
     <doxia-markdown.plugin.version>1.8</doxia-markdown.plugin.version>
+    <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>
     <failsafe.plugin.version>3.5.3</failsafe.plugin.version>
-    <fcrepo-build-tools.version>6.0.0</fcrepo-build-tools.version>
+    <fcrepo-build-tools.version>7.0.0-SNAPSHOT</fcrepo-build-tools.version>
     <github-site.plugin.version>0.12</github-site.plugin.version>
     <gpg.plugin.version>3.0.1</gpg.plugin.version>
     <install.plugin.version>2.5.2</install.plugin.version>
     <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
     <jar.plugin.version>3.2.0</jar.plugin.version>
-    <javadoc.plugin.version>3.3.1</javadoc.plugin.version>
+    <javadoc.plugin.version>3.11.2</javadoc.plugin.version>
     <jxr.plugin.version>3.1.1</jxr.plugin.version>
-    <license.plugin.version>4.1</license.plugin.version>
+    <license.plugin.version>5.0.0</license.plugin.version>
     <nexus-staging.plugin.version>1.6.8</nexus-staging.plugin.version>
+    <puppycrawl.checkstyle.version>10.14.1</puppycrawl.checkstyle.version>
     <project-info-reports.plugin.version>3.1.2</project-info-reports.plugin.version>
     <release.plugin.version>2.5.3</release.plugin.version>
     <remote-resources.plugin.version>1.7</remote-resources.plugin.version>
@@ -218,7 +219,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.34</version>
+              <version>${puppycrawl.checkstyle.version}</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -336,7 +337,7 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>${surefire.plugin.version}</version>
           <configuration>
-            <argLine>${argLine} -Xms512m -Xmx1024m</argLine>
+            <argLine>-Xms512m -Xmx1024m</argLine>
           </configuration>
         </plugin>
 

@@ -22,6 +22,7 @@
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
+    <exec.plugin.version>3.5.0</exec.plugin.version>
   </properties>
 
   <dependencies>
@@ -78,14 +79,7 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-webapp</artifactId>
       <version>${jetty.version}</version>
-      <exclusions>
-        <!--<exclusion>
-          <groupId>org.eclipse.jetty.orbit</groupId>
-          <artifactId>javax.servlet</artifactId>
-        </exclusion>-->
-      </exclusions>
     </dependency>
-
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlets</artifactId>
@@ -94,6 +88,11 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-deploy</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
       <version>${jetty.version}</version>
     </dependency>
     <dependency>
@@ -127,8 +126,8 @@
       <artifactId>mariadb-java-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -315,6 +314,7 @@
             <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
             <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
             <integration-test>true</integration-test>
+            <project.version>${project.version}</project.version>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -369,9 +369,10 @@
         </executions>
       </plugin>
 
-      <plugin>
+      <!--<plugin>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
+        <version>${jetty.version}</version>
         <configuration>
           <scanIntervalSeconds>2</scanIntervalSeconds>
           <stopKey>STOP</stopKey>
@@ -379,10 +380,15 @@
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
           <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
+          <jettyEnvXml>${project.build.directory}/test-classes/jetty-env.xml</jettyEnvXml>
           <systemProperties>
             <systemProperty>
               <name>fcrepo.home</name>
               <value>${project.build.directory}/fcrepo-home</value>
+            </systemProperty>
+            <systemProperty>
+              <name>jetty.users.file</name>
+              <value>${jetty.users.file}</value>
             </systemProperty>
           </systemProperties>
 
@@ -442,7 +448,7 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
+      </plugin>-->
 
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -468,6 +474,19 @@
         <configuration>
           <!-- this is needed if the module depends on mockito starting in Java 21. -->
           <argLine>${argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>${exec.plugin.version}</version>
+        <executions>
+          <execution>
+            <goals><goal>java</goal></goals>
+          </execution>
+        </executions>
+        <configuration>
+          <mainClass>org.fcrepo.utils.JettyDevLauncher</mainClass>
         </configuration>
       </plugin>
     </plugins>

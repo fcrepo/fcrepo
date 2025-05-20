@@ -9,7 +9,7 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Stream.of;
 
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteralString;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
@@ -131,7 +131,7 @@ public class DefaultRdfStreamTest extends WrappingStreamTest {
             assertEquals(3, objects.size());
             assertTrue(objects.contains(Triple.create(subject.asNode(), RDF.type.asNode(), createURI("http://example.org/Type"))));
             assertTrue(objects.contains(Triple.create(subject.asNode(), CREATED_BY.asNode(),
-                    createLiteralString("test-user"))));
+                    createLiteral("test-user"))));
             assertTrue(objects.contains(Triple.create(
                     subject.asNode(),
                     CREATED_DATE.asNode(),
