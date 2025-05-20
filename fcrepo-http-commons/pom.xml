@@ -47,10 +47,6 @@
       <type>pom</type>
     </dependency>
     <dependency>
-      <groupId>com.apicatalog</groupId>
-      <artifactId>titanium-json-ld</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-server</artifactId>
     </dependency>
@@ -290,13 +286,6 @@
           <excludes>
             <exclude>logback-test.xml</exclude>
           </excludes>
-        </configuration>
-      </plugin>
-      <plugin>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <!-- this is needed if the module depends on mockito starting in Java 21. -->
-          <argLine>${argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
         </configuration>
       </plugin>
     </plugins>
