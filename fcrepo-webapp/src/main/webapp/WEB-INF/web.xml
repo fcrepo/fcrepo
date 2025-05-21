@@ -126,4 +126,6 @@
     <realm-name>fcrepo</realm-name>
   </login-config>
 
+  <!-- Stops auto loading environment listeners on the context path -->
+  <absolute-ordering/>
 </web-app>

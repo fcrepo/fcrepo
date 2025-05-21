@@ -68,24 +68,22 @@
     <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
     </dependency>
-    <dependency>
+    <!--<dependency>
       <groupId>org.glassfish.grizzly</groupId>
       <artifactId>grizzly-http-server</artifactId>
-    </dependency>
+      <scope>test</scope>
+    </dependency>-->
     <dependency>
       <groupId>org.glassfish.grizzly</groupId>
       <artifactId>grizzly-http-servlet</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.test-framework.providers</groupId>
       <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-        </exclusion>
-      </exclusions>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -158,6 +156,7 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
@@ -167,6 +166,7 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>

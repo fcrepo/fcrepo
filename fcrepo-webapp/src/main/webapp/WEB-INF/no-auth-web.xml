@@ -65,4 +65,6 @@
     <url-pattern>/rest/*</url-pattern>
   </filter-mapping>
 
+    <!-- Stops auto loading environment listeners on the context path -->
+    <absolute-ordering/>
 </web-app>

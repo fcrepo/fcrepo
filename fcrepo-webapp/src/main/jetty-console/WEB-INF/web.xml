@@ -64,5 +64,5 @@
     <filter-name>repositoryInitializationFilter</filter-name>
     <url-pattern>/rest/*</url-pattern>
   </filter-mapping>
-
+  <absolute-ordering />
 </web-app>

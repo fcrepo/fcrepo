@@ -9,7 +9,6 @@ import static java.lang.Integer.MAX_VALUE;
 import static java.lang.Integer.parseInt;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.IOException;
 import java.util.Objects;
 
 import org.apache.http.auth.AuthScope;

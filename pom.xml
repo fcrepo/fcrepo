@@ -174,6 +174,17 @@
           </exclusion>
         </exclusions>
       </dependency>
+      <dependency>
+        <groupId>jakarta.annotation</groupId>
+        <artifactId>jakarta.annotation-api</artifactId>
+        <version>${jakarta.annotation.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>${jakarta.servlet.version}</version>
+        <scope>provided</scope>
+      </dependency>
       <!--  modules needed for Java 11 support EE modules. -->
       <dependency>
         <groupId>jakarta.xml.bind</groupId>
@@ -196,11 +207,7 @@
         <version>${jaxb.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>jakarta.annotation</groupId>
-        <artifactId>jakarta.annotation-api</artifactId>
-        <version>${jakarta.annotation.version}</version>
-      </dependency>
+
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-common</artifactId>
@@ -210,7 +217,16 @@
             <groupId>org.osgi</groupId>
             <artifactId>osgi.core</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>osgi-resource-locator</artifactId>
+          </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.inject</groupId>
+        <artifactId>jersey-hk2</artifactId>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
@@ -253,7 +269,17 @@
       </dependency>
       <dependency>
         <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2-api</artifactId>
+        <version>${hk2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
         <artifactId>hk2-locator</artifactId>
+        <version>${hk2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2-utils</artifactId>
         <version>${hk2.version}</version>
       </dependency>
       <dependency>
@@ -262,11 +288,11 @@
         <version>${hk2.version}</version>
       </dependency>
       <dependency>
-        <groupId>jakarta.servlet</groupId>
-        <artifactId>jakarta.servlet-api</artifactId>
-        <version>${jakarta.servlet.version}</version>
-        <scope>provided</scope>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>osgi-resource-locator</artifactId>
+        <version>3.0.0</version>
       </dependency>
+
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
@@ -469,9 +495,6 @@
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
         <version>${micrometer.version}</version>
-        <exclusions>
-
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>io.prometheus</groupId>
@@ -895,7 +918,7 @@
           </executions>
         </plugin>
 
-        <plugin>
+        <!--<plugin>
           <groupId>org.eclipse.jetty</groupId>
           <artifactId>jetty-maven-plugin</artifactId>
           <version>${jetty.version}</version>
@@ -904,7 +927,7 @@
               <contextPath>/</contextPath>
             </webApp>
           </configuration>
-        </plugin>
+        </plugin>-->
 
         <plugin>
           <groupId>io.github.git-commit-id</groupId>
@@ -1223,13 +1246,13 @@
               <skip>true</skip>
             </configuration>
           </plugin>
-          <plugin>
+          <!--<plugin>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>
-          </plugin>
+          </plugin>-->
         </plugins>
       </build>
     </profile>

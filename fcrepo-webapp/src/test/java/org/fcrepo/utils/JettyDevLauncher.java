@@ -1,3 +1,8 @@
+/*
+ * The contents of this file are subject to the license and copyright
+ * detailed in the LICENSE and NOTICE files at the root of the source
+ * tree.
+ */
 package org.fcrepo.utils;
 
 import com.google.common.base.Strings;
@@ -5,9 +10,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.xml.XmlConfiguration;
 
-import java.io.FileInputStream;
 import java.util.Objects;
-import java.util.Properties;
 
 import static java.lang.Integer.parseInt;
 import static org.eclipse.jetty.util.resource.Resource.newResource;
@@ -29,7 +32,7 @@ public class JettyDevLauncher {
     public void start(final int port) throws Exception {
         // Load jetty.xml configuration if present
         try (final var xml = newResource("src/test/resources/jetty-test.xml")) {
-            XmlConfiguration configuration = new XmlConfiguration(xml);
+            final XmlConfiguration configuration = new XmlConfiguration(xml);
             server = (Server) configuration.configure();
         }
 
@@ -41,7 +44,7 @@ public class JettyDevLauncher {
 
         try (final var envXml = newResource("src/test/resources/jetty-env.xml")) {
             // applies env config to explicitly configure the LoginService. (new in Jetty 10+)
-            XmlConfiguration envConfig = new XmlConfiguration(envXml);
+            final XmlConfiguration envConfig = new XmlConfiguration(envXml);
             envConfig.configure(webapp);
         }
 
