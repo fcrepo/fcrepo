@@ -18,9 +18,6 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.fcrepo.utils.JettyDevLauncher;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 
@@ -56,27 +53,9 @@ public abstract class AbstractResourceIT {
     protected static final String serverAddress = PROTOCOL + "://" + HOSTNAME + ":" +
             SERVER_PORT + CONTEXT_PATH + "rest/";
 
-    protected static JettyDevLauncher jetty;
-
-    @BeforeAll
-    public static void startServer() throws Exception {
-        // Set the system property so Jetty can resolve the users file
-        System.setProperty("jetty.users.file",
-                AbstractResourceIT.class.getClassLoader().getResource("jetty-users.properties").getFile());
-        jetty = new JettyDevLauncher();
-        jetty.start(SERVER_PORT);
-    }
-
-    @AfterAll
-    public static void stopServer() throws Exception {
-        if (jetty != null) {
-            jetty.stop();
-        }
-    }
-
     protected static final HttpClient client = createClient();
 
-    private static HttpClient createClient() {
+    protected static HttpClient createClient() {
         final Credentials credentials = new UsernamePasswordCredentials("fedoraAdmin", "fedoraAdmin");
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(AuthScope.ANY, credentials);

@@ -21,8 +21,8 @@
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
+    <fcrepo.home>${project.build.directory}/fcrepo-home</fcrepo.home>
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
-    <exec.plugin.version>3.5.0</exec.plugin.version>
   </properties>
 
   <dependencies>
@@ -330,6 +330,7 @@
             <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
             <integration-test>true</integration-test>
             <project.version>${project.version}</project.version>
+            <fcrepo.home>${fcrepo.home}</fcrepo.home>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -360,6 +361,10 @@
             <configuration>
               <properties>
                 <property>
+                  <name>fcrepo.dynamic.test.port</name>
+                  <value>${fcrepo.dynamic.test.port}</value>
+                </property>
+                <property>
                   <name>fcrepo.dynamic.jms.port</name>
                   <value>${fcrepo.dynamic.jms.port}</value>
                 </property>
@@ -369,14 +374,19 @@
                   <value>${fcrepo.dynamic.stomp.port}</value>
                 </property>
 
-                <systemProperty>
+                <property>
                   <name>fcrepo.home</name>
-                  <value>${project.build.directory}/fcrepo-home</value>
-                </systemProperty>
+                  <value>${fcrepo.home}</value>
+                </property>
 
                 <property>
                   <name>integration-test</name>
                   <value>true</value>
+                </property>
+
+                <property>
+                  <name>jetty.users.file</name>
+                  <value>${jetty.users.file}</value>
                 </property>
               </properties>
             </configuration>
@@ -384,22 +394,26 @@
         </executions>
       </plugin>
 
-      <!--<plugin>
+      <plugin>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
         <version>${jetty.version}</version>
         <configuration>
-          <scanIntervalSeconds>2</scanIntervalSeconds>
           <stopKey>STOP</stopKey>
+          <jettyXmls>
+            <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
+          </jettyXmls>
           <webApp>
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
-          <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
-          <jettyEnvXml>${project.build.directory}/test-classes/jetty-env.xml</jettyEnvXml>
           <systemProperties>
             <systemProperty>
+              <name>fcrepo.dynamic.test.port</name>
+              <value>${fcrepo.dynamic.test.port}</value>
+            </systemProperty>
+            <systemProperty>
               <name>fcrepo.home</name>
-              <value>${project.build.directory}/fcrepo-home</value>
+              <value>${fcrepo.home}</value>
             </systemProperty>
             <systemProperty>
               <name>jetty.users.file</name>
@@ -441,12 +455,17 @@
 
                 <systemProperty>
                   <name>fcrepo.home</name>
-                  <value>${project.build.directory}/fcrepo-home</value>
+                  <value>${fcrepo.home}</value>
                 </systemProperty>
 
                 <systemProperty>
                   <name>fcrepo.activemq.directory</name>
-                  <value>${project.build.directory}/active-mq</value>
+                  <value>${project.build.directory}/target/active-mq</value>
+                </systemProperty>
+
+                <systemProperty>
+                  <name>jetty.users.file</name>
+                  <value>${jetty.users.file}</value>
                 </systemProperty>
               </systemProperties>
 
@@ -463,7 +482,7 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>-->
+      </plugin>
 
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
@@ -482,19 +501,6 @@
           <doUpdate>false</doUpdate>
           <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
           <shortRevisionLength>8</shortRevisionLength>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>${exec.plugin.version}</version>
-        <executions>
-          <execution>
-            <goals><goal>java</goal></goals>
-          </execution>
-        </executions>
-        <configuration>
-          <mainClass>org.fcrepo.utils.JettyDevLauncher</mainClass>
         </configuration>
       </plugin>
     </plugins>

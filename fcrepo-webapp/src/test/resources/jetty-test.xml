@@ -27,7 +27,7 @@
       <Arg>
         <New id="LoginService" class="org.eclipse.jetty.security.HashLoginService">
           <Set name="name">fcrepo</Set>
-          <Set name="config">src/test/resources/jetty-users.properties</Set>
+          <Set name="config"><SystemProperty name="jetty.users.file" default="fcrepo-webapp/target/test-classes/jetty-users.properties"/></Set>
         </New>
       </Arg>
     </Call>
