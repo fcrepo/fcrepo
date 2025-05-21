@@ -50,6 +50,7 @@ import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -579,24 +580,31 @@ public class DbSearchIndexImpl implements SearchIndex {
     private Set<URI> insertRdfTypes(final List<URI> rdfTypes) {
         final var addTypes = new HashSet<URI>();
 
-        rdfTypes.stream()
+        final List<URI> types = new ArrayList<>();
+        final MapSqlParameterSource[] params = rdfTypes.stream()
                 .filter(rdfType -> !rdfTypeIdCache.containsKey(rdfType))
-                .forEach(rdfType -> {
-                    try {
-                        final var params = new MapSqlParameterSource();
-                        params.addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
-                        if (isPostgres()) {
-                            // weirdly, postgres spoils the entire tx on duplicate keys and must be handled differently
-                            jdbcTemplate.update(INSERT_RDF_TYPE_POSTGRES, params);
-                        } else {
-                            jdbcTemplate.update(INSERT_RDF_TYPE, params);
-                        }
+                .map(r -> {
+                    types.add(r);
+                    return new MapSqlParameterSource().addValue(RDF_TYPE_URI_PARAM, r.toString());
+                })
+                .toArray(MapSqlParameterSource[]::new);
 
-                        addTypes.add(rdfType);
-                    } catch (DuplicateKeyException e) {
-                        // ignore duplicate keys
-                    }
-                });
+        try {
+            if (isPostgres()) {
+                // weirdly, postgres spoils the entire tx on duplicate keys and must be handled differently
+                jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_POSTGRES, params);
+            } else {
+                jdbcTemplate.batchUpdate(INSERT_RDF_TYPE, params);
+            }
+
+            addTypes.addAll(types);
+
+        } catch (final DuplicateKeyException e) {
+            // ignore duplicate keys
+        } catch (final CannotAcquireLockException e) {
+            // if we can't get a lock
+            throw new RepositoryRuntimeException("Failed to add RDF type(s) to search index", e);
+        }
 
         return addTypes;
     }

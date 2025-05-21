@@ -365,7 +365,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     private void handleInsertException(final FedoraId fedoraId, final Exception e) {
-        if (e.getMessage().contains("too long for")) {
+        if (e.getMessage().contains("too long for") || e.getCause().getMessage().contains("too long for")) {
             throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);
         } else if (e instanceof DuplicateKeyException) {
             throw new RepositoryRuntimeException("Database error - primary key already exists for Fedora ID: " +
