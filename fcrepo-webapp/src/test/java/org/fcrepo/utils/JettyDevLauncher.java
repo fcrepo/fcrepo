@@ -36,11 +36,12 @@ public class JettyDevLauncher {
             server = (Server) configuration.configure();
         }
 
-
+        final String version = System.getProperty("project.version", "6.5.2-SNAPSHOT");
+        final String warFilePath = "target/fcrepo-webapp-" + version + ".war";
         // Configure the web application context
         final WebAppContext webapp = new WebAppContext();
         webapp.setContextPath("/rest");
-        webapp.setWar(determineWarFilePath());
+        webapp.setWar(warFilePath);
 
         try (final var envXml = newResource("src/test/resources/jetty-env.xml")) {
             // applies env config to explicitly configure the LoginService. (new in Jetty 10+)
@@ -64,15 +65,6 @@ public class JettyDevLauncher {
         if (server != null) {
             server.stop();
         }
-    }
-
-    /**
-     * Determines the path to the WAR file based on the version specified in pom.properties.
-     * @return the path to the WAR file
-     */
-    private String determineWarFilePath() {
-        final String version = System.getProperty("project.version", "6.5.2-SNAPSHOT");
-        return "target/fcrepo-webapp-" + version + ".war";
     }
 
     /**
