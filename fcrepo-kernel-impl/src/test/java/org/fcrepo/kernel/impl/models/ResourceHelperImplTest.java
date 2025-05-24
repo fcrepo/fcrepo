@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import java.util.UUID;
 

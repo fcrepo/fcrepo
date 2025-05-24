@@ -8,9 +8,9 @@ package org.fcrepo.http.commons.exceptionhandlers;
 import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
-import static javax.ws.rs.core.Response.Status.BAD_GATEWAY;
+import static jakarta.ws.rs.core.Response.Status.BAD_GATEWAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**

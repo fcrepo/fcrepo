@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.core.Link;
+import jakarta.ws.rs.core.Link;
 
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
 import org.junit.jupiter.api.BeforeEach;

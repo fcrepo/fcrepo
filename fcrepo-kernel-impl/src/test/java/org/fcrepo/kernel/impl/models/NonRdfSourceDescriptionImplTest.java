@@ -159,19 +159,19 @@ public class NonRdfSourceDescriptionImplTest {
 
         // Find the triple with the resource as the subject
         final var descTriple = results.stream()
-                .filter(t -> t.getObject().getLiteral().toString().equals("value1"))
+                .filter(t -> t.getObject().getLiteralValue().toString().equals("value1"))
                 .findFirst().orElse(null);
         assertNotNull(descTriple);
         assertEquals(binarySubject.getURI(), descTriple.getSubject().getURI());
 
         final var binaryTriple = results.stream()
-                .filter(t -> t.getObject().getLiteral().toString().equals("value2"))
+                .filter(t -> t.getObject().getLiteralValue().toString().equals("value2"))
                 .findFirst().orElse(null);
         assertNotNull(binaryTriple);
         assertEquals(binarySubject.getURI(), binaryTriple.getSubject().getURI());
 
         final var otherTriple = results.stream()
-                .filter(t -> t.getObject().getLiteral().toString().equals("value3"))
+                .filter(t -> t.getObject().getLiteralValue().toString().equals("value3"))
                 .findFirst().orElse(null);
         assertNotNull(otherTriple);
         assertEquals(otherSubject.getURI(), otherTriple.getSubject().getURI());

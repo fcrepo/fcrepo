@@ -5,7 +5,7 @@
  */
 package org.fcrepo.http.commons.webxml.bind;
 
-import javax.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElement;
 
 /**
  * <p>Abstract UrlMappable class.</p>
@@ -14,7 +14,7 @@ import javax.xml.bind.annotation.XmlElement;
  */
 public abstract class UrlMappable {
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "url-pattern")
     String urlPattern;
 

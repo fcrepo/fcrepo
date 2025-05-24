@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.impl.LiteralLabel;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -97,7 +96,7 @@ public class WrappingStreamTest {
         // Filter out things matching "a"
         final var filteredStream = stream.map(Triple::getObject)
                 .filter(s -> !s.equals(objectA))
-                .collect(Collectors.toList());
+                .toList();
         assertEquals(2, filteredStream.size());
         assertTrue(filteredStream.contains(objectB));
         assertTrue(filteredStream.contains(objectC));
@@ -144,7 +143,7 @@ public class WrappingStreamTest {
     public void testCollectExtended() {
         final var result = stream.collect(
                 StringBuilder::new,  // Supplier
-                (sb, t) -> sb.append(t.getObject().getLiteral().getValue()),  // Accumulator
+                (sb, t) -> sb.append(t.getObject().getLiteralValue()),  // Accumulator
                 StringBuilder::append   // Combiner (for parallelism)
         );
         assertEquals("abc", result.toString());
@@ -196,10 +195,10 @@ public class WrappingStreamTest {
                         Stream.of(
                                 s.getObject(),
                                 NodeFactory.createLiteral(
-                                        s.getObject().getLiteral().getValue().toString().toUpperCase()
+                                        s.getObject().getLiteralValue().toString().toUpperCase()
                                 )
                         ))
-                .collect(Collectors.toList());
+                .toList();
         assertEquals(6, flatMapped.size());
         assertTrue(flatMapped.contains(objectA));
         assertTrue(flatMapped.contains(NodeFactory.createLiteral("A")));
@@ -214,7 +213,7 @@ public class WrappingStreamTest {
         stream = generateFloatStream();
         final var flatMapped = stream
                 .flatMapToDouble(s -> {
-                    final var o = s.getObject().getLiteral().toString();
+                    final var o = s.getObject().getLiteralValue().toString();
                     return DoubleStream.of(Double.parseDouble(o));
                 }).min().stream().findFirst();
         assertTrue(flatMapped.isPresent());
@@ -226,7 +225,7 @@ public class WrappingStreamTest {
         stream = generateIntStream();
         final var flatMapped = stream
                 .flatMapToInt(s -> {
-                    final var o = s.getObject().getLiteral().toString();
+                    final var o = s.getObject().getLiteralValue().toString();
                     return IntStream.of(Integer.parseInt(o));
                 })
                 .min().stream().findFirst();
@@ -239,7 +238,7 @@ public class WrappingStreamTest {
         stream = generateIntStream();
         final var flatMapped = stream
                 .flatMapToLong(s -> {
-                    final var o = s.getObject().getLiteral().toString();
+                    final var o = s.getObject().getLiteralValue().toString();
                     return LongStream.of(Long.parseLong(o));
                 })
                 .min().stream().findFirst();
@@ -251,7 +250,7 @@ public class WrappingStreamTest {
     public void testForEach() {
         final var result = new StringBuilder();
         stream.forEach(s -> {
-                    final var o = s.getObject().getLiteral().getValue().toString();
+                    final var o = s.getObject().getLiteralValue().toString();
                     result.append(o);
                 });
         assertTrue(
@@ -268,7 +267,7 @@ public class WrappingStreamTest {
     public void testForEachOrdered() {
         final var result = new StringBuilder();
         stream.forEachOrdered(s -> {
-            final var o = s.getObject().getLiteral().getValue().toString();
+            final var o = s.getObject().getLiteralValue().toString();
             result.append(o);
         });
         assertEquals("abc", result.toString());
@@ -277,8 +276,8 @@ public class WrappingStreamTest {
     @Test
     public void testMap() {
         final var mapped = stream.map(Triple::getObject)
-                .map(Node::getLiteral).map(LiteralLabel::toString)
-                .map(String::toUpperCase).collect(Collectors.toList());
+                .map(Node::getLiteralValue).map(Object::toString)
+                .map(String::toUpperCase).toList();
         assertEquals(3, mapped.size());
         assertTrue(mapped.contains("A"));
         assertTrue(mapped.contains("B"));
@@ -293,7 +292,7 @@ public class WrappingStreamTest {
         stream = generateFloatStream();
         final var mapped = stream
                 .mapToDouble(s -> {
-                    final var o = s.getObject().getLiteral().toString();
+                    final var o = s.getObject().getLiteralValue().toString();
                     return Double.parseDouble(o);
                 }).reduce(0, Double::sum);
         assertEquals(6.0, mapped);
@@ -304,7 +303,7 @@ public class WrappingStreamTest {
         stream = generateIntStream();
         final var mapped = stream
                 .mapToInt(s -> {
-                    final var o = s.getObject().getLiteral().toString();
+                    final var o = s.getObject().getLiteralValue().toString();
                     return Integer.parseInt(o);
                 }).reduce(0, Integer::sum);
         assertEquals(6, mapped);
@@ -315,7 +314,7 @@ public class WrappingStreamTest {
         stream = generateIntStream();
         final var mapped = stream
                 .mapToLong(s -> {
-                    final var o = s.getObject().getLiteral().toString();
+                    final var o = s.getObject().getLiteralValue().toString();
                     return Long.parseLong(o);
                 }).reduce(0, Long::sum);
         assertEquals(6L, mapped);
@@ -325,8 +324,8 @@ public class WrappingStreamTest {
     public void testMax() {
         stream = generateIntStream();
         final var max = stream.max((s1, s2) -> {
-            final var o1 = Integer.parseInt(s1.getObject().getLiteral().toString());
-            final var o2 = Integer.parseInt(s2.getObject().getLiteral().toString());
+            final var o1 = Integer.parseInt(s1.getObject().getLiteralValue().toString());
+            final var o2 = Integer.parseInt(s2.getObject().getLiteralValue().toString());
             return o1 - o2;
         });
         assertTrue(max.isPresent());
@@ -337,16 +336,16 @@ public class WrappingStreamTest {
     public void testMin() {
         stream = generateIntStream();
         final var min = stream.min((s1, s2) -> {
-            final var o1 = Integer.parseInt(s1.getObject().getLiteral().toString());
-            final var o2 = Integer.parseInt(s2.getObject().getLiteral().toString());
+            final var o1 = Integer.parseInt(s1.getObject().getLiteralValue().toString());
+            final var o2 = Integer.parseInt(s2.getObject().getLiteralValue().toString());
             return o1 - o2;
         });
         assertTrue(min.isPresent());
         assertEquals(objectInt1, min.get().getObject());
         stream = generateTextStream();
         final var min2 = stream.min((s1, s2) -> {
-            final var o1 = s1.getObject().getLiteral().toString();
-            final var o2 = s2.getObject().getLiteral().toString();
+            final var o1 = s1.getObject().getLiteralValue().toString();
+            final var o2 = s2.getObject().getLiteralValue().toString();
             return o1.compareTo(o2);
         });
         assertTrue(min2.isPresent());
@@ -383,10 +382,10 @@ public class WrappingStreamTest {
         final var reduced = stream.reduce(Triple.create(subject, predicate, NodeFactory.createLiteral("")),
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
                         NodeFactory.createLiteral(
-                                s1.getObject().getLiteral().getValue().toString() +
-                                        s2.getObject().getLiteral().getValue().toString()
+                                s1.getObject().getLiteralValue().toString() +
+                                        s2.getObject().getLiteralValue().toString()
                         )));
-        assertEquals("abc", reduced.getObject().getLiteral().getValue().toString());
+        assertEquals("abc", reduced.getObject().getLiteralValue().toString());
     }
 
     @Test
@@ -394,10 +393,10 @@ public class WrappingStreamTest {
         final var reduced = stream.reduce(
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
                         NodeFactory.createLiteral(
-                                s1.getObject().getLiteral().getValue().toString() +
-                                        s2.getObject().getLiteral().getValue().toString()
+                                s1.getObject().getLiteralValue().toString() +
+                                        s2.getObject().getLiteralValue().toString()
                         )));
-        final var reducedString = reduced.map(s -> s.getObject().getLiteral().getValue().toString());
+        final var reducedString = reduced.map(s -> s.getObject().getLiteralValue().toString());
         assertEquals("abc", reducedString.orElse(""));
     }
 
@@ -409,17 +408,17 @@ public class WrappingStreamTest {
                 identity,
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
                         NodeFactory.createLiteral(
-                                s1.getObject().getLiteral().getValue().toString() +
-                                        s2.getObject().getLiteral().getValue().toString()
+                                s1.getObject().getLiteralValue().toString() +
+                                        s2.getObject().getLiteralValue().toString()
                         )),
                 (t1, t2) -> Triple.create(t1.getSubject(), t1.getPredicate(),
                         NodeFactory.createLiteral(
-                                t1.getObject().getLiteral().getValue().toString() +
-                                        t2.getObject().getLiteral().getValue().toString()
+                                t1.getObject().getLiteralValue().toString() +
+                                        t2.getObject().getLiteralValue().toString()
                         ))
         );
 
-        assertEquals("abc", reduced.getObject().getLiteral().getValue().toString());
+        assertEquals("abc", reduced.getObject().getLiteralValue().toString());
     }
 
     @Test

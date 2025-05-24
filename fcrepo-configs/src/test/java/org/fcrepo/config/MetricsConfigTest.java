@@ -5,7 +5,6 @@
  */
 package org.fcrepo.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,8 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,10 +66,6 @@ public class MetricsConfigTest {
         assertNotNull(registry);
         assertInstanceOf(SimpleMeterRegistry.class, registry);
 
-        // CollectorRegistry should default to the default registry
-        final CollectorRegistry collectorRegistry = context.getBean(CollectorRegistry.class);
-        assertNotNull(collectorRegistry);
-        assertEquals(CollectorRegistry.defaultRegistry, collectorRegistry);
     }
 
     @Test
@@ -86,11 +80,6 @@ public class MetricsConfigTest {
         final MeterRegistry registry = context.getBean(MeterRegistry.class);
         assertNotNull(registry);
         assertInstanceOf(PrometheusMeterRegistry.class, registry);
-
-        // CollectorRegistry should be the Prometheus registry
-        final CollectorRegistry collectorRegistry = context.getBean(CollectorRegistry.class);
-        assertNotNull(collectorRegistry);
-        assertEquals(((PrometheusMeterRegistry) registry).getPrometheusRegistry(), collectorRegistry);
 
         // Verify the registry has the JVM metrics registered
         assertFalse(registry.getMeters().isEmpty());

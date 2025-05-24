@@ -18,7 +18,6 @@ import org.fcrepo.search.api.SearchIndex;
 import org.fcrepo.search.impl.DbSearchIndexImpl;
 
 import org.mockito.Mockito;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -78,7 +77,6 @@ public class SearchTestConfiguration {
     }
 
     @Bean
-    @Autowired
     public SearchIndex searchIndex() {
         return new DbSearchIndexImpl();
     }

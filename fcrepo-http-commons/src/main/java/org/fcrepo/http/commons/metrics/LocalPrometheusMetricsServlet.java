@@ -4,21 +4,22 @@
  * tree.
  */
 package org.fcrepo.http.commons.metrics;
-
+// TODO: Re-enable https://fedora-repository.atlassian.net/browse/FCREPO-4021
+/*
 import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.exporter.MetricsServlet;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+*/
 /**
  * This class is an extension of Prometheus's MetricsServlet. It only exists because there isn't an easy way to
  * set the CollectorRegistry on with a Spring bean.
  *
  * @author pwinckles
  */
-public class PrometheusMetricsServlet extends MetricsServlet {
+/*
+public class LocalPrometheusMetricsServlet extends PrometheusMetricsServlet {
 
     @Override
     public void init(final ServletConfig config) throws ServletException {
@@ -27,7 +28,7 @@ public class PrometheusMetricsServlet extends MetricsServlet {
         final var collector = context.getBean(CollectorRegistry.class);
 
         try {
-            final var field = MetricsServlet.class.getDeclaredField("registry");
+            final var field = PrometheusMetricsServlet.class.getDeclaredField("registry");
             field.setAccessible(true);
             field.set(this, collector);
         } catch (final NoSuchFieldException | IllegalAccessException e) {
@@ -38,3 +39,4 @@ public class PrometheusMetricsServlet extends MetricsServlet {
     }
 
 }
+*/

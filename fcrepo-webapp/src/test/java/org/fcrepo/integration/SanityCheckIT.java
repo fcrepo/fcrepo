@@ -4,10 +4,9 @@
  * tree.
  */
 package org.fcrepo.integration;
-import static java.lang.Integer.MAX_VALUE;
 import static java.util.UUID.randomUUID;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CONFLICT;
 import static org.apache.http.HttpStatus.SC_CREATED;
@@ -18,70 +17,28 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.Objects;
 
-import com.google.common.base.Strings;
 import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
-
-import javax.ws.rs.core.Link;
+import jakarta.ws.rs.core.Link;
 
 /**
  * <p>SanityCheckIT class.</p>
  *
  * @author fasseg
  */
-public class SanityCheckIT {
+public class SanityCheckIT extends AbstractResourceIT {
 
-    /**
-     * The server port of the application, set as system property by
-     * maven-failsafe-plugin.
-     */
-    private static final String SERVER_PORT = Objects.requireNonNullElse(
-            Strings.emptyToNull(System.getProperty("fcrepo.dynamic.test.port")), "8080");
-
-    /**
-    * The context path of the application (including the leading "/"), set as
-    * system property by maven-failsafe-plugin.
-    */
-    private static final String CONTEXT_PATH = System.getProperty("fcrepo.test.context.path");
-
-    private Logger logger;
-
-    @BeforeEach
-    public void setLogger() {
-        logger = LoggerFactory.getLogger(this.getClass());
-    }
-
-    private static final String HOSTNAME = "localhost";
-
-    private static final String serverAddress = "http://" + HOSTNAME + ":" +
-            SERVER_PORT + CONTEXT_PATH + (CONTEXT_PATH.endsWith("/") ? "" : "/") + "rest";
-
-    private static final HttpClient client;
-
-    static {
-        final CredentialsProvider creds = new DefaultCredentialsProvider();
-        creds.setCredentials(AuthScope.ANY, AbstractResourceIT.FEDORA_ADMIN_CREDENTIALS);
-        client =
-                HttpClientBuilder.create().setMaxConnPerRoute(MAX_VALUE)
-                        .setMaxConnTotal(MAX_VALUE).setDefaultCredentialsProvider(creds).build();
-    }
+    private static final Logger logger = LoggerFactory.getLogger(SanityCheckIT.class);
 
     @Test
     public void doASanityCheck() throws IOException {

@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -101,7 +101,10 @@ public class RangeIT extends AbstractResourceIT{
 
     private String createDatastreamAndGetLength(final String pid) throws IOException {
         final var randomLength = (int)((Math.random() + 0.1) * 100);
-        final String content = RandomStringUtils.random(randomLength, true, true);
+        final RandomStringGenerator generator = RandomStringGenerator.builder()
+                .withinRange('a', 'z')
+                .get();
+        final String content = generator.generate(randomLength);
         createDatastream(pid, content);
         try (final var res = execute(getObjMethod(pid))) {
             assertEquals(200, res.getStatusLine().getStatusCode());

@@ -13,7 +13,7 @@ import org.fcrepo.kernel.api.services.ReindexService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 /**
  * Implementation of {@link org.fcrepo.kernel.api.services.ReindexService}

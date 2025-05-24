@@ -34,23 +34,23 @@ public class TripleOrdering implements Comparator<Triple> {
     public int compare(final Triple left, final Triple right) {
 
         final int s =
-                left.getSubject().toString(prefixMapping, false).compareTo(
-                        right.getSubject().toString(prefixMapping, false));
+                left.getSubject().toString(prefixMapping).compareTo(
+                        right.getSubject().toString(prefixMapping));
 
         if (s != 0) {
             return s;
         }
 
         final int p =
-                left.getPredicate().toString(prefixMapping, false).compareTo(
-                        right.getPredicate().toString(prefixMapping, false));
+                left.getPredicate().toString(prefixMapping).compareTo(
+                        right.getPredicate().toString(prefixMapping));
 
         if (p != 0) {
             return p;
         }
 
-        return left.getObject().toString(false).compareTo(
-                right.getObject().toString(false));
+        return left.getObject().toString().compareTo(
+                right.getObject().toString());
 
     }
 

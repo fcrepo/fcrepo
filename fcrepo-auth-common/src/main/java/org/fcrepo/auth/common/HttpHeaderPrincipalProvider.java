@@ -10,7 +10,7 @@ import static java.util.Collections.emptySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.Serializable;
 import java.security.Principal;
@@ -86,7 +86,7 @@ public class HttpHeaderPrincipalProvider extends AbstractPrincipalProvider {
     /*
     * (non-Javadoc)
     * @see
-    * org.fcrepo.auth.PrincipalProvider#getPrincipals(javax.servlet.http.HttpServletRequest)
+    * org.fcrepo.auth.PrincipalProvider#getPrincipals(jakarta.servlet.http.HttpServletRequest)
     */
     @Override
     public Set<Principal> getPrincipals(final HttpServletRequest request) {

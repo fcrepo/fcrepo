@@ -5,14 +5,14 @@
  */
 package org.fcrepo.http.commons.webxml.bind;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
  * <p>ContextParam class.</p>
  *
  * @author awoods
  */
-@XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
+@XmlRootElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
         name = "context-param")
 public class ContextParam extends Param {
 

@@ -31,7 +31,6 @@ import org.mockito.quality.Strictness;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.SimpleSelector;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
 import org.mockito.Mock;
@@ -115,8 +114,8 @@ public class EventSerializerTestBase {
                     (RDFNode) null));
 
         final AtomicInteger actors = new AtomicInteger();
-        model.listStatements(new SimpleSelector(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "actor"),
-                blankNode))
+        model.listStatements(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "actor"),
+                        (RDFNode) null)
                 .forEachRemaining(statement -> {
                     final Resource r = statement.getResource();
                     if (r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Person"))) {
@@ -128,11 +127,11 @@ public class EventSerializerTestBase {
                     }
                     actors.incrementAndGet();
                 });
-        assertEquals(actors.get(), 2);
+        assertEquals(2, actors.get());
 
         final AtomicInteger eventName = new AtomicInteger();
-        model.listStatements(new SimpleSelector(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"),
-                blankNode))
+        model.listStatements(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"),
+                        (RDFNode) null)
                 .forEachRemaining(statement -> {
                     assertEquals(EventType.RESOURCE_MODIFICATION.getName(), statement.getString());
                     eventName.incrementAndGet();

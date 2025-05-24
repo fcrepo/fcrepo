@@ -10,8 +10,9 @@ import static java.util.UUID.randomUUID;
 import static javax.jms.Session.AUTO_ACKNOWLEDGE;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
+import static org.apache.jena.riot.lang.LangJSONLD11.JSONLD_OPTIONS;
 import static org.awaitility.Awaitility.await;
-import static org.awaitility.Durations.ONE_HUNDRED_MILLISECONDS;
+import static org.awaitility.Durations.TWO_HUNDRED_MILLISECONDS;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +33,11 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import javax.inject.Inject;
+import com.apicatalog.jsonld.JsonLdError;
+import com.apicatalog.jsonld.JsonLdOptions;
+import com.apicatalog.jsonld.context.cache.LruCache;
+import com.apicatalog.jsonld.document.JsonDocument;
+import jakarta.inject.Inject;
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -40,8 +46,12 @@ import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 
+import org.apache.jena.riot.RDFLanguages;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.system.ErrorHandlerFactory;
+import org.apache.jena.sparql.util.Context;
 import org.fcrepo.event.serialization.JsonLDEventMessage;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.Transaction;
@@ -78,6 +88,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.springframework.core.io.ClassPathResource;
 
 /**
  * <p>
@@ -106,6 +117,25 @@ abstract class AbstractJmsIT implements MessageListener {
     private static final String TEST_BASE_URL = "http://localhost:8080/rest";
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final static JsonLdOptions JSONLD_OPTIONS_VALUE = new JsonLdOptions();
+    static {
+        // Jena now downloads all external contexts by default, this causes 429 errors in tests so we
+        // preload a document cache with the activitystreams context.
+        final var documentCache = Optional
+                .ofNullable(JSONLD_OPTIONS_VALUE.getDocumentCache())
+                .orElseGet(() -> new LruCache<>(2));
+
+        try (var is = new ClassPathResource("activitystreams.jsonld").getInputStream()) {
+            final var schemaJsonLdContext = JsonDocument.of(is);
+            // Preload the schema.org JSON-LD context.
+            documentCache.put("http://www.w3.org/ns/activitystreams", schemaJsonLdContext);
+            documentCache.put("https://www.w3.org/ns/activitystreams", schemaJsonLdContext);
+        } catch (JsonLdError | IOException e) {
+            throw new RuntimeException(e);
+        }
+        JSONLD_OPTIONS_VALUE.setDocumentCache(documentCache);
+    }
 
     @Inject
     private ResourceFactory resourceFactory;
@@ -309,7 +339,7 @@ abstract class AbstractJmsIT implements MessageListener {
     }
 
     private void awaitMessageOrFail(final String id, final String eventType, final String resourceType) {
-        await().pollInterval(ONE_HUNDRED_MILLISECONDS).until(() -> messages.stream().anyMatch(msg -> {
+        await().pollInterval(TWO_HUNDRED_MILLISECONDS).until(() -> messages.stream().anyMatch(msg -> {
             try {
                 return checkForMatchingMessage(msg, id, eventType, resourceType);
             } catch (final JMSException | JsonProcessingException e) {
@@ -362,7 +392,16 @@ abstract class AbstractJmsIT implements MessageListener {
      */
     private static Model decodeModel(final String id, final String msgBody) {
         final Model model = createDefaultModel();
-        model.read(new ByteArrayInputStream(msgBody.getBytes(UTF_8)), id, "JSON-LD");
+        final var input = new ByteArrayInputStream(msgBody.getBytes(UTF_8));
+
+        RDFParser.create()
+                .source(input)
+                .lang(RDFLanguages.JSONLD)
+                .base(id)
+                .errorHandler(ErrorHandlerFactory.errorHandlerStrict)
+                .context(Context.create().set(JSONLD_OPTIONS, JSONLD_OPTIONS_VALUE))
+                .parse(model.getGraph());
+
         return model;
     }
 

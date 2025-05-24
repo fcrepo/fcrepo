@@ -7,9 +7,9 @@ package org.fcrepo.jms;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;

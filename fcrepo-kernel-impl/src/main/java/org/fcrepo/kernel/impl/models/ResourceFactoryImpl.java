@@ -16,7 +16,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.time.Instant;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;

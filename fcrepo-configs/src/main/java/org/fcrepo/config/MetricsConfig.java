@@ -17,14 +17,12 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.time.Duration;
 
 /**
  * @author pwinckles
@@ -38,19 +36,8 @@ public class MetricsConfig extends BasePropsConfig {
     @Bean
     public MeterRegistry meterRegistry() {
         final MeterRegistry registry;
-
         if (metricsEnabled) {
-            registry = new PrometheusMeterRegistry(new PrometheusConfig() {
-                @Override
-                public Duration step() {
-                    return Duration.ofSeconds(30);
-                }
-                @Override
-                public String get(final String key) {
-                    return null;
-                }
-            });
-            // Enables distribution stats for all timer metrics
+            registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
             registry.config().meterFilter(new MeterFilter() {
                 @Override
                 public DistributionStatisticConfig configure(final Meter.Id id,
@@ -69,21 +56,11 @@ public class MetricsConfig extends BasePropsConfig {
             new JvmMemoryMetrics().bindTo(registry);
             new ProcessorMetrics().bindTo(registry);
             new UptimeMetrics().bindTo(registry);
+            Metrics.addRegistry(registry);
         } else {
             registry = new SimpleMeterRegistry();
         }
-
-        Metrics.addRegistry(registry);
-
         return registry;
-    }
-
-    @Bean
-    public CollectorRegistry collectorRegistry(final MeterRegistry meterRegistry) {
-        if (meterRegistry instanceof PrometheusMeterRegistry) {
-            return ((PrometheusMeterRegistry) meterRegistry).getPrometheusRegistry();
-        }
-        return CollectorRegistry.defaultRegistry;
     }
 
     /**

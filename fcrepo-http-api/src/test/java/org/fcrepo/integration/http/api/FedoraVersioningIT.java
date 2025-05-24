@@ -44,27 +44,27 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.LOCATION;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.FOUND;
-import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.FOUND;
+import static jakarta.ws.rs.core.Response.Status.GONE;
+import static jakarta.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.sort;
 
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.UriBuilder;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -84,7 +84,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.io.IOUtils;
@@ -412,7 +411,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             final List<Quad> quadList = ImmutableList.copyOf(quads);
             assertEquals(1, quadList.size(), "Should only be one element: " + quadList.size());
 
-            final Quad quad = quadList.get(0);
+            final Quad quad = quadList.getFirst();
             // The quad:Object is the subject of the Blank Node triple we are expecting
             assertTrue(results.contains(ANY, quad.getObject(), RDF.type.asNode(), createURI("info:test#Something")),
                     "Should have found blank node triple");
@@ -784,7 +783,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             final var allLinks = bodyList.stream().map(String::trim).filter(t -> !t.isEmpty())
                                                       .sorted(Comparator.naturalOrder())
-                                                      .map(Link::valueOf).collect(Collectors.toList());
+                                                      .map(Link::valueOf).toList();
 
             for (final var link : allLinks) {
                 if ("memento".equals(link.getRel())) {
@@ -1530,7 +1529,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         // There should be only one memento
         assertEquals(1, mementos.size());
         // Get the memento
-        final HttpGet getMemento = new HttpGet(mementos.get(0));
+        final HttpGet getMemento = new HttpGet(mementos.getFirst());
         assertEquals(OK.getStatusCode(), getStatus(getMemento));
         // Delete the original container.
         final HttpDelete deleteContainer = deleteObjMethod(id);
@@ -1543,7 +1542,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         final List<String> mementosAfterDelete = getMementos(id);
         assertTrue(mementosAfterDelete.size() == 1 || mementosAfterDelete.size() == 2);
         // The last memento should be gone
-        final HttpGet getDeletedMemento = new HttpGet(mementosAfterDelete.get(mementosAfterDelete.size() - 1));
+        final HttpGet getDeletedMemento = new HttpGet(mementosAfterDelete.getLast());
         assertEquals(GONE.getStatusCode(), getStatus(getDeletedMemento));
     }
 

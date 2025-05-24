@@ -22,7 +22,7 @@ import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 
 import org.springframework.stereotype.Component;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 /**
  * Inject our HTTP API methods into the object graphs

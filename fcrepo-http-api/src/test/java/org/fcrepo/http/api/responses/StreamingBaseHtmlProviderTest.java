@@ -22,17 +22,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.of;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -113,10 +113,10 @@ public class StreamingBaseHtmlProviderTest {
         final var external_id2 = base_uri + "subject2";
         final var internal_id1 = FEDORA_ID_PREFIX + "/subject";
         final var internal_id2 = FEDORA_ID_PREFIX + "/subject2";
-        final Stream<Triple> triples = of(new Triple(createURI(external_id1), createURI("test:predicate"),
-                createLiteral("test:object")), new Triple(createURI(external_id1), type.asNode(),
+        final Stream<Triple> triples = of(Triple.create(createURI(external_id1), createURI("test:predicate"),
+                createLiteral("test:object")), Triple.create(createURI(external_id1), type.asNode(),
                 FEDORA_BINARY.asNode()));
-        final Stream<Triple> triples2 = of(new Triple(createURI(external_id2), type.asNode(),
+        final Stream<Triple> triples2 = of(Triple.create(createURI(external_id2), type.asNode(),
                 FEDORA_CONTAINER.asNode()));
         @SuppressWarnings("resource")
         final DefaultRdfStream stream = new DefaultRdfStream(createURI(external_id1), triples);

@@ -7,7 +7,7 @@ package org.fcrepo.http.commons.domain;
 
 import java.util.Set;
 
-import javax.ws.rs.HeaderParam;
+import jakarta.ws.rs.HeaderParam;
 
 /**
  * Aggregates information from multiple Prefer HTTP headers.

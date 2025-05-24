@@ -16,7 +16,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 
 import org.glassfish.jersey.message.internal.HttpHeaderReader;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.text.ParseException;
 import java.util.HashMap;

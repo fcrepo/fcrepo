@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider;
 import org.fcrepo.auth.common.DelegateHeaderPrincipalProvider;

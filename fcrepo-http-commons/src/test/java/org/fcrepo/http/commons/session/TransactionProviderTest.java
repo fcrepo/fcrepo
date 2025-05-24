@@ -24,9 +24,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriInfo;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.UriInfo;
 import java.net.URI;
 
 
@@ -81,7 +81,7 @@ public class TransactionProviderTest {
      * found in the {@code UriInfo}.
      * <p>
      * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
+     * {@code jakarta.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
      * </p>
      */
     @Test
@@ -109,7 +109,7 @@ public class TransactionProviderTest {
      * </p>
      * <p>
      * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
+     * {@code jakarta.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
      * </p>
      */
     @Test
@@ -139,7 +139,7 @@ public class TransactionProviderTest {
      * </p>
      * <p>
      * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
+     * {@code jakarta.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
      * </p>
      */
     @Test
@@ -167,7 +167,7 @@ public class TransactionProviderTest {
      * </p>
      * <p>
      * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
+     * {@code jakarta.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
      * </p>
      */
     @Test
@@ -195,7 +195,7 @@ public class TransactionProviderTest {
      * </p>
      * <p>
      * Implementation note: this test requires a concrete instance of {@link UriInfo}, because it is the interaction of
-     * {@code javax.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
+     * {@code jakarta.ws.rs.core.UriBuilder} and {@code TransactionProvider} that is being tested.
      * </p>
      */
     @Test

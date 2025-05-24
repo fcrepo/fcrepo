@@ -5,7 +5,7 @@
  */
 package org.fcrepo.integration.rdf;
 
-import static javax.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.io.IOException;
 import java.util.HashMap;

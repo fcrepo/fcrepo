@@ -8,7 +8,6 @@ package org.fcrepo.stats.impl.utils;
 import org.fcrepo.config.FlywayFactory;
 import org.fcrepo.stats.api.RepositoryStats;
 import org.fcrepo.stats.impl.DbRepositoryStatsImpl;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -38,7 +37,6 @@ public class StatsTestConfiguration {
     }
 
     @Bean
-    @Autowired
     public RepositoryStats repositoryStats() {
         return new DbRepositoryStatsImpl();
     }

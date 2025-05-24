@@ -724,7 +724,7 @@ public class WebACRolesProviderTest {
         model.listStatements().forEachRemaining(x -> {
             final Triple t = x.asTriple();
             if (t.getObject().isURI() && t.getObject().getURI().startsWith(FEDORA_URI_PREFIX)) {
-                triples.add(new Triple(t.getSubject(), t.getPredicate(),
+                triples.add(Triple.create(t.getSubject(), t.getPredicate(),
                         createURI(FEDORA_PREFIX + t.getObject().getURI().substring(FEDORA_URI_PREFIX.length()))));
             } else {
                 triples.add(t);

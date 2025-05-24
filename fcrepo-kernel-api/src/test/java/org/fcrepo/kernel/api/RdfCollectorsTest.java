@@ -28,12 +28,12 @@ public class RdfCollectorsTest {
         final Node prop1 = createURI("prop1");
         final Node prop2 = createURI("prop2");
         final List<Triple> triples = asList(
-                new Triple(subject, prop1, createURI("obj1")),
-                new Triple(subject, prop1, createURI("obj2")),
-                new Triple(subject, prop1, createURI("obj3")),
-                new Triple(subject, prop2, createURI("obj1")),
-                new Triple(subject, prop2, createURI("obj2")),
-                new Triple(subject, prop2, createURI("obj3")));
+                Triple.create(subject, prop1, createURI("obj1")),
+                Triple.create(subject, prop1, createURI("obj2")),
+                Triple.create(subject, prop1, createURI("obj3")),
+                Triple.create(subject, prop2, createURI("obj1")),
+                Triple.create(subject, prop2, createURI("obj2")),
+                Triple.create(subject, prop2, createURI("obj3")));
 
         final Model filtered = triples.stream().filter(x -> x.getPredicate().equals(prop1))
                 .collect(RdfCollectors.toModel());

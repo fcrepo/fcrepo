@@ -15,14 +15,19 @@ import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
 import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.core.MediaType;
 
+import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.RdfStream;
@@ -83,7 +88,7 @@ public class HttpRdfService {
         return new DefaultRdfStream(NodeFactory.createURI(extResourceId), stream.map(t -> {
             final Node subject = makeExternalNode(t.getSubject(), idTranslator);
             final Node object = makeExternalNode(t.getObject(), idTranslator);
-            return new Triple(subject, t.getPredicate(), object);
+            return Triple.create(subject, t.getPredicate(), object);
         }));
     }
 
@@ -217,6 +222,18 @@ public class HttpRdfService {
         return visitor.getTranslatedRequest().toString();
     }
 
+    public String patchRequestToInternalString(final FedoraId resourceId, final InputStream requestStream,
+                                               final HttpIdentifierConverter idTranslator) {
+        final String externalURI = idTranslator.toExternalId(resourceId.getFullDescribedId());
+        final UpdateRequest request = UpdateFactory.read(requestStream, externalURI);
+        final List<Update> updates = request.getOperations();
+        final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator, fedoraPropsConfig);
+        for (final Update update : updates) {
+            update.visit(visitor);
+        }
+        return visitor.getTranslatedRequest().toString();
+    }
+
     /**
      * Parse the request body as a Model.
      *
@@ -249,18 +266,33 @@ public class HttpRdfService {
                     "format");
         }
         try {
-            final Model inputModel = createDefaultModel();
-            inputModel.read(requestBodyStream, extResourceId, format.getName().toUpperCase());
-            return inputModel;
+            return parseAsTemp(requestBodyStream, extResourceId, format);
         } catch (final RiotException e) {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
-
         } catch (final RuntimeIOException e) {
             if (e.getCause() instanceof JsonParseException) {
                 final var cause = e.getCause();
                 throw new MalformedRdfException(cause.getMessage(), cause);
             }
             throw new RepositoryRuntimeException(e.getMessage(), e);
+        } catch (final IOException e) {
+            throw new RepositoryRuntimeException("Error reading RDF: " + e.getMessage(), e);
+        }
+    }
+
+    private static Model parseAsTemp(final InputStream bodyStream, final String extResourceId, final Lang format)
+            throws IOException, RiotException, RuntimeIOException {
+        final Path tempFile = Files.createTempFile("fedora-upload-", ".rdf");
+        try (OutputStream out = Files.newOutputStream(tempFile)) {
+            bodyStream.transferTo(out);
+        }
+
+        try (InputStream fileIn = Files.newInputStream(tempFile)) {
+            final Model inputModel = createDefaultModel();
+            RDFDataMgr.read(inputModel, fileIn, extResourceId, format);
+            return inputModel;
+        } finally {
+            Files.deleteIfExists(tempFile);
         }
     }
 
