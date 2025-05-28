@@ -47,7 +47,6 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
 import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -59,6 +58,7 @@ import static jakarta.ws.rs.core.Response.Status.CONFLICT;
 import static jakarta.ws.rs.core.Response.created;
 import static jakarta.ws.rs.core.Response.noContent;
 import static jakarta.ws.rs.core.Response.ok;
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.Lang.TTL;
@@ -198,23 +198,22 @@ public class FedoraAcl extends ContentExposingResource {
             // TODO: use a streaming parser instead of reading the entire body into memory,
             // but IOUtils hangs since the Jersey change.
             final byte[] body = requestBodyStream.readAllBytes();
-            if (body.length == 0) {
+            final String requestBody = new String(body);
+            if (isBlank(requestBody)) {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
 
             evaluateRequestPreconditions(request, servletResponse, aclResource, transaction());
 
             LOGGER.info("PATCH for '{}'", externalPath);
-            try (InputStream in = new ByteArrayInputStream(body)) {
-                final String newRequest = httpRdfService.patchRequestToInternalString(aclResource.getFedoraId(),
-                        in, identifierConverter());
-                LOGGER.debug("PATCH request translated to '{}'", newRequest);
+            final String newRequest = httpRdfService.patchRequestToInternalString(aclResource.getFedoraId(),
+                    requestBody, identifierConverter());
+            LOGGER.debug("PATCH request translated to '{}'", newRequest);
 
-                doInDbTxWithRetry(() -> {
-                    patchResourcewithSparql(aclResource, newRequest);
-                    transaction().commitIfShortLived();
-                });
-            }
+            doInDbTxWithRetry(() -> {
+                patchResourcewithSparql(aclResource, newRequest);
+                transaction().commitIfShortLived();
+            });
             addCacheControlHeaders(servletResponse, aclResource, transaction());
 
             return noContent().build();

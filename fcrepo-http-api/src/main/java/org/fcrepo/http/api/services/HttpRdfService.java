@@ -222,18 +222,6 @@ public class HttpRdfService {
         return visitor.getTranslatedRequest().toString();
     }
 
-    public String patchRequestToInternalString(final FedoraId resourceId, final InputStream requestStream,
-                                               final HttpIdentifierConverter idTranslator) {
-        final String externalURI = idTranslator.toExternalId(resourceId.getFullDescribedId());
-        final UpdateRequest request = UpdateFactory.read(requestStream, externalURI);
-        final List<Update> updates = request.getOperations();
-        final SparqlTranslateVisitor visitor = new SparqlTranslateVisitor(idTranslator, fedoraPropsConfig);
-        for (final Update update : updates) {
-            update.visit(visitor);
-        }
-        return visitor.getTranslatedRequest().toString();
-    }
-
     /**
      * Parse the request body as a Model.
      *
@@ -280,6 +268,16 @@ public class HttpRdfService {
         }
     }
 
+    /**
+     * Read the jersey inputstream to a file on disk, then parse it as a Model.
+     * @param bodyStream the input stream containing the RDF
+     * @param extResourceId the external ID of the Fedora resource
+     * @param format the RDF format of the body stream
+     * @return a Model containing triples from request body
+     * @throws IOException Problems writing to or reading from the temporary file.
+     * @throws RiotException Problems parsing the RDF.
+     * @throws RuntimeIOException Problems reading the temporary file.
+     */
     private static Model parseAsTemp(final InputStream bodyStream, final String extResourceId, final Lang format)
             throws IOException, RiotException, RuntimeIOException {
         final Path tempFile = Files.createTempFile("fedora-upload-", ".rdf");

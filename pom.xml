@@ -89,7 +89,7 @@
     <junit5.version>5.11.4</junit5.version>
     <mockito.version>5.17.0</mockito.version>
     <mockito.junit5.version>5.17.0</mockito.junit5.version>
-    <!-- fcrepo5-specific plugins -->
+    <!-- fcrepo-specific plugins -->
     <enforcer.plugin.version>3.4.1</enforcer.plugin.version>
     <war.plugin.version>3.3.2</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
@@ -185,7 +185,6 @@
         <version>${jakarta.servlet.version}</version>
         <scope>provided</scope>
       </dependency>
-      <!--  modules needed for Java 11 support EE modules. -->
       <dependency>
         <groupId>jakarta.xml.bind</groupId>
         <artifactId>jakarta.xml.bind-api</artifactId>
@@ -286,11 +285,6 @@
         <groupId>org.glassfish.hk2</groupId>
         <artifactId>spring-bridge</artifactId>
         <version>${hk2.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.hk2</groupId>
-        <artifactId>osgi-resource-locator</artifactId>
-        <version>3.0.0</version>
       </dependency>
 
       <dependency>
@@ -393,56 +387,6 @@
             <artifactId>commons-collections</artifactId>
           </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.velocity</groupId>
-        <artifactId>velocity-tools</artifactId>
-        <version>2.0</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>dom4j</groupId>
-            <artifactId>dom4j</artifactId>
-          </exclusion>
-          <!-- velocity is already bringing in commons-collections-3.2.1, whereas velocity-tools
-            is bringing in 3.2 -->
-          <exclusion>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-digester</groupId>
-            <artifactId>commons-digester</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.struts</groupId>
-            <artifactId>struts-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.struts</groupId>
-            <artifactId>struts-taglib</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.apache.struts</groupId>
-            <artifactId>struts-tiles</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.jgroups</groupId>
-        <artifactId>jgroups</artifactId>
-        <version>${jgroups.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -923,7 +867,7 @@
           </executions>
         </plugin>
 
-        <!--<plugin>
+        <plugin>
           <groupId>org.eclipse.jetty</groupId>
           <artifactId>jetty-maven-plugin</artifactId>
           <version>${jetty.version}</version>
@@ -932,7 +876,7 @@
               <contextPath>/</contextPath>
             </webApp>
           </configuration>
-        </plugin>-->
+        </plugin>
 
         <plugin>
           <groupId>io.github.git-commit-id</groupId>

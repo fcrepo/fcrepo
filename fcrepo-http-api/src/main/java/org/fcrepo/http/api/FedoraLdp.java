@@ -45,7 +45,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -622,24 +621,23 @@ public class FedoraLdp extends ContentExposingResource {
             // TODO: use a streaming parser instead of reading the entire body into memory,
             // but IOUtils hangs since the Jersey change.
             final byte[] body = requestBodyStream.readAllBytes();
-            if (body.length == 0) {
+            final String requestBody = new String(body);
+            if (isBlank(requestBody)) {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
 
             evaluateRequestPreconditions(request, servletResponse, resource(), transaction);
 
             LOGGER.info("PATCH for '{}'", externalPath);
-            try (InputStream in = new ByteArrayInputStream(body)) {
-                final String newRequest = httpRdfService.patchRequestToInternalString(resource().getFedoraId(),
-                        in, identifierConverter());
+            final String newRequest = httpRdfService.patchRequestToInternalString(resource().getFedoraId(),
+                    requestBody, identifierConverter());
 
-                LOGGER.debug("PATCH request translated to '{}'", newRequest);
+            LOGGER.debug("PATCH request translated to '{}'", newRequest);
 
-                doInDbTxWithRetry(() -> {
-                    patchResourcewithSparql(resource(), newRequest);
-                    transaction.commitIfShortLived();
-                });
-            }
+            doInDbTxWithRetry(() -> {
+                patchResourcewithSparql(resource(), newRequest);
+                transaction.commitIfShortLived();
+            });
 
             addCacheControlHeaders(servletResponse, reloadResource(), transaction);
 
