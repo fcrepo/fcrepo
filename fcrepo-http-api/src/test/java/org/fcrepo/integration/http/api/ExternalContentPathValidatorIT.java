@@ -6,9 +6,9 @@
 package org.fcrepo.integration.http.api;
 
 import static java.nio.file.StandardOpenOption.APPEND;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
 import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -33,6 +33,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -210,6 +211,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
         }
     }
 
+    @Disabled("Issues with path modifiers in Windows environments, see https://fedora-repository.atlassian.net/browse/FCREPO-4022")
     @Test
     public void testPathModifiers() throws Exception {
         // Creating file in disallowed path

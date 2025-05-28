@@ -6,8 +6,8 @@
 package org.fcrepo.http.commons.exceptionhandlers;
 
 import java.net.URI;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.api.exception.ConstraintViolationException;
 
@@ -16,7 +16,7 @@ import static org.fcrepo.http.commons.test.util.TestHelpers.getServletContextImp
 import static org.fcrepo.kernel.api.RdfLexicon.CONSTRAINED_BY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import javax.servlet.ServletContext;
+import jakarta.servlet.ServletContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

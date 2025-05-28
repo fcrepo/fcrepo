@@ -6,7 +6,7 @@
 package org.fcrepo.http.commons.test.util;
 
 import static java.net.URI.create;
-import static javax.ws.rs.core.UriBuilder.fromUri;
+import static jakarta.ws.rs.core.UriBuilder.fromUri;
 import static org.apache.http.entity.ContentType.parse;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
@@ -18,9 +18,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.net.URI;
-import javax.servlet.ServletContext;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import jakarta.servlet.ServletContext;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.apache.http.HttpEntity;
 import org.apache.jena.rdf.model.Model;

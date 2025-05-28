@@ -46,33 +46,23 @@
       <artifactId>apache-jena-libs</artifactId>
       <type>pom</type>
     </dependency>
-
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-server</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-api</artifactId>
+      <groupId>org.glassfish.jersey.inject</groupId>
+      <artifactId>jersey-hk2</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-context</artifactId>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-configs</artifactId>
       <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-http-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-http-servlet</artifactId>
     </dependency>
 
     <dependency>
@@ -88,6 +78,11 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.containers</groupId>
+      <artifactId>jersey-container-grizzly2-http</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -116,12 +111,11 @@
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring5</artifactId>
-      <scope>test</scope>
-      <version>${jersey.version}</version>
+      <artifactId>jersey-spring6</artifactId>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
@@ -130,7 +124,18 @@
     <dependency>
       <groupId>org.glassfish.hk2</groupId>
       <artifactId>hk2-api</artifactId>
-      <version>${hk2.version}</version>
+      <exclusions>
+        <exclusion>
+          <!-- comes in with jersey -->
+          <groupId>jakarta.annotation</groupId>
+          <artifactId>jakarta.annotation-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>hk2-locator</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
@@ -172,29 +177,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-collections</groupId>
-          <artifactId>commons-collections</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
-    <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-    </dependency>
-
     <dependency>
       <groupId>org.apache.velocity</groupId>
       <artifactId>velocity-tools</artifactId>
@@ -208,7 +198,7 @@
           <groupId>dom4j</groupId>
           <artifactId>dom4j</artifactId>
         </exclusion>
-        <!-- velocity is already bringing in commons-collections-3.2.1, whereas velocity-tools 
+        <!-- velocity is already bringing in commons-collections-3.2.1, whereas velocity-tools
           is bringing in 3.2 -->
         <exclusion>
           <groupId>commons-collections</groupId>
@@ -240,14 +230,32 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
     <dependency>
       <groupId>io.micrometer</groupId>
-      <artifactId>micrometer-jersey2</artifactId>
+      <artifactId>micrometer-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
     </dependency>
     <dependency>
       <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_servlet</artifactId>
+      <artifactId>prometheus-metrics-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.ext</groupId>
+      <artifactId>jersey-micrometer</artifactId>
     </dependency>
 
     <!-- commons-digester-1.8 is explicitly added here because of a dependency 
@@ -281,8 +289,9 @@
     </dependency>
     <!--  modules needed for Java 11 support EE modules. -->
     <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>com.sun.xml.bind</groupId>
@@ -291,6 +300,11 @@
     <dependency>
       <groupId>com.sun.xml.bind</groupId>
       <artifactId>jaxb-impl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 

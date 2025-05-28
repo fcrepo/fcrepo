@@ -5,15 +5,15 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.apache.jena.riot.Lang.JSONLD;
 import static org.apache.jena.riot.Lang.RDFXML;
-import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
-import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
-import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
 import static org.apache.jena.riot.RDFFormat.JSONLD_COMPACT_FLAT;
 import static org.apache.jena.riot.RDFFormat.JSONLD_EXPAND_FLAT;
 import static org.apache.jena.riot.RDFFormat.JSONLD_FLATTEN_FLAT;
+import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
+import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
+import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
 import static org.apache.jena.riot.system.StreamRDFWriter.defaultSerialization;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
@@ -26,12 +26,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Set;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.StreamingOutput;
+
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.StreamingOutput;
 
 import com.google.common.util.concurrent.AbstractFuture;
 import org.apache.jena.riot.RiotException;
@@ -158,7 +158,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             if (RDF_TYPE.equals(t.getPredicate().getURI()) && t.getObject().isURI()) {
                 namespacesPresent.add(t.getObject().getNameSpace());
             }
-        }).collect(Collectors.toList());
+        }).toList();
 
         nsPrefixes.forEach((prefix, uri) -> {
             // Only add namespace prefixes if the namespace is present in the rdf stream
@@ -204,10 +204,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             final Optional<Entry<String, String>> nsOpt = nsSet.stream()
                     .filter(nsEntry -> nsEntry.getValue().equals(ns))
                     .findFirst();
-            if (nsOpt.isPresent()) {
-                final Entry<String, String> nsMatch = nsOpt.get();
-                resultNses.put(nsMatch.getKey(), nsMatch.getValue());
-            }
+            nsOpt.ifPresent(nsMatch -> resultNses.put(nsMatch.getKey(), nsMatch.getValue()));
         }
 
         return resultNses;

@@ -34,24 +34,24 @@ import static org.fcrepo.kernel.api.models.ExternalContent.REDIRECT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CACHE_CONTROL;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.TEXT_HTML;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
-import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.notAcceptable;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Variant.mediaTypes;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CACHE_CONTROL;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LOCATION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.MediaType.TEXT_HTML;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.PARTIAL_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
+import static jakarta.ws.rs.core.Response.created;
+import static jakarta.ws.rs.core.Response.noContent;
+import static jakarta.ws.rs.core.Response.notAcceptable;
+import static jakarta.ws.rs.core.Response.ok;
+import static jakarta.ws.rs.core.Response.status;
+import static jakarta.ws.rs.core.Variant.mediaTypes;
 import static java.net.URI.create;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toSet;
@@ -74,19 +74,19 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.BeanParam;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.core.CacheControl;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.EntityTag;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.BeanParam;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.core.CacheControl;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.EntityTag;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Request;
+import jakarta.ws.rs.core.Response;
 
 import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.config.OcflPropsConfig;
@@ -373,7 +373,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
                 }
 
             } else {
-                @SuppressWarnings("resource")
                 final InputStream content = binary.getContent();
                 builder = ok(content);
             }
@@ -463,8 +462,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     protected void addExternalContentHeaders(final FedoraResource resource) {
-        if (resource instanceof Binary) {
-            final Binary binary = (Binary)resource;
+        if (resource instanceof Binary binary) {
 
             if (binary.isProxy() || binary.isRedirect()) {
                 servletResponse.addHeader(CONTENT_LOCATION, binary.getExternalURL());
@@ -602,7 +600,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     }
 
     /**
-     * Multi-value Link header values parsed by the javax.ws.rs.core are not split out by the framework Therefore we
+     * Multi-value Link header values parsed by the jakarta.ws.rs.core are not split out by the framework Therefore we
      * must do this ourselves.
      *
      * @param rawLinks the list of unprocessed links
@@ -634,8 +632,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected void addResourceHttpHeaders(final FedoraResource resource,
                                           final boolean dispositionInline,
                                           final boolean isRedirect) {
-        if (resource instanceof Binary) {
-            final Binary binary = (Binary)resource;
+        if (resource instanceof Binary binary) {
 
             final ContentDisposition.Builder dispositionBuilder = (dispositionInline ? ContentDisposition.inline() :
                     ContentDisposition.attachment());
@@ -735,7 +732,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         date = resource.getLastModifiedDate();
 
         if (!etag.getValue().isEmpty()) {
-            servletResponse.addHeader("ETag", etag.toString());
+            servletResponse.addHeader("ETag", formatETagHeader(etag));
         }
 
         if (resource.getStateToken() != null && !resource.getStateToken().isEmpty()) {
@@ -765,6 +762,17 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         transaction.lockResource(resource.getFedoraId());
         evaluateRequestPreconditions(request, servletResponse, resource, transaction, false);
     }
+
+    /**
+     * Jakarta has deprecated the EntityTag.toString() method, this function duplicates the functionality
+     * @param etag the entity tag
+     * @return the formatted ETag header value
+     */
+    protected static String formatETagHeader(final EntityTag etag) {
+        final String quotedValue = "\"" + etag.getValue() + "\"";
+        return etag.isWeak() ? "W/" + quotedValue : quotedValue;
+    }
+
 
     @VisibleForTesting
     void evaluateRequestPreconditions(final Request request,
@@ -816,10 +824,11 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         if (builder != null) {
-            final Response response = builder.build();
-            final Object message = response.getEntity();
-            throw new PreconditionException(message != null ? message.toString()
-                    : "Request failed due to unspecified failed precondition.", response.getStatus());
+            try (final Response response = builder.build()) {
+                final Object message = response.getEntity();
+                throw new PreconditionException(message != null ? message.toString()
+                        : "Request failed due to unspecified failed precondition.", response.getStatus());
+            }
         }
 
         final String method = request.getMethod();
@@ -840,7 +849,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     private MediaType acceptablePlainTextMediaType() {
         final List<MediaType> acceptable = headers.getAcceptableMediaTypes();
-        if (acceptable == null || acceptable.size() == 0) {
+        if (acceptable == null || acceptable.isEmpty()) {
             return TEXT_PLAIN_TYPE;
         }
         for (final MediaType type : acceptable) {
@@ -864,7 +873,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @return 204 No Content (for updated resources), 201 Created (for created resources) including the resource URI or
      *         content depending on Prefer headers.
      */
-    @SuppressWarnings("resource")
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
         addCacheControlHeaders(servletResponse, resource, transaction());
         addResourceLinkHeaders(resource, created);
@@ -959,8 +967,8 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      */
     protected int getChildrenLimit() {
         final List<String> acceptHeaders = headers.getRequestHeader(ACCEPT);
-        if (acceptHeaders != null && acceptHeaders.size() > 0) {
-            final List<String> accept = Arrays.asList(acceptHeaders.get(0).split(","));
+        if (acceptHeaders != null && !acceptHeaders.isEmpty()) {
+            final List<String> accept = Arrays.asList(acceptHeaders.getFirst().split(","));
             if (accept.contains(TEXT_HTML)) {
                 // Magic number '100' is tied to common-metadata.vsl display of ellipses
                 return 100;
@@ -968,13 +976,13 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
 
         final List<String> limits = headers.getRequestHeader("Limit");
-        if (null != limits && limits.size() > 0) {
+        if (null != limits && !limits.isEmpty()) {
             try {
-                return Integer.parseInt(limits.get(0));
+                return Integer.parseInt(limits.getFirst());
 
             } catch (final NumberFormatException e) {
-                LOGGER.warn("Invalid 'Limit' header value: {}", limits.get(0));
-                throw new ClientErrorException("Invalid 'Limit' header value: " + limits.get(0), SC_BAD_REQUEST, e);
+                LOGGER.warn("Invalid 'Limit' header value: {}", limits.getFirst());
+                throw new ClientErrorException("Invalid 'Limit' header value: " + limits.getFirst(), SC_BAD_REQUEST, e);
             }
         }
         return -1;

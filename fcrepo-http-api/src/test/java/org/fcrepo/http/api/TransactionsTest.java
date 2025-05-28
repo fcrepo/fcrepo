@@ -20,10 +20,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
-import javax.ws.rs.core.UriInfo;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;

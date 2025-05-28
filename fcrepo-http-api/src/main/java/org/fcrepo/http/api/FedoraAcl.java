@@ -6,7 +6,6 @@
 package org.fcrepo.http.api;
 
 import io.micrometer.core.annotation.Timed;
-import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFLanguages;
@@ -29,23 +28,23 @@ import org.fcrepo.kernel.api.services.WebacAclService;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Request;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -53,13 +52,12 @@ import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.MediaType.valueOf;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.created;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.ok;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.MediaType.valueOf;
+import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static jakarta.ws.rs.core.Response.created;
+import static jakarta.ws.rs.core.Response.noContent;
+import static jakarta.ws.rs.core.Response.ok;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -196,7 +194,11 @@ public class FedoraAcl extends ContentExposingResource {
         }
 
         try {
-            final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
+            //final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
+            // TODO: use a streaming parser instead of reading the entire body into memory,
+            // but IOUtils hangs since the Jersey change.
+            final byte[] body = requestBodyStream.readAllBytes();
+            final String requestBody = new String(body);
             if (isBlank(requestBody)) {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
@@ -212,7 +214,6 @@ public class FedoraAcl extends ContentExposingResource {
                 patchResourcewithSparql(aclResource, newRequest);
                 transaction().commitIfShortLived();
             });
-
             addCacheControlHeaders(servletResponse, aclResource, transaction());
 
             return noContent().build();

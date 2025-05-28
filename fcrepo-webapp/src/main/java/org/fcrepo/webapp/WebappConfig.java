@@ -11,8 +11,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
-import javax.servlet.Filter;
+import jakarta.inject.Inject;
+import jakarta.servlet.Filter;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.api.ExternalContentHandlerFactory;

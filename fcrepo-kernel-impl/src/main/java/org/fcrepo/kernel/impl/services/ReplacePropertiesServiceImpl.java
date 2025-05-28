@@ -25,7 +25,7 @@ import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 

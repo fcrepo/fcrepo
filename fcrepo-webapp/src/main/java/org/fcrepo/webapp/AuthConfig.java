@@ -9,7 +9,7 @@ package org.fcrepo.webapp;
 import java.util.HashSet;
 import java.util.List;
 
-import javax.servlet.Filter;
+import jakarta.servlet.Filter;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider;
 import org.fcrepo.auth.common.DelegateHeaderPrincipalProvider;

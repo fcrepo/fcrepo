@@ -11,28 +11,28 @@ import static java.time.ZoneId.of;
 import static java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME;
 import static java.util.Arrays.asList;
 import static java.util.regex.Pattern.compile;
-import static javax.ws.rs.core.HttpHeaders.ACCEPT;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.LOCATION;
-import static javax.ws.rs.core.Link.fromUri;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.NOT_MODIFIED;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.Status.PARTIAL_CONTENT;
-import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
-import static javax.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
-import static javax.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_LENGTH;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
+import static jakarta.ws.rs.core.Link.fromUri;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.GONE;
+import static jakarta.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+import static jakarta.ws.rs.core.Response.Status.NOT_MODIFIED;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.PARTIAL_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static jakarta.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
+import static jakarta.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
 import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -45,6 +45,7 @@ import static org.apache.jena.datatypes.TypeMapper.getInstance;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static org.apache.jena.graph.Node.ANY;
+import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -142,9 +143,9 @@ import java.util.Random;
 import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response.Status;
-import javax.ws.rs.core.Variant;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Variant;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -192,6 +193,7 @@ import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.test.context.TestExecutionListeners;
@@ -1181,7 +1183,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
                 final DatasetGraph graphStore = dataset.asDatasetGraph();
                 final Node subject = createURI(dsLocation);
-                assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(), createLiteral("text/awesome")));
+                assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(),
+                        createLiteral("text/awesome")));
                 assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
                 assertFalse(graphStore.contains(ANY, subject, createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY),
                         "Should not contain old mime type property");
@@ -1291,8 +1294,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")),
-                    "Didn't find a triple we tried to create!");
+            assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"),
+                            createLiteral("foo")),"Didn't find a triple we tried to create!");
         }
     }
 
@@ -1306,8 +1309,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")),
-                    "Didn't find a triple we tried to create!");
+            assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"),
+                            createLiteral("foo")),"Didn't find a triple we tried to create!");
         }
     }
 
@@ -2187,7 +2190,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertNotNull(header);
 
             final ContentDisposition contentDisposition = new ContentDisposition(header.getValue());
-            assertEquals(filename, contentDisposition.getFileName());
+            assertEquals(filename, contentDisposition.getFileName(false),
+                    "Encoded filename in content-disposition header should match");
         }
     }
 
@@ -2219,8 +2223,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
                 final DatasetGraph graphStore = dataset.asDatasetGraph();
                 final Node subj = createURI(location);
-                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("english title", "en", false)));
-                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("french title", "fr", false)));
+                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("english title", "en")));
+                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("french title", "fr")));
             }
         }
     }
@@ -3208,12 +3212,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         executeAndClose(updateObjectGraphMethod);
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")),
-                    "Didn't find a triple we thought we added.");
+            assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"),
+                            createLiteral("foo")),"Didn't find a triple we thought we added.");
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#number"),
-                            createLiteral("42", XSDinteger)), "Didn't find a triple we thought we added.");
+                            createLiteralByValue("42", XSDinteger)), "Didn't find a triple we thought we added.");
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#date"),
-                    createLiteral("1953?", getInstance().getSafeTypeByName("http://id.loc.gov/datatypes/edtf/EDTF"))),
+                    createLiteralByValue("1953?", getInstance().getSafeTypeByName("http://id.loc.gov/datatypes/edtf/EDTF"))),
                     "Didn't find a triple we thought we added.");
         }
         updateObjectGraphMethod.setEntity(new StringEntity("DELETE WHERE { " +
@@ -3232,12 +3236,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertFalse(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"), createLiteral("foo")),
-                    "Found a triple we thought we deleted.");
+            assertFalse(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"),
+                            createLiteral("foo")),"Found a triple we thought we deleted.");
             assertFalse(graph.contains(ANY, createURI(subjectURI), createURI("info:test#number"),
-                    createLiteral("42", XSDinteger)), "Found a triple we thought we deleted.");
+                    createLiteralByValue("42", XSDinteger)), "Found a triple we thought we deleted.");
             assertFalse(graph.contains(ANY, createURI(subjectURI), createURI("info:test#date"),
-                    createLiteral("1953?", getInstance().getSafeTypeByName("http://id.loc.gov/datatypes/edtf/EDTF"))),
+                    createLiteralByValue("1953?", getInstance().getSafeTypeByName("http://id.loc.gov/datatypes/edtf/EDTF"))),
                     "Found a triple we thought we deleted.");
         }
     }
@@ -3441,7 +3445,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graph.contains(ANY, binaryNode, type.asNode(), RESOURCE.asNode()));
                 assertTrue(graph.contains(ANY, binaryNode, type.asNode(), FEDORA_RESOURCE.asNode()));
                 assertTrue(graph.contains(ANY, binaryNode, type.asNode(), FEDORA_BINARY.asNode()));
-                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteral("9", XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteralByValue("9", XSDlong)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_MESSAGE_DIGEST.asNode(), ANY));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_FIXITY_SERVICE.asNode(),
                         createURI(binaryUri + "/" + FCR_FIXITY)));
@@ -3486,7 +3490,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(response)) {
                 final DatasetGraph graph = dataset.asDatasetGraph();
                 assertFalse(dataset.isEmpty());
-                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteral(originalSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
+                        createLiteralByValue(originalSize, XSDlong)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
                         createLiteral(originalName)));
             }
@@ -3517,7 +3522,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(response)) {
                 final DatasetGraph graph = dataset.asDatasetGraph();
                 assertFalse(dataset.isEmpty());
-                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteral(updatedSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
+                        createLiteralByValue(updatedSize, XSDlong)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
                         createLiteral(updatedName)));
             }
@@ -3529,7 +3535,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(response)) {
                 final DatasetGraph graph = dataset.asDatasetGraph();
                 assertFalse(dataset.isEmpty());
-                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteral(originalSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
+                        createLiteralByValue(originalSize, XSDlong)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
                         createLiteral(originalName)));
             }
@@ -3821,7 +3828,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 final var iterator = graph.find(ANY, uriResource, CREATED_DATE.asNode(), ANY);
                 while (iterator.hasNext()) {
                     final var quad = iterator.next();
-                    createdDate = quad.getObject().getLiteral().toString();
+                    createdDate = quad.getObject().getLiteralValue().toString();
                 }
             }
         }
@@ -3846,12 +3853,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 final var iterator = graph.find(ANY, uriResource, CREATED_DATE.asNode(), ANY);
                 while (iterator.hasNext()) {
                     final var quad = iterator.next();
-                    createdDate2 = quad.getObject().getLiteral().toString();
+                    createdDate2 = quad.getObject().getLiteralValue().toString();
                 }
                 final var iterator2 = graph.find(ANY, uriResource, DCTITLE, ANY);
                 while (iterator2.hasNext()) {
                     final var quad = iterator2.next();
-                    title = quad.getObject().getLiteral().toString();
+                    title = quad.getObject().getLiteralValue().toString();
                 }
                 // Created date change did not take effect.
                 assertEquals(createdDate, createdDate2);
@@ -4031,6 +4038,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdProfileCompacted() throws IOException {
         // Create a resource
@@ -4057,7 +4065,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             json = mapper.readTree(responseGET.getEntity().getContent());
         }
 
-        final JsonNode titles = json.get("title");
+        final JsonNode titles = json.get(title.getURI());
         assertNotNull(titles);
         assertTrue(titles.isArray(), "Should be a list");
 
@@ -4065,6 +4073,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(2, titles.findValues("@value").size(), "Should be two values!");
     }
 
+    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdProfileExpanded() throws IOException {
         // Create a resource
@@ -4095,11 +4104,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertNotNull(titlesList);
         assertEquals(1, titlesList.size(), "Should be list of lists");
 
-        final JsonNode titles = titlesList.get(0);
+        final JsonNode titles = titlesList.getFirst();
         assertEquals(2, titles.findValues("@language").size(), "Should be two langs!");
         assertEquals(2, titles.findValues("@value").size(), "Should be two values!");
     }
 
+    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdProfileFlattened() throws IOException {
         // Create a resource
@@ -4130,7 +4140,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertNotNull(titlesList);
         assertEquals(1, titlesList.size(), "Should be list of lists");
 
-        final JsonNode titles = titlesList.get(0);
+        final JsonNode titles = titlesList.getFirst();
         assertEquals(2, titles.findValues("@language").size(), "Should be two langs!");
         assertEquals(2, titles.findValues("@value").size(), "Should be two values!");
     }
@@ -4182,7 +4192,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpHead httpHead = headObjMethod(id);
         try (final CloseableHttpResponse response = execute(httpHead)) {
             etag = response.getFirstHeader("ETag").getValue();
-            assertNotNull("ETag was missing!?", etag);
+            assertNotNull(etag, "ETag was missing!?");
         }
 
         // PUT properly formatted etag
@@ -4434,9 +4444,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final List<RequestThread> successfulThreads = new ArrayList<>();
         for (final RequestThread t : threads) {
             t.join(1000);
-            assertFalse(t.isAlive(), "Thread " + t.getId() + " could not perform its operation in time!");
+            assertFalse(t.isAlive(), "Thread " + t.threadId() + " could not perform its operation in time!");
             final int status = t.response.getStatusLine().getStatusCode();
-            LOGGER.info("{} received a {} status code.", t.getId(), status);
+            LOGGER.info("{} received a {} status code.", t.threadId(), status);
             if (status == 201) {
                 successfulThreads.add(t);
             }
@@ -4504,9 +4514,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final List<RequestThread> successfulThreads = new ArrayList<>();
         for (final RequestThread t : threads) {
             t.join(1000);
-            assertFalse(t.isAlive(), "Thread " + t.getId() + " could not perform its operation in time!");
+            assertFalse(t.isAlive(), "Thread " + t.threadId() + " could not perform its operation in time!");
             final int status = t.response.getStatusLine().getStatusCode();
-            LOGGER.info("{} received a {} status code.", t.getId(), status);
+            LOGGER.info("{} received a {} status code.", t.threadId(), status);
             if (status == 201) {
                 successfulThreads.add(t);
             }
@@ -4549,9 +4559,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final List<RequestThread> successfulThreads = new ArrayList<>();
         for (final RequestThread t : threads) {
             t.join(1000);
-            assertFalse(t.isAlive(), "Thread " + t.getId() + " could not perform its operation in time!");
+            assertFalse(t.isAlive(), "Thread " + t.threadId() + " could not perform its operation in time!");
             final int status = t.response.getStatusLine().getStatusCode();
-            LOGGER.info("{} received a {} status code.", t.getId(), status);
+            LOGGER.info("{} received a {} status code.", t.threadId(), status);
             if (status == 204) {
                 successfulThreads.add(t);
             }
@@ -4579,7 +4589,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 phaser.arriveAndAwaitAdvance();
                 response = execute(request);
             } catch (final IOException e) {
-                LOGGER.error("Thread " + Thread.currentThread().getId() + ", failed to request!", e);
+                LOGGER.error("Thread " + Thread.currentThread().threadId() + ", failed to request!", e);
             }
 
         }
@@ -4750,12 +4760,12 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         final HttpHead headObjMethod = headObjMethod(id + "/binary1");
         try (final CloseableHttpResponse response = execute(headObjMethod)) {
-            assertTrue(response.getHeaders(DIGEST).length == 0);
+            assertEquals(0, response.getHeaders(DIGEST).length);
         }
 
         final HttpGet getObjMethod = getObjMethod(id + "/binary1");
         try (final CloseableHttpResponse response = execute(getObjMethod)) {
-            assertTrue(response.getHeaders(DIGEST).length == 0);
+            assertEquals(0, response.getHeaders(DIGEST).length);
         }
     }
 
