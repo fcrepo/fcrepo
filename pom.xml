@@ -78,10 +78,10 @@
     <xerces.version>2.12.2</xerces.version>
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
-    <!-- JCBC dependencies -->
+    <!-- JDBC dependencies -->
     <postgresql.version>42.4.4</postgresql.version>
     <mysql.version>8.0.33</mysql.version>
-    <mariadb.version>2.7.4</mariadb.version>
+    <mariadb.version>3.5.3</mariadb.version>
     <!-- test gear -->
     <awaitility.version>4.3.0</awaitility.version>
     <grizzly.version>4.1.0-M1</grizzly.version>
