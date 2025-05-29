@@ -71,7 +71,7 @@
     <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
-    <postgresql.version>42.4.4</postgresql.version>
+    <postgresql.version>42.7.6</postgresql.version>
     <mysql.version>8.0.28</mysql.version>
     <mariadb.version>2.7.4</mariadb.version>
     <!-- test gear -->
