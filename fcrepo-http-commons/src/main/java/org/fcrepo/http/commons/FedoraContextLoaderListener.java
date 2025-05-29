@@ -8,7 +8,7 @@ package org.fcrepo.http.commons;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.web.context.ContextLoaderListener;
 
-import javax.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextEvent;
 
 import static org.slf4j.LoggerFactory.getLogger;
 

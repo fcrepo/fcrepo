@@ -5,7 +5,7 @@
  */
 package org.fcrepo.http.api;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
+import static jakarta.ws.rs.core.MediaType.APPLICATION_OCTET_STREAM_TYPE;
 import static org.apache.http.HttpHeaders.CONTENT_LENGTH;
 import static org.apache.http.HttpHeaders.CONTENT_TYPE;
 import static org.apache.http.HttpStatus.SC_OK;
@@ -18,7 +18,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.fcrepo.kernel.api.exception.ExternalContentAccessException;
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
-import javax.ws.rs.core.Link;
+import jakarta.ws.rs.core.Link;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;

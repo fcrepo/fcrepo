@@ -95,47 +95,47 @@ public class ResourceTripleServiceImplTest {
         when(resource.getFedoraId()).thenReturn(resourceId);
 
         // Create test triples for each source
-        userTriple1 = new Triple(resourceSubject,
+        userTriple1 = Triple.create(resourceSubject,
                 createURI("http://purl.org/dc/elements/1.1/title"),
                 createLiteral("Test Resource"));
-        userTriple2 = new Triple(resourceSubject,
+        userTriple2 = Triple.create(resourceSubject,
                 createURI("http://purl.org/dc/elements/1.1/description"),
                 createLiteral("A test resource for unit testing"));
 
-        serverTriple1 = new Triple(resourceSubject,
+        serverTriple1 = Triple.create(resourceSubject,
                 createURI("http://fedora.info/definitions/v4/repository#created"),
                 createLiteral("2023-01-01T00:00:00Z"));
-        serverTriple2 = new Triple(resourceSubject,
+        serverTriple2 = Triple.create(resourceSubject,
                 createURI("http://fedora.info/definitions/v4/repository#lastModified"),
                 createLiteral("2023-01-02T12:34:56Z"));
 
         final Node childNode = createURI("info:fedora/test-resource/child");
-        containmentTriple1 = new Triple(resourceSubject,
+        containmentTriple1 = Triple.create(resourceSubject,
                 createURI("http://www.w3.org/ns/ldp#contains"),
                 childNode);
-        containmentTriple2 = new Triple(resourceSubject,
+        containmentTriple2 = Triple.create(resourceSubject,
                 createURI("http://www.w3.org/ns/ldp#contains"),
                 createURI("info:fedora/test-resource/another-child"));
 
-        membershipTriple1 = new Triple(resourceSubject,
+        membershipTriple1 = Triple.create(resourceSubject,
                 createURI("http://www.w3.org/ns/ldp#member"),
                 createURI("info:fedora/test-resource/member1"));
-        membershipTriple2 = new Triple(resourceSubject,
+        membershipTriple2 = Triple.create(resourceSubject,
                 createURI("http://www.w3.org/ns/ldp#member"),
                 createURI("info:fedora/test-resource/member2"));
 
-        referenceTriple1 = new Triple(createURI("info:fedora/other-resource"),
+        referenceTriple1 = Triple.create(createURI("info:fedora/other-resource"),
                 createURI("http://purl.org/dc/elements/1.1/relation"),
                 resourceSubject);
-        referenceTriple2 = new Triple(createURI("info:fedora/other-resource2"),
+        referenceTriple2 = Triple.create(createURI("info:fedora/other-resource2"),
                 createURI("http://purl.org/dc/elements/1.1/relation"),
                 resourceSubject);
 
-        membershipByObjectTriple = new Triple(createURI("info:fedora/collection"),
+        membershipByObjectTriple = Triple.create(createURI("info:fedora/collection"),
                 createURI("http://www.w3.org/ns/ldp#member"),
                 resourceSubject);
 
-        containedByTriple = new Triple(createURI("info:fedora/parent"),
+        containedByTriple = Triple.create(createURI("info:fedora/parent"),
                 createURI("http://www.w3.org/ns/ldp#contains"),
                 resourceSubject);
 

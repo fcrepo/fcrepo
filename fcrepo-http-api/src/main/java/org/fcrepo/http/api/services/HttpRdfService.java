@@ -15,14 +15,19 @@ import static org.fcrepo.kernel.api.RdfLexicon.restrictedType;
 import static org.fcrepo.kernel.api.utils.RelaxedPropertiesHelper.checkTripleForDisallowed;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.MediaType;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.core.MediaType;
 
+import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.RdfStream;
@@ -83,7 +88,7 @@ public class HttpRdfService {
         return new DefaultRdfStream(NodeFactory.createURI(extResourceId), stream.map(t -> {
             final Node subject = makeExternalNode(t.getSubject(), idTranslator);
             final Node object = makeExternalNode(t.getObject(), idTranslator);
-            return new Triple(subject, t.getPredicate(), object);
+            return Triple.create(subject, t.getPredicate(), object);
         }));
     }
 
@@ -249,18 +254,43 @@ public class HttpRdfService {
                     "format");
         }
         try {
-            final Model inputModel = createDefaultModel();
-            inputModel.read(requestBodyStream, extResourceId, format.getName().toUpperCase());
-            return inputModel;
+            return parseAsTemp(requestBodyStream, extResourceId, format);
         } catch (final RiotException e) {
             throw new BadRequestException("RDF was not parsable: " + e.getMessage(), e);
-
         } catch (final RuntimeIOException e) {
             if (e.getCause() instanceof JsonParseException) {
                 final var cause = e.getCause();
                 throw new MalformedRdfException(cause.getMessage(), cause);
             }
             throw new RepositoryRuntimeException(e.getMessage(), e);
+        } catch (final IOException e) {
+            throw new RepositoryRuntimeException("Error reading RDF: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Read the jersey inputstream to a file on disk, then parse it as a Model.
+     * @param bodyStream the input stream containing the RDF
+     * @param extResourceId the external ID of the Fedora resource
+     * @param format the RDF format of the body stream
+     * @return a Model containing triples from request body
+     * @throws IOException Problems writing to or reading from the temporary file.
+     * @throws RiotException Problems parsing the RDF.
+     * @throws RuntimeIOException Problems reading the temporary file.
+     */
+    private static Model parseAsTemp(final InputStream bodyStream, final String extResourceId, final Lang format)
+            throws IOException, RiotException, RuntimeIOException {
+        final Path tempFile = Files.createTempFile("fedora-upload-", ".rdf");
+        try (OutputStream out = Files.newOutputStream(tempFile)) {
+            bodyStream.transferTo(out);
+        }
+
+        try (InputStream fileIn = Files.newInputStream(tempFile)) {
+            final Model inputModel = createDefaultModel();
+            RDFDataMgr.read(inputModel, fileIn, extResourceId, format);
+            return inputModel;
+        } finally {
+            Files.deleteIfExists(tempFile);
         }
     }
 

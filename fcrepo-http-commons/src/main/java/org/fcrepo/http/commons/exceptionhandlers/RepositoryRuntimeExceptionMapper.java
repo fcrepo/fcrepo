@@ -8,13 +8,13 @@ package org.fcrepo.http.commons.exceptionhandlers;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.slf4j.Logger;
 
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
-import javax.ws.rs.ext.Providers;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
+import jakarta.ws.rs.ext.Providers;
 
-import static javax.ws.rs.core.Response.serverError;
+import static jakarta.ws.rs.core.Response.serverError;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 

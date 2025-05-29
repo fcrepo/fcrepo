@@ -14,7 +14,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 import java.util.Map;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.apache.jena.rdf.model.Statement;
 

@@ -27,7 +27,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 
