@@ -55,8 +55,8 @@
     <javaee-api.version>8.0.1</javaee-api.version>
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.version>4.0.5</jaxb.version>
-    <jackson2.version>2.15.0</jackson2.version>
-    <jackson2.databind.version>2.15.0</jackson2.databind.version>
+    <jackson2.version>2.19.0</jackson2.version>
+    <jackson2.databind.version>2.19.0</jackson2.databind.version>
     <jboss-logging.version>3.4.2.Final</jboss-logging.version>
     <jena.version>4.10.0</jena.version>
     <jersey.version>3.1.10</jersey.version>
@@ -80,8 +80,8 @@
     <velocity.version>1.7</velocity.version>
     <!-- JDBC dependencies -->
     <postgresql.version>42.4.4</postgresql.version>
-    <mysql.version>8.0.33</mysql.version>
     <mariadb.version>3.5.3</mariadb.version>
+    <mysql.version>8.2.0</mysql.version>
     <!-- test gear -->
     <awaitility.version>4.3.0</awaitility.version>
     <grizzly.version>4.1.0-M1</grizzly.version>
