@@ -245,13 +245,6 @@
       <type>test-jar</type>
     </dependency>
 
-    <dependency>
-      <groupId>org.reflections</groupId>
-      <artifactId>reflections</artifactId>
-      <version>0.9.10</version>
-      <scope>test</scope>
-    </dependency>
-
     <!-- This dependency is for compile-time: it keeps this module independent
       of any given choice of JAX-RS implementation. It must be _after_ the test
       gear. Otherwise it will get loaded during test phase, but because this is
