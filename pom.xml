@@ -41,7 +41,8 @@
     <hamcrest.version>3.0</hamcrest.version>
     <hikari.version>5.0.0</hikari.version>
     <hk2.version>3.1.1</hk2.version>
-    <htmlunit.version>2.53.0</htmlunit.version>
+    <!-- Last version that supports our version of jquery -->
+    <htmlunit.version>4.4.0</htmlunit.version>
     <httpclient.version>4.5.14</httpclient.version>
     <httpmime.version>4.5.14</httpmime.version>
     <httpcore.version>4.4.16</httpcore.version>

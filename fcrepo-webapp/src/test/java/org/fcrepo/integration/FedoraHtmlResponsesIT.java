@@ -4,54 +4,52 @@
  * tree.
  */
 package org.fcrepo.integration;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.fail;
-import static com.gargoylesoftware.htmlunit.BrowserVersion.FIREFOX;
+
 import static com.google.common.collect.Lists.transform;
-import static java.util.UUID.randomUUID;
 import static jakarta.ws.rs.core.HttpHeaders.ACCEPT;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+import static java.util.UUID.randomUUID;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import static org.htmlunit.BrowserVersion.FIREFOX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
+import org.htmlunit.DefaultCredentialsProvider;
+import org.htmlunit.FailingHttpStatusCodeException;
+import org.htmlunit.IncorrectnessListener;
+import org.htmlunit.NicelyResynchronizingAjaxController;
+import org.htmlunit.Page;
+import org.htmlunit.SilentCssErrorHandler;
+import org.htmlunit.WebClient;
+import org.htmlunit.html.DomAttr;
+import org.htmlunit.html.DomElement;
+import org.htmlunit.html.DomText;
+import org.htmlunit.html.HtmlButton;
+import org.htmlunit.html.HtmlElement;
+import org.htmlunit.html.HtmlFileInput;
+import org.htmlunit.html.HtmlForm;
+import org.htmlunit.html.HtmlInput;
+import org.htmlunit.html.HtmlPage;
+import org.htmlunit.html.HtmlSelect;
+import org.htmlunit.html.HtmlTextArea;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import com.gargoylesoftware.htmlunit.DefaultCredentialsProvider;
-import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
-import com.gargoylesoftware.htmlunit.IncorrectnessListener;
-import com.gargoylesoftware.htmlunit.NicelyResynchronizingAjaxController;
-import com.gargoylesoftware.htmlunit.Page;
-import com.gargoylesoftware.htmlunit.SilentCssErrorHandler;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.DomAttr;
-import com.gargoylesoftware.htmlunit.html.DomElement;
-import com.gargoylesoftware.htmlunit.html.DomText;
-import com.gargoylesoftware.htmlunit.html.HtmlButton;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
-import com.gargoylesoftware.htmlunit.html.HtmlFileInput;
-import com.gargoylesoftware.htmlunit.html.HtmlForm;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlSelect;
-import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>FedoraHtmlResponsesIT class.</p>
@@ -137,27 +135,27 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         button.click();
 
         final HtmlPage page1 = javascriptlessWebClient.getPage(serverAddress);
-        assertTrue(!page1.asText().equals(page.asText()), "Didn't see new information in page!");
+        assertNotEquals(page1.asXml(), page.asXml(), "Didn't see new information in page!");
     }
 
     @Test
     public void testCreateNewBasicContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "basic container");
-        assertTrue(newPage.asText().contains("http://www.w3.org/ns/ldp#BasicContainer"),
+        assertTrue(newPage.asXml().contains("http://www.w3.org/ns/ldp#BasicContainer"),
                 "Set container type to ldp:BasicContainer");
     }
 
     @Test
     public void testCreateNewDirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "direct container");
-        assertTrue(newPage.asText().contains("http://www.w3.org/ns/ldp#DirectContainer"),
+        assertTrue(newPage.asXml().contains("http://www.w3.org/ns/ldp#DirectContainer"),
                 "Set container type to ldp:DirectContainer");
     }
 
     @Test
     public void testCreateNewIndirectContainer() throws IOException {
         final HtmlPage newPage = createAndVerifyObjectWithIdFromRootPage(newPid(), "indirect container");
-        assertTrue(newPage.asText().contains("http://www.w3.org/ns/ldp#IndirectContainer"),
+        assertTrue(newPage.asXml().contains("http://www.w3.org/ns/ldp#IndirectContainer"),
                 "Set container type to ldp:IndirectContainer");
     }
 
@@ -216,6 +214,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final String pid = createNewObject();
         final HtmlPage page = webClient.getPage(serverAddress + pid);
+//        System.out.println("Page: " + page.asXml());
         final HtmlForm action_delete = page.getFormByName("action_delete");
         action_delete.getButtonByName("delete-button").click();
         webClient.waitForBackgroundJavaScript(1000);
@@ -237,7 +236,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final HtmlPage page = webClient.getPage(serverAddress + pid);
         final DomElement viewVersions = page.getElementById("view_versions");
         final Page versionsPage = viewVersions.click();
-        assertEquals(versionsPage.getWebResponse().getStatusCode(), 200, "Didn't get a 200!");
+        assertEquals(200, versionsPage.getWebResponse().getStatusCode(), "Didn't get a 200!");
         webClient.getOptions().setThrowExceptionOnFailingStatusCode(throwExceptionOnFailingStatusCode);
     }
 
@@ -286,9 +285,9 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         final List<DomText> labels =
             castList(versions
                     .getByXPath("//a[@class='version_link']/text()"));
-        final boolean chronological = labels.get(0).asText().compareTo(labels.get(1).toString()) < 0;
+        final boolean chronological = labels.get(0).asXml().compareTo(labels.get(1).toString()) < 0;
         logger.debug("Versions {} in chronological order: {}, {}",
-                     chronological ? "are" : "are not", labels.get(0).asText(), labels.get(1).asText());
+                     chronological ? "are" : "are not", labels.get(0).asXml(), labels.get(1).asXml());
 
         final HtmlPage firstRevision =
                 javascriptlessWebClient.getPage(versionLinks.get(chronological ? 1 : 2)
@@ -333,7 +332,7 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
         button.click();
 
         final HtmlPage page1 = webClient.getPage(serverAddress + pid);
-        assertTrue(page1.getElementById("metadata").asText().contains("some-predicate"));
+        assertTrue(page1.getElementById("metadata").asXml().contains("some-predicate"));
     }
 
     @Test
@@ -408,5 +407,4 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         }
     }
-
 }
