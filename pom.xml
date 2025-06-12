@@ -75,7 +75,6 @@
     <spring.version>6.2.7</spring.version>
     <titanium.version>1.6.0</titanium.version>
     <xerces.version>2.12.2</xerces.version>
-    <xml-apis.version>1.4.01</xml-apis.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
     <postgresql.version>42.4.4</postgresql.version>
@@ -106,7 +105,6 @@
     <module>fcrepo-auth-common</module>
     <module>fcrepo-configs</module>
     <module>fcrepo-parent</module>
-    <module>fcrepo-integration-ldp</module>
     <module>fcrepo-integration-rdf</module>
     <module>fcrepo-auth-webac</module>
     <module>fcrepo-persistence-api</module>
@@ -500,11 +498,6 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>${commons-lang.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>xml-apis</groupId>
-        <artifactId>xml-apis</artifactId>
-        <version>${xml-apis.version}</version>
       </dependency>
       <dependency>
         <groupId>xerces</groupId>
