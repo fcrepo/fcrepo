@@ -106,7 +106,6 @@
     <module>fcrepo-auth-common</module>
     <module>fcrepo-configs</module>
     <module>fcrepo-parent</module>
-    <module>fcrepo-integration-ldp</module>
     <module>fcrepo-integration-rdf</module>
     <module>fcrepo-auth-webac</module>
     <module>fcrepo-persistence-api</module>
