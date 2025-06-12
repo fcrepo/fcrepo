@@ -214,7 +214,6 @@ public class FedoraHtmlResponsesIT extends AbstractResourceIT {
 
         final String pid = createNewObject();
         final HtmlPage page = webClient.getPage(serverAddress + pid);
-//        System.out.println("Page: " + page.asXml());
         final HtmlForm action_delete = page.getFormByName("action_delete");
         action_delete.getButtonByName("delete-button").click();
         webClient.waitForBackgroundJavaScript(1000);
