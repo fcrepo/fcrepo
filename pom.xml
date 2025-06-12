@@ -29,7 +29,7 @@
     <aws.crt.version>0.29.16</aws.crt.version>
     <caffeine.version>3.2.0</caffeine.version>
     <commons-codec.version>1.18.0</commons-codec.version>
-    <commons-collections.version>3.2.2</commons-collections.version>
+    <commons-collections.version>4.5.0</commons-collections.version>
     <commons-io.version>2.19.0</commons-io.version>
     <commons-lang.version>3.18.0</commons-lang.version>
     <commons-text.version>1.13.1</commons-text.version>
@@ -51,6 +51,7 @@
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.jakartaee-api.version>10.0.0</jakarta.jakartaee-api.version>
     <jakarta.xml.version>4.0.2</jakarta.xml.version>
+    <jakarta.ws.version>4.0.0</jakarta.ws.version>
     <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
     <javax.annotation.version>1.3.2</javax.annotation.version>
     <javaee-api.version>8.0.1</javaee-api.version>
@@ -59,6 +60,10 @@
     <jackson2.version>2.19.0</jackson2.version>
     <jackson2.databind.version>2.19.0</jackson2.databind.version>
     <jena.version>4.10.0</jena.version>
+    <jackson2.version>2.15.0</jackson2.version>
+    <jackson2.databind.version>2.15.0</jackson2.databind.version>
+    <jboss-logging.version>3.4.2.Final</jboss-logging.version>
+    <jena.version>5.4.0</jena.version>
     <jersey.version>3.1.10</jersey.version>
     <jetty.version>11.0.25</jetty.version>
     <jsonld.version>0.13.6</jsonld.version>
@@ -75,7 +80,8 @@
     <spring.version>6.2.8</spring.version>
     <titanium.version>1.6.0</titanium.version>
     <xerces.version>2.12.2</xerces.version>
-    <velocity.version>1.7</velocity.version>
+    <xml-apis.version>1.4.01</xml-apis.version>
+    <velocity.version>2.4.1</velocity.version>
     <!-- JCBC dependencies -->
     <postgresql.version>42.7.7</postgresql.version>
     <mysql.version>8.2.0</mysql.version>
@@ -140,6 +146,11 @@
         <artifactId>jakarta.xml.bind-api</artifactId>
         <version>${jakarta.xml.version}</version>
 	  </dependency>
+      <dependency>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
+        <version>${jakarta.ws.version}</version>
+      </dependency>
 	  <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-core</artifactId>
@@ -290,6 +301,10 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -316,8 +331,14 @@
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>com.apicatalog</groupId>
+        <artifactId>titanium-json-ld</artifactId>
+        <version>${titanium.version}</version>
+      </dependency>
+
+      <dependency>
         <groupId>org.apache.velocity</groupId>
-        <artifactId>velocity</artifactId>
+        <artifactId>velocity-engine-core</artifactId>
         <version>${velocity.version}</version>
         <exclusions>
           <exclusion>
@@ -333,8 +354,8 @@
             <artifactId>servlet-api</artifactId>
           </exclusion>
           <exclusion>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
           </exclusion>
         </exclusions>
       </dependency>

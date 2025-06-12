@@ -126,7 +126,8 @@ public class RdfStreamStreamingOutputTest {
                 final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, namespaces, TURTLE_TYPE).write(output);
             final String s = output.toString(StandardCharsets.UTF_8);
-            assertTrue(s.replaceAll("\\s+", " ").contains("@prefix a: <info:>"));
+            //assertTrue(s.replaceAll("\\s+", " ").contains("@prefix a: <info:>"));
+            assertTrue(s.replaceAll("\\s+", " ").contains("PREFIX a: <info:>"));
         }
     }
 

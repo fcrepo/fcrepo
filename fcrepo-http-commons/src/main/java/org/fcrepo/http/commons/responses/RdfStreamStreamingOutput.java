@@ -8,9 +8,6 @@ package org.fcrepo.http.commons.responses;
 import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.apache.jena.riot.Lang.JSONLD;
 import static org.apache.jena.riot.Lang.RDFXML;
-import static org.apache.jena.riot.RDFFormat.JSONLD_COMPACT_FLAT;
-import static org.apache.jena.riot.RDFFormat.JSONLD_EXPAND_FLAT;
-import static org.apache.jena.riot.RDFFormat.JSONLD_FLATTEN_FLAT;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
 import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
@@ -20,7 +17,14 @@ import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +33,13 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
+import com.apicatalog.jsonld.JsonLd;
+import com.apicatalog.jsonld.JsonLdError;
+import com.apicatalog.jsonld.JsonLdOptions;
+import com.apicatalog.jsonld.JsonLdVersion;
+import com.apicatalog.jsonld.document.JsonDocument;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -170,17 +181,55 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         stream.finish();
     }
 
+    private static InputStream turtleToNQuadsStream(String turtle, Model model) {
+        RDFDataMgr.read(model, new ByteArrayInputStream(turtle.getBytes()), Lang.TURTLE);
+        StringWriter nquadsWriter = new StringWriter();
+        RDFDataMgr.write(nquadsWriter, model, Lang.NQUADS);
+        LOGGER.info("NQUADS: " + nquadsWriter);
+        return new ByteArrayInputStream(nquadsWriter.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
     private static void serializeNonStreamed(final RdfStream rdfStream, final OutputStream output,
             final Lang dataFormat, final MediaType dataMediaType, final Map<String, String> nsPrefixes) {
         final Model model = rdfStream.collect(toModel());
-
         model.setNsPrefixes(filterNamespacesToPresent(model, nsPrefixes));
         // use block output streaming for RDFXML
         if (RDFXML.equals(dataFormat)) {
             RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
         } else if (JSONLD.equals(dataFormat)) {
-            final RDFFormat jsonldFormat = getFormatFromMediaType(dataMediaType);
-            RDFDataMgr.write(output, model.getGraph(), jsonldFormat);
+
+            final StringWriter turtleWriter = new StringWriter();
+            RDFDataMgr.write(turtleWriter, model, Lang.TURTLE);
+            final InputStream nquadsStream = turtleToNQuadsStream(turtleWriter.toString(), model);
+
+            try {
+                final JsonDocument rdfDocument = JsonDocument.of(nquadsStream);
+                final JsonLdOptions options = getFormatFromMediaType(dataMediaType);
+                final Object jsonLd = JsonLd
+                        .fromRdf(rdfDocument)
+                        .options(options)
+                        .get();
+                final ObjectMapper mapper = new ObjectMapper();
+
+                try {
+                    final String prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(jsonLd);
+
+                    try (Writer w = new OutputStreamWriter(output, "UTF-8")) {
+                        LOGGER.info("FOO1 " + prettyJson);
+                        w.write(prettyJson);
+                    } catch (IOException e) {
+                        LOGGER.info("FOO2 " + e.getMessage());
+                        throw new WebApplicationException(e);
+                    }
+
+                } catch (JsonProcessingException e) {
+                    LOGGER.info("FOO3 " + e.getMessage());
+                    throw new WebApplicationException(e);
+                }
+            } catch (JsonLdError e) {
+                LOGGER.info("FOO4 " +  e.getMessage());
+                throw new WebApplicationException(e);
+            }
         } else {
             RDFDataMgr.write(output, model.getGraph(), dataFormat);
         }
@@ -210,13 +259,20 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         return resultNses;
     }
 
-    private static RDFFormat getFormatFromMediaType(final MediaType mediaType) {
+    private static JsonLdOptions getFormatFromMediaType(final MediaType mediaType) {
         final String profile = mediaType.getParameters().getOrDefault("profile", "");
+        LOGGER.info("PROFILE " + profile);
+        final JsonLdOptions jsonLDOptions = new JsonLdOptions();
+        jsonLDOptions.setProcessingMode(JsonLdVersion.V1_1);
+        jsonLDOptions.setProduceGeneralizedRdf(false);
+        jsonLDOptions.setCompactArrays(true);
         if (profile.equals(JSONLD_COMPACTED)) {
-            return JSONLD_COMPACT_FLAT;
-        } else if (profile.equals(JSONLD_FLATTENED)) {
-            return JSONLD_FLATTEN_FLAT;
+            jsonLDOptions.setOmitGraph(false);
+            jsonLDOptions.setOmitDefault(false);
+        } else {
+            jsonLDOptions.setUseNativeTypes(true);
         }
-        return JSONLD_EXPAND_FLAT;
+
+        return jsonLDOptions;
     }
 }
