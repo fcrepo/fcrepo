@@ -5,7 +5,7 @@
  */
 package org.fcrepo.persistence.ocfl.api;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;

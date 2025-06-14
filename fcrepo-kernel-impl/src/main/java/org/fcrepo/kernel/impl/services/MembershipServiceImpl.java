@@ -29,7 +29,7 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import jakarta.inject.Inject;
 import java.time.Instant;
 import java.util.ArrayList;
