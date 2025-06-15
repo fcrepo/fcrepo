@@ -59,10 +59,6 @@
     <jaxb.version>4.0.5</jaxb.version>
     <jackson2.version>2.19.0</jackson2.version>
     <jackson2.databind.version>2.19.0</jackson2.databind.version>
-    <jena.version>4.10.0</jena.version>
-    <jackson2.version>2.15.0</jackson2.version>
-    <jackson2.databind.version>2.15.0</jackson2.databind.version>
-    <jboss-logging.version>3.4.2.Final</jboss-logging.version>
     <jena.version>5.4.0</jena.version>
     <jersey.version>3.1.10</jersey.version>
     <jetty.version>11.0.25</jetty.version>
