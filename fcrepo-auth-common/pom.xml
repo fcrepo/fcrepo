@@ -47,8 +47,8 @@
       <classifier>jakarta</classifier>
       <exclusions>
         <exclusion>
-          <groupId>commons-collections</groupId>
-          <artifactId>commons-collections</artifactId>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-collections4</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
@@ -81,20 +81,21 @@
     
     <dependency>
       <groupId>org.apache.velocity</groupId>
-      <artifactId>velocity</artifactId>
+      <artifactId>velocity-engine-core</artifactId>
+      <!--
       <exclusions>
         <exclusion>
-          <groupId>commons-collections</groupId>
-          <artifactId>commons-collections</artifactId>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-collections4</artifactId>
         </exclusion>
       </exclusions>
+    -->
     </dependency>
     <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
       <version>${commons-collections.version}</version>
     </dependency>
-
     <!-- test gear -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
