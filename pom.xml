@@ -78,7 +78,7 @@
     <velocity.version>1.7</velocity.version>
     <!-- JDBC dependencies -->
     <postgresql.version>42.4.4</postgresql.version>
-    <mariadb.version>2.7.12</mariadb.version>
+    <mariadb.version>3.5.3</mariadb.version>
     <mysql.version>8.2.0</mysql.version>
     <!-- test gear -->
     <awaitility.version>4.3.0</awaitility.version>
