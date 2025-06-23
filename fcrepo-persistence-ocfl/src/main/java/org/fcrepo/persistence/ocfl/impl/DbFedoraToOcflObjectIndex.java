@@ -245,11 +245,11 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
                 final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
                 parameterSource.addValue("fedoraId", fedoraId.getResourceId());
                 parameterSource.addValue("transactionId", transaction.getId());
-                return (FedoraOcflMapping) jdbcTemplate.query(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,
-                        GET_MAPPING_ROW_MAPPER);
+                return jdbcTemplate.query(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,
+                        GET_MAPPING_ROW_MAPPER).getFirst();
             } else {
                 return this.mappingCache.get(fedoraId.getResourceId(), key ->
-                        (FedoraOcflMapping) jdbcTemplate.query(LOOKUP_MAPPING, Map.of("fedoraId", key), GET_MAPPING_ROW_MAPPER)
+                        jdbcTemplate.query(LOOKUP_MAPPING, Map.of("fedoraId", key), GET_MAPPING_ROW_MAPPER).getFirst()
                 );
             }
         } catch (final EmptyResultDataAccessException e) {
