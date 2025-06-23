@@ -9,6 +9,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.Nonnull;
@@ -245,14 +246,14 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
                 final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
                 parameterSource.addValue("fedoraId", fedoraId.getResourceId());
                 parameterSource.addValue("transactionId", transaction.getId());
-                return jdbcTemplate.query(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,
-                        GET_MAPPING_ROW_MAPPER).getFirst();
+                return jdbcTemplate.queryForObject(LOOKUP_MAPPING_IN_TRANSACTION, parameterSource,
+                        GET_MAPPING_ROW_MAPPER);
             } else {
                 return this.mappingCache.get(fedoraId.getResourceId(), key ->
-                        jdbcTemplate.query(LOOKUP_MAPPING, Map.of("fedoraId", key), GET_MAPPING_ROW_MAPPER).getFirst()
+                        jdbcTemplate.queryForObject(LOOKUP_MAPPING, Map.of("fedoraId", key), GET_MAPPING_ROW_MAPPER)
                 );
             }
-        } catch (final EmptyResultDataAccessException e) {
+        } catch (final EmptyResultDataAccessException | NoSuchElementException e) {
             throw new FedoraOcflMappingNotFoundException("No OCFL mapping found for " + fedoraId);
         }
     }
