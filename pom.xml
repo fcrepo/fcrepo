@@ -39,7 +39,7 @@
     <guava.version>33.4.8-jre</guava.version>
     <h2database.version>2.2.220</h2database.version>
     <hamcrest.version>3.0</hamcrest.version>
-    <hikari.version>5.0.0</hikari.version>
+    <hikari.version>6.3.0</hikari.version>
     <hk2.version>3.1.1</hk2.version>
     <!-- Last version that supports our version of jquery -->
     <htmlunit.version>4.4.0</htmlunit.version>
