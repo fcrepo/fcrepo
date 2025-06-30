@@ -43,10 +43,34 @@ CREATE TABLE IF NOT EXISTS search_resource_rdf_type_transactions (
     PRIMARY KEY(fedora_id, rdf_type_uri, transaction_id)
 );
 
+-- Create an index on the resource_id in search_resource_rdf_type to support fast lookups
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'search_resource_rdf_type' AND index_name = 'search_resource_rdf_type_idx1' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX search_resource_rdf_type_idx1 ON search_resource_rdf_type (resource_id)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
 SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
     WHERE table_name = 'search_resource_rdf_type_transactions' AND index_name = 'search_resource_rdf_type_transactions_idx1' AND table_schema = database());
 SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
     'CREATE INDEX search_resource_rdf_type_transactions_idx1 ON search_resource_rdf_type_transactions (fedora_id, transaction_id)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+-- Create an index on transaction_id and rdf_type_uri for commit RDF type association transactions.
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'search_resource_rdf_type_transactions' AND index_name = 'search_resource_rdf_type_tx_idx2' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX search_resource_rdf_type_tx_idx2 ON search_resource_rdf_type_transactions (transaction_id, rdf_type_uri)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+-- Create an index on the rdf_type_uri in search_resource_rdf_type_transactions to support fast lookups
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'search_resource_rdf_type_transactions' AND index_name = 'search_resource_rdf_type_tx_idx3' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX search_resource_rdf_type_tx_idx3 ON search_resource_rdf_type_transactions (rdf_type_uri)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
@@ -78,3 +102,18 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
 
+-- Create an index on the fedora_id in simple_search_transactions
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'simple_search_transactions' AND index_name = 'simple_search_transactions_idx1' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX simple_search_transactions_idx1 ON simple_search_transactions (fedora_id)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;
+
+-- Create an index on the transaction_id and operation in simple_search_transactions
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'simple_search_transactions' AND index_name = 'simple_search_transactions_idx2' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX simple_search_transactions_idx2 ON simple_search_transactions (transaction_id, operation)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;

@@ -22,7 +22,6 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -210,11 +209,31 @@ public class DbSearchIndexImpl implements SearchIndex {
             CONTENT_SIZE_COLUMN + " = EXCLUDED." + CONTENT_SIZE_COLUMN + ", " +
             MIME_TYPE_COLUMN + " = EXCLUDED." + MIME_TYPE_COLUMN;
 
-    private static final String COMMIT_RDF_TYPES =
+    private static final String COMMIT_RDF_TYPES_MYSQL_MARIA =
+            "INSERT IGNORE INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ") " +
+                    "SELECT DISTINCT " + RDF_TYPE_URI_COLUMN + " FROM " + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE +
+                    " WHERE " + TRANSACTION_ID_COLUMN + " = :" + TRANSACTION_ID_PARAM;
+    private static final String COMMIT_RDF_TYPES_POSTGRES =
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
-                    " SELECT distinct " + RDF_TYPE_URI_COLUMN + " FROM " + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE +
-                    " WHERE " + TRANSACTION_ID_COLUMN + "= :" + TRANSACTION_ID_PARAM + " AND " + RDF_TYPE_URI_COLUMN +
-                    " NOT IN (SELECT " + RDF_TYPE_URI_PARAM + " FROM " + SEARCH_RDF_TYPE_TABLE + ")";
+                    "SELECT DISTINCT " + RDF_TYPE_URI_COLUMN + " FROM " + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE +
+                    " WHERE " + TRANSACTION_ID_COLUMN + " = :" + TRANSACTION_ID_PARAM + " ON CONFLICT " +
+                    "(" + RDF_TYPE_URI_COLUMN + ") DO NOTHING";
+    private static final String COMMIT_RDF_TYPES_H2 =
+            "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ") " +
+                    "SELECT DISTINCT tx." + RDF_TYPE_URI_COLUMN + " " +
+                    "FROM " + SEARCH_RESOURCE_RDF_TYPE_TRANSACTIONS_TABLE + " tx " +
+                    "WHERE tx." + TRANSACTION_ID_COLUMN + " = :" + TRANSACTION_ID_PARAM + " " +
+                    "AND NOT EXISTS ( " +
+                    "  SELECT 1 FROM " + SEARCH_RDF_TYPE_TABLE + " existing " +
+                    "  WHERE existing." + RDF_TYPE_URI_COLUMN + " = tx." + RDF_TYPE_URI_COLUMN +
+                    ")";
+
+    private static final Map<DbPlatform, String> COMMIT_RDF_TYPES_MAP = Map.of(
+            DbPlatform.H2, COMMIT_RDF_TYPES_H2,
+            DbPlatform.MYSQL, COMMIT_RDF_TYPES_MYSQL_MARIA,
+            DbPlatform.MARIADB, COMMIT_RDF_TYPES_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, COMMIT_RDF_TYPES_POSTGRES
+    );
 
     private static final String INSERT_RDF_TYPE =
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
@@ -234,17 +253,55 @@ public class DbSearchIndexImpl implements SearchIndex {
                     "= c." + RDF_TYPE_URI_COLUMN + " AND c." + FEDORA_ID_COLUMN + " = a." + FEDORA_ID_COLUMN +
                     " GROUP BY a." + ID_COLUMN + ", b." + ID_COLUMN;
 
-    private static final String COMMIT_DELETE_RESOURCES_IN_TRANSACTION =
-            "DELETE FROM " + SIMPLE_SEARCH_TABLE + " WHERE " + FEDORA_ID_COLUMN + " IN (SELECT  " + FEDORA_ID_COLUMN +
-                    " FROM " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = " +
-                    ":" + TRANSACTION_ID_PARAM + " AND " + OPERATION_COLUMN + " = 'delete')";
+    private static final String COMMIT_DELETE_RESOURCES_IN_TRANSACTION_MYSQL_MARIA =
+            "DELETE s FROM " + SIMPLE_SEARCH_TABLE + " s JOIN " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " tx ON s." +
+                    FEDORA_ID_COLUMN + " = tx." + FEDORA_ID_COLUMN + " WHERE tx." + TRANSACTION_ID_COLUMN +
+                    " = :" + TRANSACTION_ID_PARAM + " AND tx." + OPERATION_COLUMN + " = 'delete'";
+    private static final String COMMIT_DELETE_RESOURCES_IN_TRANSACTION_POSTGRES =
+            "DELETE FROM " + SIMPLE_SEARCH_TABLE + " s " +
+                    "USING " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " tx " +
+                    "WHERE s." + FEDORA_ID_COLUMN + " = tx." + FEDORA_ID_COLUMN + " " +
+                    "AND tx." + TRANSACTION_ID_COLUMN + " = :" + TRANSACTION_ID_PARAM + " " +
+                    "AND tx." + OPERATION_COLUMN + " = 'delete'";
+    private static final String COMMIT_DELETE_RESOURCES_IN_TRANSACTION_H2 =
+            "DELETE FROM " + SIMPLE_SEARCH_TABLE + " WHERE " + FEDORA_ID_COLUMN + " IN (" +
+                    "SELECT " + FEDORA_ID_COLUMN + " FROM " + SIMPLE_SEARCH_TRANSACTIONS_TABLE +
+                    " WHERE " + TRANSACTION_ID_COLUMN + " = :" + TRANSACTION_ID_PARAM +
+                    " AND " + OPERATION_COLUMN + " = 'delete')";
+    private static final Map<DbPlatform, String> COMMIT_DELETE_RESOURCES_IN_TRANSACTION_MAP = Map.of(
+            DbPlatform.H2, COMMIT_DELETE_RESOURCES_IN_TRANSACTION_H2,
+            DbPlatform.MYSQL, COMMIT_DELETE_RESOURCES_IN_TRANSACTION_MYSQL_MARIA,
+            DbPlatform.MARIADB, COMMIT_DELETE_RESOURCES_IN_TRANSACTION_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, COMMIT_DELETE_RESOURCES_IN_TRANSACTION_POSTGRES
+    );
 
-    private static final String COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS =
-            "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " where " +
-                    RESOURCE_ID_COLUMN + " in (SELECT a." + ID_COLUMN + " FROM " + SIMPLE_SEARCH_TABLE + " a, " +
-                    SIMPLE_SEARCH_TRANSACTIONS_TABLE + " b " +
-                    " WHERE a." + FEDORA_ID_COLUMN + "= b." + FEDORA_ID_COLUMN + " AND b." + TRANSACTION_ID_COLUMN +
-                    "= :" + TRANSACTION_ID_PARAM + ")";
+    private static final String COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_MYSQL_MARIA =
+            "DELETE s FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " s JOIN " + SIMPLE_SEARCH_TABLE + " a ON s." +
+                    RESOURCE_ID_COLUMN + " = a." + ID_COLUMN + " JOIN " + SIMPLE_SEARCH_TRANSACTIONS_TABLE +
+                    " b ON a." + FEDORA_ID_COLUMN + "= b." + FEDORA_ID_COLUMN + " WHERE b." +
+                    TRANSACTION_ID_COLUMN + "= :" + TRANSACTION_ID_PARAM;
+    private static final String COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_POSTGRES =
+            "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " s " +
+                    "USING " + SIMPLE_SEARCH_TABLE + " a, " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " b " +
+                    "WHERE s." + RESOURCE_ID_COLUMN + " = a." + ID_COLUMN + " " +
+                    "AND a." + FEDORA_ID_COLUMN + " = b." + FEDORA_ID_COLUMN + " " +
+                    "AND b." + TRANSACTION_ID_COLUMN + " = :" + TRANSACTION_ID_PARAM;
+    private static final String COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_H2 =
+            "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " s " +
+                    "WHERE EXISTS ( " +
+                    "SELECT 1 FROM " + SIMPLE_SEARCH_TABLE + " a " +
+                    "JOIN " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " b " +
+                    "ON a." + FEDORA_ID_COLUMN + " = b." + FEDORA_ID_COLUMN + " " +
+                    "WHERE s." + RESOURCE_ID_COLUMN + " = a." + ID_COLUMN + " " +
+                    "AND b." + TRANSACTION_ID_COLUMN + " = :" + TRANSACTION_ID_PARAM +
+                    ")";
+
+    private static final Map<DbPlatform, String> COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_MAP = Map.of(
+            DbPlatform.H2, COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_H2,
+            DbPlatform.MYSQL, COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_MYSQL_MARIA,
+            DbPlatform.MARIADB, COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_POSTGRES
+    );
 
     private static final String DELETE_TRANSACTION =
             "DELETE FROM " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " WHERE " + TRANSACTION_ID_COLUMN + " = :" +
@@ -308,7 +365,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                     " = (SELECT " + ID_COLUMN + " FROM " + SIMPLE_SEARCH_TABLE + " WHERE " +
                     FEDORA_ID_COLUMN + " = :" + FEDORA_ID_PARAM + ")";
 
-    private static final List<String> COUNT_QUERY_COLUMNS = Arrays.asList("count(0) as count");
+    private static final List<String> COUNT_QUERY_COLUMNS = List.of("count(0) as count");
 
     @Inject
     private DataSource dataSource;
@@ -386,82 +443,74 @@ public class DbSearchIndexImpl implements SearchIndex {
                                             final List<String> selectedFields, final boolean isCountQuery)
             throws InvalidQueryException {
 
-        final var queryFields = new ArrayList<>(selectedFields);
-        final var fedoraIdStr = FEDORA_ID.toString();
+        final List<String> queryFields = new ArrayList<>(selectedFields);
+        final String fedoraIdStr = FEDORA_ID.toString();
 
-        if (!isCountQuery) {
-            if (!queryFields.contains(fedoraIdStr)) {
-                queryFields.add(0,fedoraIdStr);
-            }
-            queryFields.add(0,"id");
-        } else {
+        if (isCountQuery) {
+            queryFields.clear();
             queryFields.add("count(0)");
+        } else {
+            if (!queryFields.contains(fedoraIdStr)) {
+                queryFields.addFirst(fedoraIdStr);
+            }
+            queryFields.addFirst("id");
         }
 
-        final var whereClauses = new ArrayList<String>();
-        final var conditions = parameters.getConditions();
-        final var fields = new ArrayList<String>(queryFields);
-        final var rdfTypeConditionValue =
-                conditions.stream().filter(c -> c.getField().equals(RDF_TYPE)).findFirst().orElse(null);
-        final var returnRdfType = fields.stream().anyMatch(x -> x.equals(RDF_TYPE.toString()));
-        final var returnFields = fields.stream().filter(x -> !x.equals(RDF_TYPE.toString())).collect(toList());
+        final List<String> whereClauses = new ArrayList<>();
+        final List<Condition> conditions = parameters.getConditions();
+        final boolean returnRdfType = queryFields.contains(RDF_TYPE.toString());
+        final List<String> returnFields = queryFields.stream()
+                .filter(x -> !x.equals(RDF_TYPE.toString())).collect(toList());
 
-        final var sql = new StringBuilder("")
-                .append("SELECT ")
-                .append(String.join(",", returnFields));
-        sql.append(" FROM ")
-                .append(SIMPLE_SEARCH_TABLE).append(" s ");
+        final var sql = new StringBuilder("SELECT ")
+                .append(String.join(",", returnFields))
+                .append(" FROM ").append(SIMPLE_SEARCH_TABLE).append(" s ");
 
-        if (rdfTypeConditionValue != null) {
-            final var rdfTypeOperator = rdfTypeConditionValue.getObject().contains("*") ? " LIKE " : " = ";
-            sql.append(", (SELECT ").append(RESOURCE_ID_COLUMN).append(" FROM ")
-                    .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" WHERE ")
-                    .append(RDF_TYPE_ID_COLUMN).append(" IN (").append("SELECT ID FROM ").append(SEARCH_RDF_TYPE_TABLE)
-                    .append(" WHERE ").append(RDF_TYPE_URI_COLUMN).append(rdfTypeOperator)
-                    .append(":").append(RDF_TYPE_URI_PARAM).append(")) rdf_type_filter ");
-            whereClauses.add("rdf_type_filter.resource_id = s.id");
-            addRdfTypeParam(parameterSource, conditions);
-        }
+        conditions.stream().filter(c -> c.getField().equals(RDF_TYPE)).findFirst()
+                .ifPresent(rdfTypeCondition -> {
+                    final String rdfTypeOperator = rdfTypeCondition.getObject().contains("*") ? " LIKE " : " = ";
+                    sql.append(" JOIN (SELECT srrt.").append(RESOURCE_ID_COLUMN).append(" FROM ")
+                    .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" srrt JOIN ").append(SEARCH_RDF_TYPE_TABLE)
+                            .append(" srt ON srrt.").append(RDF_TYPE_ID_PARAM).append(" = srt.")
+                            .append(ID_COLUMN).append(" WHERE srt.").append(RDF_TYPE_URI_COLUMN).append(rdfTypeOperator)
+                    .append(":").append(RDF_TYPE_URI_PARAM)
+                            .append(") rdf_type_filter ON rdf_type_filter.resource_id = s.id");
+                addRdfTypeParam(parameterSource, conditions);
+        });
 
+        // Add general conditions
         for (int i = 0; i < conditions.size(); i++) {
             addWhereClause(i, parameterSource, whereClauses, conditions.get(i));
         }
 
         if (!whereClauses.isEmpty()) {
             sql.append(" WHERE ");
-            for (final var it = whereClauses.iterator(); it.hasNext(); ) {
-                sql.append(it.next());
-                if (it.hasNext()) {
-                    sql.append(" AND ");
-                }
+            sql.append(String.join(" AND ", whereClauses));
+        }
+
+        if (!isCountQuery) {
+            if (parameters.getOrderBy() != null) {
+                sql.append(" ORDER BY ").append(parameters.getOrderBy())
+                        .append(" ").append(parameters.getOrder());
             }
+            sql.append(" LIMIT :limit OFFSET :offset");
+            parameterSource.addValue("limit", parameters.getMaxResults());
+            parameterSource.addValue("offset", parameters.getOffset());
         }
-
-        if (isCountQuery) {
-            return sql;
-        }
-
-        if (parameters.getOrderBy() != null) {
-            //add order by limit and offset to selectquery.
-            sql.append(" ORDER BY ").append(parameters.getOrderBy()).append(" ").append(parameters.getOrder());
-        }
-
-        sql.append(" LIMIT :limit OFFSET :offset");
-        parameterSource.addValue("limit", parameters.getMaxResults());
-        parameterSource.addValue("offset", parameters.getOffset());
 
         if (!returnRdfType) {
             return sql;
         } else {
-            final var rdfTypeWrapperSql = new StringBuilder();
-            rdfTypeWrapperSql.append("SELECT a.*, ")
+            final StringBuilder rdfTypeWrapperSql = new StringBuilder()
+                    .append("SELECT a.*, ")
                     .append(isPostgres() ? POSTGRES_GROUP_CONCAT_FUNCTION : DEFAULT_GROUP_CONCAT_FUNCTION)
-                    .append(" as rdf_type")
-                    .append(" FROM ")
-                    .append("(").append(sql).append(") a, ")
-                    .append("(SELECT rrt.resource_id , rt.rdf_type_uri FROM search_resource_rdf_type rrt, " +
-                            "search_rdf_type rt WHERE  rrt.rdf_type_id = rt.id) b ")
-                    .append("WHERE a.id = b.resource_id GROUP BY ").append(String.join(",", returnFields));
+                    .append(" as rdf_type FROM (")
+                    .append(sql).append(") a ")
+                    .append("JOIN (SELECT rrt.resource_id , rt.rdf_type_uri FROM ")
+                    .append(SEARCH_RESOURCE_RDF_TYPE_TABLE).append(" rrt, ")
+                    .append(SEARCH_RDF_TYPE_TABLE)
+                    .append(" rt WHERE rrt.rdf_type_id = rt.id) b ON a.id = b.resource_id GROUP BY ")
+                    .append(String.join(", ", returnFields));
 
             if (parameters.getOrderBy() != null) {
                 //add order by limit and offset to selectquery.
@@ -835,11 +884,15 @@ public class DbSearchIndexImpl implements SearchIndex {
             try {
                 final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
                 parameterSource.addValue(TRANSACTION_ID_PARAM, txId);
-                final int deletedAssociations = jdbcTemplate.update(COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS,
+                final int deletedAssociations = jdbcTemplate.update(
+                        COMMIT_DELETE_RDF_TYPE_ASSOCIATIONS_MAP.get(dbPlatForm),
                         parameterSource);
-                final int deletedResources = jdbcTemplate.update(COMMIT_DELETE_RESOURCES_IN_TRANSACTION,
+                final int deletedResources = jdbcTemplate.update(
+                        COMMIT_DELETE_RESOURCES_IN_TRANSACTION_MAP.get(dbPlatForm),
                         parameterSource);
-                final int addedRdfTypes = jdbcTemplate.update(COMMIT_RDF_TYPES, parameterSource);
+                final int addedRdfTypes = jdbcTemplate.update(
+                        COMMIT_RDF_TYPES_MAP.get(dbPlatForm),
+                        parameterSource);
                 final int addedResources = jdbcTemplate.update(UPSERT_COMMIT_MAPPING.get(dbPlatForm),
                         parameterSource);
                 final int addRdfTypeAssociations = jdbcTemplate.update(COMMIT_RDF_TYPE_ASSOCIATIONS, parameterSource);
