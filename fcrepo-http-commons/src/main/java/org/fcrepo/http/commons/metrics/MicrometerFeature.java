@@ -5,11 +5,12 @@
  */
 package org.fcrepo.http.commons.metrics;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import org.glassfish.jersey.micrometer.server.DefaultJerseyTagsProvider;
 import org.glassfish.jersey.micrometer.server.MetricsApplicationEventListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Feature;
@@ -22,20 +23,30 @@ import jakarta.ws.rs.core.FeatureContext;
  */
 public class MicrometerFeature implements Feature {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MicrometerFeature.class);
+
     @Context
     private ServletContext servletContext;
 
     @Override
     public boolean configure(final FeatureContext context) {
         if (this.servletContext == null) {
+            LOGGER.warn("ServletContext is not available. Micrometer metrics not enabled.");
             return false;
         }
         final var appCtx = WebApplicationContextUtils.getWebApplicationContext(servletContext);
         if (appCtx == null) {
+            LOGGER.warn("Spring WebApplicationContext not found. Micrometer metrics not enabled.");
             return false;
         }
 
-        final var registry = appCtx.getBean(MeterRegistry.class);
+        final MeterRegistry registry;
+        try {
+            registry = appCtx.getBean(MeterRegistry.class);
+        } catch (Exception e) {
+            LOGGER.error("MeterRegistry bean not found. Micrometer metrics not enabled.", e);
+            return false;
+        }
 
         final var micrometerListener = new MetricsApplicationEventListener(
                 registry,
@@ -44,7 +55,7 @@ public class MicrometerFeature implements Feature {
                 false);
 
         context.register(micrometerListener);
-
+        LOGGER.info("Micrometer metrics enabled for Jersey resources.");
         return true;
     }
 

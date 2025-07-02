@@ -6,6 +6,7 @@
 
 package org.fcrepo.config;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
@@ -19,6 +20,7 @@ import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,7 +39,8 @@ public class MetricsConfig extends BasePropsConfig {
     public MeterRegistry meterRegistry() {
         final MeterRegistry registry;
         if (metricsEnabled) {
-            registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+            registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry,
+                    Clock.SYSTEM);
             registry.config().meterFilter(new MeterFilter() {
                 @Override
                 public DistributionStatisticConfig configure(final Meter.Id id,
