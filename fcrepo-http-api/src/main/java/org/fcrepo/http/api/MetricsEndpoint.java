@@ -5,6 +5,7 @@
  */
 package org.fcrepo.http.api;
 
+import io.micrometer.core.annotation.Timed;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import jakarta.inject.Inject;
@@ -14,7 +15,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import org.fcrepo.config.MetricsConfig;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Scope;
 
 /**
  * JAX-RS endpoint for exposing Prometheus metrics.
@@ -22,7 +23,8 @@ import org.springframework.stereotype.Component;
  *
  * @author whikloj
  */
-@Component
+@Timed
+@Scope("request")
 @Path("/prometheus")
 public class MetricsEndpoint {
 
