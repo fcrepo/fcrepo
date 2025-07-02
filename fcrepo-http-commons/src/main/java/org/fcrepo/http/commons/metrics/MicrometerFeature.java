@@ -5,13 +5,12 @@
  */
 package org.fcrepo.http.commons.metrics;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import org.glassfish.jersey.micrometer.server.DefaultJerseyTagsProvider;
 import org.glassfish.jersey.micrometer.server.MetricsApplicationEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.context.support.WebApplicationContextUtils;
-
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.servlet.ServletContext;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Feature;
