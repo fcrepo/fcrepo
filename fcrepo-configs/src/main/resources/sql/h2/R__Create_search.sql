@@ -40,8 +40,17 @@ CREATE TABLE IF NOT EXISTS search_resource_rdf_type_transactions (
     PRIMARY KEY(fedora_id, rdf_type_uri, transaction_id)
 );
 
+CREATE INDEX IF NOT EXISTS search_resource_rdf_type_idx1
+    ON search_resource_rdf_type (resource_id);
+
 CREATE INDEX IF NOT EXISTS search_resource_rdf_type_transactions_idx1
     ON search_resource_rdf_type_transactions (fedora_id, transaction_id);
+
+CREATE INDEX IF NOT EXISTS search_resource_rdf_type_tx_idx2
+    ON search_resource_rdf_type_transactions (transaction_id, rdf_type_uri);
+
+CREATE INDEX IF NOT EXISTS search_resource_rdf_type_tx_idx3
+    ON search_resource_rdf_type_transactions (rdf_type_uri);
 
 CREATE INDEX IF NOT EXISTS simple_search_idx1
     ON simple_search (created);
@@ -54,3 +63,9 @@ CREATE INDEX IF NOT EXISTS simple_search_idx3
 
 CREATE INDEX IF NOT EXISTS simple_search_idx4
     ON simple_search (mime_type);
+
+CREATE INDEX IF NOT EXISTS simple_search_transactions_idx1
+    ON simple_search_transactions (fedora_id);
+
+CREATE INDEX IF NOT EXISTS simple_search_transactions_idx2
+    ON simple_search_transactions (transaction_id, operation);
