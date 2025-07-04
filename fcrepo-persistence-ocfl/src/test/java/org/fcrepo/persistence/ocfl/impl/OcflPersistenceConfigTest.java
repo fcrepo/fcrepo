@@ -295,7 +295,4 @@ public class OcflPersistenceConfigTest {
             ));
         }
     }
-
-
-    // ocflPropsConfig.isPathStyleAccessEnabled
 }
