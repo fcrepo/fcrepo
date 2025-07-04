@@ -21,18 +21,23 @@ import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
@@ -207,6 +212,147 @@ public class FedoraResourceImplTest {
     public void testGetChildren() {
         final var resource = new FedoraResourceImpl(FEDORA_ID, null, sessionManager, resourceFactory, null);
         assertEquals(0, resource.getChildren().count());
+    }
+
+
+
+
+    @Test
+    public void testGetSystemTypesWithRdfFlag() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+        resource.setInteractionModel(BASIC_CONTAINER.toString());
+        resource.setIsArchivalGroup(true);
+        resource.setIsMemento(false);
+
+        // Get types for RDF serialization
+        final var rdfTypes = resource.getSystemTypes(true);
+
+        // Should include base types and interaction model
+        assertTrue(rdfTypes.contains(create(BASIC_CONTAINER.toString())));
+        assertTrue(rdfTypes.contains(create(RESOURCE.toString())));
+        assertTrue(rdfTypes.contains(create(FEDORA_RESOURCE.toString())));
+
+        // Should NOT include non-RDF types
+        assertFalse(rdfTypes.contains(create(RdfLexicon.ARCHIVAL_GROUP.toString())));
+        assertFalse(rdfTypes.contains(create(VERSIONED_RESOURCE.toString())));
+        assertFalse(rdfTypes.contains(create(VERSIONING_TIMEGATE_TYPE)));
+    }
+
+    @Test
+    public void testGetSystemTypesForMemento() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+        resource.setInteractionModel(BASIC_CONTAINER.toString());
+        resource.setIsArchivalGroup(false);
+        resource.setIsMemento(true);
+        resource.setMementoDatetime(Instant.now());
+
+        final var types = resource.getSystemTypes(false);
+
+        assertTrue(types.contains(create(BASIC_CONTAINER.toString())));
+        assertTrue(types.contains(create(RdfLexicon.MEMENTO_TYPE)));
+        assertFalse(types.contains(create(VERSIONED_RESOURCE.toString())));
+        assertFalse(types.contains(create(VERSIONING_TIMEGATE_TYPE)));
+    }
+
+    @Test
+    public void testGetSystemTypesForRepositoryRoot() {
+        final var rootId = FedoraId.create("/");
+        final var rootResource = new FedoraResourceImpl(rootId, transaction, sessionManager, resourceFactory, null);
+        rootResource.setInteractionModel(BASIC_CONTAINER.toString());
+
+        final var types = rootResource.getSystemTypes(false);
+
+        assertTrue(types.contains(create(RdfLexicon.REPOSITORY_ROOT.toString())));
+    }
+
+    @Test
+    public void testGetStorageRelativePath() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+
+        // Test with null path
+        resource.setStorageRelativePath(null);
+        assertNull(resource.getStorageRelativePath());
+
+        // Test with a valid storage path
+        final String storagePath = "some/resource/path/v1/content/.fcrepo/fcr-root.json";
+        resource.setStorageRelativePath(storagePath);
+        assertEquals(Paths.get("some/resource/path"), resource.getStorageRelativePath());
+    }
+
+    @Test
+    public void testGetParent() throws Exception {
+        final var parentId = FedoraId.create("info:fedora/parent");
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+        resource.setParentId(parentId);
+
+        final var mockParent = mock(FedoraResource.class);
+        when(resourceFactory.getResource(any(Transaction.class), eq(parentId)))
+                .thenReturn(mockParent);
+
+        final var parent = resource.getParent();
+        assertEquals(mockParent, parent);
+    }
+
+    @Test
+    public void testGetDescribedResource() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+        assertEquals(resource, resource.getDescribedResource());
+    }
+
+    @Test
+    public void testGetOriginalResource_NotMemento() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+        resource.setIsMemento(false);
+
+        assertEquals(resource, resource.getOriginalResource());
+    }
+
+    @Test
+    public void testGetOriginalResource_AsMemento() throws Exception {
+        final var mementoId = FEDORA_ID.asMemento("20200309172118");
+        final var resource = new FedoraResourceImpl(mementoId, transaction, sessionManager, resourceFactory, null);
+        resource.setIsMemento(true);
+
+        final var mockOriginal = mock(FedoraResource.class);
+        when(resourceFactory.getResource(any(Transaction.class), eq(FEDORA_ID)))
+                .thenReturn(mockOriginal);
+
+        assertEquals(mockOriginal, resource.getOriginalResource());
+    }
+
+    @Test
+    public void testGetArchivalGroupId() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+
+        // Initially should be empty
+        assertTrue(resource.getArchivalGroupId().isEmpty());
+
+        // Set and check
+        final var agId = FedoraId.create("info:fedora/ag");
+        resource.setArchivalGroupId(agId);
+        assertEquals(agId, resource.getArchivalGroupId().get());
+    }
+
+    @Test
+    public void testGetContainer() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+        final var mockContainer = mock(FedoraResource.class);
+
+        when(resourceFactory.getContainer(any(Transaction.class), eq(FEDORA_ID)))
+                .thenReturn(mockContainer);
+
+        assertEquals(mockContainer, resource.getContainer());
+    }
+
+    @Test
+    public void testIsOriginalResource() {
+        final var resource = new FedoraResourceImpl(FEDORA_ID, transaction, sessionManager, resourceFactory, null);
+
+        resource.setIsMemento(false);
+        assertTrue(resource.isOriginalResource());
+
+        resource.setIsMemento(true);
+        assertFalse(resource.isOriginalResource());
     }
 
     private void expectMementos(final String... instants) {

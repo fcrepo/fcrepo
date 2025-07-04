@@ -13,6 +13,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -506,6 +507,29 @@ public class FedoraIdTest {
                 "original/child");
         assertAsDescribedId("original/child/" + FCR_METADATA + "#sad",
                 "original/child#sad");
+    }
+
+    @Test
+    public void testMultipleVersions() {
+        assertThrows(InvalidResourceIdentifierException.class, () ->
+                FedoraId.create("original/" + FCR_VERSIONS + "/20200401101900/" + FCR_VERSIONS + "/20200401101901"));
+    }
+
+    @Test
+    public void testMultipleHashes() {
+        assertThrows(InvalidResourceIdentifierException.class, () ->
+                FedoraId.create("original#20200401101900#20200401101901"));
+    }
+
+    @Test
+    public void testEquals() {
+        final var id1 = FedoraId.create("original");
+        final var id2 = FedoraId.create("original");
+        final var id3 = FedoraId.create("other");
+        assertEquals(id1, id1);
+        assertEquals(id1, id2);
+        assertNotEquals(id1, new Object());
+        assertNotEquals(id1, id3);
     }
 
     private void assertAsMemento(final String original, final String expected) {

@@ -5,9 +5,11 @@
  */
 package org.fcrepo.http.commons.webxml.bind;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
+import java.util.Objects;
+
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 
 /**
  * <p>Param class.</p>
@@ -17,11 +19,11 @@ import javax.xml.bind.annotation.XmlElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Param extends Describable {
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "param-name")
     String name;
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "param-value")
     String value;
 
@@ -45,12 +47,8 @@ public class Param extends Describable {
     public boolean equals(final Object object) {
         if (this.getClass().equals(object.getClass())) {
             final Param that = (Param) object;
-            final boolean name =
-                (this.name == null) ? that.name == null : this.name
-                        .equals(that.name);
-            final boolean value =
-                (this.value == null) ? that.value == null : this.value
-                        .equals(that.value);
+            final boolean name = Objects.equals(this.name, that.name);
+            final boolean value = Objects.equals(this.value, that.value);
             return name && value;
         }
         return false;

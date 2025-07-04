@@ -12,9 +12,9 @@ import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEA
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.Mockito.doAnswer;
@@ -22,17 +22,17 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static java.util.Collections.singletonMap;
 import static java.util.stream.Stream.of;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedHashMap;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedHashMap;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -59,12 +59,14 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.mockito.stubbing.Answer;
 
 /**
@@ -72,7 +74,8 @@ import org.mockito.stubbing.Answer;
  *
  * @author awoods
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class StreamingBaseHtmlProviderTest {
 
     private final StreamingBaseHtmlProvider testProvider = new StreamingBaseHtmlProvider();
@@ -101,7 +104,7 @@ public class StreamingBaseHtmlProviderTest {
     @Mock
     private FedoraPropsConfig mockFedoraPropsConfig;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
 
         final var namespaces = Map.of("test", "info");
@@ -110,10 +113,10 @@ public class StreamingBaseHtmlProviderTest {
         final var external_id2 = base_uri + "subject2";
         final var internal_id1 = FEDORA_ID_PREFIX + "/subject";
         final var internal_id2 = FEDORA_ID_PREFIX + "/subject2";
-        final Stream<Triple> triples = of(new Triple(createURI(external_id1), createURI("test:predicate"),
-                createLiteral("test:object")), new Triple(createURI(external_id1), type.asNode(),
+        final Stream<Triple> triples = of(Triple.create(createURI(external_id1), createURI("test:predicate"),
+                createLiteral("test:object")), Triple.create(createURI(external_id1), type.asNode(),
                 FEDORA_BINARY.asNode()));
-        final Stream<Triple> triples2 = of(new Triple(createURI(external_id2), type.asNode(),
+        final Stream<Triple> triples2 = of(Triple.create(createURI(external_id2), type.asNode(),
                 FEDORA_CONTAINER.asNode()));
         @SuppressWarnings("resource")
         final DefaultRdfStream stream = new DefaultRdfStream(createURI(external_id1), triples);
@@ -157,27 +160,28 @@ public class StreamingBaseHtmlProviderTest {
     @Test
     public void testIsWriteable() {
         assertTrue(
-                "Gave false response to HtmlProvider.isWriteable() that contained legitimate combination of parameters",
-                testProvider.isWriteable(RdfNamespacedStream.class, RdfNamespacedStream.class,
-                        null, TEXT_HTML_TYPE));
+                testProvider.isWriteable(RdfNamespacedStream.class, RdfNamespacedStream.class, null,
+                        TEXT_HTML_TYPE),
+                "Gave false response to HtmlProvider.isWriteable() that contained legitimate combination of " +
+                        "parameters");
         assertFalse(
-                "Gave true response to HtmlProvider.isWriteable() with an incorrect combination of parameters",
                 testProvider.isWriteable(RdfStream.class, RdfStream.class,
-                        null, TEXT_HTML_TYPE));
+                                null, TEXT_HTML_TYPE),
+                "Gave true response to HtmlProvider.isWriteable() with an incorrect combination of parameters");
         assertFalse(
-                "HtmlProvider.isWriteable() should return false if asked to serialize a non-RdfNamespacedStream!",
                 testProvider.isWriteable(StreamingBaseHtmlProvider.class,
-                        StreamingBaseHtmlProvider.class, null, TEXT_HTML_TYPE));
+                                StreamingBaseHtmlProvider.class, null, TEXT_HTML_TYPE),
+                "HtmlProvider.isWriteable() should return false if asked to serialize a non-RdfNamespacedStream!");
         assertFalse(
-                "HtmlProvider.isWriteable() should return false to text/plain!",
                 testProvider.isWriteable(RdfNamespacedStream.class, RdfNamespacedStream.class,
-                        null, TEXT_PLAIN_TYPE));
+                                null, TEXT_PLAIN_TYPE),
+                "HtmlProvider.isWriteable() should return false to text/plain!");
     }
 
     @Test
     public void testGetSize() {
-        assertEquals("Returned wrong size from HtmlProvider!", testProvider
-                .getSize(null, null, null, null, null), -1);
+        assertEquals(-1, testProvider.getSize(null, null, null, null, null),
+                "Returned wrong size from HtmlProvider!");
 
     }
 
@@ -200,7 +204,7 @@ public class StreamingBaseHtmlProviderTest {
                 new Annotation[]{}, MediaType.valueOf("text/html"),
                 new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
-        assertTrue("Got no output from serialization!", results.length > 0);
+        assertTrue(results.length > 0, "Got no output from serialization!");
 
     }
 
@@ -228,7 +232,7 @@ public class StreamingBaseHtmlProviderTest {
                         .valueOf("text/html"),
                 new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
-        assertTrue("Got no output from serialization!", results.length > 0);
+        assertTrue(results.length > 0, "Got no output from serialization!");
 
     }
 
@@ -254,6 +258,6 @@ public class StreamingBaseHtmlProviderTest {
                         .valueOf("text/html"),
                 new MultivaluedHashMap<>(), outStream);
         final byte[] results = outStream.toByteArray();
-        assertTrue("Got no output from serialization!", results.length > 0);
+        assertTrue(results.length > 0, "Got no output from serialization!");
     }
 }

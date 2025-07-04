@@ -6,7 +6,9 @@
 package org.fcrepo.http.commons.responses;
 
 import static com.google.common.collect.ImmutableMap.of;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTimeStamp;
 import static org.apache.jena.graph.NodeFactory.createBlankNode;
+import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -16,6 +18,8 @@ import static org.apache.jena.vocabulary.DC.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.apache.jena.vocabulary.RDFS.label;
 import static org.apache.jena.vocabulary.SKOS.prefLabel;
+
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
 import static org.fcrepo.http.commons.test.util.TestHelpers.getUriInfoImpl;
 import static org.fcrepo.kernel.api.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
@@ -26,20 +30,19 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_RFC_1123_FORMATTER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.core.UriInfo;
-
+import jakarta.ws.rs.core.UriInfo;
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.Triple;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
@@ -59,7 +62,7 @@ public class ViewHelpersTest {
 
     private ViewHelpers testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = ViewHelpers.getInstance();
     }
@@ -70,10 +73,11 @@ public class ViewHelpersTest {
         final String resource_version = "http://localhost/fcrepo/abc/" + FCR_VERSIONS;
         final Instant recent = Instant.now();
         final Node version = createURI(resource_version + "/" + MEMENTO_LABEL_FORMATTER.format(recent));
-        mem.add(new Triple(createURI(resource_version), CONTAINS.asNode(), version));
-        mem.add(new Triple(version, CREATED_DATE.asNode(), createLiteral(MEMENTO_RFC_1123_FORMATTER.format(recent))));
-        assertEquals("Version should be available.",
-            version, testObj.getVersions(mem, createURI(resource_version)).next());
+        mem.add(Triple.create(createURI(resource_version), CONTAINS.asNode(), version));
+        mem.add(Triple.create(version, CREATED_DATE.asNode(),
+                createTypedLiteral(MEMENTO_RFC_1123_FORMATTER.format(recent), XSDdateTimeStamp).asNode()));
+        assertEquals(version, testObj.getVersions(mem, createURI(resource_version)).next(),
+                "Version should be available.");
     }
 
     @Test
@@ -90,21 +94,24 @@ public class ViewHelpersTest {
             createURI("http://localhost/fcrepo/abc/" + FCR_VERSIONS + "/" + MEMENTO_LABEL_FORMATTER.format(way_past));
 
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(resource_version, CONTAINS.asNode(), v1));
-        mem.add(new Triple(resource_version, CONTAINS.asNode(), v2));
-        mem.add(new Triple(resource_version, CONTAINS.asNode(), v3));
-        mem.add(new Triple(v1, CREATED_DATE.asNode(), createLiteral(MEMENTO_RFC_1123_FORMATTER.format(recent))));
-        mem.add(new Triple(v2, CREATED_DATE.asNode(), createLiteral(MEMENTO_RFC_1123_FORMATTER.format(past))));
-        mem.add(new Triple(v3, CREATED_DATE.asNode(), createLiteral(MEMENTO_RFC_1123_FORMATTER.format(way_past))));
+        mem.add(Triple.create(resource_version, CONTAINS.asNode(), v1));
+        mem.add(Triple.create(resource_version, CONTAINS.asNode(), v2));
+        mem.add(Triple.create(resource_version, CONTAINS.asNode(), v3));
+        mem.add(Triple.create(v1, CREATED_DATE.asNode(),
+                createLiteralByValue(MEMENTO_RFC_1123_FORMATTER.format(recent), XSDdateTime)));
+        mem.add(Triple.create(v2, CREATED_DATE.asNode(),
+                createLiteralByValue(MEMENTO_RFC_1123_FORMATTER.format(past), XSDdateTime)));
+        mem.add(Triple.create(v3, CREATED_DATE.asNode(),
+                createLiteralByValue(MEMENTO_RFC_1123_FORMATTER.format(way_past), XSDdateTime)));
 
         final Iterator<Node> versions = testObj.getOrderedVersions(mem, resource_version, CONTAINS);
         assertTrue(versions.hasNext());
         final Node r1 = versions.next();
-        assertEquals("Version is out of order", v3, r1);
+        assertEquals(v3, r1, "Version is out of order");
         final Node r2 = versions.next();
-        assertEquals("Version is out of order", v2, r2);
+        assertEquals(v2, r2, "Version is out of order");
         final Node r3 = versions.next();
-        assertEquals("Latest version should be last.", v1, r3);
+        assertEquals(v1, r3, "Latest version should be last.");
     }
 
     @Test
@@ -136,8 +143,8 @@ public class ViewHelpersTest {
     @Test
     public void testIsVersionedNode() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), type.asNode(), createURI(MEMENTO_TYPE)));
-        assertTrue("Node is a versioned node.", testObj.isVersionedNode(mem, createURI("a/b/c")));
+        mem.add(Triple.create(createURI("a/b/c"), type.asNode(), createURI(MEMENTO_TYPE)));
+        assertTrue(testObj.isVersionedNode(mem, createURI("a/b/c")), "Node is a versioned node.");
     }
 
 
@@ -146,13 +153,13 @@ public class ViewHelpersTest {
         final String ns = "http://any/namespace#";
         final String rdfType = "anyType";
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b"), type.asNode(),
+        mem.add(Triple.create(createURI("a/b"), type.asNode(),
                 createResource(ns + rdfType).asNode()));
 
-        assertTrue("Node is a " + rdfType + " node.",
-                testObj.isRdfResource(mem, createURI("a/b"), ns, rdfType));
-        assertFalse("Node is not a " + rdfType + " node.",
-                testObj.isRdfResource(mem, createURI("a/b"), ns, "otherType"));
+        assertTrue(testObj.isRdfResource(mem, createURI("a/b"), ns, rdfType),
+                "Node is a " + rdfType + " node.");
+        assertFalse(testObj.isRdfResource(mem, createURI("a/b"), ns, "otherType"),
+                "Node is not a " + rdfType + " node.");
     }
 
     @Test
@@ -171,10 +178,10 @@ public class ViewHelpersTest {
         final String date_str = "20011231050505";
         final Node subject = createURI("a/b/c/" + date_str);
         final Instant date = Instant.from(MEMENTO_LABEL_FORMATTER.parse(date_str));
-        mem.add(new Triple(subject, CREATED_DATE.asNode(),
-            createLiteral(MEMENTO_RFC_1123_FORMATTER.format(date))));
+        mem.add(Triple.create(subject, CREATED_DATE.asNode(),
+            createLiteralByValue(MEMENTO_RFC_1123_FORMATTER.format(date), XSDdateTime)));
 
-        assertEquals("Date should be available.", date, testObj.getVersionDate(mem, subject));
+        assertEquals(date, testObj.getVersionDate(mem, subject), "Date should be available.");
     }
 
     @Test
@@ -187,14 +194,14 @@ public class ViewHelpersTest {
 
     private void shouldExtractTitleFromNode( final Property property ) {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), property.asNode(), createLiteral("abc")));
+        mem.add(Triple.create(createURI("a/b/c"), property.asNode(), createLiteral("abc")));
         assertEquals("abc", testObj.getObjectTitle(mem, createURI("a/b/c")));
     }
 
     @Test
     public void shouldUseTheObjectUriIfATitleIsNotAvailable() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), title.asNode(), createURI("d/e/f")));
+        mem.add(Triple.create(createURI("a/b/c"), title.asNode(), createURI("d/e/f")));
 
         assertEquals("a/b/c", testObj.getObjectTitle(mem, createURI("a/b/c")));
 
@@ -219,13 +226,13 @@ public class ViewHelpersTest {
     public void shouldConvertRdfObjectsToStrings() {
 
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("subject"), createURI("a/b/c"),
+        mem.add(Triple.create(createURI("subject"), createURI("a/b/c"),
                 NodeFactory.createLiteral("abc")));
-        mem.add(new Triple(createURI("subject"),
+        mem.add(Triple.create(createURI("subject"),
                 createURI("a-numeric-type"), createTypedLiteral(0).asNode()));
-        mem.add(new Triple(createURI("subject"),
+        mem.add(Triple.create(createURI("subject"),
                 createURI("an-empty-string"), createLiteral("")));
-        mem.add(new Triple( createURI("subject"), createURI("a-uri"),
+        mem.add(Triple.create( createURI("subject"), createURI("a-uri"),
                 createURI("some-uri")));
 
         assertEquals("abc", testObj.getObjectsAsString(mem,
@@ -317,10 +324,10 @@ public class ViewHelpersTest {
     @Test
     public void testGetNumChildren() {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(new Triple(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/1").asNode()));
-        mem.add(new Triple(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/2").asNode()));
-        mem.add(new Triple(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/3").asNode()));
-        mem.add(new Triple(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/4").asNode()));
+        mem.add(Triple.create(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/1").asNode()));
+        mem.add(Triple.create(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/2").asNode()));
+        mem.add(Triple.create(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/3").asNode()));
+        mem.add(Triple.create(createURI("a/b/c"), CONTAINS.asNode(), createResource("a/b/c/4").asNode()));
         assertEquals(4, testObj.getNumChildren(mem, createURI("a/b/c")));
     }
 
@@ -338,11 +345,21 @@ public class ViewHelpersTest {
         final Node root = createURI("http://localhost/root");
         final Node child = createURI("http://localhost/not_root");
 
-        mem.add(new Triple(root, type.asNode(), BASIC_CONTAINER.asNode()));
-        mem.add(new Triple(root, type.asNode(), REPOSITORY_ROOT.asNode()));
-        mem.add(new Triple(child, type.asNode(), BASIC_CONTAINER.asNode()));
+        mem.add(Triple.create(root, type.asNode(), BASIC_CONTAINER.asNode()));
+        mem.add(Triple.create(root, type.asNode(), REPOSITORY_ROOT.asNode()));
+        mem.add(Triple.create(child, type.asNode(), BASIC_CONTAINER.asNode()));
 
-        assertTrue("Root should be a Repository Root", testObj.isRootResource(mem, root));
-        assertFalse("Child should not be a Repository Root", testObj.isRootResource(mem, child));
+        assertTrue(testObj.isRootResource(mem, root), "Root should be a Repository Root");
+        assertFalse(testObj.isRootResource(mem, child), "Child should not be a Repository Root");
+    }
+
+    @Test
+    public void testVersionLabel() {
+        final Model model = createDefaultModel();
+        model.setNsPrefix("fedora", REPOSITORY_NAMESPACE);
+        final Graph mem = model.getGraph();
+        final Node root = createURI("http://localhost/root/20011231050505");
+
+        assertEquals("Mon, 31 Dec 2001 05:05:05 GMT", testObj.getVersionLabel(mem, root));
     }
 }

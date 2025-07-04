@@ -10,10 +10,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
@@ -74,5 +76,25 @@ public class ContainerImplTest {
 
         assertTrue(childrenList.stream().anyMatch(c -> c instanceof Container));
         assertTrue(childrenList.stream().anyMatch(c -> c instanceof Binary));
+    }
+
+    @Test
+    void testGetSystemTypes() {
+        final var container = new ContainerImpl(fedoraId, transaction, sessionManager, resourceFactory, null);
+        container.setInteractionModel(RdfLexicon.BASIC_CONTAINER.getURI());
+
+        final var typesList = container.getSystemTypes(false).stream()
+                .map(URI::toString)
+                .collect(Collectors.toList());
+
+        assertTrue(typesList.contains(RdfLexicon.CONTAINER.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.FEDORA_CONTAINER.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.RDF_SOURCE.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.RESOURCE.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.FEDORA_RESOURCE.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.VERSIONING_TIMEGATE_TYPE));
+        assertTrue(typesList.contains(RdfLexicon.VERSIONED_RESOURCE.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.BASIC_CONTAINER.getURI()));
+        assertEquals(8, typesList.size());
     }
 }

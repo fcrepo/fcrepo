@@ -21,6 +21,7 @@
     <build.timestamp>${maven.build.timestamp}</build.timestamp>
     <maven.build.timestamp.format>yyyy-MM-dd</maven.build.timestamp.format>
     <!-- for standalone operation -->
+    <fcrepo.home>${project.build.directory}/fcrepo-home</fcrepo.home>
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
   </properties>
 
@@ -78,14 +79,7 @@
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-webapp</artifactId>
       <version>${jetty.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.eclipse.jetty.orbit</groupId>
-          <artifactId>javax.servlet</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
-
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlets</artifactId>
@@ -98,23 +92,37 @@
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-jmx</artifactId>
       <version>${jetty.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>hk2-api</artifactId>
+      <version>${hk2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>hk2-locator</artifactId>
+      <version>${hk2.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.hk2</groupId>
+      <artifactId>hk2-utils</artifactId>
+      <version>${hk2.version}</version>
     </dependency>
 
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring5</artifactId>
+      <artifactId>jersey-spring6</artifactId>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>xml-apis</groupId>
-      <artifactId>xml-apis</artifactId>
-      <version>1.4.01</version>
     </dependency>
 
     <!-- JDBC dependencies-->
@@ -127,8 +135,8 @@
       <artifactId>mariadb-java-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -139,14 +147,6 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-web</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-aop</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-aspects</artifactId>
-    </dependency>
 
     <dependency>
       <groupId>com.h2database</groupId>
@@ -155,53 +155,23 @@
 
     <!-- test gear -->
     <dependency>
-      <groupId>net.sourceforge.htmlunit</groupId>
+      <groupId>org.htmlunit</groupId>
       <artifactId>htmlunit</artifactId>
       <scope>test</scope>
       <version>${htmlunit.version}</version>
 
       <exclusions>
         <exclusion>
-          <groupId>commons-codec</groupId>
-          <artifactId>commons-codec</artifactId>
-        </exclusion>
-        <exclusion>
           <groupId>commons-logging</groupId>
           <artifactId>commons-logging</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-io</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-http</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-util</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-xml</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>xml-apis</groupId>
-          <artifactId>xml-apis</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
 
     <dependency>
-      <groupId>net.sourceforge.htmlunit</groupId>
-      <artifactId>htmlunit-core-js</artifactId>
-      <scope>test</scope>
-      <version>${htmlunit.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
-      </dependency>
+    </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
@@ -231,20 +201,13 @@
       <type>test-jar</type>
     </dependency>
 
-    <dependency>
-      <groupId>org.reflections</groupId>
-      <artifactId>reflections</artifactId>
-      <version>0.9.10</version>
-      <scope>test</scope>
-    </dependency>
-
     <!-- This dependency is for compile-time: it keeps this module independent
       of any given choice of JAX-RS implementation. It must be _after_ the test
       gear. Otherwise it will get loaded during test phase, but because this is
       just an API, the tests will not be able to execute. -->
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -315,6 +278,8 @@
             <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
             <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
             <integration-test>true</integration-test>
+            <project.version>${project.version}</project.version>
+            <fcrepo.home>${fcrepo.home}</fcrepo.home>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -345,6 +310,10 @@
             <configuration>
               <properties>
                 <property>
+                  <name>fcrepo.dynamic.test.port</name>
+                  <value>${fcrepo.dynamic.test.port}</value>
+                </property>
+                <property>
                   <name>fcrepo.dynamic.jms.port</name>
                   <value>${fcrepo.dynamic.jms.port}</value>
                 </property>
@@ -354,14 +323,19 @@
                   <value>${fcrepo.dynamic.stomp.port}</value>
                 </property>
 
-                <systemProperty>
+                <property>
                   <name>fcrepo.home</name>
-                  <value>${project.build.directory}/fcrepo-home</value>
-                </systemProperty>
+                  <value>${fcrepo.home}</value>
+                </property>
 
                 <property>
                   <name>integration-test</name>
                   <value>true</value>
+                </property>
+
+                <property>
+                  <name>jetty.users.file</name>
+                  <value>${jetty.users.file}</value>
                 </property>
               </properties>
             </configuration>
@@ -372,17 +346,27 @@
       <plugin>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
+        <version>${jetty.version}</version>
         <configuration>
-          <scanIntervalSeconds>2</scanIntervalSeconds>
           <stopKey>STOP</stopKey>
+          <jettyXmls>
+            <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
+          </jettyXmls>
           <webApp>
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
-          <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
           <systemProperties>
             <systemProperty>
+              <name>fcrepo.dynamic.test.port</name>
+              <value>${fcrepo.dynamic.test.port}</value>
+            </systemProperty>
+            <systemProperty>
               <name>fcrepo.home</name>
-              <value>${project.build.directory}/fcrepo-home</value>
+              <value>${fcrepo.home}</value>
+            </systemProperty>
+            <systemProperty>
+              <name>jetty.users.file</name>
+              <value>${jetty.users.file}</value>
             </systemProperty>
           </systemProperties>
 
@@ -420,12 +404,17 @@
 
                 <systemProperty>
                   <name>fcrepo.home</name>
-                  <value>${project.build.directory}/fcrepo-home</value>
+                  <value>${fcrepo.home}</value>
                 </systemProperty>
 
                 <systemProperty>
                   <name>fcrepo.activemq.directory</name>
-                  <value>${project.build.directory}/active-mq</value>
+                  <value>${project.build.directory}/target/active-mq</value>
+                </systemProperty>
+
+                <systemProperty>
+                  <name>jetty.users.file</name>
+                  <value>${jetty.users.file}</value>
                 </systemProperty>
               </systemProperties>
 

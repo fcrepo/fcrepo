@@ -5,6 +5,7 @@
  */
 package org.fcrepo.kernel.impl.models;
 
+import static java.util.Arrays.asList;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
@@ -14,6 +15,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.models.ExternalContent.PROXY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -22,16 +25,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
-import static java.util.Arrays.asList;
-
-import java.net.URI;
-import java.time.Instant;
-import java.util.Collection;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
-import javax.inject.Inject;
-
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.ResourceFactory;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
@@ -42,15 +37,13 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.TimeMap;
 import org.fcrepo.kernel.impl.TestTransactionHelper;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentItemNotFoundException;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.common.ResourceHeadersImpl;
-
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.ResourceFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,6 +56,13 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import jakarta.inject.Inject;
+import java.net.URI;
+import java.time.Instant;
+import java.util.Collection;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * @author bbpennel
@@ -376,6 +376,82 @@ public class ResourceFactoryImplTest {
         final var child2 = childrenList.stream().filter(c -> c.getFedoraId().equals(child2Id)).findFirst();
         assertTrue(child2.isPresent());
         assertInstanceOf(Binary.class, child2.get());
+    }
+
+    @Test
+    public void getContainer_ResourceHasContainer() throws Exception {
+        // Setup container
+        final var containerId = FedoraId.create(UUID.randomUUID().toString());
+        final var containerHeaders = new ResourceHeadersImpl();
+        containerHeaders.setId(containerId);
+        populateHeaders(containerHeaders, BASIC_CONTAINER);
+
+        when(psSession.getHeaders(containerId, null)).thenReturn(containerHeaders);
+
+        containmentIndex.addContainedBy(mockTx, containerId, fedoraId);
+
+        // Call and verify
+        final var container = factory.getContainer(mockTx, fedoraId);
+
+        assertNotNull(container);
+        assertEquals(containerId, container.getFedoraId());
+        assertInstanceOf(Container.class, container);
+    }
+
+    @Test
+    public void getContainer_ResourceHasNoContainer() throws Exception {
+        // Did not add any containment statements, so should return null
+        final var container = factory.getContainer(mockTx, fedoraId);
+
+        assertNull(container);
+    }
+
+    @Test
+    public void getContainer_ContainerDoesNotExist() throws Exception {
+        // Setup a container ID that doesn't exist
+        final var containerId = FedoraId.create(UUID.randomUUID().toString());
+
+        // Setup containment index to return the container
+        when(containmentIndex.getContainedBy(mockTx, fedoraId)).thenReturn(containerId.getResourceId());
+
+        // Make the container not found
+        when(psSession.getHeaders(containerId, null)).thenThrow(PersistentItemNotFoundException.class);
+
+        // Call and verify
+        final var container = factory.getContainer(mockTx, fedoraId);
+
+        assertNull(container);
+    }
+
+    @Test
+    public void getResource_DeletedResource() throws Exception {
+        populateHeaders(resourceHeaders, BASIC_CONTAINER);
+        resourceHeaders.setDeleted(true);
+
+        final var resource = factory.getResource(mockTx, fedoraId);
+
+        assertInstanceOf(TombstoneImpl.class, resource, "Factory must return a tombstone for deleted resource");
+        assertEquals(fedoraIdStr, resource.getId());
+        assertEquals(LAST_MODIFIED_DATE, resource.getLastModifiedDate());
+
+        // We should be able to get the original resource through the tombstone
+        final var original = ((TombstoneImpl) resource).getDeletedObject();
+        assertInstanceOf(Container.class, original);
+    }
+
+    @Test
+    public void getResource_Timemap() throws Exception {
+        // Create a timemap ID
+        final var timemapId = fedoraId.asTimemap();
+
+        // Setup headers for the original resource
+        populateHeaders(resourceHeaders, BASIC_CONTAINER);
+
+        // Setup the session to return resource headers when asked for timemap
+        when(psSession.getHeaders(timemapId, null)).thenReturn(resourceHeaders);
+
+        final var resource = factory.getResource(mockTx, timemapId);
+        assertInstanceOf(TimeMap.class, resource, "Factory must return a TimeMap");
     }
 
     private void assertStateFieldsMatches(final FedoraResource resc) {

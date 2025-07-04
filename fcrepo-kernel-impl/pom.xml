@@ -9,26 +9,7 @@
   <name>Fedora Repository Kernel Implementation</name>
   <description>Fedora Repository Kernel Implementation, containing implementation of core kernel API interfacess</description>
 
-  <packaging>bundle</packaging>
-
-  <properties>
-    <osgi.import.packages>
-      javax.inject,
-      *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.kernel.impl.*;version=${project.version}
-    </osgi.export.packages>
-  </properties>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
@@ -78,16 +59,16 @@
       <artifactId>caffeine</artifactId>
     </dependency>
     <dependency>
-      <groupId>net.jodah</groupId>
-      <artifactId>failsafe</artifactId>
-    </dependency>
-    <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-mysql</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
     </dependency>
 
     <!-- test gear -->
@@ -98,7 +79,7 @@
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
+      <artifactId>hamcrest</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -117,6 +98,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-common</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <scope>test</scope>
@@ -132,8 +120,9 @@
       gear. Otherwise it will get loaded during test phase, but because this is 
       just an API, the tests will not be able to execute. -->
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

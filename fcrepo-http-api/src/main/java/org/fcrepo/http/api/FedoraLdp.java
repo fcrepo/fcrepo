@@ -7,21 +7,21 @@ package org.fcrepo.http.api;
 
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.LOCATION;
-import static javax.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static javax.ws.rs.core.MediaType.WILDCARD;
-import static javax.ws.rs.core.Response.noContent;
-import static javax.ws.rs.core.Response.notAcceptable;
-import static javax.ws.rs.core.Response.ok;
-import static javax.ws.rs.core.Response.status;
-import static javax.ws.rs.core.Response.temporaryRedirect;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.FOUND;
-import static javax.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
-import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
+import static jakarta.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static jakarta.ws.rs.core.MediaType.WILDCARD;
+import static jakarta.ws.rs.core.Response.noContent;
+import static jakarta.ws.rs.core.Response.notAcceptable;
+import static jakarta.ws.rs.core.Response.ok;
+import static jakarta.ws.rs.core.Response.status;
+import static jakarta.ws.rs.core.Response.temporaryRedirect;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.FOUND;
+import static jakarta.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
+import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -61,27 +61,27 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.DefaultValue;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.HeaderParam;
-import javax.ws.rs.OPTIONS;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilderException;
-import javax.ws.rs.core.Variant.VariantListBuilder;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.OPTIONS;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilderException;
+import jakarta.ws.rs.core.Variant.VariantListBuilder;
 
 import io.micrometer.core.annotation.Timed;
 import org.apache.commons.io.IOUtils;
@@ -232,8 +232,7 @@ public class FedoraLdp extends ContentExposingResource {
 
         Response.ResponseBuilder builder = ok();
 
-        if (resource() instanceof Binary) {
-            final Binary binary = (Binary) resource();
+        if (resource() instanceof Binary binary) {
             final MediaType mediaType = getBinaryResourceMediaType(binary);
 
             if (!acceptableMediaTypes.isEmpty()) {
@@ -315,8 +314,7 @@ public class FedoraLdp extends ContentExposingResource {
         LOGGER.info("GET resource '{}'", externalPath);
         addResourceHttpHeaders(resource(), inlineDisposition);
 
-        if (resource() instanceof Binary) {
-            final Binary binary = (Binary) resource();
+        if (resource() instanceof Binary binary) {
             if (!acceptableMediaTypes.isEmpty()) {
                 final MediaType mediaType = getBinaryResourceMediaType(resource());
 
@@ -581,10 +579,10 @@ public class FedoraLdp extends ContentExposingResource {
                 }
 
             LOGGER.debug("Finished creating resource with path: {}", externalPath());
-
             return createUpdateResponse(getFedoraResource(transaction, fedoraId), created.get());
         } finally {
             transaction.releaseResourceLocksIfShortLived();
+            IOUtils.closeQuietly(requestBodyStream);
         }
     }
 
@@ -619,7 +617,11 @@ public class FedoraLdp extends ContentExposingResource {
         final var transaction = transaction();
 
         try {
-            final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
+            //final String requestBody = IOUtils.toString(requestBodyStream, UTF_8);
+            // TODO: use a streaming parser instead of reading the entire body into memory,
+            // but IOUtils hangs since the Jersey change.
+            final byte[] body = requestBodyStream.readAllBytes();
+            final String requestBody = new String(body);
             if (isBlank(requestBody)) {
                 throw new BadRequestException("SPARQL-UPDATE requests must have content!");
             }
@@ -629,6 +631,7 @@ public class FedoraLdp extends ContentExposingResource {
             LOGGER.info("PATCH for '{}'", externalPath);
             final String newRequest = httpRdfService.patchRequestToInternalString(resource().getFedoraId(),
                     requestBody, identifierConverter());
+
             LOGGER.debug("PATCH request translated to '{}'", newRequest);
 
             doInDbTxWithRetry(() -> {
@@ -780,6 +783,7 @@ public class FedoraLdp extends ContentExposingResource {
             }
         } finally {
             transaction.releaseResourceLocksIfShortLived();
+            IOUtils.closeQuietly(requestBodyStream);
         }
     }
 

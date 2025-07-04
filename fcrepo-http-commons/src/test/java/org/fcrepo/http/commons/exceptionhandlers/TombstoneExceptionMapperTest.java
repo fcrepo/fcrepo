@@ -9,14 +9,16 @@ import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.kernel.api.exception.TombstoneException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.ext.ExceptionMapper;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Arrays;
@@ -25,18 +27,18 @@ import java.util.stream.Collectors;
 
 import static java.time.ZoneOffset.UTC;
 import static java.time.format.DateTimeFormatter.ISO_INSTANT;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.Response.Status.GONE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.Response.Status.GONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
 /**
  * @author cabeer
  */
+@ExtendWith(MockitoExtension.class)
 public class TombstoneExceptionMapperTest {
 
     @Mock
@@ -52,9 +54,8 @@ public class TombstoneExceptionMapperTest {
 
     private final HttpIdentifierConverter idConverter = new HttpIdentifierConverter(UriBuilder.fromUri(SERVER_URI));
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        initMocks(this);
         when(mockResource.getFedoraId()).thenReturn(fedoraId);
         when(mockResource.getLastModifiedDate()).thenReturn(deleteTime);
         testObj = new TombstoneExceptionMapper();

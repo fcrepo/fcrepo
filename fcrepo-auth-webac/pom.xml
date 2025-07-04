@@ -13,17 +13,7 @@
     it possible to define fine-grained repository access controls on individual resources or
     classes of resources to specific users and/or groups.
   </description>
-  <packaging>bundle</packaging>
-
-  <properties>
-    <!-- OSGi -->
-    <osgi.import.packages>
-      *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.auth.webac;version=${project.version}
-    </osgi.export.packages>
-  </properties>
+  <packaging>jar</packaging>
 
   <repositories>
     <repository>
@@ -85,8 +75,30 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.annotation</groupId>
-      <artifactId>javax.annotation-api</artifactId>
+      <groupId>jakarta.annotation</groupId>
+      <artifactId>jakarta.annotation-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-core</artifactId>
+      <classifier>jakarta</classifier>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-collections</groupId>
+          <artifactId>commons-collections</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.shiro</groupId>
+      <artifactId>shiro-web</artifactId>
+      <classifier>jakarta</classifier>
+      <exclusions>
+        <exclusion>
+          <groupId>org.omnifaces</groupId>
+          <artifactId>omnifaces</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -103,21 +115,13 @@
     </dependency>
 
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>com.github.stefanbirkner</groupId>
-      <artifactId>system-rules</artifactId>
-      <scope>test</scope>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
-      <scope>test</scope>
+      <artifactId>mockito-junit-jupiter</artifactId>
     </dependency>
 
     <dependency>
@@ -140,13 +144,18 @@
 
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring5</artifactId>
+      <artifactId>jersey-spring6</artifactId>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>
       <artifactId>jersey-common</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jersey.media</groupId>
+      <artifactId>jersey-media-json-jackson</artifactId>
       <scope>test</scope>
     </dependency>
 
@@ -168,8 +177,8 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -220,23 +229,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.shiro</groupId>
-      <artifactId>shiro-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.shiro</groupId>
-      <artifactId>shiro-spring</artifactId>
     </dependency>
   </dependencies>
 
@@ -257,11 +257,6 @@
       <plugin>
         <groupId>com.github.github</groupId>
         <artifactId>site-maven-plugin</artifactId>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
       </plugin>
 
       <plugin>

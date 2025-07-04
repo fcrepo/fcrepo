@@ -5,15 +5,14 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.fcrepo.kernel.api.exception.SessionMissingException;
 import org.slf4j.Logger;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 import static com.google.common.base.Throwables.getStackTraceAsString;
-import static javax.ws.rs.core.Response.serverError;
+import static jakarta.ws.rs.core.Response.serverError;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -36,10 +35,6 @@ public class WildcardExceptionMapper implements
 
     @Override
     public Response toResponse(final Exception e) {
-        if (e.getCause() instanceof SessionMissingException) {
-            return new SessionMissingExceptionMapper()
-                    .toResponse((SessionMissingException) e.getCause());
-        }
 
         LOGGER.warn("Unmapped exception", e);
         return serverError().entity(

@@ -21,46 +21,40 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <project.copyrightYear>2015</project.copyrightYear>
-    <project.java.source>11</project.java.source>
+    <project.java.source>21</project.java.source>
     <!-- scm, site distribution names -->
     <project_name>${project.artifactId}</project_name>
     <project_organization>fcrepo</project_organization>
-    <!-- OSGi -->
-    <osgi.import.packages />
-    <osgi.private.packages />
-    <osgi.export.packages />
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <!-- plugin versions -->
     <build-helper.plugin.version>3.2.0</build-helper.plugin.version>
     <bundle.plugin.version>5.1.2</bundle.plugin.version>
-    <changelog.plugin.version>2.3</changelog.plugin.version>
-    <checkstyle.plugin.version>3.1.2</checkstyle.plugin.version>
-    <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>
-    <clean.plugin.version>3.1.0</clean.plugin.version>
-    <compiler.plugin.version>3.8.1</compiler.plugin.version>
-    <dependency.plugin.version>3.2.0</dependency.plugin.version>
+    <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
+    <clean.plugin.version>3.4.1</clean.plugin.version>
+    <compiler.plugin.version>3.14.0</compiler.plugin.version>
+    <dependency.plugin.version>3.8.1</dependency.plugin.version>
     <deploy.plugin.version>2.8.2</deploy.plugin.version>
     <doxia-markdown.plugin.version>1.8</doxia-markdown.plugin.version>
-    <failsafe.plugin.version>3.0.0-M3</failsafe.plugin.version>
-    <fcrepo-build-tools.version>6.0.0</fcrepo-build-tools.version>
+    <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>
+    <failsafe.plugin.version>3.5.3</failsafe.plugin.version>
+    <fcrepo-build-tools.version>7.0.0-SNAPSHOT</fcrepo-build-tools.version>
     <github-site.plugin.version>0.12</github-site.plugin.version>
     <gpg.plugin.version>3.0.1</gpg.plugin.version>
     <install.plugin.version>2.5.2</install.plugin.version>
-    <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
+    <jacoco.plugin.version>0.8.13</jacoco.plugin.version>
     <jar.plugin.version>3.2.0</jar.plugin.version>
-    <javadoc.plugin.version>3.3.1</javadoc.plugin.version>
-    <jxr.plugin.version>3.1.1</jxr.plugin.version>
-    <license.plugin.version>4.1</license.plugin.version>
+    <javadoc.plugin.version>3.11.2</javadoc.plugin.version>
+    <license.plugin.version>5.0.0</license.plugin.version>
     <nexus-staging.plugin.version>1.6.8</nexus-staging.plugin.version>
-    <project-info-reports.plugin.version>3.1.2</project-info-reports.plugin.version>
+    <puppycrawl.checkstyle.version>10.14.1</puppycrawl.checkstyle.version>
     <release.plugin.version>2.5.3</release.plugin.version>
     <remote-resources.plugin.version>1.7</remote-resources.plugin.version>
     <resources.plugin.version>3.2.0</resources.plugin.version>
     <scm-provider-gitexe.plugin.version>1.12.0</scm-provider-gitexe.plugin.version>
     <site.plugin.version>3.9.1</site.plugin.version>
     <source.plugin.version>3.2.1</source.plugin.version>
-    <surefire.plugin.version>2.22.2</surefire.plugin.version>
+    <surefire.plugin.version>3.5.3</surefire.plugin.version>
     <versions.plugin.version>2.8.1</versions.plugin.version>
     <!-- jacoco and sonar configuration -->
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
@@ -69,6 +63,8 @@
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
     <sonatype.host>s01.oss.sonatype.org</sonatype.host>
+    <!-- to allow argLine late replacement in surefire -->
+    <argLine />
   </properties>
 
   <build>
@@ -202,30 +198,6 @@
         </plugin>
 
         <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-bundle-plugin</artifactId>
-          <version>${bundle.plugin.version}</version>
-          <extensions>true</extensions>
-          <configuration>
-            <instructions>
-              <Bundle-Name>${project.artifactId}</Bundle-Name>
-              <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-              <Export-Package>${osgi.export.packages}</Export-Package>
-              <Import-Package>${osgi.import.packages}</Import-Package>
-              <Private-Package>${osgi.private.packages}</Private-Package>
-              <Implementation-Title>${project.name}</Implementation-Title>
-              <Implementation-Version>${project.version}</Implementation-Version>
-              <Embed-Transitive>true</Embed-Transitive>
-            </instructions>
-          </configuration>
-        </plugin>
-
-        <plugin>
-          <artifactId>maven-changelog-plugin</artifactId>
-          <version>${changelog.plugin.version}</version>
-        </plugin>
-
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
           <version>${checkstyle.plugin.version}</version>
@@ -239,7 +211,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>8.34</version>
+              <version>${puppycrawl.checkstyle.version}</version>
             </dependency>
           </dependencies>
           <configuration>
@@ -413,34 +385,6 @@
         <version>${javadoc.plugin.version}</version>
         <configuration>
           <linksource>true</linksource>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-jxr-plugin</artifactId>
-        <version>${jxr.plugin.version}</version>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>${surefire.plugin.version}</version>
-        <configuration>
-          <argLine>-XX:-UseSplitVerifier</argLine>
-          <outputName>surefire-report</outputName>
-          <aggregate>true</aggregate>
-          <reportsDirectories>
-            <reportsDirectory>${project.build.directory}/surefire-reports/</reportsDirectory>
-            <reportsDirectory>${project.build.directory}/failsafe-reports/</reportsDirectory>
-          </reportsDirectories>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <artifactId>maven-project-info-reports-plugin</artifactId>
-        <version>${project-info-reports.plugin.version}</version>
-        <configuration>
-          <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-          <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
         </configuration>
       </plugin>
 

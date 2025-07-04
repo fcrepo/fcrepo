@@ -55,7 +55,7 @@ public abstract class AbstractResourceIT {
 
     protected static final HttpClient client = createClient();
 
-    private static HttpClient createClient() {
+    protected static HttpClient createClient() {
         final Credentials credentials = new UsernamePasswordCredentials("fedoraAdmin", "fedoraAdmin");
         final CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(AuthScope.ANY, credentials);

@@ -7,10 +7,10 @@ package org.fcrepo.http.commons;
 
 import java.util.function.Supplier;
 
-import javax.inject.Inject;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.UriInfo;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -18,7 +18,7 @@ import org.fcrepo.kernel.api.services.VersionService;
 import org.fcrepo.kernel.api.services.functions.ConfigurableHierarchicalSupplier;
 import org.fcrepo.kernel.api.services.functions.UniqueValueSupplier;
 
-import org.jvnet.hk2.annotations.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Superclass for Fedora JAX-RS Resources, providing convenience fields and methods.
@@ -54,8 +54,7 @@ public class AbstractResource {
     /**
      * A resource that can mint new Fedora PIDs.
      */
-    @Inject
-    @Optional
+    @Autowired(required = false)
     protected Supplier<String> pidMinter;
 
     protected UniqueValueSupplier defaultPidMinter = new ConfigurableHierarchicalSupplier();

@@ -5,8 +5,8 @@
  */
 package org.fcrepo.auth.common;
 
-import javax.servlet.Filter;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.Filter;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.security.Principal;
 import java.util.Set;

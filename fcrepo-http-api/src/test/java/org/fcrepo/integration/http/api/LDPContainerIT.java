@@ -20,28 +20,30 @@ import static org.fcrepo.kernel.api.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMBER_SUBJECT;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MEMBERSHIP;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.HttpHeaders.LOCATION;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CONFLICT;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.GONE;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.HttpHeaders.LOCATION;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.CONFLICT;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.GONE;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response.Status;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -67,9 +69,9 @@ import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**
@@ -95,13 +97,13 @@ public class LDPContainerIT extends AbstractResourceIT {
     private DefaultOcflObjectSessionFactory objectSessionFactory;
     private OcflPropsConfig ocflPropsConfig;
 
-    @Before
+    @BeforeEach
     public void init() {
         objectSessionFactory = getBean(DefaultOcflObjectSessionFactory.class);
         ocflPropsConfig = getBean(OcflPropsConfig.class);
     }
 
-    @After
+    @AfterEach
     public void after() {
         objectSessionFactory.setDefaultCommitType(CommitType.NEW_VERSION);
         ocflPropsConfig.setAutoVersioningEnabled(true);
@@ -118,16 +120,16 @@ public class LDPContainerIT extends AbstractResourceIT {
         final Model model = getModel(id);
 
         final Resource resc = model.getResource(subjectURI);
-        assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+        assertTrue(resc.hasProperty(RDF.type, INDIRECT_CONTAINER), "Must have container type");
 
-        assertTrue("Default ldp:membershipResource must be set",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+        assertTrue(resc.hasProperty(MEMBERSHIP_RESOURCE, resc),
+                "Default ldp:membershipResource must be set");
 
-        assertTrue("Default ldp:hasMemberRelation must be set",
-                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+        assertTrue(resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER),
+                "Default ldp:hasMemberRelation must be set");
 
-        assertTrue("Default ldp:insertedContentRelation must be set",
-                resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
+        assertTrue(resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT),
+                "Default ldp:insertedContentRelation must be set");
     }
 
     @Test
@@ -140,22 +142,22 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final Model model = getModel(indirectId);
         final Resource resc = model.getResource(indirectURI);
-        assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+        assertTrue(resc.hasProperty(RDF.type, INDIRECT_CONTAINER), "Must have container type");
 
-        assertTrue("Provided ldp:membershipResource must be present",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
-        assertFalse("Default ldp:membershipResource must not be present",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+        assertTrue(resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)),
+                "Provided ldp:membershipResource must be present");
+        assertFalse(resc.hasProperty(MEMBERSHIP_RESOURCE, resc),
+                "Default ldp:membershipResource must not be present");
 
-        assertTrue("Provided ldp:hasMemberRelation must be set",
-                resc.hasProperty(HAS_MEMBER_RELATION, PCDM_HAS_MEMBER_PROP));
-        assertFalse("Default ldp:hasMemberRelation must not be present",
-                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+        assertTrue(resc.hasProperty(HAS_MEMBER_RELATION, PCDM_HAS_MEMBER_PROP),
+                "Provided ldp:hasMemberRelation must be set");
+        assertFalse(resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER),
+                "Default ldp:hasMemberRelation must not be present");
 
-        assertTrue("Provided ldp:insertedContentRelation must be set",
-                resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
-        assertFalse("Default ldp:insertedContentRelation must not be present",
-                resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
+        assertTrue(resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR),
+                "Provided ldp:insertedContentRelation must be set");
+        assertFalse(resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT),
+                "Default ldp:insertedContentRelation must not be present");
     }
 
     @Test
@@ -175,22 +177,22 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final Model model = getModel(indirectId);
         final Resource resc = model.getResource(indirectURI);
-        assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+        assertTrue(resc.hasProperty(RDF.type, INDIRECT_CONTAINER), "Must have container type");
 
-        assertFalse("Provided ldp:membershipResource must be removed",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
-        assertTrue("Default ldp:membershipResource must be set",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+        assertFalse(resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)),
+                "Provided ldp:membershipResource must be removed");
+        assertTrue(resc.hasProperty(MEMBERSHIP_RESOURCE, resc),
+                "Default ldp:membershipResource must be set");
 
-        assertFalse("Provided ldp:hasMemberRelation must be removed",
-                resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
-        assertTrue("Default ldp:hasMemberRelation must be set",
-                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+        assertFalse(resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)),
+                "Provided ldp:hasMemberRelation must be removed");
+        assertTrue(resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER),
+                "Default ldp:hasMemberRelation must be set");
 
-        assertFalse("Provided ldp:insertedContentRelation must be removed",
-                resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
-        assertTrue("Default ldp:insertedContentRelation must be present",
-                resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
+        assertFalse(resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR),
+                "Provided ldp:insertedContentRelation must be removed");
+        assertTrue(resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT),
+                "Default ldp:insertedContentRelation must be present");
     }
 
     @Test
@@ -214,22 +216,22 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final Model model = getModel(indirectId);
         final Resource resc = model.getResource(indirectURI);
-        assertTrue("Must have container type", resc.hasProperty(RDF.type, INDIRECT_CONTAINER));
+        assertTrue(resc.hasProperty(RDF.type, INDIRECT_CONTAINER), "Must have container type");
 
-        assertFalse("Provided ldp:membershipResource must be removed",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
-        assertTrue("Default ldp:membershipResource must be set",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+        assertFalse(resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)),
+                "Provided ldp:membershipResource must be removed");
+        assertTrue(resc.hasProperty(MEMBERSHIP_RESOURCE, resc),
+                "Default ldp:membershipResource must be set");
 
-        assertFalse("Provided ldp:hasMemberRelation must be removed",
-                resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
-        assertTrue("Default ldp:hasMemberRelation must be set",
-                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+        assertFalse(resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)),
+                "Provided ldp:hasMemberRelation must be removed");
+        assertTrue(resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER),
+                "Default ldp:hasMemberRelation must be set");
 
-        assertFalse("Provided ldp:insertedContentRelation must be removed",
-                resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR));
-        assertTrue("Default ldp:insertedContentRelation must be present",
-                resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT));
+        assertFalse(resc.hasProperty(INSERTED_CONTENT_RELATION, PROXY_FOR),
+                "Provided ldp:insertedContentRelation must be removed");
+        assertTrue(resc.hasProperty(INSERTED_CONTENT_RELATION, MEMBER_SUBJECT),
+                "Default ldp:insertedContentRelation must be present");
     }
 
     @Test
@@ -246,8 +248,8 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "DELETE { <> ldp:hasMemberRelation ?memRel . }\n" +
                 "INSERT { <> ldp:hasMemberRelation <" + RdfLexicon.CONTAINS + "> }\n" +
                 " WHERE { <> ldp:hasMemberRelation ?memRel}"));
-        assertEquals("Patch with sparql update allowed ldp:contains in indirect container!",
-                CONFLICT.getStatusCode(), getStatus(patch));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(patch),
+                "Patch with sparql update allowed ldp:contains in indirect container!");
     }
 
     @Test
@@ -264,8 +266,8 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "DELETE { <> ldp:hasMemberRelation ?memRel . }\n" +
                 "INSERT { <> ldp:isMemberOfRelation <" + RdfLexicon.CONTAINS + "> }\n" +
                 " WHERE { <> ldp:hasMemberRelation ?memRel}"));
-        assertEquals("Patch with sparql update allowed ldp:contains in indirect container!",
-                CONFLICT.getStatusCode(), getStatus(patch));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(patch),
+                "Patch with sparql update allowed ldp:contains in indirect container!");
     }
 
     @Test
@@ -282,8 +284,8 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "DELETE { <> ldp:hasMemberRelation ?memRel . }\n" +
                 "INSERT { <> ldp:hasMemberRelation <info:some/relation> }\n" +
                 " WHERE { <> ldp:hasMemberRelation ?memRel}"));
-        assertEquals("Patch with sparql update did not allow non SMT relation in indirect container!",
-                NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch),
+                "Patch with sparql update did not allow non SMT relation in indirect container!");
     }
 
     @Test
@@ -309,19 +311,19 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, memberId);
 
         final String etag1 = getEtag(membershipUri);
-        assertNotEquals("ETag didn't change!", etag0, etag1);
+        assertNotEquals(etag0, etag1, "ETag didn't change!");
 
         // Wait a second so that the creation and deletion of the child are not simultaneous
         TimeUnit.SECONDS.sleep(1);
 
-        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
-                getStatus(new HttpDelete(proxyUri)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(proxyUri)),
+                "Child resource not deleted!");
 
         assertHasNoMembership(membershipId, PCDM_HAS_MEMBER_PROP);
 
         final String etag2 = getEtag(membershipUri);
 
-        assertNotEquals("ETag didn't change!", etag1, etag2);
+        assertNotEquals(etag1, etag2, "ETag didn't change!");
     }
 
     // Ensure that membership is generated/manager when an IndirectContainer is also a proxy
@@ -398,19 +400,19 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertIsMemberOf(memberId, EX_IS_MEMBER_PROP, membershipId);
 
         final String etag1 = getEtag(memberUri);
-        assertNotEquals("ETag didn't change!", etag0, etag1);
+        assertNotEquals(etag0, etag1, "ETag didn't change!");
 
         // Wait a second so that the creation and deletion of the child are not simultaneous
         TimeUnit.SECONDS.sleep(1);
 
-        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
-                getStatus(new HttpDelete(proxyUri)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(proxyUri)),
+                "Child resource not deleted!");
 
         assertHasNoMembership(memberId, EX_IS_MEMBER_PROP);
 
         final String etag2 = getEtag(memberUri);
 
-        assertNotEquals("ETag didn't change!", etag1, etag2);
+        assertNotEquals(etag1, etag2, "ETag didn't change!");
     }
 
     @Test
@@ -698,7 +700,17 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id);
         final var mementos2 = listMementoIds(membershipRescId);
         assertEquals(1, mementos2.size());
-        awaitAssertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        final var proxyLastModified = getLastModified(proxy1Uri);
+        final var mementoLastModified = mementoUriToTimestamp(mementos2.get(0));
+        final var mementoAndProxyModifiedAtSameTime = proxyLastModified.equals(mementoLastModified);
+
+        // If the memento and proxy last modified are the same, then the memento will have membership
+        if (mementoAndProxyModifiedAtSameTime) {
+            awaitAssertMementoHasMembers(mementos2.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        } else {
+            // Otherwise, the update is out of range of the memento so there won't be any membership on the memento
+            assertMementoHasNoMembership(mementos2.get(0), PCDM_HAS_MEMBER_PROP);
+        }
 
         TimeUnit.MILLISECONDS.sleep(1000);
 
@@ -708,7 +720,13 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member2Id);
         final var mementos3 = listMementoIds(membershipRescId);
         assertEquals(1, mementos3.size());
-        awaitAssertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        // Memento membership will still depend on timing of when the membershipResc was versioned
+        if (mementoAndProxyModifiedAtSameTime) {
+            awaitAssertMementoHasMembers(mementos3.get(0), PCDM_HAS_MEMBER_PROP, member1Id);
+        } else {
+            // Otherwise, the update is out of range of the memento so there won't be any membership on the memento
+            assertMementoHasNoMembership(mementos3.get(0), PCDM_HAS_MEMBER_PROP);
+        }
 
         final var txUri = createTransaction();
         final String member3Id = createBasicContainer(null, getRandomUniqueId(), txUri);
@@ -722,6 +740,24 @@ public class LDPContainerIT extends AbstractResourceIT {
         // Commit tx
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member3Id);
+    }
+
+    private String getLastModified(final String uri) throws Exception {
+        final var headReq = new HttpHead(uri);
+        try (final CloseableHttpResponse response = execute(headReq)) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            return response.getFirstHeader("Last-Modified").getValue();
+        }
+    }
+
+    private String mementoUriToTimestamp(final String mementoUri) {
+        final var mementoId = mementoUri.substring(mementoUri.lastIndexOf('/') + 1);
+        final var inputFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        // Define the formatter for the desired output format
+        final var outputFormatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
+        final var dateTime = LocalDateTime.parse(mementoId, inputFormatter);
+        // Format the parsed timestamp to match the first string's format
+        return dateTime.format(outputFormatter);
     }
 
     private void changeProxyMember(final String proxyUri, final String oldMember, final String newMember,
@@ -766,7 +802,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         createProxy(proxy2Id, member2Uri);
 
         final String afterPropEtag1 = getEtag(membershipRescURI);
-        assertNotEquals("Etag must change after additions", initialEtag, afterPropEtag1);
+        assertNotEquals(initialEtag, afterPropEtag1, "Etag must change after additions");
 
         // Trigger an update of the membership resource to create version with two members
         setProperty(membershipRescId, DC.subject.getURI(), "Updated");
@@ -775,7 +811,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
 
         final String afterPropEtag2 = getEtag(membershipRescURI);
-        assertNotEquals("Etag must change after modification", afterPropEtag1, afterPropEtag2);
+        assertNotEquals(afterPropEtag1, afterPropEtag2, "Etag must change after modification");
 
         TimeUnit.MILLISECONDS.sleep(1500);
 
@@ -795,7 +831,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembershipWhenOmitted(membershipRescId, RdfLexicon.LDP_MEMBER);
 
         final String afterRelChangeEtag = getEtag(membershipRescURI);
-        assertNotEquals("Etag must change after relation changes", afterPropEtag2, afterRelChangeEtag);
+        assertNotEquals(afterPropEtag2, afterRelChangeEtag, "Etag must change after relation changes");
 
         // Update membership resc to create version where the membership rel has changed
         setProperty(membershipRescId, DC.subject.getURI(), "Updated again");
@@ -811,7 +847,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
 
         final String afterDeleteEtag = getEtag(membershipRescURI);
-        assertNotEquals("Etag must change after member delete", afterRelChangeEtag2, afterDeleteEtag);
+        assertNotEquals(afterRelChangeEtag2, afterDeleteEtag, "Etag must change after member delete");
 
         final var mementos = listMementoIds(membershipRescId);
         assertEquals(3, mementos.size());
@@ -951,8 +987,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(txUri2)));
 
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
-        assertEquals("Rolled back transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txUri2)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(txUri2)),
+                "Rolled back transaction should be gone");
     }
 
     @Test
@@ -971,13 +1007,13 @@ public class LDPContainerIT extends AbstractResourceIT {
         createProxy(proxy1Id, member1Uri);
 
         final String committedMembershipEtag = getEtag(membershipRescURI);
-        assertNotEquals("Committed etag must not match original etag", initialEtag, committedMembershipEtag);
+        assertNotEquals(initialEtag, committedMembershipEtag, "Committed etag must not match original etag");
 
         // Update the membership resource using the etags
         addTitleWithEtag(membershipRescURI, "title1", deweakify(initialEtag), Status.PRECONDITION_FAILED);
         addTitleWithEtag(membershipRescURI, "title2", deweakify(committedMembershipEtag), Status.NO_CONTENT);
 
-        assertNotEquals("Etag must update after modification", committedMembershipEtag, getEtag(membershipRescURI));
+        assertNotEquals(committedMembershipEtag, getEtag(membershipRescURI), "Etag must update after modification");
     }
 
     @Test
@@ -1135,12 +1171,12 @@ public class LDPContainerIT extends AbstractResourceIT {
         final Model model = getModel(id);
 
         final Resource resc = model.getResource(subjectURI);
-        assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+        assertTrue(resc.hasProperty(RDF.type, DIRECT_CONTAINER), "Must have container type");
 
-        assertTrue("Default ldp:membershipResource must be set",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
-        assertTrue("Default ldp:hasMemberRelation must be set",
-                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+        assertTrue(resc.hasProperty(MEMBERSHIP_RESOURCE, resc),
+                "Default ldp:membershipResource must be set");
+        assertTrue(resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER),
+                "Default ldp:hasMemberRelation must be set");
     }
 
     @Test
@@ -1153,17 +1189,17 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final Model model = getModel(directId);
         final Resource resc = model.getResource(directURI);
-        assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+        assertTrue(resc.hasProperty(RDF.type, DIRECT_CONTAINER), "Must have container type");
 
-        assertTrue("Provided ldp:membershipResource must be present",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
-        assertFalse("Default ldp:membershipResource must not be present",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+        assertTrue(resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)),
+                "Provided ldp:membershipResource must be present");
+        assertFalse(resc.hasProperty(MEMBERSHIP_RESOURCE, resc),
+                "Default ldp:membershipResource must not be present");
 
-        assertTrue("Provided ldp:hasMemberRelation must be set",
-                resc.hasProperty(HAS_MEMBER_RELATION, PCDM_HAS_MEMBER_PROP));
-        assertFalse("Default ldp:hasMemberRelation must not be present",
-                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+        assertTrue(resc.hasProperty(HAS_MEMBER_RELATION, PCDM_HAS_MEMBER_PROP),
+                "Provided ldp:hasMemberRelation must be set");
+        assertFalse(resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER),
+                "Default ldp:hasMemberRelation must not be present");
     }
 
     @Test
@@ -1182,17 +1218,17 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final Model model = getModel(directId);
         final Resource resc = model.getResource(directURI);
-        assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+        assertTrue(resc.hasProperty(RDF.type, DIRECT_CONTAINER), "Must have container type");
 
-        assertFalse("Provided ldp:membershipResource must be removed",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
-        assertTrue("Default ldp:membershipResource must be set",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+        assertFalse(resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)),
+                "Provided ldp:membershipResource must be removed");
+        assertTrue(resc.hasProperty(MEMBERSHIP_RESOURCE, resc),
+                "Default ldp:membershipResource must be set");
 
-        assertFalse("Provided ldp:hasMemberRelation must be removed",
-                resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
-        assertTrue("Default ldp:hasMemberRelation must be set",
-                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+        assertFalse(resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)),
+                "Provided ldp:hasMemberRelation must be removed");
+        assertTrue(resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER),
+                "Default ldp:hasMemberRelation must be set");
     }
 
     @Test
@@ -1215,17 +1251,17 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final Model model = getModel(directId);
         final Resource resc = model.getResource(directURI);
-        assertTrue("Must have container type", resc.hasProperty(RDF.type, DIRECT_CONTAINER));
+        assertTrue(resc.hasProperty(RDF.type, DIRECT_CONTAINER), "Must have container type");
 
-        assertFalse("Provided ldp:membershipResource must be removed",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)));
-        assertTrue("Default ldp:membershipResource must be set",
-                resc.hasProperty(MEMBERSHIP_RESOURCE, resc));
+        assertFalse(resc.hasProperty(MEMBERSHIP_RESOURCE, createResource(parentURI)),
+                "Provided ldp:membershipResource must be removed");
+        assertTrue(resc.hasProperty(MEMBERSHIP_RESOURCE, resc),
+                "Default ldp:membershipResource must be set");
 
-        assertFalse("Provided ldp:hasMemberRelation must be removed",
-                resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)));
-        assertTrue("Default ldp:hasMemberRelation must be set",
-                resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER));
+        assertFalse(resc.hasProperty(HAS_MEMBER_RELATION, createResource(parentURI)),
+                "Provided ldp:hasMemberRelation must be removed");
+        assertTrue(resc.hasProperty(HAS_MEMBER_RELATION, LDP_MEMBER),
+                "Default ldp:hasMemberRelation must be set");
     }
 
     @Test
@@ -1242,8 +1278,8 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "DELETE { <> ldp:hasMemberRelation ?memRel . }\n" +
                 "INSERT { <> ldp:hasMemberRelation <" + RdfLexicon.CONTAINS + "> }\n" +
                 " WHERE { <> ldp:hasMemberRelation ?memRel}"));
-        assertEquals("Patch with sparql update allowed ldp:contains in direct container!",
-                CONFLICT.getStatusCode(), getStatus(patch));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(patch),
+                "Patch with sparql update allowed ldp:contains in direct container!");
     }
 
     @Test
@@ -1260,8 +1296,8 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "DELETE { <> ldp:hasMemberRelation ?memRel . }\n" +
                 "INSERT { <> ldp:isMemberOfRelation <" + RdfLexicon.CONTAINS + "> }\n" +
                 " WHERE { <> ldp:hasMemberRelation ?memRel}"));
-        assertEquals("Patch with sparql update allowed ldp:contains in direct container!",
-                CONFLICT.getStatusCode(), getStatus(patch));
+        assertEquals(CONFLICT.getStatusCode(), getStatus(patch),
+                "Patch with sparql update allowed ldp:contains in direct container!");
     }
 
     @Test
@@ -1278,8 +1314,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "DELETE { <> ldp:hasMemberRelation ?memRel . }\n" +
                 "INSERT { <> ldp:hasMemberRelation <info:some/relation> }\n" +
                 " WHERE { <> ldp:hasMemberRelation ?memRel}"));
-        assertEquals("Patch with sparql update did not allow non SMT relation in direct container!",
-                NO_CONTENT.getStatusCode(), getStatus(patch));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(patch));
     }
 
     @Test
@@ -1417,7 +1452,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         final var member2Id = createBasicContainer(directId, "member2");
 
         final String afterPropEtag1 = getEtag(membershipRescURI);
-        assertNotEquals("Etag must change after additions", initialEtag, afterPropEtag1);
+        assertNotEquals(initialEtag, afterPropEtag1, "Etag must change after additions");
 
         // Trigger an update of the membership resource to create version with two members
         setProperty(membershipRescId, DC.subject.getURI(), "Updated");
@@ -1426,7 +1461,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
 
         final String afterPropEtag2 = getEtag(membershipRescURI);
-        assertNotEquals("Etag must change after modification", afterPropEtag1, afterPropEtag2);
+        assertNotEquals(afterPropEtag1, afterPropEtag2, "Etag must change after modification");
 
         TimeUnit.MILLISECONDS.sleep(1500);
 
@@ -1446,7 +1481,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembershipWhenOmitted(membershipRescId, RdfLexicon.LDP_MEMBER);
 
         final String afterRelChangeEtag = getEtag(membershipRescURI);
-        assertNotEquals("Etag must change after relation changes", afterPropEtag2, afterRelChangeEtag);
+        assertNotEquals(afterPropEtag2, afterRelChangeEtag, "Etag must change after relation changes");
 
         // Update membership resc to create version where the membership rel has changed
         setProperty(membershipRescId, DC.subject.getURI(), "Updated again");
@@ -1462,7 +1497,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembershipWhenOmitted(membershipRescId, PCDM_HAS_MEMBER_PROP);
 
         final String afterDeleteEtag = getEtag(membershipRescURI);
-        assertNotEquals("Etag must change after member delete", afterRelChangeEtag2, afterDeleteEtag);
+        assertNotEquals(afterRelChangeEtag2, afterDeleteEtag, "Etag must change after member delete");
 
         final var mementos = listMementoIds(membershipRescId);
         assertEquals(3, mementos.size());
@@ -1561,8 +1596,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(txUri2)));
 
         assertHasMembers(membershipRescId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
-        assertEquals("Rolled back transaction should be gone",
-                GONE.getStatusCode(), getStatus(new HttpGet(txUri2)));
+        assertEquals(GONE.getStatusCode(), getStatus(new HttpGet(txUri2)),
+                "Rolled back transaction should be gone");
     }
 
     @Test
@@ -1657,7 +1692,7 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         // Create new memento of resource with updated body
         try (final CloseableHttpResponse response = execute(createVersionMethod)) {
-            assertEquals("Didn't get a CREATED response!", CREATED.getStatusCode(), getStatus(response));
+            assertEquals(CREATED.getStatusCode(), getStatus(response), "Didn't get a CREATED response!");
             return response.getFirstHeader(LOCATION).getValue();
         }
     }
@@ -1672,7 +1707,7 @@ public class LDPContainerIT extends AbstractResourceIT {
         // Capture baseline etag before any membership is added
         final String initialEtag = getEtag(membershipRescURI);
         final String initialGetEtag = getEtag(new HttpGet(membershipRescURI));
-        assertEquals("HEAD and basic GET should produce same etag", initialEtag, initialGetEtag);
+        assertEquals(initialEtag, initialGetEtag, "HEAD and basic GET should produce same etag");
 
         // Add member in transaction
         final var txUri = createTransaction();
@@ -1681,22 +1716,23 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final String txMembershipEtag = getEtag(addTxTo(new HttpHead(membershipRescURI), txUri));
 
-        assertEquals("Etag outside of tx must be unchanged", initialEtag, getEtag(membershipRescURI));
-        assertNotEquals("Etag within the tx must have changed", initialEtag, txMembershipEtag);
+        assertEquals(initialEtag, getEtag(membershipRescURI), "Etag outside of tx must be unchanged");
+        assertNotEquals(initialEtag, txMembershipEtag, "Etag within the tx must have changed");
 
         // Commit tx
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
 
         final String committedMembershipEtag = getEtag(membershipRescURI);
-        assertEquals("Committed etag must match pre-commit etag", txMembershipEtag, committedMembershipEtag);
-        assertNotEquals("Committed etag must not match original etag", initialEtag, committedMembershipEtag);
+        assertEquals(txMembershipEtag, committedMembershipEtag, "Committed etag must match pre-commit etag");
+        assertNotEquals(initialEtag, committedMembershipEtag, "Committed etag must not match original etag");
 
-        assertEquals("Committed GET and HEAD etags must match",
-                committedMembershipEtag, getEtag(new HttpGet(membershipRescURI)));
+        assertEquals(committedMembershipEtag, getEtag(new HttpGet(membershipRescURI)),
+                "Committed GET and HEAD etags must match");
 
         // Verify that etag of membership resource is the same when excluding membership as before there was any
         final String excludeMembershipEtag = getEtag(getOmitMembership(membershipRescURI));
-        assertEquals("Etag without membership should match initial etag", initialEtag, excludeMembershipEtag);
+        assertEquals(initialEtag, excludeMembershipEtag,
+                "Etag without membership should match initial etag");
     }
 
     @Test
@@ -1712,13 +1748,15 @@ public class LDPContainerIT extends AbstractResourceIT {
         createBasicContainer(directId, "member1");
 
         final String committedMembershipEtag = getEtag(membershipRescURI);
-        assertNotEquals("Committed etag must not match original etag", initialEtag, committedMembershipEtag);
+        assertNotEquals(initialEtag, committedMembershipEtag,
+                "Committed etag must not match original etag");
 
         // Update the membership resource using the etags
         addTitleWithEtag(membershipRescURI, "title1", deweakify(initialEtag), Status.PRECONDITION_FAILED);
         addTitleWithEtag(membershipRescURI, "title2", deweakify(committedMembershipEtag), Status.NO_CONTENT);
 
-        assertNotEquals("Etag must update after modification", committedMembershipEtag, getEtag(membershipRescURI));
+        assertNotEquals(committedMembershipEtag, getEtag(membershipRescURI),
+                "Etag must update after modification");
     }
 
     @Test
@@ -1734,13 +1772,14 @@ public class LDPContainerIT extends AbstractResourceIT {
         createBasicContainer(directId, "member1");
 
         final String committedMembershipEtag = getEtag(membershipRescURI);
-        assertNotEquals("Committed etag must not match original etag", initialEtag, committedMembershipEtag);
+        assertNotEquals(initialEtag, committedMembershipEtag, "Committed etag must not match original etag");
 
         // Update the membership resource using the etags
         putPropertiesWithEtag(membershipRescURI, deweakify(initialEtag), Status.PRECONDITION_FAILED);
         putPropertiesWithEtag(membershipRescURI, deweakify(committedMembershipEtag), Status.NO_CONTENT);
 
-        assertNotEquals("Etag must update after modification", committedMembershipEtag, getEtag(membershipRescURI));
+        assertNotEquals(committedMembershipEtag, getEtag(membershipRescURI),
+                "Etag must update after modification");
     }
 
     @Test
@@ -1761,24 +1800,24 @@ public class LDPContainerIT extends AbstractResourceIT {
         final var memberUri = serverAddress + memberId;
 
         final String txMemberEtag = getEtag(addTxTo(new HttpHead(memberUri), txUri));
-        assertNotNull("Member etag must not be null in tx", txMemberEtag);
+        assertNotNull(txMemberEtag, "Member etag must not be null in tx");
 
         // Commit tx
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txUri)));
 
         final String committedMemberEtag = getEtag(memberUri);
-        assertEquals("Committed etag must match pre-commit etag", txMemberEtag, committedMemberEtag);
+        assertEquals(txMemberEtag, committedMemberEtag, "Committed etag must match pre-commit etag");
 
-        assertEquals("Membership resc etag must not change", membershipEtag, getEtag(membershipRescURI));
+        assertEquals(membershipEtag, getEtag(membershipRescURI), "Membership resc etag must not change");
 
         // Verify etag varies appropriately when excluding membership
         final String excludeMemberEtag = getEtag(getOmitMembership(memberUri));
-        assertNotEquals("Etag for member must change when excluding membership",
-                committedMemberEtag, excludeMemberEtag);
+        assertNotEquals(committedMemberEtag, excludeMemberEtag,
+                "Etag for member must change when excluding membership");
 
         final String excludeMembershipEtag = getEtag(getOmitMembership(membershipRescURI));
-        assertEquals("Etag for membership resc should not change when excluding membership",
-                membershipEtag, excludeMembershipEtag);
+        assertEquals(membershipEtag, excludeMembershipEtag,
+                "Etag for membership resc should not change when excluding membership");
 
         // Update the member resource using the etags
         addTitleWithEtag(memberUri, "title1", deweakify(excludeMemberEtag), Status.PRECONDITION_FAILED);
@@ -1796,13 +1835,13 @@ public class LDPContainerIT extends AbstractResourceIT {
         final var memberUri = serverAddress + memberId;
 
         final String committedMemberEtag = getEtag(memberUri);
-        assertNotNull("Member resource must have etag", committedMemberEtag);
+        assertNotNull(committedMemberEtag, "Member resource must have etag");
 
         // Update the member resource using the etags
         addTitleWithEtag(memberUri, "title1", deweakify("W/\"fake\""), Status.PRECONDITION_FAILED);
         addTitleWithEtag(memberUri, "title2", deweakify(committedMemberEtag), Status.NO_CONTENT);
 
-        assertNotEquals("Etag must update after modification", committedMemberEtag, getEtag(membershipRescURI));
+        assertNotEquals(committedMemberEtag, getEtag(membershipRescURI), "Etag must update after modification");
     }
 
     @Test
@@ -1816,12 +1855,12 @@ public class LDPContainerIT extends AbstractResourceIT {
         final var memberUri = serverAddress + memberId;
 
         final String committedMemberEtag = getEtag(memberUri);
-        assertNotNull("Member resource must have etag", committedMemberEtag);
+        assertNotNull(committedMemberEtag, "Member resource must have etag");
 
         putPropertiesWithEtag(memberUri, deweakify("W/\"fake\""), Status.PRECONDITION_FAILED);
         putPropertiesWithEtag(memberUri, deweakify(committedMemberEtag), Status.NO_CONTENT);
 
-        assertNotEquals("Etag must update after modification", committedMemberEtag, getEtag(membershipRescURI));
+        assertNotEquals(committedMemberEtag, getEtag(membershipRescURI), "Etag must update after modification");
     }
 
     @Test
@@ -1841,24 +1880,24 @@ public class LDPContainerIT extends AbstractResourceIT {
         final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <http://pcdm.org/models#hasMember>;"
             + " <http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + membershipRescId + "> . ";
         createContainer.setEntity(new StringEntity(membersRDF));
-        assertEquals("Membership container not created!", CREATED.getStatusCode(), getStatus(createContainer));
+        assertEquals(CREATED.getStatusCode(), getStatus(createContainer), "Membership container not created!");
 
         // Create the child resource
         createObjectAndClose(child);
 
         final String etag1 = getEtag(serverAddress + membershipRescId);
-        assertNotEquals("Adding child must change etag of membership resc", etag0, etag1);
+        assertNotEquals(etag0, etag1, "Adding child must change etag of membership resc");
 
         // Wait a second so that the creation and deletion of the child are not simultaneous
         TimeUnit.SECONDS.sleep(1);
 
         // Delete the child resource
-        assertEquals("Child resource not deleted!", NO_CONTENT.getStatusCode(),
-                getStatus(new HttpDelete(serverAddress + child)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(serverAddress + child)),
+                "Child resource not deleted!");
 
         final String etag2 = getEtag(serverAddress + membershipRescId);
 
-        assertNotEquals("ETag didn't change!", etag1, etag2);
+        assertNotEquals(etag1, etag2, "ETag didn't change!");
     }
 
     private void putPropertiesWithEtag(final String rescUri, final String etag, final Status status)
@@ -1881,7 +1920,7 @@ public class LDPContainerIT extends AbstractResourceIT {
                 "INSERT { <" + rescUri + "> <" + DC.title.getURI() + "> \"" + title + "\" } WHERE { }";
         postProp.setEntity(new StringEntity(updateString));
         try (final CloseableHttpResponse dcResp = execute(postProp)) {
-            assertEquals(dcResp.getStatusLine().toString(), status.getStatusCode(), getStatus(dcResp));
+            assertEquals(status.getStatusCode(), getStatus(dcResp), dcResp.getStatusLine().toString());
         }
     }
 
@@ -1899,7 +1938,7 @@ public class LDPContainerIT extends AbstractResourceIT {
 
         final String responseBody;
         try (final CloseableHttpResponse response = execute(httpGet)) {
-            assertEquals("Didn't get a OK response!", OK.getStatusCode(), getStatus(response));
+            assertEquals(OK.getStatusCode(), getStatus(response), "Didn't get a OK response!");
             responseBody = EntityUtils.toString(response.getEntity());
         }
 
@@ -1942,8 +1981,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertEquals(memberIds.length, membershipResc.listProperties(hasMemberRelation).toList().size());
         for (final String memberId : memberIds) {
             final var memberUri = serverAddress + memberId;
-            assertTrue("Did not contain expected member " + memberId,
-                    membershipResc.hasProperty(hasMemberRelation, createResource(memberUri)));
+            assertTrue(membershipResc.hasProperty(hasMemberRelation, createResource(memberUri)),
+                    "Did not contain expected member " + memberId);
         }
     }
 
@@ -1964,8 +2003,8 @@ public class LDPContainerIT extends AbstractResourceIT {
         final var memberResc = model.getResource(serverAddress + subjectId);
 
         final var membershipUri = serverAddress + membershipRescId;
-        assertTrue("Did not contain expected membership " + isMemberOfRelation + " " + membershipRescId,
-                memberResc.hasProperty(isMemberOfRelation, createResource(membershipUri)));
+        assertTrue(memberResc.hasProperty(isMemberOfRelation, createResource(membershipUri)),
+                "Did not contain expected membership " + isMemberOfRelation + " " + membershipRescId);
     }
 
     private void assertMementoHasNoMembership(final String mementoId,
@@ -1978,11 +2017,10 @@ public class LDPContainerIT extends AbstractResourceIT {
         assertHasNoMembership(getModel(subjectId), subjectId, memberRelation);
     }
 
-    private void assertHasNoMembership(final Model model, final String subjectId, final Property memberRelation)
-            throws Exception {
+    private void assertHasNoMembership(final Model model, final String subjectId, final Property memberRelation) {
         final var membershipResc = model.getResource(serverAddress + subjectId);
-        assertFalse("Expect " + subjectId + " to have no membership",
-                membershipResc.hasProperty(memberRelation));
+        assertFalse(membershipResc.hasProperty(memberRelation),
+                "Expect " + subjectId + " to have no membership");
     }
 
     private void assertHasNoMembershipWhenOmitted(final String subjectId, final Property memberRelation)

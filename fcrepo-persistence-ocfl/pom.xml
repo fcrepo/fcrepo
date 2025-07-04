@@ -9,25 +9,7 @@
   <name>Fedora Repository OCFL Persistence Impl</name>
   <description>Fedora Repository OCFL Persistence Implementation, containing implementation of core persistence API interfaces</description>
 
-  <packaging>bundle</packaging>
-
-  <properties>
-    <osgi.import.packages>
-      *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.persistence.ocfl.*;version=${project.version}
-    </osgi.export.packages>
-  </properties>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
@@ -98,6 +80,10 @@
       <groupId>com.github.ben-manes.caffeine</groupId>
       <artifactId>caffeine</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
 
     <!-- test gear -->
     <dependency>
@@ -106,7 +92,7 @@
     </dependency>
     <dependency>
       <groupId>org.hamcrest</groupId>
-      <artifactId>hamcrest-all</artifactId>
+      <artifactId>hamcrest</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -124,6 +110,13 @@
     </dependency>
     <dependency>
       <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-common</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <type>test-jar</type>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-kernel-impl</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
@@ -134,8 +127,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -149,8 +142,9 @@
          gear. Otherwise it will get loaded during test phase, but because this is
          just an API, the tests will not be able to execute. -->
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
+      <scope>provided</scope>
     </dependency>
   </dependencies>
 </project>

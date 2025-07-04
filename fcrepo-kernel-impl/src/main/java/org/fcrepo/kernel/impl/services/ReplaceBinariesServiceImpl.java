@@ -19,8 +19,9 @@ import org.fcrepo.persistence.common.MultiDigestInputStreamWrapper;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Collection;
@@ -55,19 +56,18 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
                         final InputStream contentBody,
                         final long contentSize,
                         final ExternalContent externalContent) {
-        try {
+        try (var contentInputStream = (externalContent != null && externalContent.isCopy()) ?
+                externalContent.fetchExternalContent() : contentBody) {
             final PersistentStorageSession pSession = this.psManager.getSession(tx);
 
             String mimeType = contentType;
             long size = contentSize;
             final NonRdfSourceOperationBuilder builder;
+
             if (externalContent == null || externalContent.isCopy()) {
-                var contentInputStream = contentBody;
                 if (externalContent != null) {
                     LOGGER.debug("External content COPY '{}', '{}'", fedoraId, externalContent.getURL());
-                    contentInputStream = externalContent.fetchExternalContent();
                 }
-
                 builder = factory.updateInternalBinaryBuilder(tx, fedoraId, contentInputStream);
             } else {
                 builder = factory.updateExternalBinaryBuilder(tx, fedoraId,
@@ -105,10 +105,14 @@ public class ReplaceBinariesServiceImpl extends AbstractService implements Repla
             pSession.persist(replaceOp);
             this.searchIndex.addUpdateIndex(tx, pSession.getHeaders(fedoraId, null));
             recordEvent(tx, fedoraId, replaceOp);
+
         } catch (final PersistentStorageException ex) {
             throw new RepositoryRuntimeException(format("failed to replace binary %s",
                     fedoraId), ex);
+        } catch (final IOException ex) {
+            LOGGER.error("Error closing input stream: {}", ex.getMessage());
         }
+
     }
 
 }

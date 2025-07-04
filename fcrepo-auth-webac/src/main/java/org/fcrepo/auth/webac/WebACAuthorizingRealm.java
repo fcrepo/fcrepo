@@ -26,8 +26,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.inject.Inject;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
 import org.fcrepo.config.FedoraPropsConfig;
@@ -112,7 +112,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         if (principals.byType(ContainerRolesPrincipal.class).contains(adminPrincipal)) {
             if (delegatePrincipals.size() > 1) {
                 throw new RepositoryConfigurationException("Too many delegates! " + delegatePrincipals);
-            } else if (delegatePrincipals.size() < 1) {
+            } else if (delegatePrincipals.isEmpty()) {
                 authzInfo.addRole(FEDORA_ADMIN_ROLE);
                 return authzInfo;
             }

@@ -10,41 +10,7 @@
   <artifactId>fcrepo-http-api</artifactId>
   <name>Fedora Repository HTTP API Module</name>
   <description>The Fedora Commons repository HTTP API: Provides a RESTful HTTP API to interact with the Fedora Commons repository.</description>
-  <packaging>bundle</packaging>
-
-  <properties>
-    <osgi.import.packages>
-        org.fcrepo.config.*,
-        org.fcrepo.http.commons.*,
-        org.fcrepo.kernel.api.*,
-        org.fcrepo.search.api.*,
-
-        javax.annotation,
-        javax.inject,
-        javax.jcr.*,
-        javax.servlet.http,
-        javax.ws.rs.*,
-
-        org.apache.commons.lang3,
-        org.apache.commons.io,
-        org.apache.jena.riot.*,
-        org.apache.velocity.*,
-        org.glassfish.jersey.media.multipart,
-
-        org.springframework.beans.*,
-        org.springframework.stereotype,
-        org.springframework.context.*,
-
-        com.fasterxml.jackson.*,
-        com.google.common.*,
-        org.apache.jena.*,
-
-        *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.http.api.*;version=${project.version}
-    </osgi.export.packages>
-  </properties>
+  <packaging>jar</packaging>
 
   <dependencies>
 
@@ -100,20 +66,14 @@
     </dependency>
 
     <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>javax.servlet-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-http-server</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.grizzly</groupId>
-      <artifactId>grizzly-http-servlet</artifactId>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.test-framework.providers</groupId>
       <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
@@ -184,17 +144,19 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
-      <artifactId>jersey-spring5</artifactId>
+      <artifactId>jersey-spring6</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
@@ -210,7 +172,7 @@
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
+      <artifactId>mockito-junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -225,6 +187,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.flywaydb.flyway-test-extensions</groupId>
       <artifactId>flyway-spring-test</artifactId>
       <scope>test</scope>
@@ -234,8 +200,9 @@
       gear. Otherwise it will get loaded during test phase, but because this is 
       just an API, the tests will not be able to execute. -->
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -249,8 +216,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>mysql</groupId>
-      <artifactId>mysql-connector-java</artifactId>
+      <groupId>com.mysql</groupId>
+      <artifactId>mysql-connector-j</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -263,10 +230,6 @@
 
   <build>
     <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
       </plugin>

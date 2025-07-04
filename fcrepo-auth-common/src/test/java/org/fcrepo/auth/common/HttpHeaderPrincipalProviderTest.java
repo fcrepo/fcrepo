@@ -14,7 +14,7 @@ import static org.mockito.Mockito.when;
 import java.security.Principal;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import org.fcrepo.auth.common.HttpHeaderPrincipalProvider.HttpHeaderPrincipal;
 

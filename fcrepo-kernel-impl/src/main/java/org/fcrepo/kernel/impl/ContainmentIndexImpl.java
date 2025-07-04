@@ -24,9 +24,9 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
@@ -354,7 +354,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Get the parent ID for this resource from the main table if not deleted.
      */
     private static final String PARENT_EXISTS = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + END_TIME_COLUMN + " IS NULL";
+            " WHERE " + FEDORA_ID_COLUMN + " = :child";
 
     /*
      * Get the parent ID for this resource from the operations table for an 'add' operation in this transaction, but
@@ -362,7 +362,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String PARENT_EXISTS_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +
             " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
-            " AND " + END_TIME_COLUMN + " IS NULL" +
             " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
             " AND " + OPERATION_COLUMN + " = 'add') x" +
@@ -654,7 +653,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         tx.doInTx(() -> {
             final String resourceID = resource.getFullId();
 
-            final String parent = getContainedByDeleted(tx, resource);
+            final String parent = getContainedBy(tx, resource);
 
             if (parent != null) {
                 LOGGER.debug("Removing containment relationship between parent ({}) and child ({})",
@@ -733,26 +732,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         parameterSource.addValue("resourceId", parentId);
         parameterSource.addValue("updated", formatInstant(updated));
         jdbcTemplate.update(CONDITIONALLY_UPDATE_LAST_UPDATED, parameterSource);
-    }
-
-    /**
-     * Find parent for a resource using a deleted containment relationship.
-     * @param tx the transaction.
-     * @param resource the child resource id.
-     * @return the parent id.
-     */
-    private String getContainedByDeleted(final Transaction tx, final FedoraId resource) {
-        final String resourceID = resource.getFullId();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("child", resourceID);
-        final List<String> parentID;
-        if (tx.isOpenLongRunning()) {
-            parameterSource.addValue("transactionId", tx.getId());
-            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED_IN_TRANSACTION, parameterSource, String.class);
-        } else {
-            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED, parameterSource, String.class);
-        }
-        return parentID.stream().findFirst().orElse(null);
     }
 
     @Override

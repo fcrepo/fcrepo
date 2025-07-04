@@ -5,8 +5,8 @@
  */
 package org.fcrepo.http.api;
 
-import static javax.ws.rs.core.HttpHeaders.ALLOW;
-import static javax.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.HttpHeaders.ALLOW;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2_WITH_CHARSET;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_WITH_CHARSET;
@@ -19,19 +19,19 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.HEAD;
-import javax.ws.rs.NotFoundException;
-import javax.ws.rs.OPTIONS;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.Response;
+import jakarta.inject.Inject;
+import jakarta.ws.rs.DELETE;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HEAD;
+import jakarta.ws.rs.NotFoundException;
+import jakarta.ws.rs.OPTIONS;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.Response;
 
 import org.fcrepo.http.commons.domain.PATCH;
 import org.fcrepo.http.commons.responses.HtmlTemplate;

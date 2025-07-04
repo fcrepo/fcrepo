@@ -22,17 +22,16 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WRITABLE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
-import static javax.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN;
-import static javax.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_DISPOSITION;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static java.util.Arrays.asList;
-
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.util.List;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -46,7 +45,7 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.integration.http.api.AbstractResourceIT;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author bbpennel
@@ -149,8 +148,8 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
             put.setHeader(LINK, link);
         }
         try (final CloseableHttpResponse response = execute(put)) {
-            assertEquals("Must reject server managed property <" + predicate + "> <" + refURI + ">",
-                         409, response.getStatusLine().getStatusCode());
+            assertEquals(409, response.getStatusLine().getStatusCode(),
+                    "Must reject server managed property <" + predicate + "> <" + refURI + ">");
         }
     }
 
@@ -158,8 +157,8 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
         final String pid = getRandomUniqueId();
         final String content = "<> <" + predicate + "> \"value\" .";
         try (final CloseableHttpResponse response = execute(putObjMethod(pid, "text/turtle", content))) {
-            assertEquals("Must reject server managed property <" + predicate + ">",
-                    409, response.getStatusLine().getStatusCode());
+            assertEquals(409, response.getStatusLine().getStatusCode(),
+                    "Must reject server managed property <" + predicate + ">");
         }
     }
 
@@ -170,8 +169,8 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
         final String pid = getRandomUniqueId();
         createObject(pid);
         try (final CloseableHttpResponse response = performUpdate(pid, updateString)) {
-            assertEquals("Must reject update of server managed property <" + predicate + ">",
-                    409, response.getStatusLine().getStatusCode());
+            assertEquals(409, response.getStatusLine().getStatusCode(),
+                    "Must reject update of server managed property <" + predicate + ">");
         }
     }
 
@@ -196,8 +195,8 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
             createObject(pid);
         }
         try (final CloseableHttpResponse response = performUpdate(pid, updateString)) {
-            assertEquals("Must reject update of server managed property <" + predicate + "> <" + refURI + ">",
-                         409, response.getStatusLine().getStatusCode());
+            assertEquals(409, response.getStatusLine().getStatusCode(),
+                    "Must reject update of server managed property <" + predicate + "> <" + refURI + ">");
         }
     }
 
@@ -264,7 +263,7 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
 
         final Model resultModel = getModel(pid);
         final Resource resultResc = resultModel.getResource(subjectURI);
-        assertFalse("Must not contain deleted property " + property, resultResc.hasProperty(property, object));
+        assertFalse(resultResc.hasProperty(property, object), "Must not contain deleted property " + property);
     }
 
     private void verifySetProperty(final String pid, final String subjectURI, final Property property,
@@ -277,7 +276,7 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
 
         final Model model = getModel(pid);
         final Resource resc = model.getResource(subjectURI);
-        assertTrue("Must contain updated property " + property, resc.hasProperty(property, object));
+        assertTrue(resc.hasProperty(property, object), "Must contain updated property " + property);
     }
 
     private String rdfNodeToString(final RDFNode object) {

@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -465,7 +465,9 @@ public class ContainmentIndexImplTest {
         containmentIndex.removeResource(transaction1, child1.getFedoraId());
         containmentIndex.commitTransaction(transaction1);
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
-        assertNull(containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
+        // Parent can still be found from the child
+        assertEquals(parent1.getFedoraId().getFullId(),
+                containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
     }
 
     @Test
@@ -488,7 +490,9 @@ public class ContainmentIndexImplTest {
         containmentIndex.removeResource(transaction2, child1.getFedoraId());
         containmentIndex.commitTransaction(transaction2);
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
-        assertNull(containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
+        // Parent can still be found from the child
+        assertEquals(parent1.getFedoraId().getFullId(),
+                containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
         assertEquals(1, containmentIndex.getContains(transaction1, parent2.getFedoraId()).count());
         assertEquals(child1.getFedoraId().getFullId(),
                 containmentIndex.getContains(transaction1, parent2.getFedoraId()).findFirst().get());
@@ -512,7 +516,9 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(transaction1, parent1.getFedoraId()).count());
         containmentIndex.commitTransaction(transaction1);
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
-        assertNull(containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
+        // Parent can still be found from the child.
+        assertEquals(parent1.getFedoraId().getFullId(),
+                containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
         assertEquals(0, containmentIndex.getContains(transaction1, parent1.getFedoraId()).count());
     }
 

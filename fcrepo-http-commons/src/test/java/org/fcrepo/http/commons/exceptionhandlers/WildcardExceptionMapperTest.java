@@ -5,15 +5,15 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static jakarta.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 /**
  * <p>WildcardExceptionMapperTest class.</p>
@@ -24,7 +24,7 @@ public class WildcardExceptionMapperTest {
 
     private WildcardExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new WildcardExceptionMapper();
     }
@@ -35,7 +35,7 @@ public class WildcardExceptionMapperTest {
         final Exception input = new Exception();
         Response actual = testObj.toResponse(input);
         assertEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());
-        assertTrue(actual.getEntity() != null);
+        assertNotNull(actual.getEntity());
         testObj.showStackTrace = false;
         actual = testObj.toResponse(input);
         assertEquals(INTERNAL_SERVER_ERROR.getStatusCode(), actual.getStatus());

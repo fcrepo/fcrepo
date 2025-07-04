@@ -5,12 +5,14 @@
  */
 
 package org.fcrepo.event.serialization;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.jena.rdf.model.Model;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -22,8 +24,6 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * <p>

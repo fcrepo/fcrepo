@@ -10,14 +10,20 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.Lang.TTL;
 import static org.fcrepo.auth.webac.URIConstants.FOAF_AGENT_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_GROUP_VALUE;
+import static org.fcrepo.auth.webac.URIConstants.VCARD_MEMBER_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
@@ -30,9 +36,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.Lang;
@@ -42,24 +50,27 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
-import org.fcrepo.kernel.api.exception.RepositoryException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.contrib.java.lang.system.RestoreSystemProperties;
-import org.junit.runner.RunWith;
+
+import org.apache.jena.vocabulary.RDF;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author acoburn
  * @since 9/3/15
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class WebACRolesProviderTest {
 
     private WebACRolesProvider roleProvider;
@@ -83,15 +94,12 @@ public class WebACRolesProviderTest {
     @Mock
     private FedoraResource mockAgentClassResource;
 
-    @Rule
-    public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
-
     private AuthPropsConfig propsConfig;
 
     private Cache<String, Optional<ACLHandle>> authHandleCache;
 
-    @Before
-    public void setUp() throws RepositoryException {
+    @BeforeEach
+    public void setUp() {
         authHandleCache = Caffeine.newBuilder().build();
         propsConfig = new AuthPropsConfig();
         roleProvider = new WebACRolesProvider();
@@ -112,7 +120,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void noAclTest() throws RepositoryException {
+    public void noAclTest() {
         final String accessTo = "/dark/archive/sunshine";
 
         when(mockResource.getAcl()).thenReturn(null);
@@ -133,7 +141,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl01ParentTest() throws RepositoryException {
+    public void acl01ParentTest() {
         final String agent = "user01";
         final String parentPath = "/webacl_box1";
         final String accessTo = parentPath + "/foo";
@@ -156,14 +164,14 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent in the role map", 1, roles.size());
-        assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent in the role map");
+        assertEquals(2, roles.get(agent).size(), "The agent should have exactly two modes");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     @Test
-    public void acl21NoDefaultACLStatementTest() throws RepositoryException {
+    public void acl21NoDefaultACLStatementTest() {
         final String agent = "user21";
         final String parentPath = "/resource_acl_no_inheritance";
         final String accessTo = parentPath + "/foo";
@@ -191,15 +199,15 @@ public class WebACRolesProviderTest {
         // The default root ACL should be used for authorization instead of the parent ACL
         final String rootAgent = "user06a";
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
-        assertEquals("Contains no agents in the role map!", 1, roles.size());
-        assertNull("Contains agent " + agent + " from ACL in parent node!", roles.get(agent));
-        assertEquals("Should have agent " + rootAgent + " from the root ACL!", 1, roles.get(rootAgent).size());
-        assertTrue("Should have read mode for agent " + rootAgent + " from the root ACL!",
-                roles.get(rootAgent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "Contains no agents in the role map!");
+        assertNull(roles.get(agent), "Contains agent " + agent + " from ACL in parent node!");
+        assertEquals(1, roles.get(rootAgent).size(), "Should have agent " + rootAgent + " from the root ACL!");
+        assertTrue(roles.get(rootAgent).contains(WEBAC_MODE_READ_VALUE),
+                "Should have read mode for agent " + rootAgent + " from the root ACL!");
     }
 
     @Test
-    public void acl01Test1() throws RepositoryException, PathNotFoundException {
+    public void acl01Test1() throws PathNotFoundException {
         final String agent = "user01";
         final String accessTo = "/webacl_box1";
         final String acl = "/acls/01/acl.ttl";
@@ -218,14 +226,14 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent in the role map", 1, roles.size());
-        assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent in the role map");
+        assertEquals(2, roles.get(agent).size(), "The agent should have exactly two modes");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     @Test
-    public void acl01Test2() throws RepositoryException, PathNotFoundException {
+    public void acl01Test2() throws PathNotFoundException {
         final String accessTo = "/webacl_box2";
         final String acl = "/acls/01/acl.ttl";
 
@@ -244,7 +252,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl02Test() throws RepositoryException {
+    public void acl02Test() {
         final String agent = "Editors";
         final String accessTo = "/box/bag/collection";
         final String acl = "/acls/02/acl.ttl";
@@ -262,14 +270,14 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent in the role map", 1, roles.size());
-        assertEquals("The agent should have exactly two modes", 2, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent in the role map");
+        assertEquals(2, roles.get(agent).size(), "The agent should have exactly two modes");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     @Test
-    public void acl03Test1() throws RepositoryException, PathNotFoundException {
+    public void acl03Test1() throws PathNotFoundException {
         final String agent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/03/acl.ttl";
@@ -287,13 +295,13 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent in the roles map", 1, roles.size());
-        assertEquals("The agent should have exactly one mode", 1, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent in the roles map");
+        assertEquals(1, roles.get(agent).size(), "The agent should have exactly one mode");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     @Test
-    public void acl03Test2() throws RepositoryException, PathNotFoundException {
+    public void acl03Test2() throws PathNotFoundException {
         final String agent = "Restricted";
         final String accessTo = "/dark/archive";
         final String acl = "/acls/03/acl.ttl";
@@ -310,13 +318,13 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent).size());
-        assertTrue("The agent should be able to read", roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertEquals(1, roles.get(agent).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     @Test
-    public void foafAgentTest() throws RepositoryException, PathNotFoundException {
+    public void foafAgentTest() throws PathNotFoundException {
         final String agent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/foaf-agent";
         final String acl = "/acls/03/foaf-agent.ttl";
@@ -333,15 +341,13 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be only one valid role", 1, roles.size());
-        assertEquals("The foaf:Agent should have exactly one valid mode", 1,
-                     roles.get(agent).size());
-        assertTrue("The foaf:Agent should be able to write",
-                   roles.get(agent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be only one valid role");
+        assertEquals(1, roles.get(agent).size(), "The foaf:Agent should have exactly one valid mode");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The foaf:Agent should be able to write");
     }
 
     @Test
-    public void authenticatedAgentTest() throws RepositoryException, PathNotFoundException {
+    public void authenticatedAgentTest() throws PathNotFoundException {
         final String aclAuthenticatedAgent = "http://www.w3.org/ns/auth/acl#AuthenticatedAgent";
         final String accessTo = "/authenticated-agent";
         final String acl = "/acls/03/authenticated-agent.ttl";
@@ -357,15 +363,15 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be only one valid role", 1, roles.size());
-        assertEquals("The acl:AuthenticatedAgent should have exactly one valid mode", 1,
-                     roles.get(aclAuthenticatedAgent).size());
-        assertTrue("The acl:AuthenticatedAgent should be able to write",
-                   roles.get(aclAuthenticatedAgent).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be only one valid role");
+        assertEquals(1, roles.get(aclAuthenticatedAgent).size(),
+                "The acl:AuthenticatedAgent should have exactly one valid mode");
+        assertTrue(roles.get(aclAuthenticatedAgent).contains(WEBAC_MODE_READ_VALUE),
+                "The acl:AuthenticatedAgent should be able to write");
     }
 
     @Test
-    public void acl04Test() throws RepositoryException, PathNotFoundException {
+    public void acl04Test() throws PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String agent2 = "Editors";
         final String accessTo = "/public_collection";
@@ -382,16 +388,16 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly two agents", 2, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
-        assertEquals("The agent should have two modes", 2, roles.get(agent2).size());
-        assertTrue("The agent should be able to read", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(2, roles.size(), "There should be exactly two agents");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertEquals(2, roles.get(agent2).size(), "The agent should have two modes");
+        assertTrue(roles.get(agent2).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent2).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to write");
     }
 
     @Test
-    public void acl05Test() throws RepositoryException, PathNotFoundException {
+    public void acl05Test() throws PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String agent2 = "Admins";
         final String accessTo = "/mixedCollection";
@@ -410,15 +416,15 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly two agents", 2, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
-        assertEquals("The agent should have one mode", 1, roles.get(agent2).size());
-        assertTrue("The agent should be able to read", roles.get(agent2).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(2, roles.size(), "There should be exactly two agents");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertEquals(1, roles.get(agent2).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent2).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     @Test
-    public void acl05Test2() throws RepositoryException, PathNotFoundException {
+    public void acl05Test2() throws PathNotFoundException {
         final String agent1 = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/someOtherCollection";
         final String acl = "/acls/05/acl.ttl";
@@ -435,9 +441,9 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
     }
 
     /* (non-Javadoc)
@@ -446,7 +452,7 @@ public class WebACRolesProviderTest {
      * therefore retrieve two agents.
      */
     @Test
-    public void acl09Test1() throws RepositoryException, PathNotFoundException {
+    public void acl09Test1() throws PathNotFoundException {
         final String agent1 = "person1";
         final String accessTo = "/anotherCollection";
 
@@ -473,10 +479,10 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly two agents", 2, roles.size());
-        assertEquals("The agent should have two modes", 2, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
-        assertTrue("The agent should be able to write", roles.get(agent1).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(2, roles.size(), "There should be exactly two agents");
+        assertEquals(2, roles.get(agent1).size(), "The agent should have two modes");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     /* (non-Javadoc)
@@ -485,7 +491,7 @@ public class WebACRolesProviderTest {
      * foaf:Group and therefore should retrieve zero agents.
      */
     @Test
-    public void acl09Test2() throws RepositoryException, PathNotFoundException {
+    public void acl09Test2() throws PathNotFoundException {
         final String accessTo = "/anotherCollection";
 
         final String groupResource = "/group/foo";
@@ -513,7 +519,7 @@ public class WebACRolesProviderTest {
     }
 
     @Test
-    public void acl17Test1() throws RepositoryException, PathNotFoundException {
+    public void acl17Test1() throws PathNotFoundException {
         final String foafAgent = "http://xmlns.com/foaf/0.1/Agent";
         final String accessTo = "/dark/archive/sunshine";
         final String acl = "/acls/17/acl.ttl";
@@ -530,9 +536,10 @@ public class WebACRolesProviderTest {
 
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be only one valid role", 1, roles.size());
-        assertEquals("The foafAgent should have exactly one valid mode", 1, roles.get(foafAgent).size());
-        assertTrue("The foafAgent should be able to write", roles.get(foafAgent).contains(WEBAC_MODE_WRITE_VALUE));
+        assertEquals(1, roles.size(), "There should be only one valid role");
+        assertEquals(1, roles.get(foafAgent).size(), "The foafAgent should have exactly one valid mode");
+        assertTrue(roles.get(foafAgent).contains(WEBAC_MODE_WRITE_VALUE),
+                "The foafAgent should be able to write");
     }
 
     @Test
@@ -547,11 +554,11 @@ public class WebACRolesProviderTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
     }
 
-    @Test(expected = RuntimeException.class)
+    @Test
     public void noAclTestMalformedRdf2() {
 
         when(mockResource.getAcl()).thenReturn(null);
@@ -562,7 +569,7 @@ public class WebACRolesProviderTest {
         when(mockResource.getOriginalResource()).thenReturn(mockResource);
 
         propsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/logback-test.xml"));
-        roleProvider.getRoles(mockResource, mockTransaction);
+        assertThrows(RuntimeException.class, () -> roleProvider.getRoles(mockResource, mockTransaction));
     }
 
     @Test
@@ -577,9 +584,135 @@ public class WebACRolesProviderTest {
         propsConfig.setRootAuthAclPath(Paths.get("./target/test-classes/test-root-authorization.ttl"));
         final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
 
-        assertEquals("There should be exactly one agent", 1, roles.size());
-        assertEquals("The agent should have one mode", 1, roles.get(agent1).size());
-        assertTrue("The agent should be able to read", roles.get(agent1).contains(WEBAC_MODE_READ_VALUE));
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertEquals(1, roles.get(agent1).size(), "The agent should have one mode");
+        assertTrue(roles.get(agent1).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+    }
+
+    /**
+     * Test getting the permissions for the transaction provider.
+     */
+    @Test
+    public void testTxProvider() {
+        final String agent1 = "testUser";
+
+        when(mockResource.getAcl()).thenReturn(null);
+
+        final var id = FedoraId.create("fcr:txt");
+        when(mockResource.getId()).thenReturn(id.getFullId());
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(id, mockResource, mockTransaction);
+
+        assertEquals(1, roles.size(), "There should be exactly one agent");
+        assertNull(roles.get(agent1), "The agent should not be in the roles");
+        assertEquals(1, roles.get(FOAF_AGENT_VALUE).size(), "The foaf:agent should have one mode");
+    }
+
+    /**
+     * Derefence an internal agentGroup URI to an ACL resource.
+     */
+    @Test
+    public void testDereferenceAgentGroupFailure() throws PathNotFoundException {
+        final var id = FedoraId.create("agent-group-flat");
+        final var aclId = FedoraId.create("agent-group-list-flat");
+        final String acl = "/acls/agent-group-flat.ttl";
+
+        when(mockResource.getId()).thenReturn(id.getFullId());
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockAclResource.getTriples()).thenReturn(getRdfStreamFromResource(acl, TTL));
+        when(mockResourceFactory.getResource(any(Transaction.class), eq(aclId))).thenThrow(PathNotFoundException.class);
+        assertThrows(PathNotFoundRuntimeException.class, () -> roleProvider.getRoles(mockResource, mockTransaction));
+    }
+
+    /**
+     * Dereference an internal agentGroup that is set as foaf:Agent.
+     */
+    @Test
+    public void testDereferenceAgentGroupFoafAgent() {
+        final var id = FedoraId.create("some-test");
+        final String acl = "/acls/acl-agentgroup-foaf-agent.ttl";
+
+        when(mockResource.getId()).thenReturn(id.getFullId());
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockAclResource.getTriples())
+                .thenReturn(getRdfStreamFromResource(acl, TTL));
+        final var roles =  roleProvider.getRoles(mockResource, mockTransaction);
+        assertEquals(0, roles.size(), "There should be no roles agent");
+    }
+
+    /**
+     * Dereference an internal agentGroup that has a hashuri to a vcard:Group.
+     */
+    @Test
+    public void testDereferenceAgentGroupHashUri() throws PathNotFoundException {
+        final var id = FedoraId.create("some-test");
+        final String acl = "/acls/acl-agentgroup-with-hashuri.ttl";
+        final FedoraId aclId = FedoraId.create("agent-group");
+
+        final var mockGroupResource = mock(FedoraResource.class);
+        when(mockGroupResource.getId()).thenReturn(aclId.getFullId());
+        when(mockGroupResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockGroupResource.getTriples()).thenReturn(
+                new DefaultRdfStream(NodeFactory.createURI("#list"),
+                    Stream.of(
+                        Triple.create(NodeFactory.createURI("#list"),
+                        RDF.type.asNode(),
+                        NodeFactory.createURI(VCARD_GROUP_VALUE)),
+                        Triple.create(NodeFactory.createURI("#list"),
+                        NodeFactory.createURI(VCARD_MEMBER_VALUE),
+                        NodeFactory.createLiteral("Bob"))
+                    )
+                )
+        );
+        when(mockResourceFactory.getResource(any(Transaction.class), eq(aclId))).thenReturn(mockGroupResource);
+
+        when(mockResource.getId()).thenReturn(id.getFullId());
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockAclResource.getTriples())
+                .thenReturn(getRdfStreamFromResource(acl, TTL));
+
+        final var roles =  roleProvider.getRoles(mockResource, mockTransaction);
+        assertEquals(1, roles.size(), "There should be one role agent");
+        assertEquals(1, roles.get("Bob").size(), "The agent should have one mode");
+        assertEquals(WEBAC_MODE_READ_VALUE, roles.get("Bob").iterator().next());
+    }
+
+    /**
+     * Test getting roles for an agent with a base URI.
+     */
+    @Test
+    public void testGetAgentWithBaseUri() {
+        final String agent = "info:fedora/users#Bob";
+        final String accessTo = "/box/bag/collection";
+        final String acl = "/acls/acl-agent-with-baseuri.ttl";
+
+        when(mockResource.getAcl()).thenReturn(mockAclResource);
+        when(mockAclResource.getId()).thenReturn(addPrefix(acl));
+        when(mockResource.getId()).thenReturn(addPrefix(accessTo));
+        when(mockAclResource.getTriples())
+                .thenReturn(getRdfStreamFromResource(acl, TTL));
+        when(mockAclResource.isAcl()).thenReturn(true);
+        when(mockAclResource.getId()).thenReturn(addPrefix(accessTo) + "/fcr:acl");
+        when(mockResource.getOriginalResource()).thenReturn(mockResource);
+        when(mockResource.getTypes()).thenReturn(singletonList(FEDORA_RESOURCE_URI));
+
+        roleProvider.setUserBaseUri("info:fedora/users#");
+        final Map<String, Collection<String>> roles = roleProvider.getRoles(mockResource, mockTransaction);
+
+        assertEquals(2, roles.size(), "There should be two agents in the role map");
+        assertEquals(2, roles.get(agent).size(), "The full agents should have exactly two modes");
+        assertEquals(2, roles.get("Bob").size(), "The stripped agent should have exactly two modes");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get(agent).contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
+        assertTrue(roles.get("Bob").contains(WEBAC_MODE_READ_VALUE), "The agent should be able to read");
+        assertTrue(roles.get("Bob").contains(WEBAC_MODE_WRITE_VALUE), "The agent should be able to write");
     }
 
     private static RdfStream getRdfStreamFromResource(final String resourcePath, final Lang lang) {
@@ -591,7 +724,7 @@ public class WebACRolesProviderTest {
         model.listStatements().forEachRemaining(x -> {
             final Triple t = x.asTriple();
             if (t.getObject().isURI() && t.getObject().getURI().startsWith(FEDORA_URI_PREFIX)) {
-                triples.add(new Triple(t.getSubject(), t.getPredicate(),
+                triples.add(Triple.create(t.getSubject(), t.getPredicate(),
                         createURI(FEDORA_PREFIX + t.getObject().getURI().substring(FEDORA_URI_PREFIX.length()))));
             } else {
                 triples.add(t);

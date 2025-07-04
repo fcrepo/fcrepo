@@ -29,8 +29,8 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.slf4j.Logger;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Nonnull;
-import javax.inject.Inject;
+import jakarta.annotation.Nonnull;
+import jakarta.inject.Inject;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -204,9 +204,9 @@ public class MembershipServiceImpl implements MembershipService {
     private Triple generateMembershipTriple(final Node membership, final Node member,
             final Node hasMemberRel, final Node memberOfRel) {
         if (memberOfRel != null) {
-            return new Triple(member, memberOfRel, membership);
+            return Triple.create(member, memberOfRel, membership);
         } else {
-            return new Triple(membership, hasMemberRel, member);
+            return Triple.create(membership, hasMemberRel, member);
         }
     }
 

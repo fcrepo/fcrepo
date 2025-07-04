@@ -18,24 +18,24 @@
   <context:component-scan base-package="org.fcrepo.persistence.ocfl.impl"/>
   <context:component-scan base-package="org.fcrepo.kernel.impl.operations" />
   
-  <bean id="containmentIndex" class="org.mockito.Mockito" factory-method="mock">
-    <constructor-arg value="org.fcrepo.kernel.api.ContainmentIndex" />
+  <bean id="containmentIndex" class="org.fcrepo.common.test.utils.MockitoMockFactoryBean">
+    <property name="type" value="org.fcrepo.kernel.api.ContainmentIndex" />
   </bean>
 
-  <bean id="searchIndex" class="org.mockito.Mockito" factory-method="mock">
-    <constructor-arg value="org.fcrepo.search.api.SearchIndex" />
+  <bean id="searchIndex" class="org.fcrepo.common.test.utils.MockitoMockFactoryBean">
+    <property name="type" value="org.fcrepo.search.api.SearchIndex" />
   </bean>
 
-  <bean id="referenceService" class="org.mockito.Mockito" factory-method="mock">
-    <constructor-arg value="org.fcrepo.kernel.api.services.ReferenceService" />
+  <bean id="referenceService" class="org.fcrepo.common.test.utils.MockitoMockFactoryBean">
+    <property name="type" value="org.fcrepo.kernel.api.services.ReferenceService" />
   </bean>
   
-  <bean id="membershipService" class="org.mockito.Mockito" factory-method="mock">
-    <constructor-arg value="org.fcrepo.kernel.api.services.MembershipService" />
+  <bean id="membershipService" class="org.fcrepo.common.test.utils.MockitoMockFactoryBean">
+    <property name="type" value="org.fcrepo.kernel.api.services.MembershipService" />
   </bean>
   
-  <bean id="transactionManager" class="org.mockito.Mockito" factory-method="mock">
-    <constructor-arg value="org.fcrepo.kernel.api.TransactionManager" />
+  <bean id="transactionManager" class="org.fcrepo.common.test.utils.MockitoMockFactoryBean">
+    <property name="type" value="org.fcrepo.kernel.api.TransactionManager" />
   </bean>
 
 </beans>
