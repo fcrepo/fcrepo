@@ -257,4 +257,42 @@ public class OcflPersistenceConfigTest {
             ));
         }
     }
+
+    @Test
+    public void testS3RepositoryCreationWithPathStyleSupport() throws IOException {
+        // Configure for S3 storage
+        when(ocflPropsConfig.getStorage()).thenReturn(Storage.OCFL_S3);
+        when(ocflPropsConfig.getOcflS3Bucket()).thenReturn("test-bucket");
+        when(ocflPropsConfig.getOcflS3Prefix()).thenReturn("fedora/");
+        when(ocflPropsConfig.isOcflS3DbEnabled()).thenReturn(true);
+
+        when(ocflPropsConfig.getS3Endpoint()).thenReturn("https://s3.example.org");
+        when(ocflPropsConfig.getAwsAccessKey()).thenReturn("testKey");
+        when(ocflPropsConfig.getAwsSecretKey()).thenReturn("testSecret");
+        when(ocflPropsConfig.isOcflS3ChecksumEnabled()).thenReturn(true);
+
+        // Need to provide mock values for S3 client configuration
+        when(ocflPropsConfig.getAwsRegion()).thenReturn("us-east-1");
+        when(ocflPropsConfig.getS3ConnectionTimeout()).thenReturn(30);
+        when(ocflPropsConfig.getS3ReadTimeout()).thenReturn(30);
+        when(ocflPropsConfig.getS3WriteTimeout()).thenReturn(30);
+        when(ocflPropsConfig.getS3MaxConcurrency()).thenReturn(100);
+        when(ocflPropsConfig.isPathStyleAccessEnabled()).thenReturn(true);
+
+        try (final var ocflUtilsMock = Mockito.mockStatic(OcflPersistentStorageUtils.class)) {
+            final var repoMock = mock(MutableOcflRepository.class);
+            ocflUtilsMock.when(() -> OcflPersistentStorageUtils.createS3Repository(
+                    any(DataSource.class), any(), any(), anyString(), anyString(), any(Path.class),
+                    any(DigestAlgorithm.class), anyBoolean(), anyBoolean(), anyBoolean()))
+                    .thenReturn(repoMock);
+
+            ocflPersistenceConfig.repository();
+
+            ocflUtilsMock.verify(() -> OcflPersistentStorageUtils.createS3Repository(
+                    any(DataSource.class), any(S3AsyncClient.class), any(S3AsyncClient.class),
+                    anyString(), anyString(), any(Path.class),
+                    any(DigestAlgorithm.class), anyBoolean(), anyBoolean(), anyBoolean()
+            ));
+        }
+    }
 }
