@@ -44,7 +44,7 @@ public final class RdfLexicon {
 
     public static final String PROV_NAMESPACE = "http://www.w3.org/ns/prov#";
 
-    public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v1#";
+    public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v3/";
 
     public static final String MEMENTO_NAMESPACE = "http://mementoweb.org/ns#";
 
@@ -83,10 +83,10 @@ public final class RdfLexicon {
     public static final Property HAS_MESSAGE_DIGEST =
             createProperty(PREMIS_NAMESPACE + "hasMessageDigest");
 
-    public static final Property HAS_SIZE =
-        createProperty(PREMIS_NAMESPACE + "hasSize");
+    public static final Property SIZE =
+        createProperty(PREMIS_NAMESPACE + "size");
     public static final Property HAS_FIXITY_RESULT =
-        createProperty(PREMIS_NAMESPACE + "hasFixity");
+        createProperty(PREMIS_NAMESPACE + "fixity");
 
     private static final Set<Property> fixityProperties = of(
             HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST);

@@ -11,7 +11,7 @@ import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_EVENT_OUTCOME_DETAIL;
 import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_FIXITY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -112,7 +112,7 @@ public class FixityServiceImplTest {
         final Resource subject = model.getResource(FEDORA_ID);
         final Resource outcomeSubject = subject.getProperty(HAS_FIXITY_RESULT).getObject().asResource();
         assertTrue(model.contains(outcomeSubject, HAS_FIXITY_STATE, "SUCCESS"));
-        assertTrue(model.contains(outcomeSubject, HAS_SIZE, createTypedLiteral(CONTENT_SIZE)));
+        assertTrue(model.contains(outcomeSubject, SIZE, createTypedLiteral(CONTENT_SIZE)));
         assertTrue(model.contains(outcomeSubject, type, PREMIS_FIXITY));
         assertTrue(model.contains(outcomeSubject, type, PREMIS_EVENT_OUTCOME_DETAIL));
         assertTrue(model.contains(outcomeSubject, HAS_MESSAGE_DIGEST, createResource(CORRECT_SHA1.toString())));
@@ -129,7 +129,7 @@ public class FixityServiceImplTest {
         final Resource subject = model.getResource(FEDORA_ID);
         final Resource outcomeSubject = subject.getProperty(HAS_FIXITY_RESULT).getObject().asResource();
         assertTrue(model.contains(outcomeSubject, HAS_FIXITY_STATE, "BAD_CHECKSUM"));
-        assertTrue(model.contains(outcomeSubject, HAS_SIZE, createTypedLiteral(CONTENT_SIZE)));
+        assertTrue(model.contains(outcomeSubject, SIZE, createTypedLiteral(CONTENT_SIZE)));
         assertTrue(model.contains(outcomeSubject, type, PREMIS_FIXITY));
         assertTrue(model.contains(outcomeSubject, type, PREMIS_EVENT_OUTCOME_DETAIL));
         assertTrue(model.contains(outcomeSubject, HAS_MESSAGE_DIGEST, createResource(CORRECT_SHA1.toString())));
@@ -147,7 +147,7 @@ public class FixityServiceImplTest {
         final Resource subject = model.getResource(FEDORA_ID);
         final Resource outcomeSubject = subject.getProperty(HAS_FIXITY_RESULT).getObject().asResource();
         assertTrue(model.contains(outcomeSubject, HAS_FIXITY_STATE, "SUCCESS"));
-        assertTrue(model.contains(outcomeSubject, HAS_SIZE, createTypedLiteral(CONTENT_SIZE)));
+        assertTrue(model.contains(outcomeSubject, SIZE, createTypedLiteral(CONTENT_SIZE)));
         assertTrue(model.contains(outcomeSubject, type, PREMIS_FIXITY));
         assertTrue(model.contains(outcomeSubject, type, PREMIS_EVENT_OUTCOME_DETAIL));
         assertFalse(model.contains(outcomeSubject, HAS_MESSAGE_DIGEST));

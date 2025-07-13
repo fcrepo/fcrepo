@@ -5,13 +5,14 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDnonNegativeInteger;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_EVENT_OUTCOME_DETAIL;
 import static org.fcrepo.kernel.api.RdfLexicon.PREMIS_FIXITY;
 
@@ -76,7 +77,9 @@ public class FixityServiceImpl extends AbstractService implements FixityService 
         model.add(subject, HAS_FIXITY_RESULT, fixityResult);
         model.add(fixityResult, type, PREMIS_FIXITY);
         model.add(fixityResult, type, PREMIS_EVENT_OUTCOME_DETAIL);
-        model.add(fixityResult, HAS_SIZE, createTypedLiteral(binary.getContentSize()));
+        model.add(
+                fixityResult, SIZE, createTypedLiteral(String.valueOf(binary.getContentSize()), XSDnonNegativeInteger)
+        );
 
         // Built for more than one digest in anticipation of FCREPO-3419
         final List<URI> existingDigestList = new ArrayList<>();
