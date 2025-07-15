@@ -117,3 +117,11 @@ SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
     'CREATE INDEX simple_search_transactions_idx2 ON simple_search_transactions (transaction_id, operation)');
 PREPARE stmt FROM @sqlstmt;
 EXECUTE stmt;
+
+-- Create an index on the transaction_id in simple_search_transactions
+SET @exist := (SELECT COUNT(*) FROM information_schema.statistics
+    WHERE table_name = 'simple_search_transactions' AND index_name = 'simple_search_transactions_idx3' AND table_schema = database());
+SET @sqlstmt := IF (@exist > 0, 'SELECT ''INFO: Index already exists.''',
+    'CREATE INDEX simple_search_transactions_idx3 ON simple_search_transactions (transaction_id)');
+PREPARE stmt FROM @sqlstmt;
+EXECUTE stmt;

@@ -360,10 +360,28 @@ public class DbSearchIndexImpl implements SearchIndex {
                     FEDORA_ID_COLUMN + "= :" + FEDORA_ID_PARAM + " AND " + TRANSACTION_ID_COLUMN + "= :" +
                     TRANSACTION_ID_PARAM;
 
-    private static final String DELETE_RDF_TYPE_ASSOCIATIONS =
-            "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " WHERE " + RESOURCE_ID_COLUMN +
-                    " = (SELECT " + ID_COLUMN + " FROM " + SIMPLE_SEARCH_TABLE + " WHERE " +
-                    FEDORA_ID_COLUMN + " = :" + FEDORA_ID_PARAM + ")";
+    private static final String DELETE_RDF_TYPE_ASSOCIATIONS_MYSQL_MARIA =
+            "DELETE s FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " s JOIN " + SIMPLE_SEARCH_TABLE + " a ON s." +
+                    RESOURCE_ID_COLUMN + " = a." + ID_COLUMN + " WHERE a." + FEDORA_ID_COLUMN + "= :" +
+                    FEDORA_ID_PARAM;
+    private static final String DELETE_RDF_TYPE_ASSOCIATIONS_POSTGRES =
+            "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " s " +
+                    "USING " + SIMPLE_SEARCH_TABLE + " a " +
+                    "WHERE s." + RESOURCE_ID_COLUMN + " = a." + ID_COLUMN + " " +
+                    "AND a." + FEDORA_ID_COLUMN + "= :" + FEDORA_ID_PARAM;
+    private static final String DELETE_RDF_TYPE_ASSOCIATIONS_H2 =
+            "DELETE FROM " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " s " +
+                    "WHERE EXISTS ( " +
+                    "SELECT 1 FROM " + SIMPLE_SEARCH_TABLE + " a " +
+                    "WHERE s." + RESOURCE_ID_COLUMN + " = a." + ID_COLUMN + " " +
+                    "AND a." + FEDORA_ID_COLUMN + "= :" + FEDORA_ID_PARAM +
+                    ")";
+    private static final Map<DbPlatform, String> DELETE_RDF_TYPE_ASSOCIATIONS_MAP = Map.of(
+            DbPlatform.H2, DELETE_RDF_TYPE_ASSOCIATIONS_H2,
+            DbPlatform.MYSQL, DELETE_RDF_TYPE_ASSOCIATIONS_MYSQL_MARIA,
+            DbPlatform.MARIADB, DELETE_RDF_TYPE_ASSOCIATIONS_MYSQL_MARIA,
+            DbPlatform.POSTGRESQL, DELETE_RDF_TYPE_ASSOCIATIONS_POSTGRES
+    );
 
     private static final List<String> COUNT_QUERY_COLUMNS = List.of("count(0) as count");
 
@@ -764,7 +782,7 @@ public class DbSearchIndexImpl implements SearchIndex {
     private void deleteRdfTypeAssociations(final FedoraId fedoraId) {
         final var deleteParams = new MapSqlParameterSource();
         deleteParams.addValue(FEDORA_ID_PARAM, fedoraId.getFullId());
-        jdbcTemplate.update(DELETE_RDF_TYPE_ASSOCIATIONS,
+        jdbcTemplate.update(DELETE_RDF_TYPE_ASSOCIATIONS_MAP.get(dbPlatForm),
                 deleteParams);
     }
 

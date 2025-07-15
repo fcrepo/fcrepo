@@ -69,3 +69,6 @@ CREATE INDEX IF NOT EXISTS simple_search_transactions_idx1
 
 CREATE INDEX IF NOT EXISTS simple_search_transactions_idx2
     ON simple_search_transactions (transaction_id, operation);
+
+CREATE INDEX IF NOT EXISTS simple_search_transactions_idx3
+    ON simple_search_transactions (transaction_id);
