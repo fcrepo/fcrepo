@@ -77,7 +77,7 @@
     <xerces.version>2.12.2</xerces.version>
     <velocity.version>1.7</velocity.version>
     <!-- JCBC dependencies -->
-    <postgresql.version>42.7.6</postgresql.version>
+    <postgresql.version>42.7.7</postgresql.version>
     <mysql.version>8.2.0</mysql.version>
     <mariadb.version>2.7.4</mariadb.version>
     <!-- test gear -->
