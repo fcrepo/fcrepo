@@ -7,6 +7,7 @@ package org.fcrepo.integration.http.api;
 
 import static jakarta.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static jakarta.ws.rs.core.Response.Status.OK;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDnonNegativeInteger;
 import static org.apache.jena.graph.Node.ANY;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 
@@ -16,7 +17,7 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -44,8 +45,6 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import org.apache.jena.datatypes.RDFDatatype;
-import org.apache.jena.datatypes.TypeMapper;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -59,8 +58,6 @@ import org.springframework.test.context.TestExecutionListeners;
         listeners = { TestIsolationExecutionListener.class },
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class FedoraFixityIT extends AbstractResourceIT {
-
-    private static final RDFDatatype IntegerType = TypeMapper.getInstance().getTypeByClass(Integer.class);
 
     private OcflPropsConfig ocflConfig;
     private OcflRepository ocflRepo;
@@ -142,7 +139,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(stmtIt.hasNext());
             assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
-            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
+            assertTrue(graphStore.contains(ANY, ANY, SIZE.asNode(), createLiteralByValue("3", XSDnonNegativeInteger)));
         }
 
 
@@ -160,7 +157,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(stmtIt.hasNext());
             assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("BAD_CHECKSUM")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
-            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
+            assertTrue(graphStore.contains(ANY, ANY, SIZE.asNode(), createLiteralByValue("3", XSDnonNegativeInteger)));
         }
     }
 
@@ -181,7 +178,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             assertTrue(stmtIt.hasNext());
             assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
-            assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
+            assertTrue(graphStore.contains(ANY, ANY, SIZE.asNode(), createLiteralByValue("3", XSDnonNegativeInteger)));
         }
     }
 

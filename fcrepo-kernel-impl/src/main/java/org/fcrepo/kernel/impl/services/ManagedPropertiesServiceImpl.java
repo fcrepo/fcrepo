@@ -5,7 +5,7 @@
  */
 package org.fcrepo.kernel.impl.services;
 
-import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDnonNegativeInteger;
 import static org.apache.jena.datatypes.xsd.impl.XSDDateTimeType.XSDdateTime;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
@@ -16,7 +16,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 
@@ -72,8 +72,8 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
             lastModifiedBy = binary.getLastModifiedBy();
             lastModifiedDate = binary.getLastModifiedDate();
 
-            triples.add(Triple.create(subject, HAS_SIZE.asNode(),
-                    createLiteral(String.valueOf(binary.getContentSize()), XSDlong)));
+            triples.add(Triple.create(subject, SIZE.asNode(),
+                    createLiteral(String.valueOf(binary.getContentSize()), XSDnonNegativeInteger)));
             if (binary.getFilename() != null) {
                 triples.add(Triple.create(subject, HAS_ORIGINAL_NAME.asNode(), createLiteral(binary.getFilename())));
             }

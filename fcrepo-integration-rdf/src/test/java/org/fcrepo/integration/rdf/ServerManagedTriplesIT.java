@@ -13,7 +13,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MEMBER_RELATION;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.LDP_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
@@ -221,7 +221,7 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
 
         // verify properties initially generated
         final Resource resc = model.getResource(location);
-        assertEquals(content.length(), resc.getProperty(HAS_SIZE).getLong());
+        assertEquals(content.length(), resc.getProperty(SIZE).getLong());
         assertEquals("text/plain", resc.getProperty(HAS_MIME_TYPE).getString());
         assertEquals(filename, resc.getProperty(HAS_ORIGINAL_NAME).getString());
 
@@ -231,7 +231,7 @@ public class ServerManagedTriplesIT extends AbstractResourceIT {
 
         // verify property can be added
         verifySetProperty(describedPid, location, DESCRIBED_BY, createResource("http://example.com"));
-        verifySetProperty(describedPid, location, HAS_SIZE, model.createTypedLiteral(99L));
+        verifySetProperty(describedPid, location, SIZE, model.createTypedLiteral(99L));
         verifySetProperty(describedPid, location, HAS_MIME_TYPE, model.createLiteral("text/special"));
         verifySetProperty(describedPid, location, HAS_ORIGINAL_NAME, model.createLiteral("different.txt"));
 

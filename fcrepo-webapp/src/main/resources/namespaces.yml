@@ -1,4 +1,4 @@
-premis: http://www.loc.gov/premis/rdf/v1#
+premis: http://www.loc.gov/premis/rdf/v3/
 test: info:fedora/test/
 memento: http://mementoweb.org/ns#
 rdfs: http://www.w3.org/2000/01/rdf-schema#

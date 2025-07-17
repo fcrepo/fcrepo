@@ -43,7 +43,7 @@ import static org.apache.http.entity.ContentType.parse;
 import static org.apache.http.impl.client.cache.CacheConfig.DEFAULT;
 import static org.apache.jena.datatypes.TypeMapper.getInstance;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
-import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDnonNegativeInteger;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
@@ -84,7 +84,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_MESSAGE_DIGEST;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_MIME_TYPE;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_ORIGINAL_NAME;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
-import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.INBOUND_REFERENCES;
 import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.INSERTED_CONTENT_RELATION;
@@ -3445,7 +3445,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graph.contains(ANY, binaryNode, type.asNode(), RESOURCE.asNode()));
                 assertTrue(graph.contains(ANY, binaryNode, type.asNode(), FEDORA_RESOURCE.asNode()));
                 assertTrue(graph.contains(ANY, binaryNode, type.asNode(), FEDORA_BINARY.asNode()));
-                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(), createLiteralByValue("9", XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, SIZE.asNode(), createLiteralByValue("9", XSDnonNegativeInteger)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_MESSAGE_DIGEST.asNode(), ANY));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_FIXITY_SERVICE.asNode(),
                         createURI(binaryUri + "/" + FCR_FIXITY)));
@@ -3490,8 +3490,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(response)) {
                 final DatasetGraph graph = dataset.asDatasetGraph();
                 assertFalse(dataset.isEmpty());
-                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
-                        createLiteralByValue(originalSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, SIZE.asNode(),
+                        createLiteralByValue(originalSize, XSDnonNegativeInteger)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
                         createLiteral(originalName)));
             }
@@ -3522,8 +3522,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(response)) {
                 final DatasetGraph graph = dataset.asDatasetGraph();
                 assertFalse(dataset.isEmpty());
-                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
-                        createLiteralByValue(updatedSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, SIZE.asNode(),
+                        createLiteralByValue(updatedSize, XSDnonNegativeInteger)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
                         createLiteral(updatedName)));
             }
@@ -3535,8 +3535,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(response)) {
                 final DatasetGraph graph = dataset.asDatasetGraph();
                 assertFalse(dataset.isEmpty());
-                assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
-                        createLiteralByValue(originalSize, XSDlong)));
+                assertTrue(graph.contains(ANY, binaryNode, SIZE.asNode(),
+                        createLiteralByValue(originalSize, XSDnonNegativeInteger)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
                         createLiteral(originalName)));
             }
