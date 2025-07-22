@@ -1,4 +1,6 @@
 premis: http://www.loc.gov/premis/rdf/v1#
+premis3: http://www.loc.gov/premis/rdf/v3/
+hashFunc: http://id.loc.gov/vocabulary/preservation/cryptographicHashFunctions/
 test: info:fedora/test/
 memento: http://mementoweb.org/ns#
 rdfs: http://www.w3.org/2000/01/rdf-schema#
