@@ -207,6 +207,11 @@
               <artifactId>fcrepo-build-tools</artifactId>
               <version>${fcrepo-build-tools.version}</version>
             </dependency>
+            <dependency>
+              <groupId>org.bouncycastle</groupId>
+              <artifactId>bcprov-jdk18on</artifactId>
+              <version>1.81</version>
+            </dependency>
             <!-- Override dependencies to use latest version of checkstyle -->
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
