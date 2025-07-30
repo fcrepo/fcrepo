@@ -137,11 +137,6 @@
         <scope>provided</scope>
       </dependency>
       <dependency>
-        <groupId>jakarta.xml.bind</groupId>
-        <artifactId>jakarta.xml.bind-api</artifactId>
-        <version>${jakarta.xml.version}</version>
-	  </dependency>
-      <dependency>
         <groupId>jakarta.ws.rs</groupId>
         <artifactId>jakarta.ws.rs-api</artifactId>
         <version>${jakarta.ws.version}</version>
@@ -166,8 +161,6 @@
         <artifactId>jaxb-runtime</artifactId>
         <version>${jaxb.version}</version>
       </dependency>
-
-
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-common</artifactId>
@@ -866,7 +859,7 @@
             This line enables code-coverage. However, it also blows the build's permgen.
             Fix me!
           -->
-          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.unit.arg} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
+          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.unit.arg} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.junit5.version}/mockito-core-${mockito.junit5.version}.jar</argLine>
         </configuration>
       </plugin>
 
@@ -959,7 +952,9 @@
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-changelog-plugin</artifactId>
+        <version>${changelog.plugin.version}</version>
       </plugin>
 
       <plugin>
