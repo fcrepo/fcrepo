@@ -34,17 +34,6 @@
 
 	</servlet-mapping>
 
-<!-- TODO: Fix Prometheus endpoint - https://fedora-repository.atlassian.net/browse/FCREPO-4021-->
-<!--
-  <servlet>
-      <servlet-name>prometheus</servlet-name>
-      <servlet-class>org.fcrepo.http.commons.metrics.LocalPrometheusMetricsServlet</servlet-class>
-  </servlet>
-  <servlet-mapping>
-      <servlet-name>prometheus</servlet-name>
-      <url-pattern>/prometheus</url-pattern>
-  </servlet-mapping>
--->
   <filter>
     <filter-name>ETagFilter</filter-name>
     <filter-class>org.springframework.web.filter.ShallowEtagHeaderFilter</filter-class>
