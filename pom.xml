@@ -146,7 +146,12 @@
         <artifactId>jakarta.ws.rs-api</artifactId>
         <version>${jakarta.ws.version}</version>
       </dependency>
-	  <dependency>
+      <dependency>
+        <groupId>jakarta.xml.bind</groupId>
+        <artifactId>jakarta.xml.bind-api</artifactId>
+        <version>${jakarta.xml.version}</version>
+	  </dependency>
+      <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-core</artifactId>
         <version>${jaxb.version}</version>
