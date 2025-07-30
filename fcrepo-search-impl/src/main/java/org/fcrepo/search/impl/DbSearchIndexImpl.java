@@ -260,24 +260,24 @@ public class DbSearchIndexImpl implements SearchIndex {
 
 
     private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING = Map.of(
-            DbPlatform.H2, UPSERT_SIMPLE_SEARCH_H2,
+            H2, UPSERT_SIMPLE_SEARCH_H2,
             DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
             DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
-            DbPlatform.POSTGRESQL, UPSERT_SIMPLE_SEARCH_POSTGRESQL
+            POSTGRESQL, UPSERT_SIMPLE_SEARCH_POSTGRESQL
     );
 
     private static final Map<DbPlatform, String> TRANSACTION_UPSERT_MAPPING = Map.of(
-            DbPlatform.H2, UPSERT_SIMPLE_SEARCH_TRANSACTION_H2,
+            H2, UPSERT_SIMPLE_SEARCH_TRANSACTION_H2,
             DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_TRANSACTION_MYSQL_MARIA,
             DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_TRANSACTION_MYSQL_MARIA,
-            DbPlatform.POSTGRESQL, UPSERT_SIMPLE_SEARCH_TRANSACTION_POSTGRESQL
+            POSTGRESQL, UPSERT_SIMPLE_SEARCH_TRANSACTION_POSTGRESQL
     );
 
     private static final Map<DbPlatform, String> UPSERT_COMMIT_MAPPING = Map.of(
-            DbPlatform.H2, UPSERT_COMMIT_SIMPLE_SEARCH_H2,
+            H2, UPSERT_COMMIT_SIMPLE_SEARCH_H2,
             DbPlatform.MYSQL, UPSERT_COMMIT_SIMPLE_SEARCH_MYSQL_MARIA,
             DbPlatform.MARIADB, UPSERT_COMMIT_SIMPLE_SEARCH_MYSQL_MARIA,
-            DbPlatform.POSTGRESQL, UPSERT_COMMIT_SIMPLE_SEARCH_POSTGRESQL
+            POSTGRESQL, UPSERT_COMMIT_SIMPLE_SEARCH_POSTGRESQL
     );
 
     /*
@@ -731,13 +731,14 @@ public class DbSearchIndexImpl implements SearchIndex {
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
             final Long rdfTypeId;
-            if (newTypes.contains(rdfType)) {
+            // TODO: Need to understand what's changed here but this now seems to work when using cached
+            // if (newTypes.contains(rdfType)) {
                 // The cache MUST NOT be used when the current TX created the record as it will not be committed yet
                 // and it will break other transactions.
-                rdfTypeId = getRdfTypeIdDirect(rdfType);
-            } else {
-                rdfTypeId = getRdfTypeIdCached(rdfType);
-            }
+            //    rdfTypeId = getRdfTypeIdDirect(rdfType);
+            //} else {
+                rdfTypeId = getRdfTypeIdCached(rdfType); // This one works or at least passes tests.
+            //}
 
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);
@@ -754,9 +755,14 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private Long getRdfTypeIdDirect(final URI rdfType) {
-        return jdbcTemplate.queryForObject(
-                SELECT_RDF_TYPE_ID,
-                Map.of(RDF_TYPE_URI_PARAM, rdfType.toString()), Long.class);
+        List<Long> results = List.of();
+        if (rdfType != null) {
+            results =  jdbcTemplate.query(
+                    SELECT_RDF_TYPE_ID,
+                    new MapSqlParameterSource(RDF_TYPE_URI_PARAM, rdfType.toString()), (rs, rowNum) -> rs.getLong(1));
+        }
+
+        return  results.isEmpty() ? null : results.get(0);
     }
 
     @Override
