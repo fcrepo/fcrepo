@@ -755,14 +755,14 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private Long getRdfTypeIdDirect(final URI rdfType) {
-        List<Long> results = List.of();
-        if (rdfType != null) {
-            results =  jdbcTemplate.query(
-                    SELECT_RDF_TYPE_ID,
-                    new MapSqlParameterSource(RDF_TYPE_URI_PARAM, rdfType.toString()), (rs, rowNum) -> rs.getLong(1));
+        if (rdfType == null) {
+            return null;
         }
+        List<Long> results = jdbcTemplate.query(
+                            SELECT_RDF_TYPE_ID,
+                            new MapSqlParameterSource(RDF_TYPE_URI_PARAM, rdfType.toString()), (rs, rowNum) -> rs.getLong(1));
 
-        return  results.isEmpty() ? null : results.get(0);
+        return results.isEmpty() ? null : results.getFirst();
     }
 
     @Override
