@@ -7,7 +7,7 @@ package org.fcrepo.integration.http.api;
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.graph.Node.ANY;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -993,9 +993,9 @@ public class FedoraVersioningIT extends AbstractResourceIT {
 
             final Node mementoSubject = createURI(subjectUri);
 
-            assertTrue(results.contains(ANY, mementoSubject, DC.title.asNode(), createLiteral("Original")),
+            assertTrue(results.contains(ANY, mementoSubject, DC.title.asNode(), createLiteralString("Original")),
                     "Property added to original before versioning must appear");
-            assertFalse(results.contains(ANY, mementoSubject, title.asNode(), createLiteral("Updated")),
+            assertFalse(results.contains(ANY, mementoSubject, title.asNode(), createLiteralString("Updated")),
                     "Property added after memento created must not appear");
             assertFalse(results.contains(ANY, mementoSubject, type.asNode(), MEMENTO_TYPE_NODE),
                     "Memento type should not be visible");
@@ -1014,7 +1014,7 @@ public class FedoraVersioningIT extends AbstractResourceIT {
         patchLiteralProperty(serverAddress + id, title.getURI(), "First Title");
 
         try (final CloseableDataset dataset = getContent(serverAddress + id)) {
-            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteral("First Title")),
+            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteralString("First Title")),
                     "Should find original title");
         }
         logger.debug("Posting version v0.0.1");
@@ -1030,11 +1030,11 @@ public class FedoraVersioningIT extends AbstractResourceIT {
             logger.debug("Got version profile:");
             final DatasetGraph versionResults = dataset.asDatasetGraph();
 
-            assertTrue(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteral("First Title")),
+            assertTrue(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteralString("First Title")),
                     "Should find a title in historic version");
-            assertTrue(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteral("First Title")),
+            assertTrue(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteralString("First Title")),
                     "Should find original title in historic version");
-            assertFalse(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteral("Second Title")),
+            assertFalse(versionResults.contains(ANY, subjectUri, title.asNode(), createLiteralString("Second Title")),
                     "Should not find the updated title in historic version");
 
         }

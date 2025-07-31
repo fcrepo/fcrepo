@@ -10,8 +10,8 @@ import static com.google.common.util.concurrent.Futures.addCallback;
 import static jakarta.ws.rs.core.MediaType.valueOf;
 import static jakarta.json.Json.createReader;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTime;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
+import static org.apache.jena.graph.NodeFactory.createLiteralLang;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.graph.Triple.create;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -126,7 +126,7 @@ public class RdfStreamStreamingOutputTest {
                 final ByteArrayOutputStream output = new ByteArrayOutputStream()) {
             new RdfStreamStreamingOutput(input, namespaces, TURTLE_TYPE).write(output);
             final String s = output.toString(StandardCharsets.UTF_8);
-            assertTrue(s.replaceAll("\\s+", " ").contains("@prefix a: <info:>"));
+            assertTrue(s.replaceAll("\\s+", " ").contains("PREFIX a: <info:>"));
         }
     }
 
@@ -175,7 +175,7 @@ public class RdfStreamStreamingOutputTest {
     public void testWriteWithLanguageLiteral() throws IOException {
         assertOutputContainsTriple(create(createURI("info:testSubject"),
                 createURI("info:testPredicate"),
-                createLiteral("french string", "fr")));
+                createLiteralLang("french string", "fr")));
     }
 
     @Test

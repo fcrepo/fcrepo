@@ -21,7 +21,7 @@ import static jakarta.ws.rs.core.Response.Status.OK;
 import static jakarta.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.http.util.EntityUtils.consume;
 import static org.apache.jena.graph.Node.ANY;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_EXPIRES_HEADER;
@@ -588,13 +588,13 @@ public class TransactionsIT extends AbstractResourceIT {
         /* make sure the change was made within the tx */
         try (final CloseableDataset dataset = getDataset(addTxTo(new HttpGet(newObjectLocation), txLocation))) {
             assertTrue(dataset.asDatasetGraph().contains(ANY, createURI(newObjectLocation), title.asNode(),
-                    createLiteral(newTitle)), "The sparql update did not succeed within a transaction");
+                    createLiteralString(newTitle)), "The sparql update did not succeed within a transaction");
         }
 
         // Verify that the change is not visible outside the TX
         try (final CloseableDataset dataset = getDataset(new HttpGet(newObjectLocation))) {
             assertFalse(dataset.asDatasetGraph().contains(ANY, createURI(newObjectLocation), title.asNode(),
-                    createLiteral(newTitle)), "Sparql update changes must not be visible out of tx");
+                    createLiteralString(newTitle)), "Sparql update changes must not be visible out of tx");
         }
 
         /* commit */
@@ -602,7 +602,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
         /* it must exist after commit */
         try (final CloseableDataset dataset = getDataset(new HttpGet(newObjectLocation))) {
-            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteral(newTitle)),
+            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, title.asNode(), createLiteralString(newTitle)),
                     "The inserted triple does not exist after the transaction has committed");
         }
     }
@@ -1283,7 +1283,7 @@ public class TransactionsIT extends AbstractResourceIT {
         }
         try (final CloseableDataset dataset = getDataset(getObjCommitted)) {
             final boolean exists = dataset.asDatasetGraph().contains(ANY,
-                    createURI(serverAddress + uri), createURI(propertyUri), createLiteral(propertyValue));
+                    createURI(serverAddress + uri), createURI(propertyUri), createLiteralString(propertyValue));
             if (shouldExist) {
                 assertTrue(exists, assertionMessage);
             } else {

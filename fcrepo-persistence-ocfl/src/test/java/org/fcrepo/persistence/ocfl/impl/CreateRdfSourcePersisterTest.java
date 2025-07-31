@@ -5,7 +5,7 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
@@ -217,7 +217,7 @@ public class CreateRdfSourcePersisterTest {
         // create some test user triples
         final Stream<Triple> userTriples = Stream.of(Triple.create(resourceUri,
                 DC.title.asNode(),
-                createLiteral(title)));
+                createLiteralString(title)));
         return new DefaultRdfStream(resourceUri, userTriples);
     }
 

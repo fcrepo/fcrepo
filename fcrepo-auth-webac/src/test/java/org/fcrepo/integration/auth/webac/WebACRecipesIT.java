@@ -2458,7 +2458,7 @@ public class WebACRecipesIT extends AbstractResourceIT {
                             Node.ANY,
                             Node.ANY,
                             NodeFactory.createURI(predicateUri),
-                            NodeFactory.createLiteral(predicateValue)
+                            NodeFactory.createLiteralString(predicateValue)
                     ), "Can't find " + predicateValue + " for predicate " + predicateUri + " in graph"
             );
         }
