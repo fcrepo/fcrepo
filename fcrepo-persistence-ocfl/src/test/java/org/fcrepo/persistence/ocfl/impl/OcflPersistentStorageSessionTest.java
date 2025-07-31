@@ -7,6 +7,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
@@ -233,7 +234,7 @@ public class OcflPersistentStorageSessionTest {
 
         //create some test user triples
         final String title = "my title";
-        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteralString(title));
         final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
         final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
         mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, RESOURCE_ID);
@@ -289,7 +290,7 @@ public class OcflPersistentStorageSessionTest {
 
         //create some test user triples
         final String title = "my title";
-        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteralString(title));
         final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
         final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
         mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL,
@@ -561,7 +562,7 @@ public class OcflPersistentStorageSessionTest {
 
         //mock the operation
         final String title = "my title";
-        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteralString(title));
         final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
         final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
 
@@ -612,7 +613,7 @@ public class OcflPersistentStorageSessionTest {
         when(index.getMapping(any(Transaction.class), eq(childId))).thenReturn(mapping);
 
         final String title = "title";
-        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral(title));
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteralString(title));
         final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
         final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
 
@@ -717,7 +718,7 @@ public class OcflPersistentStorageSessionTest {
         // create resource
         final Node resourceUri = createURI(RESOURCE_ID.getFullId());
 
-        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteral("my title"));
+        final var dcTitleTriple = Triple.create(resourceUri, DC.title.asNode(), createLiteralString("my title"));
         final Stream<Triple> userTriples = Stream.of(dcTitleTriple);
         final DefaultRdfStream userStream = new DefaultRdfStream(resourceUri, userTriples);
         mockResourceOperation(rdfSourceOperation, userStream, USER_PRINCIPAL, RESOURCE_ID);

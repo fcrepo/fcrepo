@@ -8,6 +8,8 @@ package org.fcrepo.kernel.impl.services;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static org.apache.jena.datatypes.xsd.impl.XSDDateTimeType.XSDdateTime;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralDT;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
@@ -73,12 +75,14 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
             lastModifiedDate = binary.getLastModifiedDate();
 
             triples.add(Triple.create(subject, HAS_SIZE.asNode(),
-                    createLiteral(String.valueOf(binary.getContentSize()), XSDlong)));
+                    createLiteralDT(String.valueOf(binary.getContentSize()), XSDlong)));
             if (binary.getFilename() != null) {
-                triples.add(Triple.create(subject, HAS_ORIGINAL_NAME.asNode(), createLiteral(binary.getFilename())));
+                triples.add(Triple.create(subject, HAS_ORIGINAL_NAME.asNode(),
+                        createLiteralString(binary.getFilename())));
             }
             if (binary.getMimeType() != null) {
-                triples.add(Triple.create(subject, HAS_MIME_TYPE.asNode(), createLiteral(binary.getMimeType())));
+                triples.add(Triple.create(subject, HAS_MIME_TYPE.asNode(),
+                        createLiteralString(binary.getMimeType())));
             }
             if (binary.getContentDigests() != null) {
                 for (var digest : binary.getContentDigests()) {
@@ -90,14 +94,14 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
         }
 
         triples.add(Triple.create(subject, CREATED_DATE.asNode(),
-                                  createLiteral(createdDate.toString(), XSDdateTime)));
+                                  createLiteralDT(createdDate.toString(), XSDdateTime)));
         triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
-                                  createLiteral(lastModifiedDate.toString(), XSDdateTime)));
+                                  createLiteralDT(lastModifiedDate.toString(), XSDdateTime)));
         if (createdBy != null) {
-            triples.add(Triple.create(subject, CREATED_BY.asNode(), createLiteral(createdBy)));
+            triples.add(Triple.create(subject, CREATED_BY.asNode(), createLiteralString(createdBy)));
         }
         if (lastModifiedBy != null) {
-            triples.add(Triple.create(subject, LAST_MODIFIED_BY.asNode(), createLiteral(lastModifiedBy)));
+            triples.add(Triple.create(subject, LAST_MODIFIED_BY.asNode(), createLiteralString(lastModifiedBy)));
         }
 
         describedResource.getSystemTypes(true).forEach(triple -> {

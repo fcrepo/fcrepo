@@ -18,6 +18,7 @@ import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 
 import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
@@ -268,7 +269,7 @@ public class FedoraAclIT extends AbstractResourceIT {
             assertTrue(graph.contains(ANY,
                     createURI(authzUri),
                     createURI("http://www.w3.org/2000/01/rdf-schema#label"),
-                    createLiteral("Root Authorization")));
+                    createLiteralString("Root Authorization")));
 
             assertTrue(graph.contains(ANY,
                     createURI(authzUri),
@@ -310,7 +311,7 @@ public class FedoraAclIT extends AbstractResourceIT {
             assertTrue(graph.contains(ANY,
                                       createURI(rootAclUri),
                                       createURI("http://www.w3.org/2000/01/rdf-schema#label"),
-                                      createLiteral("(Test) Root ACL")));
+                                      createLiteralString("(Test) Root ACL")));
 
             assertTrue(graph.contains(ANY,
                                       createURI(rootAclUri),

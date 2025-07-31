@@ -41,17 +41,17 @@ public class WrappingStreamTest {
     protected Node subject = NodeFactory.createURI("http://example.org/subject");
     protected Node predicate = NodeFactory.createURI("http://example.org/predicate");
 
-    protected Node objectA = NodeFactory.createLiteral("a");
-    protected Node objectB = NodeFactory.createLiteral("b");
-    protected Node objectC = NodeFactory.createLiteral("c");
+    protected Node objectA = NodeFactory.createLiteralString("a");
+    protected Node objectB = NodeFactory.createLiteralString("b");
+    protected Node objectC = NodeFactory.createLiteralString("c");
 
-    protected Node objectFloat1 = NodeFactory.createLiteral("1.0");
-    protected Node objectFloat2 = NodeFactory.createLiteral("2.0");
-    protected Node objectFloat3 = NodeFactory.createLiteral("3.0");
+    protected Node objectFloat1 = NodeFactory.createLiteralString("1.0");
+    protected Node objectFloat2 = NodeFactory.createLiteralString("2.0");
+    protected Node objectFloat3 = NodeFactory.createLiteralString("3.0");
 
-    protected Node objectInt1 = NodeFactory.createLiteral("1");
-    protected Node objectInt2 = NodeFactory.createLiteral("2");
-    protected Node objectInt3 = NodeFactory.createLiteral("3");
+    protected Node objectInt1 = NodeFactory.createLiteralString("1");
+    protected Node objectInt2 = NodeFactory.createLiteralString("2");
+    protected Node objectInt3 = NodeFactory.createLiteralString("3");
 
     @BeforeEach
     public void setUp() {
@@ -128,7 +128,7 @@ public class WrappingStreamTest {
         stream = generateTextStream();
         // Do any things match "d"?
         final var anyMatchFalse = stream
-                .anyMatch(s -> s.getObject().equals(NodeFactory.createLiteral("d")));
+                .anyMatch(s -> s.getObject().equals(NodeFactory.createLiteralString("d")));
         assertFalse(anyMatchFalse);
     }
 
@@ -194,18 +194,18 @@ public class WrappingStreamTest {
                 .flatMap(s ->
                         Stream.of(
                                 s.getObject(),
-                                NodeFactory.createLiteral(
+                                NodeFactory.createLiteralString(
                                         s.getObject().getLiteralValue().toString().toUpperCase()
                                 )
                         ))
                 .toList();
         assertEquals(6, flatMapped.size());
         assertTrue(flatMapped.contains(objectA));
-        assertTrue(flatMapped.contains(NodeFactory.createLiteral("A")));
+        assertTrue(flatMapped.contains(NodeFactory.createLiteralString("A")));
         assertTrue(flatMapped.contains(objectB));
-        assertTrue(flatMapped.contains(NodeFactory.createLiteral("B")));
+        assertTrue(flatMapped.contains(NodeFactory.createLiteralString("B")));
         assertTrue(flatMapped.contains(objectC));
-        assertTrue(flatMapped.contains(NodeFactory.createLiteral("C")));
+        assertTrue(flatMapped.contains(NodeFactory.createLiteralString("C")));
     }
 
     @Test
@@ -354,7 +354,7 @@ public class WrappingStreamTest {
 
     @Test
     public void testNoneMatch() {
-        assertTrue(stream.noneMatch(s -> s.getObject().equals(NodeFactory.createLiteral("d"))));
+        assertTrue(stream.noneMatch(s -> s.getObject().equals(NodeFactory.createLiteralString("d"))));
         stream = generateTextStream();
         assertFalse(stream.noneMatch(s -> s.getObject().equals(objectA)));
     }
@@ -379,9 +379,9 @@ public class WrappingStreamTest {
 
     @Test
     public void testReduceIdentity() {
-        final var reduced = stream.reduce(Triple.create(subject, predicate, NodeFactory.createLiteral("")),
+        final var reduced = stream.reduce(Triple.create(subject, predicate, NodeFactory.createLiteralStringString("")),
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
-                        NodeFactory.createLiteral(
+                        NodeFactory.createLiteralStringString(
                                 s1.getObject().getLiteralValue().toString() +
                                         s2.getObject().getLiteralValue().toString()
                         )));
@@ -392,7 +392,7 @@ public class WrappingStreamTest {
     public void testReduce() {
         final var reduced = stream.reduce(
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
-                        NodeFactory.createLiteral(
+                        NodeFactory.createLiteralStringString(
                                 s1.getObject().getLiteralValue().toString() +
                                         s2.getObject().getLiteralValue().toString()
                         )));
@@ -402,17 +402,17 @@ public class WrappingStreamTest {
 
     @Test
     public void testReduceWithCombiner() {
-        final var identity = Triple.create(subject, predicate, NodeFactory.createLiteral(""));
+        final var identity = Triple.create(subject, predicate, NodeFactory.createLiteralStringString(""));
 
         final var reduced = stream.reduce(
                 identity,
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
-                        NodeFactory.createLiteral(
+                        NodeFactory.createLiteralStringString(
                                 s1.getObject().getLiteralValue().toString() +
                                         s2.getObject().getLiteralValue().toString()
                         )),
                 (t1, t2) -> Triple.create(t1.getSubject(), t1.getPredicate(),
-                        NodeFactory.createLiteral(
+                        NodeFactory.createLiteralStringString(
                                 t1.getObject().getLiteralValue().toString() +
                                         t2.getObject().getLiteralValue().toString()
                         ))

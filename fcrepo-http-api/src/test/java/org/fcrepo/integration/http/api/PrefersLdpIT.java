@@ -13,6 +13,7 @@ import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
@@ -141,7 +142,7 @@ public class PrefersLdpIT extends AbstractResourceIT {
         postMain.setEntity(new StringEntity(body, StandardCharsets.UTF_8));
         mainResource = createAndGetLocation(postMain);
         final Node mainNode = createURI(mainResource);
-        userRdfTriple = generateQuad(mainNode, DC_11.title.getURI(), createLiteral("The object's title"));
+        userRdfTriple = generateQuad(mainNode, DC_11.title.getURI(), createLiteralString("The object's title"));
         systemManagedPropertyTriple = generateQuad(mainNode, CREATED_DATE.getURI(), ANY);
         // Make a DirectContainer pointing at the main resource.
         final var postDC = postObjMethod();
@@ -165,7 +166,7 @@ public class PrefersLdpIT extends AbstractResourceIT {
         postChild.setEntity(new StringEntity(childBody, StandardCharsets.UTF_8));
         final String containedResource = createAndGetLocation(postChild);
         containmentTriple = generateQuad(mainNode, CONTAINS.getURI(), containedResource);
-        embededTriple = generateQuad(containedResource, DC_11.title.getURI(), createLiteral("The child's title"));
+        embededTriple = generateQuad(containedResource, DC_11.title.getURI(), createLiteralString("The child's title"));
         // Make an inbound reference.
         final var otherRef = postObjMethod();
         final String refBody = "<> <http://example.org/related> <" + mainResource + "> .";
@@ -626,7 +627,7 @@ public class PrefersLdpIT extends AbstractResourceIT {
 
             final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
             assertTrue(graphStore.contains(ANY, createURI(serverAddress + id + "/" + binaryId),
-                    title.asNode(), createLiteral("this is a title")),
+                    title.asNode(), createLiteralString("this is a title")),
                     "Property on child binary should be found!" + graphStore);
         }
     }
@@ -658,11 +659,11 @@ public class PrefersLdpIT extends AbstractResourceIT {
 
             final DatasetGraph graphStore = getDataset(response).asDatasetGraph();
             assertTrue(graphStore.contains(ANY, createURI(serverAddress + level1),
-                    title.asNode(), createLiteral("First level")),
+                    title.asNode(), createLiteralString("First level")),
                     "Property on child binary should be found!" + graphStore);
             assertFalse(graphStore.contains(ANY,
                                         createURI(serverAddress + level2),
-                                        title.asNode(), createLiteral("Second level")
+                                        title.asNode(), createLiteralString("Second level")
                                 ),
                     "Property from embedded resource's own child should not be found."
                         );

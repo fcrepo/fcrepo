@@ -7,6 +7,7 @@ package org.fcrepo.kernel.impl.services;
 
 import static java.util.stream.Stream.of;
 import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -97,17 +98,17 @@ public class ResourceTripleServiceImplTest {
         // Create test triples for each source
         userTriple1 = Triple.create(resourceSubject,
                 createURI("http://purl.org/dc/elements/1.1/title"),
-                createLiteral("Test Resource"));
+                createLiteralString("Test Resource"));
         userTriple2 = Triple.create(resourceSubject,
                 createURI("http://purl.org/dc/elements/1.1/description"),
-                createLiteral("A test resource for unit testing"));
+                createLiteralString("A test resource for unit testing"));
 
         serverTriple1 = Triple.create(resourceSubject,
                 createURI("http://fedora.info/definitions/v4/repository#created"),
-                createLiteral("2023-01-01T00:00:00Z"));
+                createLiteralString("2023-01-01T00:00:00Z"));
         serverTriple2 = Triple.create(resourceSubject,
                 createURI("http://fedora.info/definitions/v4/repository#lastModified"),
-                createLiteral("2023-01-02T12:34:56Z"));
+                createLiteralString("2023-01-02T12:34:56Z"));
 
         final Node childNode = createURI("info:fedora/test-resource/child");
         containmentTriple1 = Triple.create(resourceSubject,
