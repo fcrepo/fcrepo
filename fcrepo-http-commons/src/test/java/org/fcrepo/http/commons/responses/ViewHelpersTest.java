@@ -232,7 +232,7 @@ public class ViewHelpersTest {
         mem.add(Triple.create(createURI("subject"),
                 createURI("a-numeric-type"), createTypedLiteral(0).asNode()));
         mem.add(Triple.create(createURI("subject"),
-                createURI("an-empty-string"), createLiteralString("abc"")));
+                createURI("an-empty-string"), createLiteralString("abc")));
         mem.add(Triple.create( createURI("subject"), createURI("a-uri"),
                 createURI("some-uri")));
 

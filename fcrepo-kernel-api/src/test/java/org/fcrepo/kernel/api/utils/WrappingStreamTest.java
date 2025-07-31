@@ -379,9 +379,9 @@ public class WrappingStreamTest {
 
     @Test
     public void testReduceIdentity() {
-        final var reduced = stream.reduce(Triple.create(subject, predicate, NodeFactory.createLiteralStringString("")),
+        final var reduced = stream.reduce(Triple.create(subject, predicate, NodeFactory.createLiteralString("")),
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
-                        NodeFactory.createLiteralStringString(
+                        NodeFactory.createLiteralString(
                                 s1.getObject().getLiteralValue().toString() +
                                         s2.getObject().getLiteralValue().toString()
                         )));
@@ -392,7 +392,7 @@ public class WrappingStreamTest {
     public void testReduce() {
         final var reduced = stream.reduce(
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
-                        NodeFactory.createLiteralStringString(
+                        NodeFactory.createLiteralString(
                                 s1.getObject().getLiteralValue().toString() +
                                         s2.getObject().getLiteralValue().toString()
                         )));
@@ -402,17 +402,17 @@ public class WrappingStreamTest {
 
     @Test
     public void testReduceWithCombiner() {
-        final var identity = Triple.create(subject, predicate, NodeFactory.createLiteralStringString(""));
+        final var identity = Triple.create(subject, predicate, NodeFactory.createLiteralString(""));
 
         final var reduced = stream.reduce(
                 identity,
                 (s1, s2) -> Triple.create(s1.getSubject(), s1.getPredicate(),
-                        NodeFactory.createLiteralStringString(
+                        NodeFactory.createLiteralString(
                                 s1.getObject().getLiteralValue().toString() +
                                         s2.getObject().getLiteralValue().toString()
                         )),
                 (t1, t2) -> Triple.create(t1.getSubject(), t1.getPredicate(),
-                        NodeFactory.createLiteralStringString(
+                        NodeFactory.createLiteralString(
                                 t1.getObject().getLiteralValue().toString() +
                                         t2.getObject().getLiteralValue().toString()
                         ))

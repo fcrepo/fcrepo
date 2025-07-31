@@ -2228,7 +2228,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
                 final DatasetGraph graphStore = dataset.asDatasetGraph();
                 final Node subj = createURI(location);
-                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteralString("english title", "en")));
+                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteralLang("english title", "en")));
                 assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteralLang("french title", "fr")));
             }
         }
