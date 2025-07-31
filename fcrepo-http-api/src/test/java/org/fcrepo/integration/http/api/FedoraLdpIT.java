@@ -46,7 +46,6 @@ import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralLang;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;

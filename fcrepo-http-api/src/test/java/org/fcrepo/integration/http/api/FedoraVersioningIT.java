@@ -7,7 +7,6 @@ package org.fcrepo.integration.http.api;
 
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.jena.graph.Node.ANY;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;

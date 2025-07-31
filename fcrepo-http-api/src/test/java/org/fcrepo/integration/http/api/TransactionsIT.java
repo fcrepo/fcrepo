@@ -21,7 +21,6 @@ import static jakarta.ws.rs.core.Response.Status.OK;
 import static jakarta.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static org.apache.http.util.EntityUtils.consume;
 import static org.apache.jena.graph.Node.ANY;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.DC_11.title;

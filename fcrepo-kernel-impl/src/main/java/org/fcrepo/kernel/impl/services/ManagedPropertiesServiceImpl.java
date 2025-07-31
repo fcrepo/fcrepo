@@ -7,7 +7,6 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static org.apache.jena.datatypes.xsd.impl.XSDDateTimeType.XSDdateTime;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralDT;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;

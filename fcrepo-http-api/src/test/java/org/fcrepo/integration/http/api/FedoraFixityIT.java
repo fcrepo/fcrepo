@@ -11,7 +11,6 @@ import static org.apache.jena.graph.Node.ANY;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;

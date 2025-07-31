@@ -6,7 +6,6 @@
 package org.fcrepo.kernel.impl.services;
 
 import static java.util.stream.Stream.of;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.junit.jupiter.api.Assertions.assertEquals;

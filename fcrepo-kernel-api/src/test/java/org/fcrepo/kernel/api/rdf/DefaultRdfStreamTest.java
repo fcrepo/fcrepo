@@ -9,7 +9,6 @@ import static java.util.Arrays.asList;
 import static java.util.stream.Stream.of;
 
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;

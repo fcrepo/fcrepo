@@ -9,7 +9,6 @@ import static com.google.common.collect.ImmutableMap.of;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTimeStamp;
 import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
@@ -240,7 +239,7 @@ public class ViewHelpersTest {
                 createURI("subject"), createResource("a/b/c"), true));
         assertEquals("0", testObj.getObjectsAsString(mem, createURI("subject"),
                 createResource("a-numeric-type"), true));
-        assertEquals("<empty>", testObj.getObjectsAsString(mem,
+        assertEquals("abc", testObj.getObjectsAsString(mem,
                 createURI("subject"), createResource("an-empty-string"), true));
         assertEquals("&lt;<a href=\"some-uri\">some-uri</a>&gt;", testObj
                 .getObjectsAsString(mem, createURI("subject"),

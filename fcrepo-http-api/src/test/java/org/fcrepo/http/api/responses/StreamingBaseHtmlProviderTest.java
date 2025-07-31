@@ -5,7 +5,6 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;

@@ -6,7 +6,6 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
