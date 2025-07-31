@@ -34,12 +34,12 @@
     <commons-lang.version>3.18.0</commons-lang.version>
     <commons-text.version>1.13.1</commons-text.version>
     <failsafe.version>3.3.2</failsafe.version>
-    <flyway.version>11.8.2</flyway.version>
+    <flyway.version>11.10.4</flyway.version>
     <flyway.test.version>10.0.0</flyway.test.version>
     <guava.version>33.4.8-jre</guava.version>
     <h2database.version>2.2.220</h2database.version>
     <hamcrest.version>3.0</hamcrest.version>
-    <hikari.version>5.0.0</hikari.version>
+    <hikari.version>6.3.2</hikari.version>
     <hk2.version>3.1.1</hk2.version>
     <!-- Last version that supports our version of jquery -->
     <htmlunit.version>4.4.0</htmlunit.version>
@@ -76,10 +76,10 @@
     <titanium.version>1.6.0</titanium.version>
     <xerces.version>2.12.2</xerces.version>
     <velocity.version>1.7</velocity.version>
-    <!-- JCBC dependencies -->
+    <!-- JDBC dependencies -->
     <postgresql.version>42.7.7</postgresql.version>
+    <mariadb.version>3.5.3</mariadb.version>
     <mysql.version>8.2.0</mysql.version>
-    <mariadb.version>2.7.4</mariadb.version>
     <!-- test gear -->
     <awaitility.version>4.3.0</awaitility.version>
     <grizzly.version>4.1.0-M1</grizzly.version>

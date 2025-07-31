@@ -161,11 +161,14 @@ public class TransactionManagerImpl implements TransactionManager {
             final var txEntry = txIt.next();
             final var tx = txEntry.getValue();
 
-            if ((tx.isOpen() || tx.hasExpired()) && !tx.isRolledBack()) {
+            if ((tx.isOpen() || tx.hasExpired()) && !tx.isRolledBack() ) {
                 LOGGER.debug("Rolling back transaction as part of shutdown {}", tx.getId());
                 try {
                     tx.rollback();
                     pSessionManager.removeSession(tx.getId());
+                } catch (TransactionClosedException ignore) {
+                    // ignore. Already committed
+                    LOGGER.info("Failed to rollback transaction {} as already committed", tx.getId(), ignore);
                 } catch (final RuntimeException e) {
                     LOGGER.error("Failed to rollback transaction {}", tx.getId(), e);
                 }
