@@ -125,7 +125,7 @@ public class FixityServiceImpl extends AbstractService implements FixityService 
                 model.add(subject, FIXITY, fixity3Result);
                 model.add(fixity3Result, type, PREMIS3_FIXITY);
                 model.add(fixity3Result, type, HASHFUNC_SHA512);
-                model.add(fixity3Result, value, model.createLiteral(computedSha512Digest));
+                model.add(fixity3Result, value, model.createTypedLiteral(computedSha512Digest));
             }
 
             digestWrapper.getDigests().forEach(d ->
