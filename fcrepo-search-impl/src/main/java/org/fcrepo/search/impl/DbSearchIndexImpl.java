@@ -216,14 +216,27 @@ public class DbSearchIndexImpl implements SearchIndex {
                     " WHERE " + TRANSACTION_ID_COLUMN + "= :" + TRANSACTION_ID_PARAM + " AND " + RDF_TYPE_URI_COLUMN +
                     " NOT IN (SELECT " + RDF_TYPE_URI_PARAM + " FROM " + SEARCH_RDF_TYPE_TABLE + ")";
 
-    private static final String INSERT_RDF_TYPE =
+    private static final String INSERT_RDF_TYPE_H2 =
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
                     " VALUES (:" + RDF_TYPE_URI_PARAM + ")";
 
+    // postgres spoils the entire tx on duplicate keys
     private static final String INSERT_RDF_TYPE_POSTGRES =
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
                     " VALUES (:" + RDF_TYPE_URI_PARAM + ")" +
                     " ON CONFLICT (" + RDF_TYPE_URI_COLUMN + ") DO NOTHING";
+
+    // MySQL and MariaDB use INSERT IGNORE to avoid duplicate key errors
+    private static final String INSERT_RDF_TYPE_MYSQL_MARIA =
+            "INSERT IGNORE INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
+                    " VALUES (:" + RDF_TYPE_URI_PARAM + ")";
+
+    private static final Map<DbPlatform, String> INSERT_RDF_TYPE_MAPPING = Map.of(
+            H2, INSERT_RDF_TYPE_H2,
+            DbPlatform.MYSQL, INSERT_RDF_TYPE_MYSQL_MARIA,
+            DbPlatform.MARIADB, INSERT_RDF_TYPE_MYSQL_MARIA,
+            POSTGRESQL, INSERT_RDF_TYPE_POSTGRES
+    );
 
     private static final String COMMIT_RDF_TYPE_ASSOCIATIONS =
             "INSERT INTO " + SEARCH_RESOURCE_RDF_TYPE_TABLE +
@@ -590,13 +603,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 .toArray(MapSqlParameterSource[]::new);
 
         try {
-            if (isPostgres()) {
-                // weirdly, postgres spoils the entire tx on duplicate keys and must be handled differently
-                jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_POSTGRES, params);
-            } else {
-                jdbcTemplate.batchUpdate(INSERT_RDF_TYPE, params);
-            }
-
+            jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_MAPPING.get(dbPlatForm), params);
             addTypes.addAll(types);
 
         } catch (final DuplicateKeyException e) {
@@ -731,14 +738,13 @@ public class DbSearchIndexImpl implements SearchIndex {
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
             final Long rdfTypeId;
-            // TODO: Need to understand what's changed here but this now seems to work when using cached
-            // if (newTypes.contains(rdfType)) {
+            if (newTypes.contains(rdfType)) {
                 // The cache MUST NOT be used when the current TX created the record as it will not be committed yet
                 // and it will break other transactions.
-            //    rdfTypeId = getRdfTypeIdDirect(rdfType);
-            //} else {
-                rdfTypeId = getRdfTypeIdCached(rdfType); // This one works or at least passes tests.
-            //}
+                rdfTypeId = getRdfTypeIdDirect(rdfType);
+            } else {
+                rdfTypeId = getRdfTypeIdCached(rdfType);
+            }
 
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);
@@ -755,14 +761,9 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private Long getRdfTypeIdDirect(final URI rdfType) {
-        if (rdfType == null) {
-            return null;
-        }
-        List<Long> results = jdbcTemplate.query(
-                            SELECT_RDF_TYPE_ID,
-                            new MapSqlParameterSource(RDF_TYPE_URI_PARAM, rdfType.toString()), (rs, rowNum) -> rs.getLong(1));
-
-        return results.isEmpty() ? null : results.getFirst();
+        return jdbcTemplate.queryForObject(
+                SELECT_RDF_TYPE_ID,
+                Map.of(RDF_TYPE_URI_PARAM, rdfType.toString()), Long.class);
     }
 
     @Override
