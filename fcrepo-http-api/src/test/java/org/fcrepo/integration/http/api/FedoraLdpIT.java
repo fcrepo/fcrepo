@@ -33,7 +33,6 @@ import static jakarta.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.PRECONDITION_FAILED;
 import static jakarta.ws.rs.core.Response.Status.REQUESTED_RANGE_NOT_SATISFIABLE;
 import static jakarta.ws.rs.core.Response.Status.UNSUPPORTED_MEDIA_TYPE;
-import static nu.validator.htmlparser.common.DoctypeExpectation.NO_DOCTYPE_ERRORS;
 import static nu.validator.htmlparser.common.XmlViolationPolicy.ALLOW;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.apache.http.HttpStatus.SC_CREATED;
@@ -3663,7 +3662,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String content = EntityUtils.toString(response.getEntity());
             logger.trace("Retrieved HTML view:\n" + content);
             final HtmlParser htmlParser = new HtmlParser(ALLOW);
-            htmlParser.setDoctypeExpectation(NO_DOCTYPE_ERRORS);
             htmlParser.setErrorHandler(new HTMLErrorHandler());
             htmlParser.setContentHandler(new TreeBuilder());
             try (final InputStream htmlStream = new ByteArrayInputStream(content.getBytes(UTF_8))) {
