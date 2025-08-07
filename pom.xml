@@ -60,7 +60,7 @@
     <jackson2.databind.version>2.19.0</jackson2.databind.version>
     <jena.version>4.10.0</jena.version>
     <jersey.version>3.1.10</jersey.version>
-    <jetty.version>11.0.25</jetty.version>
+    <jetty.version>12.0.23</jetty.version>
     <jsonld.version>0.13.6</jsonld.version>
     <logback.version>1.5.18</logback.version>
     <micrometer.version>1.15.0</micrometer.version>
@@ -778,8 +778,8 @@
         </plugin>
 
         <plugin>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-maven-plugin</artifactId>
+          <groupId>org.eclipse.jetty.ee10</groupId>
+          <artifactId>jetty-ee10-maven-plugin</artifactId>
           <version>${jetty.version}</version>
           <configuration>
             <webApp>
@@ -1105,13 +1105,6 @@
               <skip>true</skip>
             </configuration>
           </plugin>
-          <!--<plugin>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-maven-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>-->
         </plugins>
       </build>
     </profile>

@@ -46,6 +46,14 @@ public final class RdfLexicon {
 
     public static final String PREMIS_NAMESPACE = "http://www.loc.gov/premis/rdf/v1#";
 
+    public static final String PREMIS3_NAMESPACE = "http://www.loc.gov/premis/rdf/v3/";
+
+    public static final String HASHFUNC_NAMESPACE = "http://id.loc.gov/vocabulary/preservation/cryptographicHashFunctions/";
+
+    public static final String EVENT_TYPE_NAMESPACE = "http://id.loc.gov/vocabulary/preservation/eventType/";
+
+    public static final String EVENT_OUTCOME_NAMESPACE = "http://id.loc.gov/vocabulary/preservation/eventOutcome/";
+
     public static final String MEMENTO_NAMESPACE = "http://mementoweb.org/ns#";
 
     public static final String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
@@ -87,6 +95,31 @@ public final class RdfLexicon {
         createProperty(PREMIS_NAMESPACE + "hasSize");
     public static final Property HAS_FIXITY_RESULT =
         createProperty(PREMIS_NAMESPACE + "hasFixity");
+
+    public static final Resource EVENT =
+            createResource(PREMIS3_NAMESPACE + "Event");
+    public static final Resource PREMIS3_FILE =
+            createResource(PREMIS3_NAMESPACE + "File");
+    public static final Resource PREMIS3_FIXITY =
+            createResource(PREMIS3_NAMESPACE + "Fixity");
+    public static final Resource HASHFUNC_SHA512 =
+            createResource(HASHFUNC_NAMESPACE + "sha512");
+    public static final Resource EVENT_TYPE_FIXITY_CHECK =
+            createResource(EVENT_TYPE_NAMESPACE + "fix");
+    public static final Resource EVENT_OUTCOME_SUCCESS =
+            createResource(EVENT_OUTCOME_NAMESPACE + "suc");
+    public static final Resource EVENT_OUTCOME_FAIL =
+            createResource(EVENT_OUTCOME_NAMESPACE + "fai");
+    public static final Property SIZE =
+            createProperty(PREMIS3_NAMESPACE + "size");
+    public static final Property FIXITY =
+            createProperty(PREMIS3_NAMESPACE + "fixity");
+    public static final Property OUTCOME =
+            createProperty(PREMIS3_NAMESPACE + "outcome");
+    public static final Property GENERATED =
+            createProperty(PROV_NAMESPACE + "generated");
+    public static final Property WAS_GENERATED_BY =
+            createProperty(PROV_NAMESPACE + "wasGeneratedBy");
 
     private static final Set<Property> fixityProperties = of(
             HAS_FIXITY_RESULT, HAS_MESSAGE_DIGEST);
