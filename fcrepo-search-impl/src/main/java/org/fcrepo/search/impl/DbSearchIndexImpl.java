@@ -235,14 +235,27 @@ public class DbSearchIndexImpl implements SearchIndex {
             DbPlatform.POSTGRESQL, COMMIT_RDF_TYPES_POSTGRES
     );
 
-    private static final String INSERT_RDF_TYPE =
+    private static final String INSERT_RDF_TYPE_H2 =
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
                     " VALUES (:" + RDF_TYPE_URI_PARAM + ")";
 
+    // postgres spoils the entire tx on duplicate keys
     private static final String INSERT_RDF_TYPE_POSTGRES =
             "INSERT INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
                     " VALUES (:" + RDF_TYPE_URI_PARAM + ")" +
                     " ON CONFLICT (" + RDF_TYPE_URI_COLUMN + ") DO NOTHING";
+
+    // MySQL and MariaDB use INSERT IGNORE to avoid duplicate key errors
+    private static final String INSERT_RDF_TYPE_MYSQL_MARIA =
+            "INSERT IGNORE INTO " + SEARCH_RDF_TYPE_TABLE + " (" + RDF_TYPE_URI_COLUMN + ")" +
+                    " VALUES (:" + RDF_TYPE_URI_PARAM + ")";
+
+    private static final Map<DbPlatform, String> INSERT_RDF_TYPE_MAPPING = Map.of(
+            H2, INSERT_RDF_TYPE_H2,
+            DbPlatform.MYSQL, INSERT_RDF_TYPE_MYSQL_MARIA,
+            DbPlatform.MARIADB, INSERT_RDF_TYPE_MYSQL_MARIA,
+            POSTGRESQL, INSERT_RDF_TYPE_POSTGRES
+    );
 
     private static final String COMMIT_RDF_TYPE_ASSOCIATIONS =
             "INSERT INTO " + SEARCH_RESOURCE_RDF_TYPE_TABLE +
@@ -317,24 +330,24 @@ public class DbSearchIndexImpl implements SearchIndex {
 
 
     private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING = Map.of(
-            DbPlatform.H2, UPSERT_SIMPLE_SEARCH_H2,
+            H2, UPSERT_SIMPLE_SEARCH_H2,
             DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
             DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
-            DbPlatform.POSTGRESQL, UPSERT_SIMPLE_SEARCH_POSTGRESQL
+            POSTGRESQL, UPSERT_SIMPLE_SEARCH_POSTGRESQL
     );
 
     private static final Map<DbPlatform, String> TRANSACTION_UPSERT_MAPPING = Map.of(
-            DbPlatform.H2, UPSERT_SIMPLE_SEARCH_TRANSACTION_H2,
+            H2, UPSERT_SIMPLE_SEARCH_TRANSACTION_H2,
             DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_TRANSACTION_MYSQL_MARIA,
             DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_TRANSACTION_MYSQL_MARIA,
-            DbPlatform.POSTGRESQL, UPSERT_SIMPLE_SEARCH_TRANSACTION_POSTGRESQL
+            POSTGRESQL, UPSERT_SIMPLE_SEARCH_TRANSACTION_POSTGRESQL
     );
 
     private static final Map<DbPlatform, String> UPSERT_COMMIT_MAPPING = Map.of(
-            DbPlatform.H2, UPSERT_COMMIT_SIMPLE_SEARCH_H2,
+            H2, UPSERT_COMMIT_SIMPLE_SEARCH_H2,
             DbPlatform.MYSQL, UPSERT_COMMIT_SIMPLE_SEARCH_MYSQL_MARIA,
             DbPlatform.MARIADB, UPSERT_COMMIT_SIMPLE_SEARCH_MYSQL_MARIA,
-            DbPlatform.POSTGRESQL, UPSERT_COMMIT_SIMPLE_SEARCH_POSTGRESQL
+            POSTGRESQL, UPSERT_COMMIT_SIMPLE_SEARCH_POSTGRESQL
     );
 
     /*
@@ -657,13 +670,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 .toArray(MapSqlParameterSource[]::new);
 
         try {
-            if (isPostgres()) {
-                // weirdly, postgres spoils the entire tx on duplicate keys and must be handled differently
-                jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_POSTGRES, params);
-            } else {
-                jdbcTemplate.batchUpdate(INSERT_RDF_TYPE, params);
-            }
-
+            jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_MAPPING.get(dbPlatForm), params);
             addTypes.addAll(types);
 
         } catch (final DuplicateKeyException e) {
