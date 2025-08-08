@@ -31,7 +31,6 @@
     <build-helper.plugin.version>3.2.0</build-helper.plugin.version>
     <bundle.plugin.version>5.1.2</bundle.plugin.version>
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
-    <changelog.plugin.version>3.0.0-M1</changelog.plugin.version>
     <clean.plugin.version>3.4.1</clean.plugin.version>
     <compiler.plugin.version>3.14.0</compiler.plugin.version>
     <dependency.plugin.version>3.8.1</dependency.plugin.version>
