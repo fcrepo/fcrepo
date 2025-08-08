@@ -11,7 +11,7 @@ import static org.apache.jena.graph.Node.ANY;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_RESULT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_FIXITY_STATE;
@@ -140,7 +140,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             logger.debug("Got binary content fixity triples {}", graphStore);
             final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
             assertTrue(stmtIt.hasNext());
-            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteralString("SUCCESS")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
             assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
         }
@@ -158,7 +158,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             logger.debug("Got binary content fixity triples {}", graphStore);
             final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
             assertTrue(stmtIt.hasNext());
-            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("BAD_CHECKSUM")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteralString("BAD_CHECKSUM")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
             assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
         }
@@ -179,7 +179,7 @@ public class FedoraFixityIT extends AbstractResourceIT {
             logger.debug("Got binary content versioned fixity triples {}", graphStore);
             final Iterator<Quad> stmtIt = graphStore.find(ANY, ANY, HAS_FIXITY_RESULT.asNode(), ANY);
             assertTrue(stmtIt.hasNext());
-            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteral("SUCCESS")));
+            assertTrue(graphStore.contains(ANY, ANY, HAS_FIXITY_STATE.asNode(), createLiteralString("SUCCESS")));
             assertTrue(graphStore.contains(ANY, ANY, HAS_MESSAGE_DIGEST.asNode(), ANY));
             assertTrue(graphStore.contains(ANY, ANY, HAS_SIZE.asNode(), createLiteralByValue("3", IntegerType)));
         }

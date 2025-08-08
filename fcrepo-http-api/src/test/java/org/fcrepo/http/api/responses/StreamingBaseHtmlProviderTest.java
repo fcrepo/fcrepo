@@ -5,7 +5,7 @@
  */
 package org.fcrepo.http.api.responses;
 
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
@@ -114,7 +114,7 @@ public class StreamingBaseHtmlProviderTest {
         final var internal_id1 = FEDORA_ID_PREFIX + "/subject";
         final var internal_id2 = FEDORA_ID_PREFIX + "/subject2";
         final Stream<Triple> triples = of(Triple.create(createURI(external_id1), createURI("test:predicate"),
-                createLiteral("test:object")), Triple.create(createURI(external_id1), type.asNode(),
+                createLiteralString("test:object")), Triple.create(createURI(external_id1), type.asNode(),
                 FEDORA_BINARY.asNode()));
         final Stream<Triple> triples2 = of(Triple.create(createURI(external_id2), type.asNode(),
                 FEDORA_CONTAINER.asNode()));

@@ -23,7 +23,7 @@ import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
@@ -152,7 +152,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
-                    .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(CREATED_BY.asNode(), createLiteralString(providedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(providedDate));
         }
     }
@@ -177,9 +177,9 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(describedByURI))) {
             triples(subjectURI, dataset)
-                    .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(CREATED_BY.asNode(), createLiteralString(providedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(providedDate))
-                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteralString(providedUsername))
                     .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(providedDate));
         }
     }
@@ -209,7 +209,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
-                    .mustHave(CREATED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(CREATED_BY.asNode(), createLiteralString(providedUsername))
                     .mustHave(CREATED_DATE.asNode(), createDateTime(updatedDate));
         }
     }
@@ -238,7 +238,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
-                    .mustNotHave(CREATED_BY.asNode(), createLiteral(providedUsername))
+                    .mustNotHave(CREATED_BY.asNode(), createLiteralString(providedUsername))
                     .mustNotHave(CREATED_DATE.asNode(), createDateTime(updatedDate));
         }
     }
@@ -263,7 +263,7 @@ public class FedoraRelaxedLdpIT extends AbstractResourceIT {
 
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             triples(subjectURI, dataset)
-                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteral(providedUsername))
+                    .mustHave(LAST_MODIFIED_BY.asNode(), createLiteralString(providedUsername))
                     .mustHave(LAST_MODIFIED_DATE.asNode(), createDateTime(providedDate));
         }
     }
