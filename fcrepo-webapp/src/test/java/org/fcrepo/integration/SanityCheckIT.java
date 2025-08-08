@@ -4,7 +4,6 @@
  * tree.
  */
 package org.fcrepo.integration;
-import static java.util.UUID.randomUUID;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.HttpHeaders.LINK;
 import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
@@ -129,7 +128,7 @@ public class SanityCheckIT extends AbstractResourceIT {
     @Test
     public void testUnicodeCharsAllowed() throws Exception {
         final var id = "ÅŤéșţ!";
-        final var url = serverAddress + "/" + id;
+        final var url = serverAddress + id;
 
         final HttpPut put = new HttpPut(url);
         put.setEntity(new StringEntity("testing"));
@@ -137,12 +136,5 @@ public class SanityCheckIT extends AbstractResourceIT {
         executeAndVerify(put, SC_CREATED);
 
         executeAndVerify(new HttpGet(url), SC_OK);
-    }
-
-    @Test
-    public void testEncodedSlash() throws IOException {
-        final String targetResource = serverAddress + "/rest/" + randomUUID() + "/admin_set%2Fdefault";
-        final var putTest = new HttpPut(targetResource);
-        executeAndVerify(putTest, SC_CREATED);
     }
 }

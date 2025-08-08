@@ -23,6 +23,7 @@
     <!-- for standalone operation -->
     <fcrepo.home>${project.build.directory}/fcrepo-home</fcrepo.home>
     <jetty.users.file>${project.build.directory}/test-classes/jetty-users.properties</jetty.users.file>
+    <fcrepo.dynamic.test.port>8080</fcrepo.dynamic.test.port>
   </properties>
 
   <dependencies>
@@ -76,13 +77,13 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-webapp</artifactId>
+      <groupId>org.eclipse.jetty.ee10</groupId>
+      <artifactId>jetty-ee10-webapp</artifactId>
       <version>${jetty.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlets</artifactId>
+      <groupId>org.eclipse.jetty.ee10</groupId>
+      <artifactId>jetty-ee10-servlets</artifactId>
       <version>${jetty.version}</version>
     </dependency>
     <dependency>
@@ -344,30 +345,29 @@
       </plugin>
 
       <plugin>
-        <groupId>org.eclipse.jetty</groupId>
-        <artifactId>jetty-maven-plugin</artifactId>
+        <groupId>org.eclipse.jetty.ee10</groupId>
+        <artifactId>jetty-ee10-maven-plugin</artifactId>
         <version>${jetty.version}</version>
         <configuration>
           <stopKey>STOP</stopKey>
-          <jettyXmls>
-            <jettyXml>${project.build.directory}/test-classes/jetty-test.xml</jettyXml>
-          </jettyXmls>
+          <httpConnector>
+            <port>${fcrepo.dynamic.test.port}</port>
+          </httpConnector>
+          <loginServices>
+            <loginService implementation="org.eclipse.jetty.security.HashLoginService">
+              <name>fcrepo</name>
+              <config implementation="org.eclipse.jetty.maven.MavenResource">
+                <resourceAsString>${project.basedir}/src/test/resources/jetty-users.properties</resourceAsString>
+              </config>
+            </loginService>
+          </loginServices>
           <webApp>
             <contextPath>${fcrepo.test.context.path}</contextPath>
           </webApp>
           <systemProperties>
-            <systemProperty>
-              <name>fcrepo.dynamic.test.port</name>
-              <value>${fcrepo.dynamic.test.port}</value>
-            </systemProperty>
-            <systemProperty>
-              <name>fcrepo.home</name>
-              <value>${fcrepo.home}</value>
-            </systemProperty>
-            <systemProperty>
-              <name>jetty.users.file</name>
-              <value>${jetty.users.file}</value>
-            </systemProperty>
+            <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
+            <fcrepo.home>${fcrepo.home}</fcrepo.home>
+            <jetty.users.file>${jetty.users.file}</jetty.users.file>
           </systemProperties>
 
         </configuration>
@@ -382,40 +382,13 @@
               <stopPort>${jetty.dynamic.stop.port}</stopPort>
 
               <systemProperties>
-                <systemProperty>
-                  <name>fcrepo.dynamic.test.port</name>
-                  <value>${fcrepo.dynamic.test.port}</value>
-                </systemProperty>
-
-                <systemProperty>
-                  <name>fcrepo.dynamic.jms.port</name>
-                  <value>${fcrepo.dynamic.jms.port}</value>
-                </systemProperty>
-
-                <systemProperty>
-                  <name>fcrepo.dynamic.stomp.port</name>
-                  <value>${fcrepo.dynamic.stomp.port}</value>
-                </systemProperty>
-
-                <systemProperty>
-                  <name>integration-test</name>
-                  <value>true</value>
-                </systemProperty>
-
-                <systemProperty>
-                  <name>fcrepo.home</name>
-                  <value>${fcrepo.home}</value>
-                </systemProperty>
-
-                <systemProperty>
-                  <name>fcrepo.activemq.directory</name>
-                  <value>${project.build.directory}/target/active-mq</value>
-                </systemProperty>
-
-                <systemProperty>
-                  <name>jetty.users.file</name>
-                  <value>${jetty.users.file}</value>
-                </systemProperty>
+                <fcrepo.dynamic.test.port>${fcrepo.dynamic.test.port}</fcrepo.dynamic.test.port>
+                <fcrepo.dynamic.jms.port>${fcrepo.dynamic.jms.port}</fcrepo.dynamic.jms.port>
+                <fcrepo.dynamic.stomp.port>${fcrepo.dynamic.stomp.port}</fcrepo.dynamic.stomp.port>
+                <integration-test>true</integration-test>
+                <fcrepo.home>${fcrepo.home}</fcrepo.home>
+                <fcrepo.activemq.directory>${project.build.directory}/target/active-mq</fcrepo.activemq.directory>
+                <jetty.users.file>${jetty.users.file}</jetty.users.file>
               </systemProperties>
 
             </configuration>

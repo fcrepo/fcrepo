@@ -6,9 +6,9 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
+import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDnonNegativeInteger;
 import static org.apache.jena.datatypes.xsd.impl.XSDDateTimeType.XSDdateTime;
-import static org.apache.jena.graph.NodeFactory.createLiteralDT;
-import static org.apache.jena.graph.NodeFactory.createLiteralString;
+import static org.apache.jena.graph.NodeFactory.createLiteral;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
@@ -20,6 +20,8 @@ import static org.fcrepo.kernel.api.RdfLexicon.HAS_PARENT;
 import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
+import static org.fcrepo.kernel.api.RdfLexicon.PREMIS3_FILE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,14 +76,17 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
             lastModifiedDate = binary.getLastModifiedDate();
 
             triples.add(Triple.create(subject, HAS_SIZE.asNode(),
-                    createLiteralDT(String.valueOf(binary.getContentSize()), XSDlong)));
+                    createLiteral(String.valueOf(binary.getContentSize()), XSDlong)));
+
+            triples.add(Triple.create(subject, type.asNode(), PREMIS3_FILE.asNode()));
+            triples.add(Triple.create(subject, SIZE.asNode(),
+                    createLiteral(String.valueOf(binary.getContentSize()), XSDnonNegativeInteger)));
+
             if (binary.getFilename() != null) {
-                triples.add(Triple.create(subject, HAS_ORIGINAL_NAME.asNode(),
-                        createLiteralString(binary.getFilename())));
+                triples.add(Triple.create(subject, HAS_ORIGINAL_NAME.asNode(), createLiteral(binary.getFilename())));
             }
             if (binary.getMimeType() != null) {
-                triples.add(Triple.create(subject, HAS_MIME_TYPE.asNode(),
-                        createLiteralString(binary.getMimeType())));
+                triples.add(Triple.create(subject, HAS_MIME_TYPE.asNode(), createLiteral(binary.getMimeType())));
             }
             if (binary.getContentDigests() != null) {
                 for (var digest : binary.getContentDigests()) {
@@ -93,14 +98,14 @@ public class ManagedPropertiesServiceImpl implements ManagedPropertiesService {
         }
 
         triples.add(Triple.create(subject, CREATED_DATE.asNode(),
-                                  createLiteralDT(createdDate.toString(), XSDdateTime)));
+                                  createLiteral(createdDate.toString(), XSDdateTime)));
         triples.add(Triple.create(subject, LAST_MODIFIED_DATE.asNode(),
-                                  createLiteralDT(lastModifiedDate.toString(), XSDdateTime)));
+                                  createLiteral(lastModifiedDate.toString(), XSDdateTime)));
         if (createdBy != null) {
-            triples.add(Triple.create(subject, CREATED_BY.asNode(), createLiteralString(createdBy)));
+            triples.add(Triple.create(subject, CREATED_BY.asNode(), createLiteral(createdBy)));
         }
         if (lastModifiedBy != null) {
-            triples.add(Triple.create(subject, LAST_MODIFIED_BY.asNode(), createLiteralString(lastModifiedBy)));
+            triples.add(Triple.create(subject, LAST_MODIFIED_BY.asNode(), createLiteral(lastModifiedBy)));
         }
 
         describedResource.getSystemTypes(true).forEach(triple -> {
