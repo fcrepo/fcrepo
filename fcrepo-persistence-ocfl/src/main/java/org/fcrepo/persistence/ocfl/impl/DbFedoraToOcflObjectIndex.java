@@ -9,7 +9,6 @@ package org.fcrepo.persistence.ocfl.impl;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
 import jakarta.annotation.Nonnull;
