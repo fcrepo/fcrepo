@@ -305,12 +305,13 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /*
      * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.
      */
-    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " WHERE " +
-            "EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +
-            TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'purge' AND" +
-            " t." + FEDORA_ID_COLUMN + " = " + RESOURCES_TABLE + "." + FEDORA_ID_COLUMN +
-            " AND t." + PARENT_COLUMN + " = " + RESOURCES_TABLE + "." + PARENT_COLUMN + ")";
 
+    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE +
+            " WHERE (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ") IN (" +
+            " SELECT t." + FEDORA_ID_COLUMN + ", t." + PARENT_COLUMN +
+            " FROM " + TRANSACTION_OPERATIONS_TABLE + " t " +
+            " WHERE t." + TRANSACTION_ID_COLUMN + " = :transactionId " +
+            " AND t." + OPERATION_COLUMN + " = 'purge')";
     /*
      * Query if a resource exists in the main table and is not deleted.
      */
