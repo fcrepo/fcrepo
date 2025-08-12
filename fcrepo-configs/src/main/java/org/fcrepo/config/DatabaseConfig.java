@@ -124,6 +124,9 @@ public class DatabaseConfig extends BasePropsConfig {
             }
             config.setMaximumPoolSize(maxPoolSize);
         }
+        if (driver == "mariadb") {
+            config.addDataSourceProperty("useServerPrepStmts", "false");
+        }
         config.setDriverClassName(driver);
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUser);
