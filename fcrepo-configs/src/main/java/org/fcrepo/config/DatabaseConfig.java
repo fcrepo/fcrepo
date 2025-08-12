@@ -126,7 +126,6 @@ public class DatabaseConfig extends BasePropsConfig {
         }
         if (driver == "mariadb") {
             config.addDataSourceProperty("useServerPrepStmts", "false");
-            config.setAutoCommit(false);
         }
         config.setDriverClassName(driver);
         config.setJdbcUrl(dbUrl);

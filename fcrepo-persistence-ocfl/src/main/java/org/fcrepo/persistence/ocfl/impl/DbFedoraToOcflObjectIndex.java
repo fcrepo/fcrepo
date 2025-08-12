@@ -253,7 +253,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
                         jdbcTemplate.queryForObject(LOOKUP_MAPPING, Map.of("fedoraId", key), GET_MAPPING_ROW_MAPPER)
                 );
             }
-        } catch (final EmptyResultDataAccessException | NoSuchElementException e) {
+        } catch (final EmptyResultDataAccessException e) {
             throw new FedoraOcflMappingNotFoundException("No OCFL mapping found for " + fedoraId);
         }
     }
