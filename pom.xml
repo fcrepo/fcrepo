@@ -63,6 +63,7 @@
     <jetty.version>12.0.23</jetty.version>
     <jsonld.version>0.13.6</jsonld.version>
     <logback.version>1.5.18</logback.version>
+    <maven.changelog.version>3.0.0-M1</maven.changelog.version>
     <micrometer.version>1.15.0</micrometer.version>
     <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
     <netty.version>4.1.68.Final</netty.version>
@@ -939,6 +940,7 @@
 
       <plugin>
         <artifactId>maven-changelog-plugin</artifactId>
+        <version>${maven.changelog.version}</version>
       </plugin>
 
       <plugin>
