@@ -45,7 +45,8 @@ import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDinteger;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDlong;
 import static org.apache.jena.graph.Node.ANY;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralLang;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
@@ -1062,9 +1063,11 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // ensure that the triples are there.
         try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue(graph.contains(ANY, createURI(location), createURI("http://example.org/test/x"), createLiteral("x")),
+            assertTrue(graph.contains(ANY, createURI(location), createURI("http://example.org/test/x"),
+                            createLiteralString("x")),
                     "Didn't find a triple we expected!");
-            assertTrue(graph.contains(ANY, createURI(location), createURI("http://example.org/test/a"), createLiteral("1")),
+            assertTrue(graph.contains(ANY, createURI(location), createURI("http://example.org/test/a"),
+                            createLiteralString("1")),
                     "Didn't find a triple we expected!");
 
         }
@@ -1086,7 +1089,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // ensure that the expected triples removed.
         try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
-            assertTrue(graph.contains(ANY, createURI(location), createURI("http://example.org/test/x"), createLiteral("x")),
+            assertTrue(graph.contains(ANY, createURI(location), createURI("http://example.org/test/x"),
+                            createLiteralString("x")),
                     "Didn't find a triple we expected!");
             for (int i = 0; i < 4; ++i) {
                 for (final String suffix : Arrays.asList("a", "b")) {
@@ -1094,7 +1098,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                             ANY,
                             createURI(location),
                             createURI("http://example.org/test/" + suffix),
-                            createLiteral(i + "")),
+                            createLiteralString(i + "")),
                             "Found a triple we deleted!");
                 }
             }
@@ -1152,7 +1156,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
                 final DatasetGraph graph = dataset.asDatasetGraph();
                 assertTrue(graph.contains(ANY,
-                        createURI(resource + "/x"), DC_IDENTIFIER, createLiteral("identifier")));
+                        createURI(resource + "/x"), DC_IDENTIFIER, createLiteralString("identifier")));
             }
         }
     }
@@ -1183,8 +1187,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 final DatasetGraph graphStore = dataset.asDatasetGraph();
                 final Node subject = createURI(dsLocation);
                 assertTrue(graphStore.contains(ANY, subject, HAS_MIME_TYPE.asNode(),
-                        createLiteral("text/awesome")));
-                assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteral("x.txt")));
+                        createLiteralString("text/awesome")));
+                assertTrue(graphStore.contains(ANY, subject, HAS_ORIGINAL_NAME.asNode(), createLiteralString("x.txt")));
                 assertFalse(graphStore.contains(ANY, subject, createURI(REPOSITORY_NAMESPACE + "mimeType"), ANY),
                         "Should not contain old mime type property");
             }
@@ -1266,7 +1270,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             assertTrue(graphStore.contains(ANY, createURI(location), createURI("info:some-predicate"), ANY));
             final Node bnode = graphStore.find(ANY,
                     createURI(location), createURI("info:some-predicate"), ANY).next().getObject();
-            assertTrue(graphStore.contains(ANY, bnode, DCTITLE, createLiteral("this is a title")));
+            assertTrue(graphStore.contains(ANY, bnode, DCTITLE, createLiteralString("this is a title")));
         }
     }
 
@@ -1294,7 +1298,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(getObjMethod(id))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"),
-                            createLiteral("foo")),"Didn't find a triple we tried to create!");
+                            createLiteralString("foo")),"Didn't find a triple we tried to create!");
         }
     }
 
@@ -1309,7 +1313,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"),
-                            createLiteral("foo")),"Didn't find a triple we tried to create!");
+                            createLiteralString("foo")),"Didn't find a triple we tried to create!");
         }
     }
 
@@ -1416,7 +1420,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     graph.find(ANY, createURI(subjectURI), createURI("info:some-predicate"), ANY);
             assertTrue(quads.hasNext(), "Didn't find skolemized blank node assertion");
             final Node skolemizedNode = quads.next().getObject();
-            assertTrue(graph.contains(ANY, skolemizedNode, createURI("info:test#label"), createLiteral("asdfg")),
+            assertTrue(graph.contains(ANY, skolemizedNode, createURI("info:test#label"), createLiteralString("asdfg")),
                     "Didn't find a triple we tried to create!");
         }
     }
@@ -1828,7 +1832,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             final String location = getLocation(response);
             try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
                 final DatasetGraph graphStore = dataset.asDatasetGraph();
-                assertTrue(graphStore.contains(ANY, createURI(location), DCTITLE, createLiteral("title")));
+                assertTrue(graphStore.contains(ANY, createURI(location), DCTITLE, createLiteralString("title")));
             }
         }
     }
@@ -2101,7 +2105,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 final DatasetGraph graph = dataset.asDatasetGraph();
                 assertFalse(dataset.isEmpty());
                 assertTrue(graph.contains(ANY, createURI(location), HAS_ORIGINAL_NAME.asNode(),
-                        createLiteral(filename)));
+                        createLiteralString(filename)));
             }
         }
     }
@@ -2222,8 +2226,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
             try (final CloseableDataset dataset = getDataset(new HttpGet(location))) {
                 final DatasetGraph graphStore = dataset.asDatasetGraph();
                 final Node subj = createURI(location);
-                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("english title", "en")));
-                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteral("french title", "fr")));
+                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteralLang("english title", "en")));
+                assertTrue(graphStore.contains(ANY, subj, DCTITLE, createLiteralLang("french title", "fr")));
             }
         }
     }
@@ -3212,7 +3216,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"),
-                            createLiteral("foo")),"Didn't find a triple we thought we added.");
+                            createLiteralString("foo")),"Didn't find a triple we thought we added.");
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#number"),
                             createLiteralByValue("42", XSDinteger)), "Didn't find a triple we thought we added.");
             assertTrue(graph.contains(ANY, createURI(subjectURI), createURI("info:test#date"),
@@ -3236,7 +3240,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         try (final CloseableDataset dataset = getDataset(new HttpGet(subjectURI))) {
             final DatasetGraph graph = dataset.asDatasetGraph();
             assertFalse(graph.contains(ANY, createURI(subjectURI), createURI("info:test#label"),
-                            createLiteral("foo")),"Found a triple we thought we deleted.");
+                            createLiteralString("foo")),"Found a triple we thought we deleted.");
             assertFalse(graph.contains(ANY, createURI(subjectURI), createURI("info:test#number"),
                     createLiteralByValue("42", XSDinteger)), "Found a triple we thought we deleted.");
             assertFalse(graph.contains(ANY, createURI(subjectURI), createURI("info:test#date"),
@@ -3449,7 +3453,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graph.contains(ANY, binaryNode, HAS_FIXITY_SERVICE.asNode(),
                         createURI(binaryUri + "/" + FCR_FIXITY)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
-                        createLiteral("mytest.txt")));
+                        createLiteralString("mytest.txt")));
             }
         }
 
@@ -3492,7 +3496,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
                         createLiteralByValue(originalSize, XSDlong)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
-                        createLiteral(originalName)));
+                        createLiteralString(originalName)));
             }
         }
 
@@ -3524,7 +3528,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
                         createLiteralByValue(updatedSize, XSDlong)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
-                        createLiteral(updatedName)));
+                        createLiteralString(updatedName)));
             }
         }
 
@@ -3537,7 +3541,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graph.contains(ANY, binaryNode, HAS_SIZE.asNode(),
                         createLiteralByValue(originalSize, XSDlong)));
                 assertTrue(graph.contains(ANY, binaryNode, HAS_ORIGINAL_NAME.asNode(),
-                        createLiteral(originalName)));
+                        createLiteralString(originalName)));
             }
         }
     }
@@ -3977,7 +3981,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 assertTrue(graphStore.contains(ANY,
                         createURI(location), createURI("info:some-predicate"), createURI(location + "#abc")));
                 assertTrue(graphStore.contains(ANY,
-                        createURI(location + "#abc"), createURI("info:test#label"), createLiteral("asdfg")));
+                        createURI(location + "#abc"), createURI("info:test#label"), createLiteralString("asdfg")));
                 assertFalse(graphStore.contains(ANY,
                         createURI(location + "#abc"), LAST_MODIFIED_DATE.asNode(), ANY));
                 assertFalse(graphStore.contains(ANY,
@@ -4007,7 +4011,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpGet get = new HttpGet(subjectURI);
         get.addHeader("Prefer", "return=representation; include=\"" + PREFER_MINIMAL_CONTAINER + "\"");
         try (final CloseableDataset dataset = getDataset(get)) {
-            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, DCTITLE, createLiteral("xyz")));
+            assertTrue(dataset.asDatasetGraph().contains(ANY, ANY, DCTITLE, createLiteralString("xyz")));
         }
         LOGGER.trace("Done with testCreateAndReplaceGraphMinimal().");
     }
@@ -4306,7 +4310,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // now test if property exists anymore (it shouldn't).
         try (final CloseableDataset dataset = getDataset(getObjMethod(pid))) {
             assertFalse(dataset.asDatasetGraph().contains(ANY, createURI(location), DC_TITLE,
-                            createLiteral(longLiteral)),"Found the literal we tried to delete!");
+                            createLiteralString(longLiteral)),"Found the literal we tried to delete!");
         }
     }
 
@@ -5177,7 +5181,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     ANY,
                     ANY,
                     NodeFactory.createURI("http://www.w3.org/2006/vcard/ns#hasMember"),
-                    NodeFactory.createLiteral("someUser")));
+                    NodeFactory.createLiteralString("someUser")));
         }
     }
 

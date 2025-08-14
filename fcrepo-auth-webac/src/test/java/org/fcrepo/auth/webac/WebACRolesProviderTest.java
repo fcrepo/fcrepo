@@ -665,7 +665,7 @@ public class WebACRolesProviderTest {
                         NodeFactory.createURI(VCARD_GROUP_VALUE)),
                         Triple.create(NodeFactory.createURI("#list"),
                         NodeFactory.createURI(VCARD_MEMBER_VALUE),
-                        NodeFactory.createLiteral("Bob"))
+                        NodeFactory.createLiteralString("Bob"))
                     )
                 )
         );

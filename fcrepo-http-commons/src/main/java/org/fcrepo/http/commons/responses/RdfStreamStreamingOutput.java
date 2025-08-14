@@ -8,9 +8,6 @@ package org.fcrepo.http.commons.responses;
 import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 import static org.apache.jena.riot.Lang.JSONLD;
 import static org.apache.jena.riot.Lang.RDFXML;
-import static org.apache.jena.riot.RDFFormat.JSONLD_COMPACT_FLAT;
-import static org.apache.jena.riot.RDFFormat.JSONLD_EXPAND_FLAT;
-import static org.apache.jena.riot.RDFFormat.JSONLD_FLATTEN_FLAT;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
 import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
@@ -179,8 +176,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         if (RDFXML.equals(dataFormat)) {
             RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
         } else if (JSONLD.equals(dataFormat)) {
-            final RDFFormat jsonldFormat = getFormatFromMediaType(dataMediaType);
-            RDFDataMgr.write(output, model.getGraph(), jsonldFormat);
+            RDFDataMgr.write(output, model.getGraph(), RDFFormat.JSONLD);
         } else {
             RDFDataMgr.write(output, model.getGraph(), dataFormat);
         }
@@ -210,6 +206,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         return resultNses;
     }
 
+    /* TODO: Should we reimplement this in Titanium post Jena 5 upgrade?
     private static RDFFormat getFormatFromMediaType(final MediaType mediaType) {
         final String profile = mediaType.getParameters().getOrDefault("profile", "");
         if (profile.equals(JSONLD_COMPACTED)) {
@@ -219,4 +216,5 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         }
         return JSONLD_EXPAND_FLAT;
     }
+     */
 }

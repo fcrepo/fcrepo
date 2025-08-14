@@ -172,7 +172,7 @@ public class RelaxedPropertiesHelperTest {
         final var triple = Triple.create(
                 subject,
                 NodeFactory.createURI(RDF.type.getURI()),
-                NodeFactory.createLiteral("some-type")
+                NodeFactory.createLiteralString("some-type")
         );
         assertThrows(MalformedRdfException.class, () -> {
             RelaxedPropertiesHelper.checkTripleForDisallowed(triple);
@@ -251,17 +251,17 @@ public class RelaxedPropertiesHelperTest {
             Triple.create(
                 subject,
                 HAS_FIXITY_RESULT.asNode(),
-                NodeFactory.createLiteral("some-value")
+                NodeFactory.createLiteralString("some-value")
             ),
             Triple.create(
                 subject,
                 HAS_MESSAGE_DIGEST.asNode(),
-                NodeFactory.createLiteral("some-value")
+                NodeFactory.createLiteralString("some-value")
             ),
             Triple.create(
                 subject,
                 CONTAINS.asNode(),
-                NodeFactory.createLiteral("some-value")
+                NodeFactory.createLiteralString("some-value")
             )
         );
         for (final var triple : triples) {
@@ -284,22 +284,22 @@ public class RelaxedPropertiesHelperTest {
             Triple.create(
                 subject,
                 CREATED_BY.asNode(),
-                NodeFactory.createLiteral("some-value")
+                NodeFactory.createLiteralString("some-value")
             ),
             Triple.create(
                 subject,
                 CREATED_DATE.asNode(),
-                NodeFactory.createLiteral("some-value")
+                NodeFactory.createLiteralString("some-value")
             ),
             Triple.create(
                 subject,
                 LAST_MODIFIED_BY.asNode(),
-                NodeFactory.createLiteral("some-value")
+                NodeFactory.createLiteralString("some-value")
             ),
             Triple.create(
                 subject,
                 LAST_MODIFIED_DATE.asNode(),
-                NodeFactory.createLiteral("some-value")
+                NodeFactory.createLiteralString("some-value")
             )
         );
         for (final var triple : triples) {
@@ -318,17 +318,17 @@ public class RelaxedPropertiesHelperTest {
                 Triple.create(
                         subject,
                         HAS_MIME_TYPE.asNode(),
-                        NodeFactory.createLiteral("text/plain")
+                        NodeFactory.createLiteralString("text/plain")
                 ),
                 Triple.create(
                         subject,
                         HAS_MIME_TYPE.asNode(),
-                        NodeFactory.createLiteral("application/json")
+                        NodeFactory.createLiteralString("application/json")
                 ),
                 Triple.create(
                         subject,
                         HAS_MIME_TYPE.asNode(),
-                        NodeFactory.createLiteral("application/n-triples")
+                        NodeFactory.createLiteralString("application/n-triples")
                 ),
                 Triple.create(
                         subject,
@@ -343,7 +343,7 @@ public class RelaxedPropertiesHelperTest {
         final Triple invalidTriple = Triple.create(
                 subject,
                 HAS_MIME_TYPE.asNode(),
-                NodeFactory.createLiteral("video")
+                NodeFactory.createLiteralString("video")
         );
         assertThrows(MalformedRdfException.class,
                 () -> RelaxedPropertiesHelper.checkTripleForDisallowed(invalidTriple));

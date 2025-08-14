@@ -35,7 +35,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static jakarta.ws.rs.core.Response.Status.CREATED;
 import static org.apache.jena.graph.NodeFactory.createBlankNode;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_MINIMAL_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.PREFER_SERVER_MANAGED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -131,7 +131,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
                     bnodeMap.put(replacement.getSubject(), createBlankNode());
                 }
 
-                replacement = new Triple(bnodeMap.get(replacement.getSubject()),
+                replacement = Triple.create(bnodeMap.get(replacement.getSubject()),
                         replacement.getPredicate(),
                         replacement.getObject());
             }
@@ -142,7 +142,7 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
                     bnodeMap.put(replacement.getObject(), createBlankNode());
                 }
 
-                replacement = new Triple(replacement.getSubject(),
+                replacement = Triple.create(replacement.getSubject(),
                         replacement.getPredicate(),
                         bnodeMap.get(replacement.getObject()));
             }
@@ -150,9 +150,9 @@ public abstract class AbstractIntegrationRdfIT extends AbstractResourceIT {
             if (replacement.getObject().isLiteral()
                     && replacement.getObject().getLiteral().getDatatype() != null
                     && replacement.getObject().getLiteral().getDatatype().equals(XSDDatatype.XSDstring)) {
-                replacement = new Triple(replacement.getSubject(),
+                replacement = Triple.create(replacement.getSubject(),
                         replacement.getPredicate(),
-                        createLiteral(replacement.getObject().getLiteral().getLexicalForm()));
+                        createLiteralString(replacement.getObject().getLiteral().getLexicalForm()));
             }
 
             betterGraph.add(replacement);
