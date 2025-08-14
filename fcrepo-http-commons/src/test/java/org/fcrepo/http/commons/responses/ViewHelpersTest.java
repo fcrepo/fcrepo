@@ -9,7 +9,7 @@ import static com.google.common.collect.ImmutableMap.of;
 import static org.apache.jena.datatypes.xsd.XSDDatatype.XSDdateTimeStamp;
 import static org.apache.jena.graph.NodeFactory.createBlankNode;
 import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
-import static org.apache.jena.graph.NodeFactory.createLiteral;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
@@ -194,7 +194,7 @@ public class ViewHelpersTest {
 
     private void shouldExtractTitleFromNode( final Property property ) {
         final Graph mem = createDefaultModel().getGraph();
-        mem.add(Triple.create(createURI("a/b/c"), property.asNode(), createLiteral("abc")));
+        mem.add(Triple.create(createURI("a/b/c"), property.asNode(), createLiteralString("abc")));
         assertEquals("abc", testObj.getObjectTitle(mem, createURI("a/b/c")));
     }
 
@@ -218,7 +218,7 @@ public class ViewHelpersTest {
     @Test
     public void shouldJustUseTheStringIfItIsALiteral() {
         final Graph mem = createDefaultModel().getGraph();
-        final Node lit = createLiteral("xyz");
+        final Node lit = createLiteralString("xyz");
         assertEquals("\"xyz\"", testObj.getObjectTitle(mem, lit));
     }
 
@@ -227,11 +227,11 @@ public class ViewHelpersTest {
 
         final Graph mem = createDefaultModel().getGraph();
         mem.add(Triple.create(createURI("subject"), createURI("a/b/c"),
-                NodeFactory.createLiteral("abc")));
+                NodeFactory.createLiteralString("abc")));
         mem.add(Triple.create(createURI("subject"),
                 createURI("a-numeric-type"), createTypedLiteral(0).asNode()));
         mem.add(Triple.create(createURI("subject"),
-                createURI("an-empty-string"), createLiteral("")));
+                createURI("an-empty-string"), createLiteralString("abc")));
         mem.add(Triple.create( createURI("subject"), createURI("a-uri"),
                 createURI("some-uri")));
 
@@ -239,7 +239,7 @@ public class ViewHelpersTest {
                 createURI("subject"), createResource("a/b/c"), true));
         assertEquals("0", testObj.getObjectsAsString(mem, createURI("subject"),
                 createResource("a-numeric-type"), true));
-        assertEquals("<empty>", testObj.getObjectsAsString(mem,
+        assertEquals("abc", testObj.getObjectsAsString(mem,
                 createURI("subject"), createResource("an-empty-string"), true));
         assertEquals("&lt;<a href=\"some-uri\">some-uri</a>&gt;", testObj
                 .getObjectsAsString(mem, createURI("subject"),
