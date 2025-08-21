@@ -1,25 +1,40 @@
-<dl>
-    <dt>Created at</dt> <dd>$helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.CREATED_DATE, true)
-    by $esc.html($helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.CREATED_BY, true))</dd>
+<dl class="row">
+    <dt class="col-sm-3">Created at</dt>
+    <dd class="col-sm-9">
+        $helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.CREATED_DATE, true)
+        by $esc.html($helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.CREATED_BY, true))
+    </dd>
 
-    <dt>Last Modified at</dt> <dd>$helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.LAST_MODIFIED_DATE, true)
-    by $esc.html($helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.LAST_MODIFIED_BY, true))</dd>
+    <dt class="col-sm-3">Last Modified at</dt>
+    <dd class="col-sm-9">
+        $helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.LAST_MODIFIED_DATE, true)
+        by $esc.html($helpers.getObjectsAsString($rdf, $originalResource, $rdfLexicon.LAST_MODIFIED_BY, true))
+    </dd>
 
     #if ($isArchivalGroup == true)
-        <dt>Archival Group</dt> <dd>true</dd>
+        <dt class="col-sm-3">Archival Group</dt>
+        <dd class="col-sm-9">true</dd>
     #end
 
-    <dt>Children <span class="badge">$helpers.getNumChildren($rdf, $originalResource) </span></dt>
-    <dd>
-        <ol id="childList">
+    <dt class="col-sm-3">
+        Children
+        <span class="badge bg-secondary">
+            $helpers.getNumChildren($rdf, $originalResource)
+        </span>
+    </dt>
+    <dd class="col-sm-9">
+        <ol id="childList" class="mb-0">
             #foreach($quad in $rdf.find($originalResource, $rdfLexicon.CONTAINS.asNode(), null))
-                <li><a href="$quad.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))</a></li>
+                <li>
+                    <a href="$quad.getObject().getURI()">
+                        $esc.html($helpers.getObjectTitle($rdf, $quad.getObject()))
+                    </a>
+                </li>
             #end
-##          Magic number '100' below is tied to FedoraLDP.getChildrenLimit()
+            ## Magic number '100' below is tied to FedoraLDP.getChildrenLimit()
             #if ($helpers.getNumChildren($rdf, $originalResource) >= 100 )
                 <li>...</li>
             #end
         </ol>
     </dd>
-
 </dl>

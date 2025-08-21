@@ -3,122 +3,123 @@
 #set ($isRoot = $helpers.isRootResource($rdf, $topic))
 
 #if ($isVersion == true)
-  #set ($original = $helpers.getOriginalResource($topic))
-  <div class="alert alert-warning">
-    <span class="glyphicon glyphicon-warning-sign"></span>
-    This is a <strong>historic version</strong> and cannot be modified.
-  </div>
-  #if ($helpers.isRdfResource($rdf, $original, "http://fedora.info/definitions/v4/repository#", "Binary"))
-    <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a><br/><br/>
-  #end
-#else
-  #if ($helpers.isRdfResource($rdf, $content, "http://fedora.info/definitions/v4/repository#", "Binary"))
-    <a href="$content" class="btn btn-success btn-lg"><span class="glyphicon glyphicon-download"></span> Download Content</a><br/><br/>
-	<a href="$content/fcr:fixity" class="btn btn-success btn-lg">Fixity</a>
-    #if ($writable == true)
-      <h3>Update Content</h3>
-      <form id="action_update_file">
-        <div class="form-group">
-          <label for="update_file" class="control-label">File</label>
-          <input type="file" id="update_file"/>
-        </div>
-        <div class="form-group">
-          <label for="update_mime_type" class="control-label">
-            MIME Type
-          </label>
-          <input type="text" id="update_mime_type" placeholder="application/octet-stream" name="update_mime_type" class="form-control"/>
-        </div>
-        <input type="submit" id="binary_update_content" class="btn btn-primary" value="Update">
-      </form>
+    #set ($original = $helpers.getOriginalResource($topic))
+<div class="alert alert-warning d-flex align-items-center" role="alert">
+    <!-- Optional icon if you include Bootstrap Icons:
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> -->
+    <div>
+        This is a <strong>historic version</strong> and cannot be modified.
+    </div>
+</div>
+    #if ($helpers.isRdfResource($rdf, $original, "http://fedora.info/definitions/v4/repository#", "Binary"))
+    <a href="$content" class="btn btn-success btn-lg">
+        <!-- <i class="bi bi-download me-1"></i> -->
+        Download Content
+    </a>
+    <br><br>
     #end
-    <hr />
-  #end
+#else
+    #if ($helpers.isRdfResource($rdf, $content, "http://fedora.info/definitions/v4/repository#", "Binary"))
+    <a href="$content" class="btn btn-success btn-lg">
+        <!-- <i class="bi bi-download me-1"></i> -->
+        Download Content
+    </a>
+    <br><br>
+    <a href="$content/fcr:fixity" class="btn btn-success btn-lg">Fixity</a>
 
-  #if ($writable == true)
-  <form id="action_create" name="action_create" method="POST" enctype="multipart/form-data">
-    <h3>Create New Child Resource</h3>
-    <div class="form-group">
-    <label for="new_mixin" class="control-label">
-        Type
-    </label>
-    <select id="new_mixin" class="form-control">
-        <option value="basic container">basic container</option>
-        <option value="direct container">direct container</option>
-        <option value="indirect container">indirect container</option>
-        <option value="archival group">archival group</option>
-        <option value="binary">binary</option>
-    </select>
+        #if ($writable == true)
+        <h3 class="mt-4">Update Content</h3>
+        <form id="action_update_file">
+            <div class="mb-3">
+                <label for="update_file" class="form-label">File</label>
+                <input type="file" id="update_file" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label for="update_mime_type" class="form-label">MIME Type</label>
+                <input type="text" id="update_mime_type" name="update_mime_type"
+                       placeholder="application/octet-stream" class="form-control">
+            </div>
+            <input type="submit" id="binary_update_content" class="btn btn-primary" value="Update">
+        </form>
+        #end
+    <hr>
+    #end
+
+    #if ($writable == true)
+    <form id="action_create" name="action_create" method="POST" enctype="multipart/form-data">
+        <h3>Create New Child Resource</h3>
+
+        <div class="mb-3">
+            <label for="new_mixin" class="form-label">Type</label>
+            <select id="new_mixin" class="form-select">
+                <option value="basic container">basic container</option>
+                <option value="direct container">direct container</option>
+                <option value="indirect container">indirect container</option>
+                <option value="archival group">archival group</option>
+                <option value="binary">binary</option>
+            </select>
         </div>
 
-    <div class="form-group">
-    <label for="new_id"  class="control-label">
-        Identifier
-    </label>
-    <input type="text" id="new_id" placeholder="(auto-generated identifier)" name="slug"  class="form-control"/>
+        <div class="mb-3">
+            <label for="new_id" class="form-label">Identifier</label>
+            <input type="text" id="new_id" name="slug"
+                   placeholder="(auto-generated identifier)" class="form-control">
         </div>
 
-    <div class="form-group" id="turtle_payload_container">
-        <label for="rdf"  class="control-label">
-	        RDF (turtle)
-        </label>
-        <textarea rows="10" id="turtle_payload" name="turtle" class="form-control"
-                  placeholder="<> a <http://purl.org/dc/dcmitype/Collection>"></textarea>
-    </div>
+        <div class="mb-3" id="turtle_payload_container">
+            <label for="turtle_payload" class="form-label">RDF (turtle)</label>
+            <textarea rows="10" id="turtle_payload" name="turtle" class="form-control"
+                      placeholder="&lt;&gt; a &lt;http://purl.org/dc/dcmitype/Collection&gt;"></textarea>
+        </div>
 
+        <div class="mb-3" id="binary_payload_container">
+            <label for="binary_payload" class="form-label">File</label>
+            <input type="file" name="file" id="binary_payload" class="form-control">
+        </div>
 
-    <div  id="binary_payload_container" class="form-group">
-    <label for="binary_payload"  class="control-label">
-        File
-    </label>
-    <input type="file" name="file" id="binary_payload"/>
-    </div>
+        <div class="mb-3" id="binary_mime_type_container">
+            <label for="mime_type" class="form-label">MIME Type</label>
+            <input type="text" id="mime_type" name="mime_type"
+                   placeholder="application/octet-stream" class="form-control">
+        </div>
 
-    <div id="binary_mime_type_container" class="form-group">
-      <label for="mime_type" class="control-label">
-          MIME Type
-       </label>
-       <input type="text" id="mime_type" placeholder="application/octet-stream" name="mime_type" class="form-control"/>
-    </div>
+        <button id="btn_action_create" class="btn btn-primary">Add</button>
+        <hr>
+    </form>
 
-    <button id="btn_action_create" class="btn btn-primary">Add</button>
-    <hr />
-  </form>
-
-
-  <form id="action_sparql_update" method="POST">
-    <input type="hidden" name="_method" value="PATCH" />
-    <h3>Update Properties</h3>
-    <div class="form-group">
-    <textarea rows="10" id="sparql_update_query" name="query" class="form-control">
+    <form id="action_sparql_update" method="POST">
+        <input type="hidden" name="_method" value="PATCH">
+        <h3>Update Properties</h3>
+        <div class="mb-3">
+        <textarea rows="10" id="sparql_update_query" name="query" class="form-control">
 $helpers.getPrefixPreamble($model)
 DELETE { }
 INSERT { }
 WHERE { }
- </textarea>
-    </div>
-    <button type="submit" class="btn btn-primary">Update</button>
-    <hr />
-  </form>
-
-  #if ( !$isRoot )
-	  <h3>Versioning</h3>
-	#if ($autoVersioningEnabled == true)
-	  <p>Autoversioning is enabled. Versions are created with each update to a resource.
-	  <h4><a id="view_versions" href="$topic/fcr:versions">View Versions</a></h4>
-	#elseif ($isOriginalResource == true)
-      <form id="action_create_version" name="action_create_version" method="POST">
-        <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
-      </form>
-      <h4><a id="view_versions" href="$topic/fcr:versions">View Versions</a></h4>
-    #end
-    <hr />
-
-    <form id="action_delete" name="action_delete">
-      <h3>Delete Resource</h3>
-      <button name="delete-button" type="submit" class="btn btn-danger">Delete</button>
-      <hr />
+        </textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Update</button>
+        <hr>
     </form>
-  #end
-#end
 
+        #if ( !$isRoot )
+        <h3>Versioning</h3>
+            #if ($autoVersioningEnabled == true)
+            <p>Autoversioning is enabled. Versions are created with each update to a resource.</p>
+            <h4 class="h5"><a id="view_versions" href="$topic/fcr:versions">View Versions</a></h4>
+            #elseif ($isOriginalResource == true)
+            <form id="action_create_version" name="action_create_version" method="POST">
+                <button id="create-version-button" type="submit" class="btn btn-primary">Create Version</button>
+            </form>
+            <h4 class="h5"><a id="view_versions" href="$topic/fcr:versions">View Versions</a></h4>
+            #end
+        <hr>
+
+        <form id="action_delete" name="action_delete">
+            <h3>Delete Resource</h3>
+            <button name="delete-button" type="submit" class="btn btn-danger">Delete</button>
+            <hr>
+        </form>
+        #end
+    #end
 #end

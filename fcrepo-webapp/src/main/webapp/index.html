@@ -1,47 +1,61 @@
-<html>
+<!doctype html>
+<html lang="en">
 <head>
+  <meta charset="utf-8">
   <title>Fedora Commons Repository</title>
-  <link rel="icon" type="image/png" href="static/images/fcrepo-favicon.png"/>
-  <script src="static/js/bootstrap-3.0.0.min.js"></script>
-  <link href="static/css/bootstrap-3.0.0.min.css" rel="stylesheet" />
-    <style >
-        .thumbnail {
-            background: transparent; border: none; margin-bottom: 1.5em
-        }
-
-        body {
-            padding-top: 70px;
-            padding-bottom: 70px;
-        }
-        article p {
-          padding: 10px 0;
-        }
-    </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="static/images/fcrepo-favicon.png">
+  <link href="static/css/bootstrap.min.css" rel="stylesheet">
+  <script src="static/js/bootstrap.bundle.min.js" defer></script>
+  <style>
+    body { padding-top: 70px; padding-bottom: 70px; }
+    article p { padding: 10px 0; }
+  </style>
 </head>
 <body>
-<article class="container">
-  <div class="col-md-12">
-    <div class="jumbotron">
-      <a href="rest/" class="thumbnail" style=""><img src="static/images/fedora_logo_10in.png" /></a>
-      <p>Fedora is a robust, modular, open source repository system for the management and dissemination of digital content. It is especially suited for digital libraries and archives, both
-for access and preservation. It is also used to provide specialized access to very large and complex digital collections of historic and cultural materials as well as scientific
-data.</p>
-      <p class="text-center"><a class="btn btn-primary btn-lg" href="rest/">Fedora REST API endpoint</a></p>
-      <p>Fedora is maintained by a community of volunteers. <a href="https://fedora.lyrasis.org/register-your-site/" target="_duraspace">Register your repository</a> at <a href="http://www.lyrasis.org/" target="_lyrasis">Lyrasis</a> in order to facilitate information sharing and collaboration within the community.</p>
+
+<main class="container">
+  <div class="row">
+    <div class="col-12">
+      <section class="p-5 mb-4 bg-body-tertiary rounded-3">
+        <div class="container-fluid py-2 text-center">
+          <a href="rest/" class="d-inline-block">
+            <img src="static/images/fedora_logo_10in.png" class="img-fluid" alt="Fedora Commons">
+          </a>
+          <p class="mt-3">
+            Fedora is a robust, modular, open source repository system for the management and dissemination of digital content. It is especially suited for digital libraries and archives, both
+            for access and preservation. It is also used to provide specialized access to very large and complex digital collections of historic and cultural materials as well as scientific
+            data.
+          </p>
+          <p class="text-center">
+            <a class="btn btn-primary btn-lg" href="rest/">Fedora REST API endpoint</a>
+          </p>
+          <p>
+            Fedora is maintained by a community of volunteers.
+            <a href="https://fedora.lyrasis.org/register-your-site/" target="_blank" rel="noopener">Register your repository</a>
+            at <a href="https://www.lyrasis.org/" target="_blank" rel="noopener">Lyrasis</a> in order to facilitate information sharing and collaboration within the community.
+          </p>
+        </div>
+      </section>
     </div>
   </div>
-</article>
+</main>
 
-<footer class="navbar navbar-default navbar-fixed-bottom" role="navigation">
+<footer class="navbar navbar-expand bg-body-tertiary fixed-bottom" role="navigation">
   <div class="container">
-    <ul class="nav navbar-nav">
-      <li><a href="https://fedora-repository.atlassian.net/issues/">Issue Tracker</a></li>
-      <li><a href="https://wiki.lyrasis.org/display/FF">Wiki</a></li>
-      <li><a href="https://wiki.lyrasis.org/display/FF/Documentation">REST API Documentation</a></li>
-      <li><a href="http://fedora.info">Ontologies and Specifications</a></li>
+    <ul class="navbar-nav">
+      <li class="nav-item"><a class="nav-link" href="https://fedora-repository.atlassian.net/issues/">Issue Tracker</a></li>
+      <li class="nav-item"><a class="nav-link" href="https://wiki.lyrasis.org/display/FF">Wiki</a></li>
+      <li class="nav-item"><a class="nav-link" href="https://wiki.lyrasis.org/display/FF/Documentation">REST API Documentation</a></li>
+      <li class="nav-item"><a class="nav-link" href="http://fedora.info">Ontologies and Specifications</a></li>
     </ul>
-    <p class="navbar-text pull-right">Release: <span id="version">${project.version}</span> | Build <span id="build">#${buildNumber}</span> (<span id="timestamp">${build.timestamp}</span>)</p>
+    <p class="navbar-text ms-auto mb-0">
+      Release: <span id="version">${project.version}</span> |
+      Build <span id="build">#${buildNumber}</span>
+      (<span id="timestamp">${build.timestamp}</span>)
+    </p>
   </div>
 </footer>
+
 </body>
 </html>
