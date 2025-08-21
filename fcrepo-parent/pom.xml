@@ -259,6 +259,7 @@
           <version>${compiler.plugin.version}</version>
           <configuration>
             <debug>true</debug>
+            <showDeprecation>true</showDeprecation>
             <release>${project.java.source}</release>
             <compilerArgument>-Xlint:unchecked,deprecation</compilerArgument>
           </configuration>
