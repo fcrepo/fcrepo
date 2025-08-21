@@ -1,18 +1,17 @@
-
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>RDF types</th>
-            <th>Content size</th>
-            <th>MimeType</th>
-            <th>Created</th>
-            <th>Last Modified</th>
-        </tr>
+<table class="table table-striped table-bordered align-middle">
+    <thead class="table-light">
+    <tr>
+        <th scope="col">ID</th>
+        <th scope="col">RDF types</th>
+        <th scope="col">Content size</th>
+        <th scope="col">MimeType</th>
+        <th scope="col">Created</th>
+        <th scope="col">Last Modified</th>
+    </tr>
     </thead>
     <tbody>
         #foreach( $result in $searchResults.getItems() )
-        #set( $id = $helpers.getString($result, "fedora_id"))
+            #set( $id = $helpers.getString($result, "fedora_id"))
         <tr>
             <td><a href="$id">$id</a></td>
             <td>$helpers.getString($result, "rdf_type")</td>
@@ -24,6 +23,3 @@
         #end
     </tbody>
 </table>
-
-
-

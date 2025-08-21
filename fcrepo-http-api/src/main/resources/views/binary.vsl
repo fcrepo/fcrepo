@@ -2,78 +2,102 @@
 #* @vtlvariable name="rdf" type="org.apache.jena.sparql.core.DatasetGraph" *#
 #* @vtlvariable name="model" type="org.apache.jena.rdf.model.Model" *#
 <!DOCTYPE html>
-#set( $title = $helpers.getObjectTitle($rdf, $topic) )
-#set( $contentNode = $helpers.getContentNode($topic) )
+    #set( $title = $helpers.getObjectTitle($rdf, $topic) )
+    #set( $contentNode = $helpers.getContentNode($topic) )
 
-#parse("views/common.vsl")
+    #parse("views/common.vsl")
 <html>
 <head>
-	<meta charset="UTF-8">
+    <meta charset="UTF-8">
     <title>$title</title>
     #parse("views/common-head.vsl")
 </head>
 
 <body class="fcrepo_binary">
-<div  id="main" class="container" resource="$topic.getURI()">
+<div id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
 
     <div class="row">
-        <div class="col-md-12">
+        <div class="col-12">
             #parse("views/common-breadcrumb.vsl")
         </div>
 
-        <div class="col-md-3 col-md-push-9 clearfix">
-            <button id="toggle-actions" type="button" class="visible-xs visible-sm btn btn-danger" data-toggle="collapse" data-target=".actions">
-                <span>Toggle actions</span>
-            </button>
-
-        ## output actions
-            <div class="actions collapse visible-lg visible-md" id="actions">
-                #parse("views/common-node-actions.vsl")
-            </div>
-        </div>
-
-        <div class="col-md-9 col-md-pull-3">
-
+        <!-- Main content -->
+        <div class="col-lg-9">
             #parse("views/common-metadata.vsl")
 
-        ## output triples for the topic node
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">Properties</h4>
+            <!-- Properties card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Properties</h4>
                 </div>
-                <div class="panel-body">
+                <div class="card-body">
                     #triples($contentNode)
                 </div>
             </div>
 
-            ## output other nodes
-
-            <h2>Other Resources</h2>
-            <div class="panel-group" id="accordion">
-            #foreach($subject in $model.listSubjects())
-                #if( $subject != $topic )
-                    #set( $subUri = #$helpers.getResourceId($subject) )
-                    <div class="panel panel-default" resource="$subUri">
-                        <div class="panel-heading collapsed" data-toggle="collapse" data-target="#$helpers.parameterize($subUri)_triples" >
-                            #if( $subject.getURI() && $subject.getURI().startsWith("http") )
-                                <h3 class="ctitle panel-title"><a href="$subject.getURI()">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</a></h3>
-                            #else
-                                <h3 class="ctitle panel-title">$esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))</h3>
-                            #end
-                        </div>
-                        <div class="panel-collapse collapse"  id="$helpers.parameterize($subUri)_triples">
-                            <div class="panel-body">
-                                #triples($subject.asNode())
+            <!-- Other Resources accordion -->
+            <h2 class="h4">Other Resources</h2>
+            <div class="accordion" id="accordion">
+                #foreach($subject in $model.listSubjects())
+                    #if( $subject != $topic )
+                        #set( $subUri = #$helpers.getResourceId($subject) )
+                        #set( $paneId = "$helpers.parameterize($subUri)_triples" )
+                        <div class="accordion-item" resource="$subUri">
+                            <h2 class="accordion-header" id="${paneId}_header">
+                                <button class="accordion-button collapsed"
+                                        type="button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#$paneId"
+                                        aria-expanded="false"
+                                        aria-controls="$paneId">
+                                    #if( $subject.getURI() && $subject.getURI().startsWith("http") )
+                                        <span class="ctitle">
+                      <a href="$subject.getURI()" class="stretched-link text-reset text-decoration-none">
+                          $esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))
+                      </a>
+                    </span>
+                                    #else
+                                        <span class="ctitle">
+                                            $esc.html($helpers.getObjectTitle($rdf, $subject.asNode()))
+                                        </span>
+                                    #end
+                                </button>
+                            </h2>
+                            <div id="$paneId"
+                                 class="accordion-collapse collapse show"
+                                 aria-labelledby="${paneId}_header"
+                                 data-bs-parent="#accordion">
+                                <div class="accordion-body">
+                                    #triples($subject.asNode())
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    #end
                 #end
-            #end
             </div>
 
         </div>
+
+        <!-- Actions (shown as a collapsible block on xs/sm, always visible md+) -->
+        <div class="col-lg-3">
+            <button id="toggle-actions"
+                    type="button"
+                    class="btn btn-danger d-md-none mb-3"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#actions"
+                    aria-controls="actions"
+                    aria-expanded="false">
+                <span>Toggle actions</span>
+            </button>
+
+            <div class="actions collapse d-md-block" id="actions">
+                #parse("views/common-node-actions.vsl")
+            </div>
+        </div>
+
     </div>
+
     #parse("views/common-footer.vsl")
 </div>
 </body>
