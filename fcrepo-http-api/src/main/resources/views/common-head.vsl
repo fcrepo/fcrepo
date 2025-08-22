@@ -1,5 +1,6 @@
 <link rel="icon" type="image/png" href="$staticBaseUrl/static/images/fcrepo-favicon.png">
 <link href="$staticBaseUrl/static/css/bootstrap.min.css" rel="stylesheet">
+<link href="$staticBaseUrl/static/css/bootstrap-icons.css" rel="stylesheet">
 <link rel="stylesheet" type="text/css" href="$staticBaseUrl/static/css/common.css">
 
 <script type="text/javascript" src="$staticBaseUrl/static/js/common.js"></script>
