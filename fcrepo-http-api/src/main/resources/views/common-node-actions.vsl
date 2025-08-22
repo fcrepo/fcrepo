@@ -13,7 +13,7 @@
 </div>
     #if ($helpers.isRdfResource($rdf, $original, "http://fedora.info/definitions/v4/repository#", "Binary"))
     <a href="$content" class="btn btn-success btn-lg">
-        <!-- <i class="bi bi-download me-1"></i> -->
+        <i class="bi bi-file-earmark-arrow-down me-1"></i>
         Download Content
     </a>
     <br><br>
@@ -21,7 +21,7 @@
 #else
     #if ($helpers.isRdfResource($rdf, $content, "http://fedora.info/definitions/v4/repository#", "Binary"))
     <a href="$content" class="btn btn-success btn-lg">
-        <!-- <i class="bi bi-download me-1"></i> -->
+        <i class="bi bi-file-earmark-arrow-down me-1"></i>
         Download Content
     </a>
     <br><br>
