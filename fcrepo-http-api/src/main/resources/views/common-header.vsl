@@ -2,42 +2,57 @@
 
 #parse("views/common-register-header.vsl")
 
-<nav class="navbar navbar-default navbar-static-top" role="navigation">
-    <div class="navbar-header">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-        </button>
+<nav class="navbar navbar-expand-lg navbar-light bg-body-tertiary" role="navigation">
+    <div class="container-fluid">
         <a class="navbar-brand" href="$uriInfo.baseUriBuilder.build()">Fedora</a>
-    </div>
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#navbarMain"
+                aria-controls="navbarMain"
+                aria-expanded="false"
+                aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-    <!-- Collect the nav links, forms, and other content for toggling -->
-    <div class="collapse navbar-collapse navbar-ex1-collapse">
-        <ul class="nav navbar-nav">
-            <li><a href="$uriInfo.baseUriBuilder.build()">Home</a></li>
-            <li><a href="$uriInfo.baseUriBuilder.build()fcr:search">Search</a></li>
-        </ul>
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="$uriInfo.baseUriBuilder.build()">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="$uriInfo.baseUriBuilder.build()fcr:search">Search</a>
+                </li>
+            </ul>
+        </div>
     </div>
 </nav>
 
-
 <!-- Modal -->
-<button id="showErrorModal" data-toggle="modal" data-target="#errorModal"></button>
-<div class="modal fade" id="errorModal" tabindex="-1" role="dialog" aria-labelledby="errorLabel" aria-hidden="true">
+<button id="showErrorModal" type="button"
+        class="d-none"
+        data-bs-toggle="modal"
+        data-bs-target="#errorModal"></button>
+
+<div class="modal fade" id="errorModal" tabindex="-1"
+     aria-labelledby="errorLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
+
             <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="errorLabel"></h4>
+                <h4 class="modal-title mb-0" id="errorLabel"></h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
             </div>
+
             <div class="modal-body">
                 <div id="errorText"></div>
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary"
+                        data-bs-dismiss="modal">Close</button>
             </div>
-        </div><!-- /.modal-content -->
-    </div><!-- /.modal-dialog -->
-</div><!-- /.modal -->
+
+        </div>
+    </div>
+</div>
