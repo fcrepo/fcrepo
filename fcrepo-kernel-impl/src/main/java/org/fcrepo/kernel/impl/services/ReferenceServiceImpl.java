@@ -19,6 +19,7 @@ import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.sql.DataSource;
 
+import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -156,6 +157,29 @@ public class ReferenceServiceImpl implements ReferenceService {
             " t." + SUBJECT_COLUMN + " = " + TABLE_NAME + "." + SUBJECT_COLUMN +
             " AND t." + PROPERTY_COLUMN + " = " + TABLE_NAME + "." + PROPERTY_COLUMN +
             " AND t." + TARGET_COLUMN + " = " + TABLE_NAME + "." + TARGET_COLUMN + ")";
+    private static final String COMMIT_DELETE_RECORD_POSTGRES = "DELETE FROM " + TABLE_NAME + " r" +
+            " USING " + TRANSACTION_TABLE + " rto" +
+            " WHERE r." + RESOURCE_COLUMN + " = rto." + RESOURCE_COLUMN +
+            " AND r." + SUBJECT_COLUMN + " = rto." + SUBJECT_COLUMN +
+            " AND r." + PROPERTY_COLUMN + " = rto." + PROPERTY_COLUMN +
+            " AND r." + TARGET_COLUMN + " = rto." + TARGET_COLUMN +
+            " AND rto." + TRANSACTION_COLUMN + " = :transactionId" +
+            " AND rto." + OPERATION_COLUMN + " = 'delete'";
+    private static final String COMMIT_DELETE_RECORD_MYSQL = "DELETE r" +
+            " FROM " + TABLE_NAME + " r" +
+            " INNER JOIN " + TRANSACTION_TABLE + " rto" +
+            " ON r." + RESOURCE_COLUMN + " = rto." + RESOURCE_COLUMN +
+            " AND r." + SUBJECT_COLUMN + " = rto." + SUBJECT_COLUMN +
+            " AND r." + PROPERTY_COLUMN + " = rto." + PROPERTY_COLUMN +
+            " AND r." + TARGET_COLUMN + " = rto." + TARGET_COLUMN +
+            " WHERE rto." + TRANSACTION_COLUMN + " = :transactionId" +
+            " AND rto." + OPERATION_COLUMN + " = 'delete'";
+    private static final Map<DbPlatform, String> COMMIT_DELETE_RECORD_MAP = Map.of(
+            DbPlatform.POSTGRESQL, COMMIT_DELETE_RECORD_POSTGRES,
+            DbPlatform.MYSQL, COMMIT_DELETE_RECORD_MYSQL,
+            DbPlatform.MARIADB, COMMIT_DELETE_RECORD_MYSQL,
+            DbPlatform.H2, COMMIT_DELETE_RECORDS
+            );
 
     private static final String DELETE_TRANSACTION = "DELETE FROM " + TRANSACTION_TABLE + " WHERE " +
             TRANSACTION_COLUMN + " = :transactionId";
@@ -163,8 +187,11 @@ public class ReferenceServiceImpl implements ReferenceService {
     private static final String TRUNCATE_TABLE = "TRUNCATE TABLE " + TABLE_NAME;
     private static final String TRUNCATE_TX_TABLE = "TRUNCATE TABLE " + TRANSACTION_TABLE;
 
+    private DbPlatform dbPlatform;
+
     @PostConstruct
     public void setUp() {
+        dbPlatform = DbPlatform.fromDataSource(dataSource);
         jdbcTemplate = new NamedParameterJdbcTemplate(getDataSource());
     }
 
@@ -295,7 +322,7 @@ public class ReferenceServiceImpl implements ReferenceService {
             tx.ensureCommitting();
             try {
                 final Map<String, String> parameterSource = Map.of("transactionId", tx.getId());
-                jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
+                jdbcTemplate.update(COMMIT_DELETE_RECORD_MAP.get(dbPlatform), parameterSource);
                 jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
                 jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
             } catch (final Exception e) {
