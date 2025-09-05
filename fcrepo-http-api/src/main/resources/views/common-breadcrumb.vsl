@@ -1,13 +1,20 @@
-
 #set( $breadcrumbs = $helpers.getNodeBreadcrumbs($uriInfo, $topic))
 
-<ul class="breadcrumb">
-    <li><a href="$uriInfo.getBaseUri()">Home</a></li>
-    #foreach($entry in $breadcrumbs.entrySet())
-        #if ($entry.getKey() == $uriInfo.getAbsolutePath().toString())
-            <li class="active">$entry.getValue()</li>
-        #else
-            <li ><a href="$entry.getKey()">$entry.getValue()</a></li>
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb mb-3">
+        <li class="breadcrumb-item">
+            <a href="$uriInfo.getBaseUri()">Home</a>
+        </li>
+        #foreach($entry in $breadcrumbs.entrySet())
+            #if ($entry.getKey() == $uriInfo.getAbsolutePath().toString())
+                <li class="breadcrumb-item active" aria-current="page">
+                    $entry.getValue()
+                </li>
+            #else
+                <li class="breadcrumb-item">
+                    <a href="$entry.getKey()">$entry.getValue()</a>
+                </li>
+            #end
         #end
-    #end
-</ul>
+    </ol>
+</nav>

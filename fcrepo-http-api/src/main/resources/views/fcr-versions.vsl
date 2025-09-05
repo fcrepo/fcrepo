@@ -9,27 +9,35 @@
     #parse("views/common-head.vsl")
 </head>
 
-
-<body  class="fcrepo_resource">
-  <div  id="main" class="container" resource="$topic.getURI()">
+<body class="fcrepo_resource">
+<div id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
-    <div class="col-md-12">
-      #parse("views/common-breadcrumb.vsl")
+
+    <div class="row">
+        <div class="col-12">
+            #parse("views/common-breadcrumb.vsl")
+        </div>
     </div>
-    <div id="historic-versions">
-        <h2>Historic Versions</h2>
+
+    <section id="historic-versions" class="mt-3">
+        <h2 class="h4">Historic Versions</h2>
         #set( $versions = $helpers.getVersions($rdf, $topic) )
         #if($versions.hasNext())
-            <ul>
-            #foreach($subject in $versions)
-                #set($label = $helpers.getVersionLabel($rdf, $subject))
-                <li><a href="$subject.getURI()" class="version_link">$esc.html($label)</a></li>
-            #end
+            <ul class="list-group">
+                #foreach($subject in $versions)
+                    #set($label = $helpers.getVersionLabel($rdf, $subject))
+                    <li class="list-group-item">
+                        <a href="$subject.getURI()" class="version_link text-decoration-none">
+                            $esc.html($label)
+                        </a>
+                    </li>
+                #end
             </ul>
         #else
-            <p>No versions have been created for this resource.</p>
+            <p class="text-muted mb-0">No versions have been created for this resource.</p>
         #end
-    </div>
+    </section>
+
     #parse("views/common-footer.vsl")
 </div>
 </body>
