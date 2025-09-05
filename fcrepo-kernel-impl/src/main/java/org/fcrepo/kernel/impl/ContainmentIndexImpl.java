@@ -312,6 +312,26 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             " FROM " + TRANSACTION_OPERATIONS_TABLE + " t " +
             " WHERE t." + TRANSACTION_ID_COLUMN + " = :transactionId " +
             " AND t." + OPERATION_COLUMN + " = 'purge')";
+    private static final String COMMIT_PURGE_RECORDS_POSTGRES = "DELETE FROM " + RESOURCES_TABLE + " r" +
+            " USING " + TRANSACTION_OPERATIONS_TABLE + " t" +
+            " WHERE t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN +
+            " AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN +
+            " AND t." + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND t." + OPERATION_COLUMN + " = 'purge'";
+    private static final String COMMIT_PURGE_RECORDS_MYSQL = "DELETE r" +
+            " FROM " + RESOURCES_TABLE + " r" +
+            " INNER JOIN " + TRANSACTION_OPERATIONS_TABLE + " t" +
+            " ON t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN +
+            " AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN +
+            " WHERE t." + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND t." + OPERATION_COLUMN + " = 'purge'";
+
+    private static final Map<DbPlatform, String> COMMIT_PURGE_RECORDS_MAP = Map.of(
+            DbPlatform.H2, COMMIT_PURGE_RECORDS,
+            DbPlatform.MYSQL, COMMIT_PURGE_RECORDS_MYSQL,
+            DbPlatform.MARIADB, COMMIT_PURGE_RECORDS_MYSQL,
+            DbPlatform.POSTGRESQL, COMMIT_PURGE_RECORDS_POSTGRES
+    );
     /*
      * Query if a resource exists in the main table and is not deleted.
      */
@@ -748,7 +768,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                         String.class);
                 final List<String> addedResources = jdbcTemplate.queryForList(GET_ADDED_RESOURCES, parameterSource,
                         String.class);
-                final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
+                final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS_MAP.get(dbPlatform), parameterSource);
                 final int deleted = jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
                 final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS_MAP.get(dbPlatform), parameterSource);
                 for (final var parent : changedParents) {
