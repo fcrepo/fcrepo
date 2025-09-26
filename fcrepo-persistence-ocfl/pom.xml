@@ -50,7 +50,7 @@
     <dependency>
       <groupId>org.fcrepo</groupId>
       <artifactId>fcrepo-storage-ocfl</artifactId>
-      <version>6.4.0</version>
+      <version>${fcrepo-storage-ocfl.version}</version>
     </dependency>
 
     <dependency>
