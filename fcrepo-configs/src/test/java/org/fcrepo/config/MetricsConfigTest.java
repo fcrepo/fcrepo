@@ -70,7 +70,7 @@ public class MetricsConfigTest {
 
     @Test
     public void testMetricsEnabled() {
-        env.setProperty("fcrepo.metrics.enable", "true");
+        env.setProperty("fcrepo.metrics.enabled", "true");
         initializeContext();
         initializeConfig();
 
@@ -87,7 +87,7 @@ public class MetricsConfigTest {
 
     @Test
     public void testTimerMetricsConfiguration() {
-        env.setProperty("fcrepo.metrics.enable", "true");
+        env.setProperty("fcrepo.metrics.enabled", "true");
         initializeContext();
         initializeConfig();
 

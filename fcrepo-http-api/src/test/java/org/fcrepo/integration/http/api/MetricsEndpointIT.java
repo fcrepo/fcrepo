@@ -44,7 +44,7 @@ public class MetricsEndpointIT extends AbstractResourceIT {
 
     static {
         // Ensure the metrics property is set before tests run
-        System.setProperty("fcrepo.metrics.enable", "true");
+        System.setProperty("fcrepo.metrics.enabled", "true");
     }
 
     @BeforeEach
@@ -63,7 +63,7 @@ public class MetricsEndpointIT extends AbstractResourceIT {
                     }
                 });
         // Now that fedora has started, clear the property so it won't impact other tests
-        System.clearProperty("fcrepo.metrics.enable");
+        System.clearProperty("fcrepo.metrics.enabled");
     }
 
     @Test
