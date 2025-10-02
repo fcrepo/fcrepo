@@ -32,13 +32,17 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class MetricsConfig extends BasePropsConfig {
 
+    @Deprecated
     @Value("${fcrepo.metrics.enable:false}")
+    private boolean metricsEnable;
+
+    @Value("${fcrepo.metrics.enabled:false}")
     private boolean metricsEnabled;
 
     @Bean
     public MeterRegistry meterRegistry() {
         final MeterRegistry registry;
-        if (metricsEnabled) {
+        if (metricsEnabled || metricsEnable) {
             registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry,
                     Clock.SYSTEM);
             registry.config().meterFilter(new MeterFilter() {
@@ -70,7 +74,10 @@ public class MetricsConfig extends BasePropsConfig {
      * @return whether metrics are enabled
      */
     public boolean isMetricsEnabled() {
-        return metricsEnabled;
+        if (metricsEnabled || metricsEnable) {
+            return true;
+        } else {
+            return false;
+        }
     }
-
 }
