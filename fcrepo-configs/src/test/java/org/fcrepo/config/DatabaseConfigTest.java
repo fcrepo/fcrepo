@@ -6,9 +6,9 @@
 package org.fcrepo.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import javax.sql.DataSource;
@@ -38,6 +38,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 
 /**
  * @author bbpennel
@@ -92,11 +94,13 @@ public class DatabaseConfigTest {
         setField(databaseConfig, "customDbProperties", null);
     }
 
+    private final MeterRegistry registry = new SimpleMeterRegistry();
+
     @Test
     public void testDataSource() throws Exception {
-        final DataSource dataSource = databaseConfig.dataSource();
+        final DataSource dataSource = databaseConfig.dataSource(registry);
         assertNotNull(dataSource);
-        assertTrue(dataSource instanceof HikariDataSource);
+        assertInstanceOf(HikariDataSource.class, dataSource);
 
         final HikariDataSource hikariDs = (HikariDataSource) dataSource;
         assertEquals("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", hikariDs.getJdbcUrl());
@@ -105,14 +109,14 @@ public class DatabaseConfigTest {
 
     @Test
     public void testTxManager() throws Exception {
-        final DataSource dataSource = databaseConfig.dataSource();
+        final DataSource dataSource = databaseConfig.dataSource(registry);
         final PlatformTransactionManager txManager = databaseConfig.txManager(dataSource);
         assertNotNull(txManager);
     }
 
     @Test
     public void testTxTemplate() throws Exception {
-        final DataSource dataSource = databaseConfig.dataSource();
+        final DataSource dataSource = databaseConfig.dataSource(registry);
         final PlatformTransactionManager txManager = databaseConfig.txManager(dataSource);
         final TransactionTemplate txTemplate = databaseConfig.txTemplate(txManager);
         assertNotNull(txTemplate);
@@ -120,7 +124,7 @@ public class DatabaseConfigTest {
 
     @Test
     public void testFlyway() throws Exception {
-        final DataSource dataSource = databaseConfig.dataSource();
+        final DataSource dataSource = databaseConfig.dataSource(registry);
         final Flyway flyway = databaseConfig.flyway(dataSource);
         assertNotNull(flyway);
     }
@@ -128,13 +132,13 @@ public class DatabaseConfigTest {
     @Test
     public void testDataSourceInvalidDbType() {
         setField(databaseConfig, "dbUrl", "failtime");
-        assertThrows(IllegalArgumentException.class, () -> databaseConfig.dataSource());
+        assertThrows(IllegalArgumentException.class, () -> databaseConfig.dataSource(registry));
     }
 
     @Test
     public void testDataSourceDriverNotFound() {
         setField(databaseConfig, "dbUrl", "oh:no");
-        assertThrows(IllegalStateException.class, () -> databaseConfig.dataSource());
+        assertThrows(IllegalStateException.class, () -> databaseConfig.dataSource(registry));
     }
 
     @Test
@@ -155,9 +159,9 @@ public class DatabaseConfigTest {
         setField(databaseConfig, "customDbProperties", propertiesPath.toString());
 
         // Test the datasource creation with custom properties file
-        final DataSource dataSource = databaseConfig.dataSource();
+        final DataSource dataSource = databaseConfig.dataSource(registry);
         assertNotNull(dataSource);
-        assertTrue(dataSource instanceof HikariDataSource);
+        assertInstanceOf(HikariDataSource.class, dataSource);
 
         final HikariDataSource hikariDs = (HikariDataSource) dataSource;
         assertEquals("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", hikariDs.getJdbcUrl());
@@ -171,9 +175,9 @@ public class DatabaseConfigTest {
         setField(databaseConfig, "maxPoolSize", 20);
         setField(databaseConfig, "checkoutTimeout", 5000);
 
-        final DataSource dataSource = databaseConfig.dataSource();
+        final DataSource dataSource = databaseConfig.dataSource(registry);
         assertNotNull(dataSource);
-        assertTrue(dataSource instanceof HikariDataSource);
+        assertInstanceOf(HikariDataSource.class, dataSource);
 
         final HikariDataSource hikariDs = (HikariDataSource) dataSource;
         assertEquals(20, hikariDs.getMaximumPoolSize());

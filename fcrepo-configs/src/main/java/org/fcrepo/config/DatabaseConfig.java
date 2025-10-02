@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 
@@ -32,6 +34,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.metrics.micrometer.MicrometerMetricsTrackerFactory;
 
 /**
  * @author pwinckles
@@ -89,7 +92,7 @@ public class DatabaseConfig extends BasePropsConfig {
     }
 
     @Bean
-    public DataSource dataSource() throws Exception {
+    public DataSource dataSource(final MeterRegistry registry) throws Exception {
         final var driver = identifyDbDriver();
 
         LOGGER.info("JDBC URL: {}", dbUrl);
@@ -124,13 +127,16 @@ public class DatabaseConfig extends BasePropsConfig {
             }
             config.setMaximumPoolSize(maxPoolSize);
         }
-        if (driver == "mariadb") {
+        if (driver.equalsIgnoreCase("mariadb")) {
             config.addDataSourceProperty("useServerPrepStmts", "false");
         }
         config.setDriverClassName(driver);
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUser);
         config.setPassword(dbPassword);
+        if (registry instanceof PrometheusMeterRegistry) {
+            config.setMetricsTrackerFactory(new MicrometerMetricsTrackerFactory(registry));
+        }
 
         final var dataSource = new HikariDataSource(config);
 
