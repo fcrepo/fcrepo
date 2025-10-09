@@ -13,6 +13,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.slf4j.LoggerFactory.getLogger;
 
+import com.newrelic.api.agent.Trace;
 import java.time.Instant;
 import java.util.stream.Stream;
 
@@ -62,6 +63,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
     private UserTypesCache userTypesCache;
 
     @Override
+    @Trace
     public FedoraResource getResource(final Transaction transaction, final FedoraId fedoraID)
             throws PathNotFoundException {
         return instantiateResource(transaction, fedoraID);
@@ -120,6 +122,7 @@ public class ResourceFactoryImpl implements ResourceFactory {
      * @return new FedoraResource instance
      * @throws PathNotFoundException
      */
+    @Trace
     private FedoraResource instantiateResource(final Transaction transaction,
                                                final FedoraId identifier)
             throws PathNotFoundException {

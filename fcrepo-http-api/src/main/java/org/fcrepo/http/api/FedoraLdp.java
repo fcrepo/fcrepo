@@ -119,6 +119,8 @@ import org.springframework.http.ContentDisposition;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.newrelic.api.agent.Trace;
+import com.newrelic.api.agent.TraceByReturnType;
 
 /**
  * @author cabeer
@@ -210,6 +212,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return response
      * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
      */
+    @Trace(dispatcher = true)
     @HEAD
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
@@ -275,6 +278,7 @@ public class FedoraLdp extends ContentExposingResource {
      * Outputs information about the supported HTTP methods, etc.
      * @return the outputs information about the supported HTTP methods, etc.
      */
+    @Trace(dispatcher = true)
     @OPTIONS
     public Response options() {
         LOGGER.info("OPTIONS for '{}'", externalPath);
@@ -294,6 +298,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws UnsupportedAlgorithmException if unsupported digest algorithm occurred
      */
     @GET
+    @Trace(dispatcher = true)
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET,
             TEXT_HTML_WITH_CHARSET, "*/*"})
@@ -382,6 +387,7 @@ public class FedoraLdp extends ContentExposingResource {
      *
      * @return response
      */
+    @Trace(dispatcher = true)
     @DELETE
     public Response deleteObject() {
         LOGGER.info("Delete resource '{}'", externalPath);
@@ -435,6 +441,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
      */
+    @Trace(dispatcher = true)
     @PUT
     @Consumes
     public Response createOrReplaceObjectRdf(
@@ -595,6 +602,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @return 201
      * @throws IOException if IO exception occurred
      */
+    @Trace(dispatcher = true)
     @PATCH
     @Consumes({contentTypeSPARQLUpdate})
     public Response updateSparql(final InputStream requestBodyStream)
@@ -675,6 +683,7 @@ public class FedoraLdp extends ContentExposingResource {
      * @throws MalformedRdfException if malformed rdf exception occurred
      * @throws UnsupportedAlgorithmException if an unsupported algorithm exception occurs
      */
+    @Trace(dispatcher = true)
     @POST
     @Consumes({MediaType.APPLICATION_OCTET_STREAM + ";qs=1.000", WILDCARD})
     @Produces({TURTLE_WITH_CHARSET + ";qs=1.0", JSON_LD + ";qs=0.8",

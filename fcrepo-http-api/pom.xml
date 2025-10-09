@@ -137,7 +137,11 @@
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-core</artifactId>
     </dependency>
-
+    <dependency>
+      <groupId>com.newrelic.agent.java</groupId>
+      <artifactId>newrelic-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <!-- test gear -->
     <dependency>
       <groupId>org.fcrepo</groupId>

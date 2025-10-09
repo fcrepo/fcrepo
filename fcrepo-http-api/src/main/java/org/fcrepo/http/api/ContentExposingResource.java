@@ -129,6 +129,7 @@ import org.fcrepo.kernel.api.utils.ContentDigest;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.newrelic.api.agent.Trace;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
@@ -398,6 +399,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
         }
     }
 
+    @Trace
     protected FedoraResource resource(final boolean canReturnTombstone) {
         if (fedoraResource == null) {
             try {
@@ -1074,6 +1076,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      * @param canReturnTombstone if tombstones can be returned
      * @return the fedora resource at the external path
      */
+    @Trace
     private FedoraResource getResourceFromPath(final String externalPath, final boolean canReturnTombstone) {
         final FedoraId fedoraId = identifierConverter().pathToInternalId(externalPath);
 

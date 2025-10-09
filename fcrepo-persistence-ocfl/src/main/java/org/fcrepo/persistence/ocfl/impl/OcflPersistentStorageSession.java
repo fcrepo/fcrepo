@@ -48,6 +48,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.newrelic.api.agent.Trace;
 
 /**
  * OCFL Persistent Storage class.
@@ -188,12 +189,14 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         }
     }
 
+    @Trace
     OcflObjectSession findOrCreateSession(final String ocflId) {
         return this.sessionMap.computeIfAbsent(ocflId, key -> {
             return new FcrepoOcflObjectSessionWrapper(this.objectSessionFactory.newSession(key));
         });
     }
 
+    @Trace
     @Override
     public ResourceHeaders getHeaders(final FedoraId identifier, final Instant version)
             throws PersistentStorageException {
@@ -208,6 +211,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         return new ResourceHeadersAdapter(headers).asKernelHeaders();
     }
 
+    @Trace
     private FedoraOcflMapping getFedoraOcflMapping(final FedoraId identifier)
             throws PersistentStorageException {
         try {
@@ -218,6 +222,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         }
     }
 
+    @Trace
     @Override
     public RdfStream getTriples(final FedoraId identifier, final Instant version)
             throws PersistentStorageException {
@@ -235,6 +240,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
         }
     }
 
+    @Trace
     @Override
     public List<Instant> listVersions(final FedoraId fedoraIdentifier)
             throws PersistentStorageException {
@@ -402,6 +408,7 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
      * @return name of version
      * @throws PersistentStorageException thrown if version not found
      */
+    @Trace
     private String resolveVersionNumber(final OcflObjectSession objSession,
                                        final FedoraId fedoraId,
                                        final Instant version)
