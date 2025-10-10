@@ -6,24 +6,16 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import io.ocfl.api.OcflRepository;
-
+import jakarta.inject.Inject;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
-import org.fcrepo.kernel.api.ContainmentIndex;
-import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
-import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import jakarta.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -44,14 +36,6 @@ import java.time.Instant;
 public class IndexBuilderImpl implements IndexBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexBuilderImpl.class);
-
-    @Autowired
-    @Qualifier("ocflIndex")
-    private FedoraToOcflObjectIndex ocflIndex;
-
-    @Autowired
-    @Qualifier("containmentIndex")
-    private ContainmentIndex containmentIndex;
 
     @Inject
     private OcflRepository ocflRepository;
@@ -89,11 +73,6 @@ public class IndexBuilderImpl implements IndexBuilder {
         }
         LOGGER.info(logMessage + " This may take a while. Progress will be logged periodically.");
 
-        if (!fedoraPropsConfig.isRebuildContinue()) {
-            LOGGER.debug("Clearing all indexes");
-            reindexService.reset();
-        }
-
         try (var objectIds = ocflRepository.listObjectIds()) {
             final ReindexManager reindexManager = new ReindexManager(objectIds,
                     reindexService, ocflPropsConfig, txManager, dbTransactionExecutor);
@@ -126,26 +105,7 @@ public class IndexBuilderImpl implements IndexBuilder {
     }
 
     private boolean shouldRebuild() {
-        final var repoRoot = getRepoRootMapping();
-        if (fedoraPropsConfig.isRebuildOnStart() || fedoraPropsConfig.isRebuildContinue()) {
-            return true;
-        } else if (repoRoot == null) {
-            return true;
-        } else {
-            return !repoContainsRootObject(repoRoot);
-        }
-    }
-
-    private String getRepoRootMapping() {
-        try {
-            return ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()).getOcflObjectId();
-        } catch (final FedoraOcflMappingNotFoundException e) {
-            return null;
-        }
-    }
-
-    private boolean repoContainsRootObject(final String id) {
-        return ocflRepository.containsObject(id);
+        return fedoraPropsConfig.isRebuildContinue();
     }
 
     private String getDurationMessage(final Duration duration) {

@@ -40,7 +40,6 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
     private static final String FCREPO_REBUILD_VALIDATION = "fcrepo.rebuild.validation";
     private static final String FCREPO_REBUILD_VALIDATION_FIXITY = "fcrepo.rebuild.validation.fixity";
-    private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
     private static final String FCREPO_REBUILD_CONTINUE = "fcrepo.rebuild.continue";
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
     private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
@@ -98,9 +97,6 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("${" + FCREPO_REBUILD_VALIDATION_FIXITY + ":false}")
     private boolean rebuildFixityCheck;
-
-    @Value("${" + FCREPO_REBUILD_ON_START + ":false}")
-    private boolean rebuildOnStart;
 
     @Value("${" + FCREPO_REBUILD_CONTINUE + ":false}")
     private boolean rebuildContinue;
@@ -308,20 +304,6 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public boolean isRebuildFixityCheck() {
         return rebuildFixityCheck;
-    }
-
-    /**
-     * @return true if the internal indices should be rebuilt when Fedora starts up.
-     */
-    public boolean isRebuildOnStart() {
-        return rebuildOnStart;
-    }
-
-    /**
-     * @param rebuildOnStart A boolean flag indicating whether or not to rebuild on start
-     */
-    public void setRebuildOnStart(final boolean rebuildOnStart) {
-        this.rebuildOnStart = rebuildOnStart;
     }
 
     /**
