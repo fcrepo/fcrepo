@@ -6,6 +6,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,8 +16,14 @@ import io.ocfl.api.OcflRepository;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +42,12 @@ import java.util.List;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class IndexBuilderImplTest {
+
+    @Mock
+    private FedoraToOcflObjectIndex ocflIndex;
+
+    @Mock
+    private ContainmentIndex containmentIndex;
 
     @Mock
     private OcflRepository ocflRepository;
@@ -72,7 +85,12 @@ public class IndexBuilderImplTest {
     }
 
     @Test
-    public void testRebuildIfNecessary_NoRebuildNeeded() throws Exception {
+    public void testRebuildIfNecessary_NoRebuildNeeded_RootPresent() throws Exception {
+        // Configure root object to exist
+        when(ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()))
+                .thenReturn(rootMapping);
+        when(rootMapping.getOcflObjectId()).thenReturn(ROOT_OBJECT_ID);
+        when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(true);
         when(fedoraPropsConfig.isRebuildContinue()).thenReturn(false);
 
         try (final var mockReindexManagers = Mockito.mockConstruction(ReindexManager.class)) {
@@ -82,6 +100,35 @@ public class IndexBuilderImplTest {
             verify(reindexService, never()).reset();
             assertTrue(mockReindexManagers.constructed().isEmpty());
         }
+    }
+
+    @Test
+    public void testRebuildIfNecessary_NoRebuildNeeded_NoRoot() throws Exception {
+        // Configure root object to exist
+        when(ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()))
+                .thenThrow(new FedoraOcflMappingNotFoundException("Missing"));
+        when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
+        when(fedoraPropsConfig.isRebuildContinue()).thenReturn(false);
+
+        // No errors, but no reindex either
+        try (final var mockReindexManagers = Mockito.mockConstruction(ReindexManager.class)) {
+            indexBuilder.rebuildIfNecessary();
+
+            // Verify no rebuild was performed
+            verify(reindexService, never()).reset();
+            assertTrue(mockReindexManagers.constructed().isEmpty());
+        }
+    }
+
+    @Test
+    public void testRebuildIfNecessary_RootObjectNotInOcflButIndexed() throws Exception {
+        // Configure root mapping exists, but object doesn't
+        when(ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()))
+                .thenReturn(rootMapping);
+        when(rootMapping.getOcflObjectId()).thenReturn(ROOT_OBJECT_ID);
+        when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
+
+        assertThrows(RepositoryConfigurationException.class, () -> indexBuilder.rebuildIfNecessary());
     }
 
     @Test

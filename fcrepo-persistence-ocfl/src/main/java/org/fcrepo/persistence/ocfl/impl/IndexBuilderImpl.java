@@ -10,10 +10,18 @@ import jakarta.inject.Inject;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.TransactionManager;
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
+import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.persistence.ocfl.api.IndexBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -36,6 +44,14 @@ import java.time.Instant;
 public class IndexBuilderImpl implements IndexBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexBuilderImpl.class);
+
+    @Autowired
+    @Qualifier("ocflIndex")
+    private FedoraToOcflObjectIndex ocflIndex;
+
+    @Autowired
+    @Qualifier("containmentIndex")
+    private ContainmentIndex containmentIndex;
 
     @Inject
     private OcflRepository ocflRepository;
@@ -60,17 +76,18 @@ public class IndexBuilderImpl implements IndexBuilder {
         if (shouldRebuild()) {
             rebuild();
         } else {
+            final var rootIndexed = getRepoRootMapping();
+            if (rootIndexed != null && !repoContainsRootObject(rootIndexed)) {
+                throw new RepositoryConfigurationException("The OCFL repository does not contain a repository" +
+                        " root object, but one is indexed. Inspect configuration and setup to determine" +
+                        " the cause of this inconsistency.");
+            }
             LOGGER.debug("No index rebuild necessary");
         }
     }
 
     private void rebuild() {
-        final String logMessage;
-        if (fedoraPropsConfig.isRebuildContinue()) {
-            logMessage = "Initiating partial index rebuild. This will add missing objects to the index.";
-        } else {
-            logMessage = "Initiating index rebuild.";
-        }
+        final String logMessage = "Initiating partial index rebuild. This will add missing objects to the index.";
         LOGGER.info(logMessage + " This may take a while. Progress will be logged periodically.");
 
         try (var objectIds = ocflRepository.listObjectIds()) {
@@ -90,22 +107,27 @@ public class IndexBuilderImpl implements IndexBuilder {
             final var count = reindexManager.getCompletedCount();
             final var errors = reindexManager.getErrorCount();
             final var skipped = reindexManager.getSkippedCount();
-            if (fedoraPropsConfig.isRebuildContinue()) {
-                LOGGER.info(
-                    "Index rebuild completed {} objects successfully, {} objects skipped and {} objects had errors " +
-                    "in {} ", count, skipped, errors, getDurationMessage(Duration.between(startTime, endTime))
-                );
-            } else {
-                LOGGER.info(
-                    "Index rebuild completed {} objects successfully and {} objects had errors in {} ",
-                    count, errors, getDurationMessage(Duration.between(startTime, endTime))
-                );
-            }
+            LOGGER.info(
+                "Index rebuild completed {} objects successfully, {} objects skipped and {} objects had errors " +
+                "in {} ", count, skipped, errors, getDurationMessage(Duration.between(startTime, endTime))
+            );
         }
     }
 
     private boolean shouldRebuild() {
         return fedoraPropsConfig.isRebuildContinue();
+    }
+
+    private String getRepoRootMapping() {
+        try {
+            return ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()).getOcflObjectId();
+        } catch (final FedoraOcflMappingNotFoundException e) {
+            return null;
+        }
+    }
+
+    private boolean repoContainsRootObject(final String id) {
+        return ocflRepository.containsObject(id);
     }
 
     private String getDurationMessage(final Duration duration) {
