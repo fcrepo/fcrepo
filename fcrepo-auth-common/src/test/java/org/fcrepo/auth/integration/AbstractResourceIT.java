@@ -8,12 +8,15 @@ package org.fcrepo.auth.integration;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Strings;
+import jakarta.inject.Inject;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.fcrepo.http.commons.test.util.ContainerWrapper;
+import org.fcrepo.persistence.ocfl.impl.ReindexService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -40,10 +43,19 @@ import org.fcrepo.kernel.api.auth.ACLHandle;
 public abstract class AbstractResourceIT {
 
     private Logger logger;
+    @Inject
+    protected ContainerWrapper containerWrapper;
+    private ReindexService reindexService;
 
     @BeforeEach
     public void setLogger() {
         logger = LoggerFactory.getLogger(this.getClass());
+        reindexService = getBean(ReindexService.class);
+        reindexService.reset();
+    }
+
+    protected <T> T getBean(final Class<T> type) {
+        return containerWrapper.getSpringAppContext().getBean(type);
     }
 
     static class TestAuthHandleCacheConfig {
