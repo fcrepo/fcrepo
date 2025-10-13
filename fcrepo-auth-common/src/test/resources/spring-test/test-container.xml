@@ -9,9 +9,9 @@
   <context:property-placeholder/>
 
   <!-- show stack traces for easier debugging -->
-  <bean id="wildcardExceptionmapper" class="org.fcrepo.http.commons.exceptionhandlers.WildcardExceptionMapper" >
+  <!--   <bean id="wildcardExceptionmapper" class="org.fcrepo.http.commons.exceptionhandlers.WildcardExceptionMapper" >
   	<property name="showStackTrace" value="true" />
-  </bean>
+  </bean> -->
 
   <bean id="containerWrapper"
     class="org.fcrepo.http.commons.test.util.ContainerWrapper"

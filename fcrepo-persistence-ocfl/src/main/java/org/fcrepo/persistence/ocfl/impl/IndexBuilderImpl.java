@@ -77,11 +77,12 @@ public class IndexBuilderImpl implements IndexBuilder {
         } else {
             final var rootIndexed = getRepoRootMapping();
             if (rootIndexed != null && !repoContainsRootObject(rootIndexed)) {
-                throw new IllegalStateException("The OCFL repository does not contain a repository" +
+                LOGGER.error("The OCFL repository does not contain a repository" +
                         " root object, but one is indexed. Inspect configuration and setup to determine" +
                         " the cause of this inconsistency.");
+            } else {
+                LOGGER.debug("No index rebuild necessary");
             }
-            LOGGER.debug("No index rebuild necessary");
         }
     }
 

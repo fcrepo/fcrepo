@@ -6,7 +6,6 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -127,10 +126,13 @@ public class IndexBuilderImplTest {
         when(rootMapping.getOcflObjectId()).thenReturn(ROOT_OBJECT_ID);
         when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
 
-        final var exception = assertThrows(IllegalStateException.class,
-                () -> indexBuilder.rebuildIfNecessary());
-        assertTrue(exception.getMessage().contains("The OCFL repository does not contain a repository" +
-                " root object, but one is indexed."));
+        try (final var mockReindexManagers = Mockito.mockConstruction(ReindexManager.class)) {
+            indexBuilder.rebuildIfNecessary();
+
+            // Verify no rebuild was performed
+            verify(reindexService, never()).reset();
+            assertTrue(mockReindexManagers.constructed().isEmpty());
+        }
     }
 
     @Test
