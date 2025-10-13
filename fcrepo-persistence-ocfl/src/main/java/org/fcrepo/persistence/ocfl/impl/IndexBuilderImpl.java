@@ -13,7 +13,6 @@ import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -77,8 +76,13 @@ public class IndexBuilderImpl implements IndexBuilder {
             rebuild();
         } else {
             final var rootIndexed = getRepoRootMapping();
+            if (rootIndexed == null && repoIsPopulated()) {
+                throw new IllegalStateException("The OCFL repository appears to be populated, but the " +
+                        "index does not contain a mapping for the repository root object. Inspect configuration " +
+                        "and setup to determine the cause of this inconsistency.");
+            }
             if (rootIndexed != null && !repoContainsRootObject(rootIndexed)) {
-                throw new RepositoryConfigurationException("The OCFL repository does not contain a repository" +
+                throw new IllegalStateException("The OCFL repository does not contain a repository" +
                         " root object, but one is indexed. Inspect configuration and setup to determine" +
                         " the cause of this inconsistency.");
             }
@@ -128,6 +132,12 @@ public class IndexBuilderImpl implements IndexBuilder {
 
     private boolean repoContainsRootObject(final String id) {
         return ocflRepository.containsObject(id);
+    }
+
+    private boolean repoIsPopulated() {
+        try (final var objectIds = ocflRepository.listObjectIds()) {
+            return objectIds.findAny().isPresent();
+        }
     }
 
     private String getDurationMessage(final Duration duration) {

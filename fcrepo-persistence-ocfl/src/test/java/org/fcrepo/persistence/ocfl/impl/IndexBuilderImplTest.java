@@ -20,7 +20,6 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.ReadOnlyTransaction;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
-import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
@@ -35,6 +34,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author bbpennel
@@ -128,7 +128,24 @@ public class IndexBuilderImplTest {
         when(rootMapping.getOcflObjectId()).thenReturn(ROOT_OBJECT_ID);
         when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
 
-        assertThrows(RepositoryConfigurationException.class, () -> indexBuilder.rebuildIfNecessary());
+        final var exception = assertThrows(IllegalStateException.class,
+                () -> indexBuilder.rebuildIfNecessary());
+        assertTrue(exception.getMessage().contains("The OCFL repository does not contain a repository" +
+                " root object, but one is indexed."));
+    }
+
+    @Test
+    public void testRebuildIfNecessary_RootObjectNotIndexed_OcflPopulated() throws Exception {
+        // Root does not exist in index, but OCFL has other objects (we can't know the root id without index)
+        when(ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()))
+                .thenThrow(new FedoraOcflMappingNotFoundException("Missing"));
+        when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
+        when(ocflRepository.listObjectIds()).thenReturn(Stream.of("some-other-object"));
+
+        final var exception = assertThrows(IllegalStateException.class,
+                () -> indexBuilder.rebuildIfNecessary());
+        assertTrue(exception.getMessage().contains("The OCFL repository appears to be populated, but the" +
+                " index does not contain a mapping for the repository root object"));
     }
 
     @Test
