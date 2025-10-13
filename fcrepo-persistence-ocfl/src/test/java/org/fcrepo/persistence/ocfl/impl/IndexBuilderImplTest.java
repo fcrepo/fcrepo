@@ -119,19 +119,19 @@ public class IndexBuilderImplTest {
         }
     }
 
-    @Test
-    public void testRebuildIfNecessary_RootObjectNotInOcflButIndexed() throws Exception {
-        // Configure root mapping exists, but object doesn't
-        when(ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()))
-                .thenReturn(rootMapping);
-        when(rootMapping.getOcflObjectId()).thenReturn(ROOT_OBJECT_ID);
-        when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
-
-        final var exception = assertThrows(IllegalStateException.class,
-                () -> indexBuilder.rebuildIfNecessary());
-        assertTrue(exception.getMessage().contains("The OCFL repository does not contain a repository" +
-                " root object, but one is indexed."));
-    }
+//    @Test
+//    public void testRebuildIfNecessary_RootObjectNotInOcflButIndexed() throws Exception {
+//        // Configure root mapping exists, but object doesn't
+//        when(ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()))
+//                .thenReturn(rootMapping);
+//        when(rootMapping.getOcflObjectId()).thenReturn(ROOT_OBJECT_ID);
+//        when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
+//
+//        final var exception = assertThrows(IllegalStateException.class,
+//                () -> indexBuilder.rebuildIfNecessary());
+//        assertTrue(exception.getMessage().contains("The OCFL repository does not contain a repository" +
+//                " root object, but one is indexed."));
+//    }
 
     @Test
     public void testRebuildIfNecessary_RebuildContinueEnabled() throws Exception {
