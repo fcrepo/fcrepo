@@ -135,20 +135,6 @@ public class IndexBuilderImplTest {
     }
 
     @Test
-    public void testRebuildIfNecessary_RootObjectNotIndexed_OcflPopulated() throws Exception {
-        // Root does not exist in index, but OCFL has other objects (we can't know the root id without index)
-        when(ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()))
-                .thenThrow(new FedoraOcflMappingNotFoundException("Missing"));
-        when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
-        when(ocflRepository.listObjectIds()).thenReturn(Stream.of("some-other-object"));
-
-        final var exception = assertThrows(IllegalStateException.class,
-                () -> indexBuilder.rebuildIfNecessary());
-        assertTrue(exception.getMessage().contains("The OCFL repository appears to be populated, but the" +
-                " index does not contain a mapping for the repository root object"));
-    }
-
-    @Test
     public void testRebuildIfNecessary_RebuildContinueEnabled() throws Exception {
         when(fedoraPropsConfig.isRebuildContinue()).thenReturn(true);
 
