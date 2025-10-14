@@ -16,21 +16,37 @@ import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
-
+import static com.apicatalog.jsonld.http.ProfileConstants.COMPACTED;
+import static com.apicatalog.jsonld.http.ProfileConstants.EXPANDED;
+import static com.apicatalog.jsonld.http.ProfileConstants.FLATTENED;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import com.apicatalog.jsonld.JsonLd;
+import com.apicatalog.jsonld.JsonLdError;
+import com.apicatalog.jsonld.JsonLdVersion;
+import com.apicatalog.jsonld.document.JsonDocument;
+import com.apicatalog.jsonld.serialization.QuadsToJsonld;
+import com.apicatalog.rdf.api.RdfConsumerException;
+import jakarta.json.Json;
+import jakarta.json.JsonStructure;
+import jakarta.json.JsonWriter;
+import jakarta.json.JsonWriterFactory;
+import jakarta.json.stream.JsonGenerator;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.StreamingOutput;
 
 import com.google.common.util.concurrent.AbstractFuture;
+import org.apache.jena.graph.Node;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
@@ -39,6 +55,9 @@ import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.system.StreamRDF;
+import org.apache.jena.sparql.core.DatasetGraph;
+import org.apache.jena.sparql.core.DatasetGraphFactory;
+import org.apache.jena.sparql.core.Quad;
 import org.fcrepo.kernel.api.RdfStream;
 import org.slf4j.Logger;
 
@@ -170,16 +189,96 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     private static void serializeNonStreamed(final RdfStream rdfStream, final OutputStream output,
             final Lang dataFormat, final MediaType dataMediaType, final Map<String, String> nsPrefixes) {
         final Model model = rdfStream.collect(toModel());
-
         model.setNsPrefixes(filterNamespacesToPresent(model, nsPrefixes));
+
+        final String rdfFormat = getFormatFromMediaType(dataMediaType);
+        LOGGER.debug("Stream-based serialization of {}", rdfFormat);
+
+        final DatasetGraph dsg = DatasetGraphFactory.wrap(model.getGraph());
+        final QuadsToJsonld q = new QuadsToJsonld().ordered(true).useNativeTypes(true).mode(JsonLdVersion.V1_1);
+
         // use block output streaming for RDFXML
         if (RDFXML.equals(dataFormat)) {
             RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
         } else if (JSONLD.equals(dataFormat)) {
-            RDFDataMgr.write(output, model.getGraph(), RDFFormat.JSONLD);
+            final Iterator<Quad> it = dsg.find();
+
+            while (it.hasNext()) {
+                final Quad quad = it.next();
+
+                final String graphName = quad.isDefaultGraph() ? null : nodeAsTerm(quad.getGraph());
+                final String s = nodeAsTerm(quad.getSubject());
+                final String p = nodeAsTerm(quad.getPredicate());
+                final Node o = quad.getObject();
+                try {
+                    if (o.isLiteral()) {
+                    final var lit = o.getLiteral();
+                        q.quad(
+                                s, p,
+                                lit.getLexicalForm(),
+                                lit.getDatatypeURI(),
+                                lit.language(),
+                                null,
+                                graphName
+                        );
+                    } else {
+                        q.quad(s, p, nodeAsTerm(o), null, null, null, graphName);
+                    }
+                } catch (RdfConsumerException e) {
+                    LOGGER.debug("Error processing RDF: {}", e.getMessage());
+                    throw new WebApplicationException(e);
+                }
+            }
+
+            try {
+                final JsonWriterFactory writerFactory =
+                        Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, false));
+                JsonStructure jsonResponse = q.toJsonLd();  // default to expanded
+                if (rdfFormat.equals(FLATTENED)) {
+                    jsonResponse = JsonLd.flatten(JsonDocument.of(jsonResponse)).get();
+                } else if (rdfFormat.equals(COMPACTED)) {
+                    jsonResponse = JsonLd.compact(
+                            JsonDocument.of(jsonResponse),
+                            JsonDocument.of(Objects.requireNonNull(
+                                    RdfStreamStreamingOutput.class.getResourceAsStream("/context.jsonld")))
+                    ).get();
+                }
+
+                try (JsonWriter writer = writerFactory.createWriter(output)) {
+                    writer.write(jsonResponse);
+                }
+            } catch (JsonLdError e) {
+                LOGGER.debug("Error processing JSON: {}", e.getMessage());
+                throw new WebApplicationException(e);
+            }
+
         } else {
             RDFDataMgr.write(output, model.getGraph(), dataFormat);
         }
+    }
+
+    /**
+     * Utility method to convert Nodes to String representations to support Titanium’s QuadsToJsonld.quad(...)
+     * method which wants plain string values
+     *
+     *  @param node Jena Node
+     * @return String representation of Node
+     */
+    private
+    static String nodeAsTerm(final Node node) {
+        if (node.isURI()) {
+            return node.getURI();
+        }
+        if (node.isBlank()) {
+            return "_:" + node.getBlankNodeLabel();
+        }
+        if (node.isLiteral()) {
+            return node.getLiteralLexicalForm();
+        }
+        if (node.isVariable()) {
+            return "?" + node.getName();
+        }
+        throw new IllegalArgumentException("Unsupported node type: " + node);
     }
 
     /**
@@ -206,15 +305,13 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         return resultNses;
     }
 
-    /* TODO: Should we reimplement this in Titanium post Jena 5 upgrade?
-    private static RDFFormat getFormatFromMediaType(final MediaType mediaType) {
+    private static String getFormatFromMediaType(final MediaType mediaType) {
         final String profile = mediaType.getParameters().getOrDefault("profile", "");
         if (profile.equals(JSONLD_COMPACTED)) {
-            return JSONLD_COMPACT_FLAT;
+            return COMPACTED;
         } else if (profile.equals(JSONLD_FLATTENED)) {
-            return JSONLD_FLATTEN_FLAT;
+            return FLATTENED;
         }
-        return JSONLD_EXPAND_FLAT;
+        return EXPANDED;
     }
-     */
 }
