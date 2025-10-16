@@ -232,7 +232,7 @@ public class FedoraPropsConfigTest {
     public void testCheckDeprecatedPropertiesWarningsLogged() {
         // Set up a custom appender to capture log messages
         final var logger = (Logger) LoggerFactory.getLogger(FedoraPropsConfig.class);
-        var appender  = new ListAppender<ILoggingEvent>();
+        final var appender  = new ListAppender<ILoggingEvent>();
         appender.start();
         logger.addAppender(appender);
 
