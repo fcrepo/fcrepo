@@ -896,7 +896,14 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Override
     public boolean hasResourcesStartingWith(final Transaction tx, final FedoraId fedoraId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("resourceId", fedoraId.getFullId() + "/%");
+        String resourceId = fedoraId.getFullId();
+        if (resourceId.contains("_")) {
+            resourceId = resourceId.replaceAll("_", "\\\\_");
+        }
+        if (resourceId.contains("%")) {
+            resourceId = resourceId.replaceAll("%", "\\\\%");
+        }
+        parameterSource.addValue("resourceId", resourceId + "/%");
         final boolean matchingIds;
         if (tx.isOpenLongRunning()) {
             parameterSource.addValue("transactionId", tx.getId());
