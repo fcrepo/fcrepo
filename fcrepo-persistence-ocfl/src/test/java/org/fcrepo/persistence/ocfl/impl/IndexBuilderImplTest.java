@@ -89,7 +89,7 @@ public class IndexBuilderImplTest {
                 .thenReturn(rootMapping);
         when(rootMapping.getOcflObjectId()).thenReturn(ROOT_OBJECT_ID);
         when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(true);
-        when(fedoraPropsConfig.isRebuildContinue()).thenReturn(false);
+        when(fedoraPropsConfig.isRebuildEnabled()).thenReturn(false);
 
         try (final var mockReindexManagers = Mockito.mockConstruction(ReindexManager.class)) {
             indexBuilder.rebuildIfNecessary();
@@ -106,7 +106,7 @@ public class IndexBuilderImplTest {
         when(ocflIndex.getMapping(ReadOnlyTransaction.INSTANCE, FedoraId.getRepositoryRootId()))
                 .thenThrow(new FedoraOcflMappingNotFoundException("Missing"));
         when(ocflRepository.containsObject(ROOT_OBJECT_ID)).thenReturn(false);
-        when(fedoraPropsConfig.isRebuildContinue()).thenReturn(false);
+        when(fedoraPropsConfig.isRebuildEnabled()).thenReturn(false);
 
         // No errors, but no reindex either
         try (final var mockReindexManagers = Mockito.mockConstruction(ReindexManager.class)) {
@@ -136,9 +136,27 @@ public class IndexBuilderImplTest {
     }
 
     @Test
+    public void testRebuildIfNecessary_RebuildEnabled() throws Exception {
+        when(fedoraPropsConfig.isRebuildEnabled()).thenReturn(true);
+
+        assertRebuildCompleted();
+    }
+
+    @Test
     public void testRebuildIfNecessary_RebuildContinueEnabled() throws Exception {
         when(fedoraPropsConfig.isRebuildContinue()).thenReturn(true);
 
+        assertRebuildCompleted();
+    }
+
+    @Test
+    public void testRebuildIfNecessary_RebuildOnStartEnabled() throws Exception {
+        when(fedoraPropsConfig.isRebuildOnStart()).thenReturn(true);
+
+        assertRebuildCompleted();
+    }
+
+    private void assertRebuildCompleted() throws Exception {
         // Setup some test object IDs
         mockObjectIds(List.of("obj1", "obj2"));
 
@@ -147,7 +165,7 @@ public class IndexBuilderImplTest {
 
             // Verify rebuild was performed but reset was not called
             verify(reindexService, never()).reset();
-            final var mockReindexManager = mockReindexManagers.constructed().get(0);
+            final var mockReindexManager = mockReindexManagers.constructed().getFirst();
             verify(mockReindexManager).start();
             verify(mockReindexManager).shutdown();
         }

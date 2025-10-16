@@ -78,7 +78,9 @@ public class FedoraPropsConfigTest {
         assertEquals(Paths.get("fcrepo-home/logs/velocity.log"), config.getVelocityLog());
         assertTrue(config.isRebuildValidation());
         assertFalse(config.isRebuildFixityCheck());
+        assertFalse(config.isRebuildOnStart());
         assertFalse(config.isRebuildContinue());
+        assertFalse(config.isRebuildEnabled());
         assertNull(config.getJmsBaseUrl());
         assertEquals(ServerManagedPropsMode.STRICT, config.getServerManagedPropsMode());
         assertEquals(JmsDestination.TOPIC, config.getJmsDestinationType());
@@ -113,9 +115,17 @@ public class FedoraPropsConfigTest {
         config.setSessionTimeout(newTimeout);
         assertEquals(newTimeout, config.getSessionTimeout());
 
+        // Test setRebuildOnStart
+        config.setRebuildOnStart(true);
+        assertTrue(config.isRebuildOnStart());
+
         // Test setRebuildContinue
         config.setRebuildContinue(true);
         assertTrue(config.isRebuildContinue());
+
+        // Test setRebuildEnabled
+        config.setRebuildEnabled(true);
+        assertTrue(config.isRebuildEnabled());
 
         // Test setServerManagedPropsMode
         config.setServerManagedPropsMode(ServerManagedPropsMode.RELAXED);

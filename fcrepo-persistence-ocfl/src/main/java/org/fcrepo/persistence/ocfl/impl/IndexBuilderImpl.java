@@ -115,7 +115,9 @@ public class IndexBuilderImpl implements IndexBuilder {
     }
 
     private boolean shouldRebuild() {
-        return fedoraPropsConfig.isRebuildContinue();
+        return fedoraPropsConfig.isRebuildEnabled() ||
+                // Legacy support for the old property names until they are removed
+                fedoraPropsConfig.isRebuildContinue() || fedoraPropsConfig.isRebuildOnStart();
     }
 
     private String getRepoRootMapping() {
