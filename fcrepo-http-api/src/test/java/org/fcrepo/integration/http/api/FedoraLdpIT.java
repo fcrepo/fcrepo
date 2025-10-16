@@ -5237,6 +5237,27 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(deepId)));
     }
 
+    // Replicates FCREPO-4032
+    @Test
+    public void testPutParentWithUnderscores() throws IOException {
+        final String subjectURI1 = serverAddress + getRandomUniqueId() + "/te_st";
+        final HttpPut putMethod = new HttpPut(subjectURI1);
+        try (final CloseableHttpResponse response = execute(putMethod)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+        final String subjectURI2 = serverAddress + getRandomUniqueId() + "/te_st/child";
+        final HttpPut putMethod2 = new HttpPut(subjectURI2);
+        try (final CloseableHttpResponse response = execute(putMethod2)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+        final String subjectURI3 = serverAddress + getRandomUniqueId() + "/t__st";
+        final HttpPut putMethod3 = new HttpPut(subjectURI3);
+        try (final CloseableHttpResponse response = execute(putMethod3)) {
+            // '/t__st' can be created, as it is not identified as a ghost node
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+    }
+
     @Test
     public void testRepositoryRootTypes() throws Exception {
         final HttpGet getRoot = new HttpGet(serverAddress);

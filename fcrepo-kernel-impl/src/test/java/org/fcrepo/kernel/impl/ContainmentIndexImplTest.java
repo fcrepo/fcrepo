@@ -622,6 +622,34 @@ public class ContainmentIndexImplTest {
     }
 
     @Test
+    public void testHasResourcesStartingFailureUnderscore() {
+        stubObject("parent1");
+        final var subSubPathId = parent1.getFedoraId().resolve("abc/123");
+        final var subPathIdWithUnderscore = parent1.getFedoraId().resolve("a_c");
+        stubObject("transaction1");
+        // Add a resource.
+        containmentIndex.addContainedBy(transaction1, FedoraId.getRepositoryRootId(), subSubPathId);
+        // That resource's ID does not start with the id containing underscores we are checking
+        // as underscores are not treated as wildcards
+        assertFalse(subSubPathId.getFullId().startsWith(subPathIdWithUnderscore.getFullId()));
+        assertFalse(containmentIndex.hasResourcesStartingWith(transaction1, subPathIdWithUnderscore));
+    }
+
+    @Test
+    public void testHasResourcesStartingFailurePercent() {
+        stubObject("parent1");
+        final var subSubPathId = parent1.getFedoraId().resolve("abbc/123");
+        final var subPathIdWithPercent = parent1.getFedoraId().resolve("a%c");
+        stubObject("transaction1");
+        // Add a resource.
+        containmentIndex.addContainedBy(transaction1, FedoraId.getRepositoryRootId(), subSubPathId);
+        // That resource's ID does not start with the id containing percent signs we are checking
+        // as percent signs are not treated as wildcards
+        assertFalse(subSubPathId.getFullId().startsWith(subPathIdWithPercent.getFullId()));
+        assertFalse(containmentIndex.hasResourcesStartingWith(transaction1, subPathIdWithPercent));
+    }
+
+    @Test
     public void testHasResourcesStartingSuccess() {
         stubObject("parent1");
         final var subPathId = parent1.getFedoraId().resolve("a/layer/down");
