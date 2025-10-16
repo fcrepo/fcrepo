@@ -204,7 +204,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
         }
         if (System.getProperty(FCREPO_REBUILD_ON_START) != null) {
             LOGGER.warn("The property '{}' is deprecated and will be removed in a future version. " +
-                    "It now behaves the same as {}.", FCREPO_REBUILD_CONTINUE, FCREPO_REBUILD);
+                    "It now behaves the same as {}.", FCREPO_REBUILD_ON_START, FCREPO_REBUILD);
         }
     }
 
