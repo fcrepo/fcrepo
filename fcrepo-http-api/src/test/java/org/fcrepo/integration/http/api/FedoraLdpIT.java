@@ -5236,7 +5236,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         // 'a/b/c' does not exist
         assertEquals(NOT_FOUND.getStatusCode(), getStatus(getObjMethod(deepId)));
     }
-    
+
     // Replicates FCREPO-4032
     @Test
     public void testPutParentWithUnderscores() throws IOException {
