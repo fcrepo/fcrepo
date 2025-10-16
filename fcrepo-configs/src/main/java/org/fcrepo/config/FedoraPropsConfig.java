@@ -369,7 +369,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     /**
      * @param rebuildEnabled A boolean flag indicating whether to rebuild on start
      */
-    public void setRebuildEnabled(boolean rebuildEnabled) {
+    public void setRebuildEnabled(final boolean rebuildEnabled) {
         this.rebuildEnabled = rebuildEnabled;
     }
 
