@@ -19,6 +19,9 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
 import static com.apicatalog.jsonld.http.ProfileConstants.COMPACTED;
 import static com.apicatalog.jsonld.http.ProfileConstants.EXPANDED;
 import static com.apicatalog.jsonld.http.ProfileConstants.FLATTENED;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +40,7 @@ import com.apicatalog.jsonld.document.JsonDocument;
 import com.apicatalog.jsonld.serialization.QuadsToJsonld;
 import com.apicatalog.rdf.api.RdfConsumerException;
 import jakarta.json.Json;
+import jakarta.json.JsonArray;
 import jakarta.json.JsonStructure;
 import jakarta.json.JsonWriter;
 import jakarta.json.JsonWriterFactory;
@@ -230,26 +234,41 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                 }
             }
 
+            final JsonWriterFactory writerFactory =
+                    Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, false));
+            final JsonArray expanded;
             try {
-                final JsonWriterFactory writerFactory =
-                        Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, false));
-                JsonStructure jsonResponse = q.toJsonLd();  // default to expanded
-                if (rdfFormat.equals(FLATTENED)) {
-                    jsonResponse = JsonLd.flatten(JsonDocument.of(jsonResponse)).get();
-                } else if (rdfFormat.equals(COMPACTED)) {
-                    jsonResponse = JsonLd.compact(
-                            JsonDocument.of(jsonResponse),
-                            JsonDocument.of(Objects.requireNonNull(
-                                    RdfStreamStreamingOutput.class.getResourceAsStream("/context.jsonld")))
-                    ).get();
-                }
+                expanded = q.toJsonLd();
+            } catch (JsonLdError jsonLdError) {
+                throw new WebApplicationException(jsonLdError);
+            }
 
-                try (JsonWriter writer = writerFactory.createWriter(output)) {
-                    writer.write(jsonResponse);
+            JsonStructure payload = expanded;
+            if (rdfFormat.equals(FLATTENED)) {
+                try {
+                    payload = JsonLd.flatten(JsonDocument.of(expanded)).get();
+                } catch (JsonLdError jsonLdError) {
+                    throw new WebApplicationException(jsonLdError);
                 }
-            } catch (JsonLdError e) {
-                LOGGER.debug("Error processing JSON: {}", e.getMessage());
-                throw new WebApplicationException(e);
+            } else if (rdfFormat.equals(COMPACTED)) {
+                try (InputStream ctx = Objects.requireNonNull(
+                        RdfStreamStreamingOutput.class.getResourceAsStream("/context.jsonld"),
+                        "context.jsonld not on classpath")) {
+                    try {
+                        payload = JsonLd.compact(
+                                JsonDocument.of(expanded),
+                                JsonDocument.of(ctx)
+                        ).get();
+                    } catch (JsonLdError e) {
+                        throw new WebApplicationException(e);
+                    }
+                } catch (IOException ioe) {
+                    throw new WebApplicationException(ioe);
+                }
+            }
+
+            try (JsonWriter writer = writerFactory.createWriter(output)) {
+                writer.write(payload);
             }
 
         } else {
