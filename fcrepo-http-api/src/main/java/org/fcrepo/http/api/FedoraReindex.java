@@ -78,8 +78,6 @@ public class FedoraReindex extends FedoraBaseResource {
             LOGGER.info(message);
             return status(HttpStatus.SC_NO_CONTENT).entity(message).build();
         } catch (final Exception ex) {
-            ex.printStackTrace();
-            LOGGER.error("reindexing failed for fedora_id = {}", externalPath, ex);
             throw new BadRequestException(ex.getMessage(), ex);
         } finally {
             transaction().releaseResourceLocksIfShortLived();
