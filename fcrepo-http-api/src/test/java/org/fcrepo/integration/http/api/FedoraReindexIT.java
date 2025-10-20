@@ -12,9 +12,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
+import jakarta.inject.Inject;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.apache.http.HttpStatus;
+import org.fcrepo.persistence.ocfl.impl.ReindexService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -38,10 +40,13 @@ public class FedoraReindexIT extends AbstractResourceIT {
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraReindexIT.class);
 
     private OcflRepository ocflRepository;
+    private ReindexService reindexService;
 
     @BeforeEach
     public void setUp() {
         ocflRepository = getBean(OcflRepository.class);
+        reindexService = getBean(ReindexService.class);
+        reindexService.reset();
     }
 
     private void prepareContentForSideLoading(final String objectId, final String name) {
@@ -62,6 +67,7 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
     @Test
     public void testReindexNewObjects() throws Exception {
+        LOGGER.error("Starting testReindexNewObjects");
         final var fedoraId = "container1";
         //validate that the fedora resource is not found (404)
         assertNotFound(fedoraId);
@@ -72,8 +78,10 @@ public class FedoraReindexIT extends AbstractResourceIT {
         //validate the fedora resource is found (200)
         assertNotDeleted(fedoraId);
 
+        LOGGER.error("Preparing testReindexNewObjects");
         //verify that updating and reindexing an existing resource returns a 204.
         prepareContentForSideLoading(fedoraId, "reindex-test-update");
+        LOGGER.error("Reindexing testReindexNewObjects");
         doReindex(fedoraId, SC_NO_CONTENT);
     }
 

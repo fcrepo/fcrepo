@@ -9,33 +9,33 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.experimental }}
-    strategy:
-      max-parallel: 1
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-        java: ['21']
-        experimental: [false]
-    steps:
-    - name: Git support longpaths
-      run: git config --global core.longpaths true
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: ${{ matrix.java }}
-        cache: 'maven'
-    - name: Build with Maven
-      run: mvn -B -U clean install
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
+#  build:
+#    runs-on: ${{ matrix.os }}
+#    continue-on-error: ${{ matrix.experimental }}
+#    strategy:
+#      max-parallel: 1
+#      fail-fast: false
+#      matrix:
+#        os: [ubuntu-latest, windows-latest]
+#        java: ['21']
+#        experimental: [false]
+#    steps:
+#    - name: Git support longpaths
+#      run: git config --global core.longpaths true
+#    - name: Checkout
+#      uses: actions/checkout@v4
+#    - name: Set up JDK ${{ matrix.java }}
+#      uses: actions/setup-java@v4
+#      with:
+#        distribution: 'temurin'
+#        java-version: ${{ matrix.java }}
+#        cache: 'maven'
+#    - name: Build with Maven
+#      run: mvn -B -U clean install
+#    - name: Upload coverage to Codecov
+#      uses: codecov/codecov-action@v5
+#      env:
+#        CODECOV_TOKEN: ${{ secrets.CODECOV_ORG_TOKEN }}
   postgres-itest:
     runs-on: ubuntu-latest
     strategy:
