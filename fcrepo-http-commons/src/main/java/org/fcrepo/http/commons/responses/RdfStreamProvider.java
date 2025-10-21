@@ -5,27 +5,27 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static jakarta.ws.rs.core.MediaType.TEXT_HTML_TYPE;
-import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
+import static org.slf4j.LoggerFactory.getLogger;
 import static org.fcrepo.http.commons.domain.RDFMediaType.JSON_LD;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3;
 import static org.fcrepo.http.commons.domain.RDFMediaType.N3_ALT2;
 import static org.fcrepo.http.commons.domain.RDFMediaType.NTRIPLES;
 import static org.fcrepo.http.commons.domain.RDFMediaType.RDF_XML;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
-import static org.slf4j.LoggerFactory.getLogger;
+import static jakarta.ws.rs.core.MediaType.TEXT_HTML_TYPE;
+import static jakarta.ws.rs.core.MediaType.TEXT_PLAIN;
 
+import org.slf4j.Logger;
+import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
 import java.io.OutputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
-
+import jakarta.inject.Inject;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.ext.MessageBodyWriter;
 import jakarta.ws.rs.ext.Provider;
-
-import org.slf4j.Logger;
 
 /**
  * Provides serialization for streaming RDF results.
@@ -38,6 +38,9 @@ import org.slf4j.Logger;
 public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream> {
 
     private static final Logger LOGGER = getLogger(RdfStreamProvider.class);
+
+    @Inject
+    private RdfNamespaceRegistry registry;
 
     @Override
     public boolean isWriteable(final Class<?> type, final Type genericType,
@@ -74,8 +77,11 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream>
         final OutputStream entityStream) {
 
         LOGGER.debug("Serializing an RdfStream to mimeType: {}", mediaType);
+        final var namespaces = registry.getNamespaces();
+        nsStream.namespaces.entrySet().stream().filter(entry -> !namespaces.containsValue(entry.getValue()))
+                .forEach(entry -> namespaces.put(entry.getKey(), entry.getValue()));
         final RdfStreamStreamingOutput streamOutput = new RdfStreamStreamingOutput(nsStream.stream,
-                nsStream.namespaces, mediaType);
+                namespaces, mediaType);
         streamOutput.write(entityStream);
     }
 }
