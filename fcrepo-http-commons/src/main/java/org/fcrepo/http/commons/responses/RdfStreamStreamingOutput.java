@@ -38,6 +38,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,7 +50,6 @@ import jakarta.json.Json;
 import jakarta.json.JsonStructure;
 import jakarta.json.JsonWriter;
 import jakarta.json.JsonWriterFactory;
-import jakarta.json.stream.JsonGenerator;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.StreamingOutput;
@@ -211,7 +211,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                     payload = JsonLd.expand(jsonDoc).get();
                 }
                 final JsonWriterFactory writerFactory =
-                        Json.createWriterFactory(Map.of(JsonGenerator.PRETTY_PRINTING, false));
+                        Json.createWriterFactory(Collections.emptyMap());
                 try (JsonWriter writer = writerFactory.createWriter(output)) {
                     writer.write(payload);
                 }
