@@ -6,7 +6,7 @@
 package org.fcrepo.persistence.ocfl.impl;
 
 import io.ocfl.api.OcflRepository;
-
+import jakarta.inject.Inject;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import jakarta.inject.Inject;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -76,23 +75,20 @@ public class IndexBuilderImpl implements IndexBuilder {
         if (shouldRebuild()) {
             rebuild();
         } else {
-            LOGGER.debug("No index rebuild necessary");
+            final var rootIndexed = getRepoRootMapping();
+            if (rootIndexed != null && !repoContainsRootObject(rootIndexed)) {
+                LOGGER.error("The OCFL repository does not contain a repository" +
+                        " root object, but one is indexed. Inspect configuration and setup to determine" +
+                        " the cause of this inconsistency.");
+            } else {
+                LOGGER.debug("No index rebuild necessary");
+            }
         }
     }
 
     private void rebuild() {
-        final String logMessage;
-        if (fedoraPropsConfig.isRebuildContinue()) {
-            logMessage = "Initiating partial index rebuild. This will add missing objects to the index.";
-        } else {
-            logMessage = "Initiating index rebuild.";
-        }
+        final String logMessage = "Initiating partial index rebuild. This will add missing objects to the index.";
         LOGGER.info(logMessage + " This may take a while. Progress will be logged periodically.");
-
-        if (!fedoraPropsConfig.isRebuildContinue()) {
-            LOGGER.debug("Clearing all indexes");
-            reindexService.reset();
-        }
 
         try (var objectIds = ocflRepository.listObjectIds()) {
             final ReindexManager reindexManager = new ReindexManager(objectIds,
@@ -111,29 +107,17 @@ public class IndexBuilderImpl implements IndexBuilder {
             final var count = reindexManager.getCompletedCount();
             final var errors = reindexManager.getErrorCount();
             final var skipped = reindexManager.getSkippedCount();
-            if (fedoraPropsConfig.isRebuildContinue()) {
-                LOGGER.info(
-                    "Index rebuild completed {} objects successfully, {} objects skipped and {} objects had errors " +
-                    "in {} ", count, skipped, errors, getDurationMessage(Duration.between(startTime, endTime))
-                );
-            } else {
-                LOGGER.info(
-                    "Index rebuild completed {} objects successfully and {} objects had errors in {} ",
-                    count, errors, getDurationMessage(Duration.between(startTime, endTime))
-                );
-            }
+            LOGGER.info(
+                "Index rebuild completed {} objects successfully, {} objects skipped and {} objects had errors " +
+                "in {} ", count, skipped, errors, getDurationMessage(Duration.between(startTime, endTime))
+            );
         }
     }
 
     private boolean shouldRebuild() {
-        final var repoRoot = getRepoRootMapping();
-        if (fedoraPropsConfig.isRebuildOnStart() || fedoraPropsConfig.isRebuildContinue()) {
-            return true;
-        } else if (repoRoot == null) {
-            return true;
-        } else {
-            return !repoContainsRootObject(repoRoot);
-        }
+        return fedoraPropsConfig.isRebuildEnabled() ||
+                // Legacy support for the old property names until they are removed
+                fedoraPropsConfig.isRebuildContinue() || fedoraPropsConfig.isRebuildOnStart();
     }
 
     private String getRepoRootMapping() {

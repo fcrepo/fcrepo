@@ -42,6 +42,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_REBUILD_VALIDATION_FIXITY = "fcrepo.rebuild.validation.fixity";
     private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
     private static final String FCREPO_REBUILD_CONTINUE = "fcrepo.rebuild.continue";
+    private static final String FCREPO_REBUILD = "fcrepo.rebuild";
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
     private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
     private static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
@@ -99,11 +100,16 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_REBUILD_VALIDATION_FIXITY + ":false}")
     private boolean rebuildFixityCheck;
 
+    @Deprecated
     @Value("${" + FCREPO_REBUILD_ON_START + ":false}")
     private boolean rebuildOnStart;
 
+    @Deprecated
     @Value("${" + FCREPO_REBUILD_CONTINUE + ":false}")
     private boolean rebuildContinue;
+
+    @Value("${" + FCREPO_REBUILD + ":false}")
+    private boolean rebuildEnabled;
 
     @Value("${" + FCREPO_JMS_BASEURL + ":#{null}}")
     private String jmsBaseUrl;
@@ -175,6 +181,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
         jmsDestinationType = JmsDestination.fromString(jmsDestinationTypeStr);
 
         checkRebuildProps();
+        checkDeprecatedProperties();
     }
 
     /**
@@ -184,6 +191,20 @@ public class FedoraPropsConfig extends BasePropsConfig {
         if (rebuildFixityCheck && !rebuildValidation) {
             throw new IllegalStateException(FCREPO_REBUILD_VALIDATION_FIXITY + " must be false when " +
                                             FCREPO_REBUILD_VALIDATION + " is false.");
+        }
+    }
+
+    /**
+     * Check for deprecated properties and log warnings if they are used
+     */
+    private void checkDeprecatedProperties() {
+        if (System.getProperty(FCREPO_REBUILD_CONTINUE) != null) {
+            LOGGER.warn("The property '{}' is deprecated and will be removed in a future version. " +
+                    "Use {} instead.", FCREPO_REBUILD_CONTINUE, FCREPO_REBUILD);
+        }
+        if (System.getProperty(FCREPO_REBUILD_ON_START) != null) {
+            LOGGER.warn("The property '{}' is deprecated and will be removed in a future version. " +
+                    "It now behaves the same as {}.", FCREPO_REBUILD_ON_START, FCREPO_REBUILD);
         }
     }
 
@@ -336,6 +357,20 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public void setRebuildContinue(final boolean rebuildContinue) {
         this.rebuildContinue = rebuildContinue;
+    }
+
+    /**
+     * @return true if the internal indices should be rebuilt when Fedora starts up.
+     */
+    public boolean isRebuildEnabled() {
+        return rebuildEnabled;
+    }
+
+    /**
+     * @param rebuildEnabled A boolean flag indicating whether to rebuild on start
+     */
+    public void setRebuildEnabled(final boolean rebuildEnabled) {
+        this.rebuildEnabled = rebuildEnabled;
     }
 
     /**

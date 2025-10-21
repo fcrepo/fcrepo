@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.apache.http.HttpStatus;
+import org.fcrepo.persistence.ocfl.impl.ReindexService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -38,10 +39,13 @@ public class FedoraReindexIT extends AbstractResourceIT {
     private static final Logger LOGGER = LoggerFactory.getLogger(FedoraReindexIT.class);
 
     private OcflRepository ocflRepository;
+    private ReindexService reindexService;
 
     @BeforeEach
     public void setUp() {
         ocflRepository = getBean(OcflRepository.class);
+        reindexService = getBean(ReindexService.class);
+        reindexService.reset();
     }
 
     private void prepareContentForSideLoading(final String objectId, final String name) {

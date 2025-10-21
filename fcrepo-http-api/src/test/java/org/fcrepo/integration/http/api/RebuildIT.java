@@ -139,8 +139,8 @@ public class RebuildIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testRebuildOnStart() throws Exception {
-        assertFalse(fedoraPropsConfig.isRebuildOnStart(), "rebuild on start is disabled");
+    public void testRebuildContinue() throws Exception {
+        assertFalse(fedoraPropsConfig.isRebuildContinue(), "rebuild on start is disabled");
         rebuild("test-rebuild-ocfl/objects");
 
         // Optional debugging
@@ -170,10 +170,12 @@ public class RebuildIT extends AbstractResourceIT {
         //but the index does not know is it gone because no rebuild occurred.
         this.index.getMapping(readOnlyTx, binaryId);
 
-        //restart the container again, but initialize after setting the rebuild on start
+        // Clear the index but retain the empty database and try again
+        reindexService.reset();
+        //restart the container again, but initialize after setting the rebuild continue
         restartContainer();
         setBeans();
-        fedoraPropsConfig.setRebuildOnStart(true);
+        fedoraPropsConfig.setRebuildContinue(true);
         //give the container a few moments to start up and get the database setup.
         TimeUnit.MILLISECONDS.sleep(2000);
         initializer.initialize();
@@ -397,6 +399,8 @@ public class RebuildIT extends AbstractResourceIT {
     }
 
     private void rebuild(final String name) {
+        // Since we are truncating but not deleting the database, set continue flag so it will rebuild
+        fedoraPropsConfig.setRebuildContinue(true);
         copyToOcfl(name);
         reindexService.reset();
         initializer.initialize();
