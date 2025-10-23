@@ -47,8 +47,8 @@ public class MetricsConfig extends BasePropsConfig {
     public MeterRegistry meterRegistry() {
         final MeterRegistry registry;
         if (metricsEnable) {
-            LOGGER.warn("Property fcrepo.metrics.enable is deprecated and will be removed in Fedora 8. " +
-                    "See https://wiki.lyrasis.org/display/FEDORA7x/Properties for details.");
+            LOGGER.warn("Property fcrepo.metrics.enable is deprecated in favour of fcrepo.metrics.enabled " +
+                    "and will be removed in Fedora 8. See https://wiki.lyrasis.org/display/FEDORA7x/Properties");
             metricsEnabled = metricsEnable;
         }
 
