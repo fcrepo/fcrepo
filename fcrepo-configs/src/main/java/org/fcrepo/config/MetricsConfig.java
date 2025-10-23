@@ -21,6 +21,8 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,9 +41,17 @@ public class MetricsConfig extends BasePropsConfig {
     @Value("${fcrepo.metrics.enabled:false}")
     private boolean metricsEnabled;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetricsConfig.class);
+
     @Bean
     public MeterRegistry meterRegistry() {
         final MeterRegistry registry;
+        if (metricsEnable) {
+            LOGGER.warn("Property fcrepo.metrics.enable is deprecated in favour of fcrepo.metrics.enabled " +
+                    "and will be removed in Fedora 8. See https://wiki.lyrasis.org/display/FEDORA7x/Properties");
+            metricsEnabled = metricsEnable;
+        }
+
         if (metricsEnabled || metricsEnable) {
             registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry,
                     Clock.SYSTEM);
