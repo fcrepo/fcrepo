@@ -6,6 +6,7 @@
         "@type": "@id"
       }
    },
+   "@id": "http://manu.sporny.org/#me",
    "name": "Manu Sporny",
    "homepage": "http://manu.sporny.org/"
 }
