@@ -193,7 +193,6 @@ import org.fcrepo.http.commons.domain.RDFMediaType;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.glassfish.jersey.media.multipart.ContentDisposition;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.test.context.TestExecutionListeners;
@@ -4040,7 +4039,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdProfileCompacted() throws IOException {
         // Create a resource
@@ -4067,7 +4065,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             json = mapper.readTree(responseGET.getEntity().getContent());
         }
 
-        final JsonNode titles = json.get(title.getURI());
+        final JsonNode titles = json.get("dc:title");
         assertNotNull(titles);
         assertTrue(titles.isArray(), "Should be a list");
 
@@ -4075,7 +4073,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(2, titles.findValues("@value").size(), "Should be two values!");
     }
 
-    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdProfileExpanded() throws IOException {
         // Create a resource
@@ -4102,7 +4099,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             json = mapper.readTree(responseGET.getEntity().getContent());
         }
 
-        final List<JsonNode> titlesList = json.findValues("http://purl.org/dc/elements/1.1/title");
+        final List<JsonNode> titlesList = json.findValues(title.getURI());
         assertNotNull(titlesList);
         assertEquals(1, titlesList.size(), "Should be list of lists");
 
@@ -4111,7 +4108,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         assertEquals(2, titles.findValues("@value").size(), "Should be two values!");
     }
 
-    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdProfileFlattened() throws IOException {
         // Create a resource
@@ -4138,7 +4134,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             json = mapper.readTree(responseGET.getEntity().getContent());
         }
 
-        final List<JsonNode> titlesList = json.get("@graph").findValues("title");
+        final List<JsonNode> titlesList = json.findValues(title.getURI());
         assertNotNull(titlesList);
         assertEquals(1, titlesList.size(), "Should be list of lists");
 

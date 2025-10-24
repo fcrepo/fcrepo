@@ -1,0 +1,25 @@
+{
+  "@context": {
+    "createdBy": {
+      "@id": "http://fedora.info/definitions/v4/repository#createdBy"
+    },
+    "created": {
+      "@id": "http://fedora.info/definitions/v4/repository#created",
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "lastModifiedBy": {
+      "@id": "http://fedora.info/definitions/v4/repository#lastModifiedBy"
+    },
+    "contains": {
+      "@id": "http://www.w3.org/ns/ldp#contains",
+      "@type": "@id"
+    },
+    "lastModified": {
+      "@id": "http://fedora.info/definitions/v4/repository#lastModified",
+      "@type": "http://www.w3.org/2001/XMLSchema#dateTime"
+    },
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "fedora": "http://fedora.info/definitions/v4/repository#",
+    "ldp": "http://www.w3.org/ns/ldp#"
+  }
+}

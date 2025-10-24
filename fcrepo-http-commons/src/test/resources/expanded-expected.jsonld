@@ -1,9 +1,10 @@
 [
   {
+    "@id": "http://manu.sporny.org/#me",
     "http://xmlns.com/foaf/0.1/name": [
       { "@value": "Manu Sporny" }
     ],
-    "http://xmlns.com/foaf/0.1/homepage": [
+     "http://xmlns.com/foaf/0.1/homepage": [
       { "@id": "http://manu.sporny.org/" }
     ]
   }

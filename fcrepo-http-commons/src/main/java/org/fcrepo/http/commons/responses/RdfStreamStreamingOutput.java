@@ -5,19 +5,40 @@
  */
 package org.fcrepo.http.commons.responses;
 
-import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static com.apicatalog.jsonld.http.ProfileConstants.COMPACTED;
+import static com.apicatalog.jsonld.http.ProfileConstants.EXPANDED;
+import static com.apicatalog.jsonld.http.ProfileConstants.FLATTENED;
 import static org.apache.jena.riot.Lang.JSONLD;
 import static org.apache.jena.riot.Lang.RDFXML;
+import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.RDFLanguages.getRegisteredLanguages;
-import static org.apache.jena.riot.RDFFormat.RDFXML_PLAIN;
 import static org.apache.jena.riot.system.StreamRDFWriter.defaultSerialization;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
-import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.slf4j.LoggerFactory.getLogger;
+import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_NAMESPACE;
+import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
 
+import com.apicatalog.jsonld.JsonLd;
+import com.apicatalog.jsonld.JsonLdError;
+import com.apicatalog.jsonld.document.JsonDocument;
+import com.google.common.util.concurrent.AbstractFuture;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.NsIterator;
+import org.apache.jena.riot.Lang;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RiotException;
+import org.apache.jena.riot.system.StreamRDF;
+import org.slf4j.Logger;
+import org.fcrepo.kernel.api.RdfStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -25,25 +46,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-
+import jakarta.json.Json;
+import jakarta.json.JsonStructure;
+import jakarta.json.JsonWriter;
+import jakarta.json.JsonWriterFactory;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.StreamingOutput;
 
-import com.google.common.util.concurrent.AbstractFuture;
-import org.apache.jena.riot.RiotException;
-import org.apache.jena.graph.Triple;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.NsIterator;
-import org.apache.jena.riot.Lang;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.RDFFormat;
-import org.apache.jena.riot.system.StreamRDF;
-import org.fcrepo.kernel.api.RdfStream;
-import org.slf4j.Logger;
-
 /**
- * Serializes an {@link RdfStream}.
+ * Serializes a {@link RdfStream}.
  *
  * @author ajs6f
  * @since Oct 30, 2013
@@ -170,13 +182,42 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
     private static void serializeNonStreamed(final RdfStream rdfStream, final OutputStream output,
             final Lang dataFormat, final MediaType dataMediaType, final Map<String, String> nsPrefixes) {
         final Model model = rdfStream.collect(toModel());
-
         model.setNsPrefixes(filterNamespacesToPresent(model, nsPrefixes));
+
         // use block output streaming for RDFXML
         if (RDFXML.equals(dataFormat)) {
             RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
         } else if (JSONLD.equals(dataFormat)) {
-            RDFDataMgr.write(output, model.getGraph(), RDFFormat.JSONLD);
+            try {
+                final String rdfFormat = getFormatFromMediaType(dataMediaType);
+                LOGGER.debug("Stream-based serialization of {}", rdfFormat);
+                final ByteArrayOutputStream out = new ByteArrayOutputStream();
+                RDFDataMgr.write(out, model, Lang.JSONLD);
+
+                final InputStream inputStream = new ByteArrayInputStream(out.toByteArray());
+                final JsonDocument jsonDoc = JsonDocument.of(inputStream);
+
+                final JsonStructure payload;
+                if (rdfFormat.equals(FLATTENED)) {
+                    payload = JsonLd.flatten(jsonDoc).get();
+                } else if (rdfFormat.equals(COMPACTED)) {
+                    final var ctx = JsonDocument.of(new ByteArrayInputStream(
+                            ("{ \"@context\": {" + nsPrefixes.entrySet().stream()
+                                    .map(e -> "\"" + e.getKey() + "\": \"" + e.getValue() + "\"")
+                                    .reduce((a, b) -> a + ", " + b).orElse("") + "}}").getBytes()));
+                    payload = JsonLd.compact(jsonDoc, ctx).get();
+                } else {
+                    // default to expanded
+                    payload = JsonLd.expand(jsonDoc).get();
+                }
+                final JsonWriterFactory writerFactory =
+                        Json.createWriterFactory(Collections.emptyMap());
+                try (JsonWriter writer = writerFactory.createWriter(output)) {
+                    writer.write(payload);
+                }
+            }  catch (JsonLdError e) {
+                throw new WebApplicationException(e);
+            }
         } else {
             RDFDataMgr.write(output, model.getGraph(), dataFormat);
         }
@@ -206,15 +247,13 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         return resultNses;
     }
 
-    /* TODO: Should we reimplement this in Titanium post Jena 5 upgrade?
-    private static RDFFormat getFormatFromMediaType(final MediaType mediaType) {
+    private static String getFormatFromMediaType(final MediaType mediaType) {
         final String profile = mediaType.getParameters().getOrDefault("profile", "");
         if (profile.equals(JSONLD_COMPACTED)) {
-            return JSONLD_COMPACT_FLAT;
+            return COMPACTED;
         } else if (profile.equals(JSONLD_FLATTENED)) {
-            return JSONLD_FLATTEN_FLAT;
+            return FLATTENED;
         }
-        return JSONLD_EXPAND_FLAT;
+        return EXPANDED;
     }
-     */
 }
