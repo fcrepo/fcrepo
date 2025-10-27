@@ -353,7 +353,7 @@ public class MembershipServiceImpl implements MembershipService {
             timelineStream.forEach(e -> {
                 final var membershipTriple = generateMembership(e, member);
                 if (membershipTriple == null) {
-                    log.error("Skipping membership indexing for member {} of container {} "
+                    log.warn("Skipping membership indexing for member {} of container {} "
                             + "due to missing insertedContentRelation", member.getFedoraId(), containerId);
                     return;
                 }
