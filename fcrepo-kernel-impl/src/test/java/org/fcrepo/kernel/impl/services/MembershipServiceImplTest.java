@@ -1451,6 +1451,37 @@ public class MembershipServiceImplTest {
         assertHasMembersNoTx(membershipRescId, OTHER_HAS_MEMBER, member1Id);
     }
 
+    @Test
+    public void populateMembershipHistory_IDC_MissingInsertedContentRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(transaction, membershipRescId);
+
+        final var idcId = createIndirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(transaction, idcId);
+
+        // First member has a proxy missing the insertedContentRelation property
+        final var proxyId = createDCMember(idcId, BASIC_CONTAINER);
+        mockGetHeaders(transaction, proxyId, idcId, BASIC_CONTAINER, CREATED_DATE, LAST_MODIFIED_DATE);
+        final var model = ModelFactory.createDefaultModel();
+        mockGetTriplesForDC(proxyId, null, model);
+        membershipService.resourceCreated(transaction, proxyId);
+
+        // Second member is valid
+        final var member2Id = createDCMember(rootId, BASIC_CONTAINER);
+        createProxy(idcId, member2Id, CREATED_DATE, false);
+
+        membershipService.reset();
+
+        // Trigger population of membership history
+        mockListVersion(idcId, CREATED_DATE);
+        // First member proxy missing insertedContentRelation, so should be skipped but not throw an error
+        membershipService.populateMembershipHistory(transaction, idcId);
+        membershipService.commitTransaction(transaction);
+
+        // Only the valid member should show up in the membership
+        assertCommittedMembershipCount(membershipRescId, 1);
+    }
+
     private void mockListVersion(final FedoraId fedoraId, final Instant... versions) {
         when(psSession.listVersions(fedoraId.asResourceId())).thenReturn(Arrays.asList(versions));
     }
