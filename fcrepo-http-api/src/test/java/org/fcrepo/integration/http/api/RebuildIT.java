@@ -139,8 +139,8 @@ public class RebuildIT extends AbstractResourceIT {
     }
 
     @Test
-    public void testRebuildContinue() throws Exception {
-        assertFalse(fedoraPropsConfig.isRebuildContinue(), "rebuild on start is disabled");
+    public void testRebuildEnabled() throws Exception {
+        assertFalse(fedoraPropsConfig.isRebuildEnabled(), "rebuild on start is disabled");
         rebuild("test-rebuild-ocfl/objects");
 
         // Optional debugging
@@ -175,7 +175,7 @@ public class RebuildIT extends AbstractResourceIT {
         //restart the container again, but initialize after setting the rebuild continue
         restartContainer();
         setBeans();
-        fedoraPropsConfig.setRebuildContinue(true);
+        fedoraPropsConfig.setRebuildEnabled(true);
         //give the container a few moments to start up and get the database setup.
         TimeUnit.MILLISECONDS.sleep(2000);
         initializer.initialize();
@@ -400,7 +400,7 @@ public class RebuildIT extends AbstractResourceIT {
 
     private void rebuild(final String name) {
         // Since we are truncating but not deleting the database, set continue flag so it will rebuild
-        fedoraPropsConfig.setRebuildContinue(true);
+        fedoraPropsConfig.setRebuildEnabled(true);
         copyToOcfl(name);
         reindexService.reset();
         initializer.initialize();
