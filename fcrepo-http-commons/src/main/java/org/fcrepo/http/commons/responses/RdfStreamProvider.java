@@ -75,7 +75,6 @@ public class RdfStreamProvider implements MessageBodyWriter<RdfNamespacedStream>
         final MediaType mediaType,
         final MultivaluedMap<String, Object> httpHeaders,
         final OutputStream entityStream) {
-
         LOGGER.debug("Serializing an RdfStream to mimeType: {}", mediaType);
         final var namespaces = registry.getNamespaces();
         nsStream.namespaces.entrySet().stream().filter(entry -> !namespaces.containsValue(entry.getValue()))
