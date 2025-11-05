@@ -13,9 +13,13 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
@@ -80,6 +84,7 @@ public class FedoraPropsConfigTest {
         assertFalse(config.isRebuildFixityCheck());
         assertFalse(config.isRebuildOnStart());
         assertFalse(config.isRebuildContinue());
+        assertFalse(config.isRebuildEnabled());
         assertNull(config.getJmsBaseUrl());
         assertEquals(ServerManagedPropsMode.STRICT, config.getServerManagedPropsMode());
         assertEquals(JmsDestination.TOPIC, config.getJmsDestinationType());
@@ -121,6 +126,10 @@ public class FedoraPropsConfigTest {
         // Test setRebuildContinue
         config.setRebuildContinue(true);
         assertTrue(config.isRebuildContinue());
+
+        // Test setRebuildEnabled
+        config.setRebuildEnabled(true);
+        assertTrue(config.isRebuildEnabled());
 
         // Test setServerManagedPropsMode
         config.setServerManagedPropsMode(ServerManagedPropsMode.RELAXED);
@@ -217,5 +226,41 @@ public class FedoraPropsConfigTest {
         initializeConfig();
 
         assertEquals(5, config.getEventBusThreads());
+    }
+
+    @Test
+    public void testCheckDeprecatedPropertiesWarningsLogged() {
+        // Set up a custom appender to capture log messages
+        final var logger = (Logger) LoggerFactory.getLogger(FedoraPropsConfig.class);
+        final var appender  = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+
+        try {
+            // Test FCREPO_REBUILD_CONTINUE property
+            System.setProperty("fcrepo.rebuild.continue", "true");
+            env.setProperty("fcrepo.rebuild.continue", "true");
+            System.setProperty("fcrepo.rebuild.on.start", "true");
+            env.setProperty("fcrepo.rebuild.on.start", "true");
+            initializeContext();
+            initializeConfig();
+
+            // Verify warning was logged for FCREPO_REBUILD_CONTINUE
+            final var logEvents = appender.list;
+            assertTrue(logEvents.stream().anyMatch(event ->
+                    event.getLevel().equals(ch.qos.logback.classic.Level.WARN) &&
+                            event.getFormattedMessage().contains("'fcrepo.rebuild.continue' is deprecated")));
+            assertTrue(logEvents.stream().anyMatch(event ->
+                    event.getLevel().equals(ch.qos.logback.classic.Level.WARN) &&
+                            event.getFormattedMessage().contains("'fcrepo.rebuild.on.start' is deprecated")));
+
+            appender.list.clear();
+            context.close();
+        } finally {
+            // Clean up system properties and logger
+            System.clearProperty("fcrepo.rebuild.continue");
+            System.clearProperty("fcrepo.rebuild.on.start");
+            logger.detachAppender(appender);
+        }
     }
 }
