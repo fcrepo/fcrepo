@@ -28,7 +28,8 @@
             <p><i>operator</i> can be one of <b>=, &lt;=, &lt;, &gt;, &gt;=</b></p>
             <p><i>Query term</i> is the value to compare with.</p>
             <p><i>Wildcards:</i> you can perform wildcard searches of the fedora_id, rdf_type, and mime_type fields
-                by using the '*' character. The operator must be set to '=' to enable this.</p>
+                by using the '*' character. The operator must be set to '=' to enable this. To search for values
+                containing * characters, escape the character with a backslash.</p>
         </div>
 
         <div class="col-md-5">
