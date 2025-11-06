@@ -87,7 +87,6 @@ public class DbSearchIndexImpl implements SearchIndex {
     private static final String RDF_TYPE_URI_COLUMN = "rdf_type_uri";
 
     private static final String FEDORA_ID_PARAM = "fedora_id";
-    private static final String RESOURCE_ID_PARAM = "resource_id";
     private static final String RDF_TYPE_ID_PARAM = "rdf_type_id";
     private static final String MODIFIED_PARAM = "modified";
     private static final String CONTENT_SIZE_PARAM = "content_size";
@@ -98,16 +97,6 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     public static final String TRANSACTION_ID_PARAM = "transaction_id";
     private static final String OPERATION_PARAM = "operation";
-
-    private static final String RDF_TYPE_FILTER_SUB_TABLE = ", (SELECT rrt." + RESOURCE_ID_COLUMN + " from " +
-            SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
-            SEARCH_RDF_TYPE_TABLE + " rt, " + SIMPLE_SEARCH_TABLE + " s WHERE rrt.rdf_type_id = rt.id and s.id = " +
-            "rrt.resource_id and rt." + RDF_TYPE_URI_COLUMN + " like :" + RDF_TYPE_URI_PARAM +
-            " group by rrt." + RESOURCE_ID_COLUMN + ") r_filter";
-    private static final String RDF_TYPES_SUB_TABLE = ", (SELECT rrt.resource_id,  group_concat_function as rdf_type " +
-            " from " + SEARCH_RESOURCE_RDF_TYPE_TABLE + " rrt, " +
-            "search_rdf_type rt ," + SIMPLE_SEARCH_TABLE + " s " +
-            "WHERE rrt.rdf_type_id = rt.id group by rrt.resource_id) r ";
 
     private static final String POSTGRES_GROUP_CONCAT_FUNCTION = "STRING_AGG(b.rdf_type_uri, ',')";
     private static final String DEFAULT_GROUP_CONCAT_FUNCTION = "GROUP_CONCAT(distinct b.rdf_type_uri " +
@@ -444,7 +433,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         final List<Map<String, Object>> items = jdbcTemplate.query(selectQueryStr, parameterSource, rowMapper);
         final var pagination = new PaginationInfo(parameters.getMaxResults(), parameters.getOffset(),
                 (totalResults != null ? totalResults : 0));
-        LOGGER.debug("Search query with parameters: {} - {}", selectQuery.toString(), parameters);
+        LOGGER.debug("Search query with parameters: {} - {}", selectQuery, parameters);
         return new SearchResult(items, pagination);
     }
 
@@ -577,7 +566,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                 final String whereClause;
                 if (object.contains("*")) {
                     object = convertToSqlLikeWildcard(object);
-                    whereClause = field + " like :" + paramName;
+                    whereClause = field + " LIKE :" + paramName;
                 } else {
                     whereClause = field + " = :" + paramName;
                 }
@@ -610,9 +599,10 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private String convertToSqlLikeWildcard(final String value) {
-        return value.replaceAll("_", "\\\\_")
-                .replaceAll("%", "\\\\%")
-                .replace("*", "%");
+        return value.replaceAll("_", "\\\\_") // escape underscores
+                .replaceAll("%", "\\\\%") // escape percent signs
+                .replaceAll("(?<!\\\\)\\*", "%") // convert unescaped * to %
+                .replaceAll("\\\\\\*", "*"); // convert \* back to *
     }
 
     @Override
