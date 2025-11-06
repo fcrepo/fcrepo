@@ -25,8 +25,10 @@
                 <li><b>content_size</b>: The size of the binary or RDF.</li>
                 <li><b>mime_type</b>: The mime-type of the binary object.</li>
             </ul>
-            <p><i>operator</i> can be one of <b>&lt;=, &lt;, &gt;, &gt;=</b></p>
+            <p><i>operator</i> can be one of <b>=, &lt;=, &lt;, &gt;, &gt;=</b></p>
             <p><i>Query term</i> is the value to compare with.</p>
+            <p><i>Wildcards:</i> you can perform wildcard searches of the fedora_id, rdf_type, and mime_type fields
+                by using the '*' character. The operator must be set to '=' to enable this.</p>
         </div>
 
         <div class="col-md-5">

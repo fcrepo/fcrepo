@@ -577,9 +577,6 @@ public class DbSearchIndexImpl implements SearchIndex {
                 final String whereClause;
                 if (object.contains("*")) {
                     object = convertToSqlLikeWildcard(object);
-                    if (object.contains("_")) {
-                        object = object.replaceAll("_", "\\\\_");
-                    }
                     whereClause = field + " like :" + paramName;
                 } else {
                     whereClause = field + " = :" + paramName;
@@ -613,7 +610,9 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private String convertToSqlLikeWildcard(final String value) {
-        return value.replace("*", "%");
+        return value.replaceAll("_", "\\\\_")
+                .replaceAll("%", "\\\\%")
+                .replace("*", "%");
     }
 
     @Override
