@@ -202,7 +202,6 @@ public class RdfStreamStreamingOutputTest {
         jsonLdTest("http://manu.sporny.org/", "expanded.jsonld", "expanded-expected.jsonld", mediaType);
     }
 
-    @Disabled
     @Test
     public void testJsonLdFlattened() throws IOException {
         final MediaType mediaType = new MediaType("application", "ld+json",
@@ -210,7 +209,6 @@ public class RdfStreamStreamingOutputTest {
         jsonLdTest("http://me.markus-lanthaler.com/", "flattened.jsonld", "flattened-expected.jsonld", mediaType);
     }
 
-    @Disabled
     @Test
     public void testJsonLdCompacted() throws IOException {
         final MediaType mediaType = new MediaType("application", "ld+json",
@@ -241,6 +239,7 @@ public class RdfStreamStreamingOutputTest {
 
             // Set up namespaces and media type for flattened JSON-LD
             final Map<String, String> namespaces = new HashMap<>();
+            namespaces.put("foaf", "http://xmlns.com/foaf/0.1/");
 
             // Serialize using RdfStreamStreamingOutput
             final ByteArrayOutputStream output = new ByteArrayOutputStream();

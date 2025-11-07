@@ -1,20 +1,38 @@
-{
-  "@context": {
-    "name": "http://xmlns.com/foaf/0.1/name",
-    "knows": "http://xmlns.com/foaf/0.1/knows"
-  },
-  "@graph": [{
-    "@id": "http://me.markus-lanthaler.com/",
-    "name": "Markus Lanthaler",
-    "knows": [
-      { "@id": "http://manu.sporny.org/about#manu" },
-      { "@id": "_:b0" }
-    ]
-  }, {
-    "@id": "http://manu.sporny.org/about#manu",
-    "name": "Manu Sporny"
-  }, {
-    "@id": "_:b0",
-    "name": "Dave Longley"
-  }]
-}
+[
+    {
+        "@id": "_:b0",
+        "http://xmlns.com/foaf/0.1/name":
+        [
+            {
+                "@value": "Dave Longley"
+            }
+        ]
+    },
+    {
+        "@id": "http://manu.sporny.org/about#manu",
+        "http://xmlns.com/foaf/0.1/name":
+        [
+            {
+                "@value": "Manu Sporny"
+            }
+        ]
+    },
+    {
+        "@id": "http://me.markus-lanthaler.com/",
+        "http://xmlns.com/foaf/0.1/knows":
+        [
+            {
+                "@id": "http://manu.sporny.org/about#manu"
+            },
+            {
+                "@id": "_:b0"
+            }
+        ],
+        "http://xmlns.com/foaf/0.1/name":
+        [
+            {
+                "@value": "Markus Lanthaler"
+            }
+        ]
+    }
+]
