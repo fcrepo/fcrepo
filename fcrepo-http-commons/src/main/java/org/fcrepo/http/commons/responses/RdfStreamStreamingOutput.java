@@ -42,8 +42,6 @@ import org.apache.jena.sparql.core.DatasetGraphFactory;
 import org.apache.jena.sparql.core.Quad;
 import org.slf4j.Logger;
 import org.fcrepo.kernel.api.RdfStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,12 +49,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
-import jakarta.json.JsonStructure;
 import jakarta.json.JsonWriter;
 import jakarta.json.JsonWriterFactory;
 import jakarta.ws.rs.WebApplicationException;
@@ -191,23 +187,33 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                                              final Lang dataFormat, final MediaType dataMediaType,
                                              final Map<String, String> nsPrefixes) {
         final Model model = rdfStream.collect(toModel());
-        final QuadsToJsonld q = new QuadsToJsonld().ordered(true).useNativeTypes(true).mode(JsonLdVersion.V1_1);
-
         model.setNsPrefixes(filterNamespacesToPresent(model, nsPrefixes));
-
-        final String rdfFormat = getFormatFromMediaType(dataMediaType);
-        LOGGER.debug("Stream-based serialization of {}", rdfFormat);
 
         // use block output streaming for RDFXML
         if (RDFXML.equals(dataFormat)) {
             RDFDataMgr.write(output, model.getGraph(), RDFXML_PLAIN);
         } else if (JSONLD.equals(dataFormat)) {
-            final JsonWriterFactory writerFactory = getJsonWriter(model, q);
-            final JsonArray expanded = getExpanded(q);
-            writePayload(writerFactory, output, expanded, rdfFormat);
+            writeJsonLd(output, model, dataMediaType);
         } else {
             RDFDataMgr.write(output, model.getGraph(), dataFormat);
         }
+    }
+
+    private static void writeJsonLd(final OutputStream output, final Model model, final MediaType dataMediaType) {
+        final String rdfFormat = getFormatFromMediaType(dataMediaType);
+        LOGGER.debug("JSON LD format requested {}", rdfFormat);
+
+        // For compacted, we can use Jena's built-in JSON-LD writer since it handles the context section for us
+        if (COMPACTED.equals(rdfFormat)) {
+            RDFDataMgr.write(output, model.getGraph(), RDFFormat.JSONLD);
+            return;
+        }
+
+        final QuadsToJsonld q = new QuadsToJsonld().ordered(true).useNativeTypes(true).mode(JsonLdVersion.V1_1);
+        convertModelToJsonQuads(model, q);
+        final JsonWriterFactory writerFactory = getJsonWriter();
+        final JsonArray expanded = getExpanded(q);
+        writePayload(writerFactory, output, expanded, rdfFormat);
     }
 
     private static JsonArray getExpanded(final QuadsToJsonld q) {
@@ -221,7 +227,11 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         return expanded;
     }
 
-    private static JsonWriterFactory getJsonWriter(final Model model, final QuadsToJsonld q) {
+    private static JsonWriterFactory getJsonWriter() {
+        return Json.createWriterFactory(java.util.Collections.emptyMap());
+    }
+
+    private static void convertModelToJsonQuads(final Model model, final QuadsToJsonld q) {
         final DatasetGraph dsg = DatasetGraphFactory.wrap(model.getGraph());
         final Iterator<Quad> it = dsg.find();
         while (it.hasNext()) {
@@ -248,7 +258,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                     }
 
                     // LOG THE VALUES YOU ACTUALLY PASS
-                    LOGGER.info("TITLE quad -> pass lex='{}', lang={}, dt={}", lex, langOrNull, dt);
+                    LOGGER.debug("TITLE quad -> pass lex='{}', lang={}, dt={}", lex, langOrNull, dt);
 
                     // LITERAL OVERLOAD (7 args): value, datatype, language, direction, graph
                     q.quad(s, p, lex, dt, langOrNull, null, graphName);
@@ -261,34 +271,10 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                 throw new WebApplicationException(e);
             }
         }
-
-        // compact output; omit PRETTY_PRINTING key entirely to ensure no pretty-print
-        return Json.createWriterFactory(java.util.Collections.emptyMap());
     }
 
     /**
-     * Adds the context to a JSON Array which is a requirement of the compact JSON-LD profile
-     * @param expanded JSON Array expanded profile
-     * @return compacted JsonStructure with context applied
-     * @throws IOException
-     * @throws JsonLdError
-     */
-    private static JsonStructure compactWithContext(final JsonArray expanded)
-            throws IOException, JsonLdError {
-
-        try (InputStream ctx = Objects.requireNonNull(
-                RdfStreamStreamingOutput.class.getResourceAsStream("/context.jsonld"),
-                "context.jsonld not on classpath")) {
-
-            return JsonLd.compact(
-                    JsonDocument.of(expanded),
-                    JsonDocument.of(ctx)
-            ).get();
-        }
-    }
-
-    /**
-     * Writes JSON-LD output and supports flattened, expanded and compacted (default) profiles
+     * Writes JSON-LD output and supports flattened and expanded profiles
      *
      * @param writerFactory JSON Writer to eventually write to
      * @param output stream for the JSON Writer
@@ -301,20 +287,13 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             final JsonArray expanded,
             final String rdfFormat) {
 
-        final JsonValue payload;
+        JsonValue payload = expanded;
 
         try {
-            switch (rdfFormat) {
-                case EXPANDED -> payload = expanded;
-
-                case FLATTENED -> payload =
-                        JsonLd.flatten(JsonDocument.of(expanded)).get();
-
-                case COMPACTED -> payload = compactWithContext(expanded);
-
-                default -> payload = compactWithContext(expanded);
+            if (FLATTENED.equals(rdfFormat)) {
+                payload = JsonLd.flatten(JsonDocument.of(expanded)).get();
             }
-        } catch (JsonLdError | IOException e) {
+        } catch (JsonLdError e) {
             throw new WebApplicationException(e);
         }
 
@@ -340,9 +319,6 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
         }
         if (node.isLiteral()) {
             return node.getLiteralLexicalForm();
-        }
-        if (node.isVariable()) {
-            return "?" + node.getName();
         }
         throw new IllegalArgumentException("Unsupported node type: " + node);
     }
