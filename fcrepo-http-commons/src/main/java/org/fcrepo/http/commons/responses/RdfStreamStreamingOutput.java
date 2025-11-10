@@ -209,68 +209,47 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
             return;
         }
 
-        final QuadsToJsonld q = new QuadsToJsonld().ordered(true).useNativeTypes(true).mode(JsonLdVersion.V1_1);
-        convertModelToJsonQuads(model, q);
-        final JsonWriterFactory writerFactory = getJsonWriter();
-        final JsonArray expanded = getExpanded(q);
-        writePayload(writerFactory, output, expanded, rdfFormat);
-    }
-
-    private static JsonArray getExpanded(final QuadsToJsonld q) {
-        final JsonArray expanded;
-
         try {
-            expanded = q.toJsonLd();
-        } catch (JsonLdError jsonLdError) {
-            throw new WebApplicationException(jsonLdError);
+            // Create JsonLd consumer directly
+            final var consumer = JsonLd.fromRdf()
+                    .ordered(true)
+                    .useNativeTypes(false)  // Allows language tags to work, but native types will have datatypes
+                    .mode(JsonLdVersion.V1_1);
+
+            // Feed triples directly to consumer
+            model.getGraph().find().forEachRemaining(triple -> {
+                try {
+                    final String s = nodeAsTerm(triple.getSubject());
+                    final String p = nodeAsTerm(triple.getPredicate());
+                    final Node o = triple.getObject();
+
+                    if (o.isLiteral()) {
+                        final String lex = o.getLiteralLexicalForm();
+                        final String lang = o.getLiteralLanguage();
+                        String dt = o.getLiteralDatatypeURI();
+
+                        final String langOrNull = (lang != null && !lang.isEmpty()) ? lang : null;
+                        consumer.quad(s, p, lex, dt, langOrNull, null, null);
+                    } else {
+                        consumer.quad(s, p, nodeAsTerm(o), null, null, null, null);
+                    }
+                } catch (RdfConsumerException e) {
+                    throw new WebApplicationException(e);
+                }
+            });
+
+            // Convert to JSON-LD
+            final JsonArray expanded = consumer.toJsonLd();
+            final JsonWriterFactory writerFactory = getJsonWriter();
+            writePayload(writerFactory, output, expanded, rdfFormat);
+
+        } catch (JsonLdError e) {
+            throw new WebApplicationException(e);
         }
-        return expanded;
     }
 
     private static JsonWriterFactory getJsonWriter() {
         return Json.createWriterFactory(java.util.Collections.emptyMap());
-    }
-
-    private static void convertModelToJsonQuads(final Model model, final QuadsToJsonld q) {
-        final DatasetGraph dsg = DatasetGraphFactory.wrap(model.getGraph());
-        final Iterator<Quad> it = dsg.find();
-        while (it.hasNext()) {
-            final Quad qd = it.next();
-
-            final String graphName = qd.isDefaultGraph() ? null : nodeAsTerm(qd.getGraph());
-            final String s = nodeAsTerm(qd.getSubject());
-            final String p = nodeAsTerm(qd.getPredicate());
-            final Node o = qd.getObject();
-
-            try {
-                if (o.isLiteral()) {
-                    final String lex = o.getLiteralLexicalForm();
-                    final String lang = o.getLiteralLanguage();        // "" if none
-                    String dt        = o.getLiteralDatatypeURI();      // may be null
-
-                    // IMPORTANT: language-tagged literals must NOT carry a datatype
-                    final String langOrNull = (lang != null && !lang.isEmpty()) ? lang : null;
-                    if (langOrNull != null) {
-                        dt = null;
-                    } else if (dt == null) {
-                        // ensure plain strings are treated as literals, not IRIs
-                        dt = "http://www.w3.org/2001/XMLSchema#string";
-                    }
-
-                    // LOG THE VALUES YOU ACTUALLY PASS
-                    LOGGER.debug("TITLE quad -> pass lex='{}', lang={}, dt={}", lex, langOrNull, dt);
-
-                    // LITERAL OVERLOAD (7 args): value, datatype, language, direction, graph
-                    q.quad(s, p, lex, dt, langOrNull, null, graphName);
-
-                } else {
-                    // NODE OVERLOAD – only for IRIs/blank nodes
-                    q.quad(s, p, nodeAsTerm(o), null, null, null, graphName);
-                }
-            } catch (RdfConsumerException e) {
-                throw new WebApplicationException(e);
-            }
-        }
     }
 
     /**

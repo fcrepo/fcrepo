@@ -244,6 +244,7 @@ public class RdfStreamStreamingOutputTest {
             // Serialize using RdfStreamStreamingOutput
             final ByteArrayOutputStream output = new ByteArrayOutputStream();
             new RdfStreamStreamingOutput(testStream, namespaces, mediaType).write(output);
+            LOGGER.debug("Output was: {}", output.toString(StandardCharsets.UTF_8));
 
             // Parse the output JSON-LD
             final JsonReader reader = createReader(new ByteArrayInputStream(output.toByteArray()));

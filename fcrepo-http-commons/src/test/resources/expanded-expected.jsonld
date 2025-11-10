@@ -4,8 +4,19 @@
     "http://xmlns.com/foaf/0.1/name": [
       { "@value": "Manu Sporny" }
     ],
-     "http://xmlns.com/foaf/0.1/homepage": [
+    "http://xmlns.com/foaf/0.1/homepage": [
       { "@id": "http://manu.sporny.org/" }
+    ],
+    "http://xmlns.com/foaf/0.1/title": [
+      { "@value": "Manu in francais",
+       "@language": "fr"
+      }
+    ],
+    "http://xmlns.com/foaf/0.1/age": [
+        {
+            "@value": "25",
+            "@type": "http://www.w3.org/2001/XMLSchema#integer"
+        }
     ]
   }
 ]

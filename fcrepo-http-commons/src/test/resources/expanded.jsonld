@@ -4,9 +4,16 @@
       "homepage": {
         "@id": "http://xmlns.com/foaf/0.1/homepage",
         "@type": "@id"
-      }
+      },
+      "title": "http://xmlns.com/foaf/0.1/title",
+      "age": "http://xmlns.com/foaf/0.1/age"
    },
    "@id": "http://manu.sporny.org/#me",
    "name": "Manu Sporny",
-   "homepage": "http://manu.sporny.org/"
+   "homepage": "http://manu.sporny.org/",
+   "title": {
+        "@value": "Manu in francais",
+        "@language": "fr"
+   },
+   "age": [{"@value": 25}]
 }
