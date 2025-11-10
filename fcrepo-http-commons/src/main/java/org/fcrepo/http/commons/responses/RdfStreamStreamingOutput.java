@@ -24,7 +24,6 @@ import com.apicatalog.jsonld.JsonLd;
 import com.apicatalog.jsonld.JsonLdError;
 import com.apicatalog.jsonld.JsonLdVersion;
 import com.apicatalog.jsonld.document.JsonDocument;
-import com.apicatalog.jsonld.serialization.QuadsToJsonld;
 import com.apicatalog.rdf.api.RdfConsumerException;
 import com.google.common.util.concurrent.AbstractFuture;
 import jakarta.json.JsonValue;
@@ -37,15 +36,11 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 import org.apache.jena.riot.RiotException;
 import org.apache.jena.riot.system.StreamRDF;
-import org.apache.jena.sparql.core.DatasetGraph;
-import org.apache.jena.sparql.core.DatasetGraphFactory;
-import org.apache.jena.sparql.core.Quad;
 import org.slf4j.Logger;
 import org.fcrepo.kernel.api.RdfStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -226,7 +221,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
                     if (o.isLiteral()) {
                         final String lex = o.getLiteralLexicalForm();
                         final String lang = o.getLiteralLanguage();
-                        String dt = o.getLiteralDatatypeURI();
+                        final String dt = o.getLiteralDatatypeURI();
 
                         final String langOrNull = (lang != null && !lang.isEmpty()) ? lang : null;
                         consumer.quad(s, p, lex, dt, langOrNull, null, null);
