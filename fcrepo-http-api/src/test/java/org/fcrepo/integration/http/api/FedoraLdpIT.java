@@ -4069,9 +4069,9 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final JsonNode titleObj = json.get("dc:title");
         assertTrue(titleObj.isArray(), "title should be an array of objects, an object per language");
         assertEquals(titleObj.size(), 2, "Both languages are together");
-        var frNode = titleObj.valueStream().filter(n -> "fr".equals(n.get("@language").asText())).findFirst().get();
+        final var frNode = titleObj.valueStream().filter(n -> "fr".equals(n.get("@language").asText())).findFirst().get();
         assertEquals("ceci n'est pas un titre français", frNode.get("@value").asText());
-        var enNode = titleObj.valueStream().filter(n -> "en".equals(n.get("@language").asText())).findFirst().get();
+        final var enNode = titleObj.valueStream().filter(n -> "en".equals(n.get("@language").asText())).findFirst().get();
         assertEquals("this is an english title", enNode.get("@value").asText());
     }
 
