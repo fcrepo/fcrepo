@@ -4060,16 +4060,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
         httpGet.setHeader(ACCEPT, "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#compacted\"");
         final JsonNode json;
         try (final CloseableHttpResponse responseGET = execute(httpGet)) {
-            LOGGER.info("GET: " + responseGET.toString());
+            LOGGER.info("GET: {}", responseGET.toString());
             // Inspect the response
             final ObjectMapper mapper = new ObjectMapper();
             json = mapper.readTree(responseGET.getEntity().getContent());
         }
 
-        final JsonNode titleObj = json.get("title");
-        assertTrue(titleObj.isObject(), "title should be an object (language map)");
-        assertEquals("ceci n'est pas un titre français", titleObj.get("fr").asText());
-        assertEquals("this is an english title", titleObj.get("en").asText());
+        final JsonNode titleObj = json.get("dc:title");
+        assertTrue(titleObj.isArray(), "title should be an array of objects, an object per language");
+        assertEquals(titleObj.size(), 2, "Both languages are together");
+        var frNode = titleObj.valueStream().filter(n -> "fr".equals(n.get("@language").asText())).findFirst().get();
+        assertEquals("ceci n'est pas un titre français", frNode.get("@value").asText());
+        var enNode = titleObj.valueStream().filter(n -> "en".equals(n.get("@language").asText())).findFirst().get();
+        assertEquals("this is an english title", enNode.get("@value").asText());
     }
 
     @Test
