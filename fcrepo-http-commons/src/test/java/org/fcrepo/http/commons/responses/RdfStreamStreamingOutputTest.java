@@ -54,7 +54,6 @@ import org.apache.jena.riot.RiotException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -202,7 +201,6 @@ public class RdfStreamStreamingOutputTest {
         jsonLdTest("http://manu.sporny.org/", "expanded.jsonld", "expanded-expected.jsonld", mediaType);
     }
 
-    @Disabled
     @Test
     public void testJsonLdFlattened() throws IOException {
         final MediaType mediaType = new MediaType("application", "ld+json",
@@ -210,7 +208,6 @@ public class RdfStreamStreamingOutputTest {
         jsonLdTest("http://me.markus-lanthaler.com/", "flattened.jsonld", "flattened-expected.jsonld", mediaType);
     }
 
-    @Disabled
     @Test
     public void testJsonLdCompacted() throws IOException {
         final MediaType mediaType = new MediaType("application", "ld+json",
@@ -241,10 +238,12 @@ public class RdfStreamStreamingOutputTest {
 
             // Set up namespaces and media type for flattened JSON-LD
             final Map<String, String> namespaces = new HashMap<>();
+            namespaces.put("foaf", "http://xmlns.com/foaf/0.1/");
 
             // Serialize using RdfStreamStreamingOutput
             final ByteArrayOutputStream output = new ByteArrayOutputStream();
             new RdfStreamStreamingOutput(testStream, namespaces, mediaType).write(output);
+            LOGGER.debug("Output was: {}", output.toString(StandardCharsets.UTF_8));
 
             // Parse the output JSON-LD
             final JsonReader reader = createReader(new ByteArrayInputStream(output.toByteArray()));
