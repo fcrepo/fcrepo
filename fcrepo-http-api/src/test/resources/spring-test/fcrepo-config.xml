@@ -24,7 +24,7 @@
   <!-- Configuration of namespace prefixes -->
   <bean name="rdfNamespaceRegistry" class="org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry"
       init-method="init">
-    <property name="configPath" value="${fcrepo.namespace.registry:#{null}}" />
+    <property name="configPath" value="classpath:/namespaces.yml" />
     <property name="monitorForChanges" value="false" />
   </bean>
 

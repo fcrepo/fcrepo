@@ -12,6 +12,7 @@ import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,6 +25,8 @@ import jakarta.ws.rs.core.MediaType;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
+import org.fcrepo.kernel.api.rdf.RdfNamespaceRegistry;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.apache.jena.graph.Triple;
@@ -41,9 +44,18 @@ public class RdfStreamProviderTest {
 
     private final RdfStreamProvider testProvider = new RdfStreamProvider();
 
+    private static final RdfNamespaceRegistry registry = new RdfNamespaceRegistry();
+
+    @BeforeAll
+    public static void beforeClass() throws Exception {
+        final Map<String, String> namespaces = new HashMap<>();
+        namespaces.put("test", "http://example.org/test#");
+        registry.setNamespaces(namespaces);
+    }
 
     @BeforeEach
-    public void setUp() throws Exception {
+    public void setUp() {
+        setField(testProvider, "registry", registry);
     }
 
     @Test
