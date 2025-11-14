@@ -4123,9 +4123,14 @@ public class FedoraLdpIT extends AbstractResourceIT {
                 }
             }
         }
-
-        //assertEquals(2, langCount,  "Should be two langs!");
-        //assertEquals(2, valueCount, "Should be two values!");
+        assertTrue(titles.isArray(), "title should be an array of objects, an object per language");
+        assertEquals(titles.size(), 2, "Both languages are together");
+        final var frNode = titles.valueStream().filter(n -> "fr".equals(n.get("@language").asText()))
+                .findFirst().get();
+        assertEquals("ceci n'est pas un titre français", frNode.get("@value").asText());
+        final var enNode = titles.valueStream().filter(n -> "en".equals(n.get("@language").asText()))
+                .findFirst().get();
+        assertEquals("this is an english title", enNode.get("@value").asText());
     }
 
     @Test
