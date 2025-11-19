@@ -19,7 +19,6 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.rdf.model.ResourceFactory.createTypedLiteral;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE_TYPE;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -55,15 +54,12 @@ import org.apache.jena.riot.RiotException;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.RdfStream;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 
-import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Model;
 
@@ -81,15 +77,9 @@ public class RdfStreamStreamingOutputTest {
     private static final Triple triple = create(createURI("info:testSubject"),
             createURI("info:testPredicate"), createURI("info:testObject"));
 
-    @Mock
-    private Node mockNode;
-
     private final RdfStream testRdfStream = new DefaultRdfStream(triple.getSubject(), of(triple));
 
     private final Map<String, String> testNamespaces = new HashMap<>();
-
-    @Mock
-    private RdfStream mockRdfStream;
 
     private final MediaType testMediaType = valueOf("application/rdf+xml");
 
@@ -181,7 +171,7 @@ public class RdfStreamStreamingOutputTest {
     @Test
     public void testWriteWithException() throws IOException {
 
-        final FutureCallback<Void> callback = new FutureCallback<Void>() {
+        final FutureCallback<Void> callback = new FutureCallback<>() {
 
             @Override
             public void onSuccess(final Void v) {
@@ -204,7 +194,6 @@ public class RdfStreamStreamingOutputTest {
         });
     }
 
-    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdExpanded() throws IOException {
         final MediaType mediaType = new MediaType("application", "ld+json",
@@ -212,7 +201,6 @@ public class RdfStreamStreamingOutputTest {
         jsonLdTest("http://manu.sporny.org/", "expanded.jsonld", "expanded-expected.jsonld", mediaType);
     }
 
-    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdFlattened() throws IOException {
         final MediaType mediaType = new MediaType("application", "ld+json",
@@ -220,7 +208,6 @@ public class RdfStreamStreamingOutputTest {
         jsonLdTest("http://me.markus-lanthaler.com/", "flattened.jsonld", "flattened-expected.jsonld", mediaType);
     }
 
-    @Disabled("Pending https://fedora-repository.atlassian.net/browse/FCREPO-4018")
     @Test
     public void testJsonLdCompacted() throws IOException {
         final MediaType mediaType = new MediaType("application", "ld+json",
@@ -251,10 +238,12 @@ public class RdfStreamStreamingOutputTest {
 
             // Set up namespaces and media type for flattened JSON-LD
             final Map<String, String> namespaces = new HashMap<>();
+            namespaces.put("foaf", "http://xmlns.com/foaf/0.1/");
 
             // Serialize using RdfStreamStreamingOutput
             final ByteArrayOutputStream output = new ByteArrayOutputStream();
             new RdfStreamStreamingOutput(testStream, namespaces, mediaType).write(output);
+            LOGGER.debug("Output was: {}", output.toString(StandardCharsets.UTF_8));
 
             // Parse the output JSON-LD
             final JsonReader reader = createReader(new ByteArrayInputStream(output.toByteArray()));
@@ -268,7 +257,7 @@ public class RdfStreamStreamingOutputTest {
                 expectedReader.close();
 
                 // Compare the @graph arrays (order-insensitive)
-                assertJsonStructMatch(expectedObj, resultObj);
+                assertJsonMatch(expectedObj, resultObj);
             }
         }
     }
@@ -279,29 +268,40 @@ public class RdfStreamStreamingOutputTest {
      * @param expected The expected JSON object
      * @param actual The actual JSON object
      */
-    private static void assertJsonStructMatch(final JsonStructure expected, final JsonStructure actual) {
+    private static void assertJsonMatch(final JsonValue expected, final JsonValue actual) {
         if (expected.getValueType() != actual.getValueType()) {
-            throw new AssertionError("Expected and actual JSON structures do not match in type");
+            throw new AssertionError("Type mismatch: expected " + expected.getValueType()
+                    + " but got " + actual.getValueType());
         }
-        if (expected.getValueType() == JsonValue.ValueType.OBJECT) {
-            assertJsonObjectsMatch(expected.asJsonObject(), actual.asJsonObject());
-        } else if (expected.getValueType() == JsonValue.ValueType.ARRAY) {
-            assertJsonArraysMatch(expected.asJsonArray(), actual.asJsonArray());
-        } else {
-            assertEquals(expected, actual, "Expected and actual JSON values do not match");
+        switch (expected.getValueType()) {
+            case OBJECT -> assertJsonObjectsMatch(expected.asJsonObject(), actual.asJsonObject());
+            case ARRAY  -> assertJsonArraysMatch(expected.asJsonArray(),  actual.asJsonArray());
+            default     -> {
+                if (!expected.equals(actual)) {
+                    throw new AssertionError("Value mismatch: expected " + expected + " but got " + actual);
+                }
+            }
         }
     }
+
     private static void assertJsonObjectsMatch(final JsonObject expected, final JsonObject actual) {
-        assertEquals(expected.size(), actual.size());
-        for (final var entry : expected.entrySet()) {
-            assertTrue(actual.containsKey(entry.getKey()));
-            assertJsonStructMatch((JsonStructure) entry.getValue(), (JsonStructure) actual.get(entry.getKey()));
+        if (expected.size() != actual.size()) {
+            throw new AssertionError("Object size mismatch: expected " + expected.size() + " got " + actual.size());
+        }
+        for (var e : expected.entrySet()) {
+            if (!actual.containsKey(e.getKey())) {
+                throw new AssertionError("Missing key in actual: " + e.getKey());
+            }
+            assertJsonMatch(e.getValue(), actual.get(e.getKey()));
         }
     }
+
     private static void assertJsonArraysMatch(final JsonArray expected, final JsonArray actual) {
-        assertEquals(expected.size(), actual.size());
-        for (var i = 0; i < expected.size(); i += 1) {
-            assertJsonStructMatch((JsonStructure) expected.get(i), (JsonStructure) actual.get(i));
+        if (expected.size() != actual.size()) {
+            throw new AssertionError("Array size mismatch: expected " + expected.size() + " got " + actual.size());
+        }
+        for (int i = 0; i < expected.size(); i++) {
+            assertJsonMatch(expected.get(i), actual.get(i));
         }
     }
 }
