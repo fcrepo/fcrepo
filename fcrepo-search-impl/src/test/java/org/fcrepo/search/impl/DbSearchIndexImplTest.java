@@ -512,6 +512,72 @@ public class DbSearchIndexImplTest {
         assertEquals(0, results2.getPagination().getTotalResults());
     }
 
+    @Test
+    public void testSearchRdfTypeWithWildcards() throws Exception {
+        when(resource1.getTypes()).thenReturn(List.of(
+                URI.create(BASIC_CONTAINER.getURI()),
+                URI.create(FEDORA_CONTAINER.getURI()),
+                URI.create(FEDORA_RESOURCE.getURI()),
+                URI.create(RDF_SOURCE.getURI()),
+                URI.create(RESOURCE.getURI()),
+                URI.create("http://example.org/type/test_type1"),
+                URI.create("http://example.org/type/test%25type3")
+        ));
+
+        final var id2 = parentId.resolve(UUID.randomUUID().toString());
+        resourceHeaders2 = buildBinaryResourceHeaders(id2, parentId);
+        mockBinaryResource(resource2, id2.getResourceId());
+        when(resourceFactory.getResource(transaction, resourceHeaders2.getId())).thenReturn(resource2);
+        when(resource2.getTypes()).thenReturn(List.of(
+                URI.create(BASIC_CONTAINER.getURI()),
+                URI.create(FEDORA_CONTAINER.getURI()),
+                URI.create(FEDORA_RESOURCE.getURI()),
+                URI.create(RDF_SOURCE.getURI()),
+                URI.create(RESOURCE.getURI()),
+                URI.create("http://example.org/type/testntype2")
+        ));
+
+        searchIndex.addUpdateIndex(transaction, resourceHeaders1);
+        searchIndex.addUpdateIndex(transaction, resourceHeaders2);
+        final var parameters = new SearchParameters(
+                List.of(Condition.Field.RDF_TYPE),
+                List.of(Condition.fromExpression("rdf_type=http://example.org/type/test*")),
+                10,
+                0,
+                Condition.Field.FEDORA_ID,
+                "asc",
+                true
+        );
+        final var results = searchIndex.doSearch(parameters);
+        assertEquals(3, results.getPagination().getTotalResults());
+
+        // Ensure that underscores are not treated as wildcards
+        final var parameters2 = new SearchParameters(
+                List.of(Condition.Field.FEDORA_ID),
+                List.of(Condition.fromExpression("rdf_type=http://example.org/type/test_*")),
+                10,
+                0,
+                Condition.Field.FEDORA_ID,
+                "asc",
+                true
+        );
+        final var results2 = searchIndex.doSearch(parameters2);
+        assertEquals(1, results2.getPagination().getTotalResults());
+
+        // Ensure that percent signs are escaped and can be searched for
+        final var parameters3 = new SearchParameters(
+                List.of(Condition.Field.FEDORA_ID),
+                List.of(Condition.fromExpression("rdf_type=http://example.org/type/test%*")),
+                10,
+                0,
+                Condition.Field.FEDORA_ID,
+                "asc",
+                true
+        );
+        final var results3 = searchIndex.doSearch(parameters3);
+        assertEquals(1, results3.getPagination().getTotalResults());
+    }
+
     /**
      * Test searching for a resource by mime_type
      */
@@ -533,6 +599,7 @@ public class DbSearchIndexImplTest {
         );
         final var results = searchIndex.doSearch(parameters);
         assertEquals(1, results.getPagination().getTotalResults());
+
         final var parameters2 = new SearchParameters(
                 List.of(Condition.Field.FEDORA_ID),
                 List.of(Condition.fromExpression("mime_type=application/json")),
@@ -544,6 +611,45 @@ public class DbSearchIndexImplTest {
         );
         final var results2 = searchIndex.doSearch(parameters2);
         assertEquals(0, results2.getPagination().getTotalResults());
+
+        // Verify wildcard searching
+        final var parameters3 = new SearchParameters(
+                List.of(Condition.Field.FEDORA_ID),
+                List.of(Condition.fromExpression("mime_type=text/pl*")),
+                10,
+                0,
+                Condition.Field.FEDORA_ID,
+                "asc",
+                true
+        );
+        final var results3 = searchIndex.doSearch(parameters3);
+        assertEquals(1, results3.getPagination().getTotalResults());
+
+        // Verify that underscores are not treated as wildcards
+        final var parameters4 = new SearchParameters(
+                List.of(Condition.Field.FEDORA_ID),
+                List.of(Condition.fromExpression("mime_type=text/pl_*")),
+                10,
+                0,
+                Condition.Field.FEDORA_ID,
+                "asc",
+                true
+        );
+        final var results4 = searchIndex.doSearch(parameters4);
+        assertEquals(0, results4.getPagination().getTotalResults());
+
+        // Verify that percents are not treated as wildcards
+        final var parameters5 = new SearchParameters(
+                List.of(Condition.Field.FEDORA_ID),
+                List.of(Condition.fromExpression("mime_type=text/pl%*")),
+                10,
+                0,
+                Condition.Field.FEDORA_ID,
+                "asc",
+                true
+        );
+        final var results5 = searchIndex.doSearch(parameters5);
+        assertEquals(0, results5.getPagination().getTotalResults());
     }
 
     /**
