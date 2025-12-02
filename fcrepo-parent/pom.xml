@@ -40,7 +40,7 @@
     <doxia-markdown.plugin.version>2.0.0</doxia-markdown.plugin.version>
     <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>
     <failsafe.plugin.version>3.5.3</failsafe.plugin.version>
-    <fcrepo-build-tools.version>7.0.0-SNAPSHOT</fcrepo-build-tools.version>
+    <fcrepo-build-tools.version>7.0.0-alpha1-SNAPSHOT</fcrepo-build-tools.version>
     <github-site.plugin.version>0.12</github-site.plugin.version>
     <gpg.plugin.version>3.2.8</gpg.plugin.version>
     <install.plugin.version>3.1.4</install.plugin.version>
@@ -57,7 +57,6 @@
     <site.plugin.version>3.21.0</site.plugin.version>
     <source.plugin.version>3.3.1</source.plugin.version>
     <surefire.plugin.version>3.5.3</surefire.plugin.version>
-    <velocity.plugin.version>2.4.1</velocity.plugin.version>
     <versions.plugin.version>2.18.0</versions.plugin.version>
     <!-- jacoco and sonar configuration -->
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
@@ -65,7 +64,6 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
-    <sonatype.host>s01.oss.sonatype.org</sonatype.host>
     <!-- to allow argLine late replacement in surefire -->
     <argLine />
   </properties>
@@ -332,11 +330,6 @@
               <artifactId>doxia-module-markdown</artifactId>
               <version>${doxia-markdown.plugin.version}</version>
             </dependency>
-            <dependency> 
-              <groupId>org.apache.velocity</groupId>
-              <artifactId>velocity</artifactId>
-              <version>${velocity.plugin.version}</version>
-            </dependency>
           </dependencies>
         </plugin>
 
@@ -380,7 +373,7 @@
           <extensions>true</extensions>
           <configuration>
             <serverId>sonatype-nexus-snapshots</serverId>
-            <nexusUrl>https://${sonatype.host}/</nexusUrl>
+	    <nexusUrl>https://ossrh-staging-api.central.sonatype.com/service/local/</nexusUrl>
             <autoReleaseAfterClose>true</autoReleaseAfterClose>
           </configuration>
         </plugin>
@@ -425,32 +418,6 @@
       </plugin>
     </plugins>
   </reporting>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <name>Sonatype Nexus Snapshots</name>
-      <url>https://${sonatype.host}/content/repositories/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-
-    <pluginRepository>
-      <id>sonatype-nexus-staging</id>
-      <name>Nexus Release Repository</name>
-      <url>https://${sonatype.host}/content/repositories/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
 
   <profiles>
     <profile>
@@ -520,11 +487,11 @@
     <snapshotRepository>
       <id>sonatype-nexus-snapshots</id>
       <name>Sonatype Nexus Shapshots</name>
-      <url>https://${sonatype.host}/content/repositories/snapshots/</url>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
     </snapshotRepository>
     <repository>
       <id>sonatype-nexus-staging</id>
-      <url>https://${sonatype.host}/service/local/staging/deploy/maven2/</url>
+      <url>https://ossrh-staging-api.central.sonatype.com/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
 
@@ -672,7 +639,7 @@
   <repositories>
     <repository>
       <id>oss.sonatype.org-snapshot</id>
-      <url>https://${sonatype.host}/content/repositories/snapshots</url>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
       <releases>
         <enabled>false</enabled>
       </releases>
