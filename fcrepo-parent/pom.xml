@@ -289,6 +289,7 @@
           <configuration>
             <!-- see http://jira.codehaus.org/browse/MRELEASE-424 -->
             <mavenExecutorId>forked-path</mavenExecutorId>
+	    <goals>deploy</goals> <!-- to get past site-deploy which is broken--> 
           </configuration>
           <dependencies>
             <dependency>
@@ -373,7 +374,7 @@
           <extensions>true</extensions>
           <configuration>
             <serverId>sonatype-nexus-snapshots</serverId>
-			<nexusUrl>https://ossrh-staging-api.central.sonatype.com/service/local/</nexusUrl>
+            <nexusUrl>https://ossrh-staging-api.central.sonatype.com/service/local/</nexusUrl>
             <autoReleaseAfterClose>true</autoReleaseAfterClose>
           </configuration>
         </plugin>
