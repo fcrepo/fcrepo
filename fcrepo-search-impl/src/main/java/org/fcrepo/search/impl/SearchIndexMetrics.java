@@ -18,6 +18,8 @@ import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Component;
  * @author pwinckles
  */
 @Component("searchIndex")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class SearchIndexMetrics implements SearchIndex {
 
     private static final String METRIC_NAME = "fcrepo.db";

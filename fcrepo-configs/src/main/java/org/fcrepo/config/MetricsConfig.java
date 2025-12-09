@@ -24,35 +24,43 @@ import io.prometheus.metrics.model.registry.PrometheusRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 
 /**
  * @author pwinckles
  */
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class MetricsConfig extends BasePropsConfig {
-
-    @Deprecated
-    @Value("${fcrepo.metrics.enable:false}")
-    private boolean metricsEnable;
-
-    @Value("${fcrepo.metrics.enabled:false}")
-    private boolean metricsEnabled;
+    private final boolean metricsEnabled;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsConfig.class);
 
-    @Bean
-    public MeterRegistry meterRegistry() {
-        final MeterRegistry registry;
+    public MetricsConfig(
+            @Deprecated @Value("${fcrepo.metrics.enable:false}") final boolean metricsEnable,
+            @Value("${fcrepo.metrics.enabled:false}") final boolean metricsEnabled) {
         if (metricsEnable) {
-            LOGGER.warn("Property fcrepo.metrics.enable is deprecated in favour of fcrepo.metrics.enabled " +
-                    "and will be removed in Fedora 8. See https://wiki.lyrasis.org/display/FEDORA7x/Properties");
-            metricsEnabled = metricsEnable;
+            LOGGER.warn("Property fcrepo.metrics.enable is deprecated...");
         }
+        // If either the new or the deprecated property is set, enable metrics
+        this.metricsEnabled = metricsEnabled || metricsEnable;
+    }
 
-        if (metricsEnabled || metricsEnable) {
+    @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static MeterRegistry meterRegistry(
+            @Deprecated @Value("${fcrepo.metrics.enable:false}") final boolean metricsEnable,
+            @Value("${fcrepo.metrics.enabled:false}") final boolean metricsEnabled
+    ) {
+        final MeterRegistry registry;
+
+        final boolean effectiveMetricsEnabled = metricsEnabled || metricsEnable;
+
+        if (effectiveMetricsEnabled) {
             registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry,
                     Clock.SYSTEM);
             registry.config().meterFilter(new MeterFilter() {
@@ -84,10 +92,6 @@ public class MetricsConfig extends BasePropsConfig {
      * @return whether metrics are enabled
      */
     public boolean isMetricsEnabled() {
-        if (metricsEnabled || metricsEnable) {
-            return true;
-        } else {
-            return false;
-        }
+        return metricsEnabled;
     }
 }

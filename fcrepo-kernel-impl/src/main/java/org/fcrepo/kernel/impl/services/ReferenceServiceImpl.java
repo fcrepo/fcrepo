@@ -40,6 +40,8 @@ import org.apache.jena.sparql.core.Quad;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -53,6 +55,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @since 6.0.0
  */
 @Component("referenceServiceImpl")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ReferenceServiceImpl implements ReferenceService {
 
     private static final Logger LOGGER = getLogger(ReferenceServiceImpl.class);

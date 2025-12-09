@@ -11,6 +11,8 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.ReindexResourceOperationFactory;
 import org.fcrepo.kernel.api.services.ReindexService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 import jakarta.inject.Inject;
@@ -21,6 +23,7 @@ import jakarta.inject.Inject;
  * @author dbernstein
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ReindexServiceImpl extends AbstractService implements ReindexService {
 
     @Inject

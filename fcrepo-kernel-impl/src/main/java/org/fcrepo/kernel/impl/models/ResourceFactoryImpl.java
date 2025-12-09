@@ -38,6 +38,8 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,6 +49,7 @@ import org.springframework.stereotype.Component;
  * @since 2019-09-23
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ResourceFactoryImpl implements ResourceFactory {
 
     private static final Logger LOGGER = getLogger(ResourceFactoryImpl.class);

@@ -27,6 +27,8 @@ import org.fcrepo.kernel.api.models.Tombstone;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Nonnull;
@@ -48,6 +50,7 @@ import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
  * @since 6.0.0
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class MembershipServiceImpl implements MembershipService {
     private static final Logger log = getLogger(MembershipServiceImpl.class);
 

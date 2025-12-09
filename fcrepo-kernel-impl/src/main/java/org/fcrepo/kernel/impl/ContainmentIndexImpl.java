@@ -37,6 +37,8 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -53,6 +55,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @since 6.0.0
  */
 @Component("containmentIndexImpl")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final Logger LOGGER = getLogger(ContainmentIndexImpl.class);

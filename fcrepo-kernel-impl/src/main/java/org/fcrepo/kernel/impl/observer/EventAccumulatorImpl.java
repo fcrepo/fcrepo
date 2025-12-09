@@ -26,6 +26,8 @@ import org.fcrepo.kernel.api.operations.ResourceOperation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Multimap;
@@ -36,6 +38,7 @@ import com.google.common.eventbus.EventBus;
  * @author pwinckles
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class EventAccumulatorImpl implements EventAccumulator {
 
     private final static Logger LOG = LoggerFactory.getLogger(EventAccumulatorImpl.class);

@@ -16,6 +16,8 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Component;
  * @author pwinckles
  */
 @Component("referenceService")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ReferenceServiceMetrics implements ReferenceService {
 
     private static final String METRIC_NAME = "fcrepo.db";
