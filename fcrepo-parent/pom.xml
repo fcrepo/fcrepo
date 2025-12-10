@@ -40,7 +40,7 @@
     <doxia-markdown.plugin.version>2.0.0</doxia-markdown.plugin.version>
     <duraspace-codestyle.version>1.1.0</duraspace-codestyle.version>
     <failsafe.plugin.version>3.5.3</failsafe.plugin.version>
-    <fcrepo-build-tools.version>7.0.0-alpha1-SNAPSHOT</fcrepo-build-tools.version>
+    <fcrepo-build-tools.version>7.0.0</fcrepo-build-tools.version>
     <github-site.plugin.version>0.12</github-site.plugin.version>
     <gpg.plugin.version>3.2.8</gpg.plugin.version>
     <install.plugin.version>3.1.4</install.plugin.version>
