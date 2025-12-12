@@ -74,7 +74,7 @@
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>2.0.4</shiro.version>
     <slf4j.version>2.0.17</slf4j.version>
-    <spring.version>6.2.8</spring.version>
+    <spring.version>6.2.11</spring.version>
     <titanium.version>1.7.0</titanium.version>
     <xerces.version>2.12.2</xerces.version>
     <velocity.version>2.4.1</velocity.version>
