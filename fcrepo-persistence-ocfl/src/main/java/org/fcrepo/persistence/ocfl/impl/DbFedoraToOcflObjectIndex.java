@@ -30,6 +30,8 @@ import org.fcrepo.storage.ocfl.cache.CaffeineCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -50,6 +52,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @author pwinckles
  */
 @Component("ocflIndexImpl")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbFedoraToOcflObjectIndex.class);

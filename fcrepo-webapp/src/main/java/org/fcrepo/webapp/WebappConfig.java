@@ -25,8 +25,10 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.fcrepo.persistence.ocfl.RepositoryInitializationFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -42,6 +44,7 @@ import com.google.common.eventbus.EventBus;
  * @author pwinckles
  */
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @EnableAsync
 @EnableScheduling
 public class WebappConfig {
@@ -81,7 +84,8 @@ public class WebappConfig {
      * @return event bus
      */
     @Bean
-    public EventBus eventBus(final FedoraPropsConfig propsConfig) {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static EventBus eventBus(final FedoraPropsConfig propsConfig) {
         return new AsyncEventBus(eventBusExecutor(propsConfig));
     }
 
@@ -90,7 +94,8 @@ public class WebappConfig {
      * @return executor intended to be used by the Guava event bus
      */
     @Bean
-    public ExecutorService eventBusExecutor(final FedoraPropsConfig propsConfig) {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static ExecutorService eventBusExecutor(final FedoraPropsConfig propsConfig) {
         LOGGER.debug("Event bus threads: {}", propsConfig);
         return Executors.newFixedThreadPool(propsConfig.getEventBusThreads());
     }
@@ -136,6 +141,7 @@ public class WebappConfig {
      * @return the cache
      */
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public Cache<String, Optional<ACLHandle>> authHandleCache() {
         return Caffeine.newBuilder().weakValues()
                 .expireAfterAccess(fedoraPropsConfig.getWebacCacheTimeout(), TimeUnit.MINUTES)

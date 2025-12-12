@@ -24,16 +24,17 @@ import org.fcrepo.config.ConditionOnPropertyTrue;
 
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.apache.shiro.realm.AuthorizingRealm;
-import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.filter.InvalidRequestFilter;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 import org.springframework.core.annotation.Order;
 
 /**
@@ -42,6 +43,7 @@ import org.springframework.core.annotation.Order;
  * @author pwinckles
  */
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 @Conditional(AuthConfig.AuthorizationEnabled.class)
 public class AuthConfig {
 
@@ -123,7 +125,8 @@ public class AuthConfig {
      * @return authorization  realm
      */
     @Bean
-    public AuthorizingRealm webACAuthorizingRealm() {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static AuthorizingRealm webACAuthorizingRealm() {
         return new WebACAuthorizingRealm();
     }
 
@@ -133,7 +136,8 @@ public class AuthConfig {
      * @return authentication realm
      */
     @Bean
-    public AuthenticatingRealm servletContainerAuthenticatingRealm() {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static AuthenticatingRealm servletContainerAuthenticatingRealm() {
         return new ServletContainerAuthenticatingRealm();
     }
 
@@ -141,28 +145,20 @@ public class AuthConfig {
      * @return Security Manager
      */
     @Bean
-    public WebSecurityManager securityManager() {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static WebSecurityManager securityManager() {
         final var manager = new DefaultWebSecurityManager();
         manager.setRealms(List.of(webACAuthorizingRealm(), servletContainerAuthenticatingRealm()));
         return manager;
     }
 
     /**
-     * Post processor that automatically invokes init() and destroy() methods
-     *
-     * @return post processor
-     */
-    @Bean
-    public LifecycleBeanPostProcessor lifecycleBeanPostProcessor() {
-        return new LifecycleBeanPostProcessor();
-    }
-
-    /**
      * @return Authentication Filter
      */
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     @Order(1)
-    public Filter servletContainerAuthFilter() {
+    public static Filter servletContainerAuthFilter() {
         return new ServletContainerAuthFilter();
     }
 

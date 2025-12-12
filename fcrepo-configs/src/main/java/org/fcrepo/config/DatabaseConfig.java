@@ -21,8 +21,10 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -41,6 +43,7 @@ import com.zaxxer.hikari.metrics.micrometer.MicrometerMetricsTrackerFactory;
  */
 @EnableTransactionManagement
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class DatabaseConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);
@@ -92,6 +95,7 @@ public class DatabaseConfig extends BasePropsConfig {
     }
 
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public DataSource dataSource(final MeterRegistry registry) throws Exception {
         final var driver = identifyDbDriver();
 
@@ -169,20 +173,23 @@ public class DatabaseConfig extends BasePropsConfig {
     }
 
     @Bean
-    public DataSourceTransactionManager txManager(final DataSource dataSource) {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static DataSourceTransactionManager txManager(final DataSource dataSource) {
         final var txManager = new DataSourceTransactionManager();
         txManager.setDataSource(dataSource);
         return txManager;
     }
 
     @Bean
-    public TransactionTemplate txTemplate(final PlatformTransactionManager txManager) {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static TransactionTemplate txTemplate(final PlatformTransactionManager txManager) {
         final var txDefinition = new DefaultTransactionDefinition();
         txDefinition.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
         return new TransactionTemplate(txManager, txDefinition);
     }
 
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public Flyway flyway(final DataSource source) throws Exception {
         LOGGER.debug("Instantiating a new flyway bean");
         return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType())

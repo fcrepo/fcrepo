@@ -14,6 +14,8 @@ import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 /**
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Component;
  * @author pwinckles
  */
 @Component("ocflIndex")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class FedoraToOcflObjectIndexMetrics implements FedoraToOcflObjectIndex {
 
     private static final String METRIC_NAME = "fcrepo.db";

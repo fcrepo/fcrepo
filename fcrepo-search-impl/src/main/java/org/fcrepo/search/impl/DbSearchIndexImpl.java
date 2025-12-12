@@ -49,6 +49,8 @@ import org.fcrepo.search.api.SearchParameters;
 import org.fcrepo.search.api.SearchResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.RowMapper;
@@ -65,6 +67,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author whikloj
  */
 @Component("searchIndexImpl")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class DbSearchIndexImpl implements SearchIndex {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbSearchIndexImpl.class);
 

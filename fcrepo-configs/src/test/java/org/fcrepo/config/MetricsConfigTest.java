@@ -86,6 +86,23 @@ public class MetricsConfigTest {
     }
 
     @Test
+    public void testMetricsEnabledOldProperty() {
+        env.setProperty("fcrepo.metrics.enable", "true");
+        initializeContext();
+        initializeConfig();
+
+        assertTrue(config.isMetricsEnabled());
+
+        // When metrics are enabled, a PrometheusMeterRegistry should be returned
+        final MeterRegistry registry = context.getBean(MeterRegistry.class);
+        assertNotNull(registry);
+        assertInstanceOf(PrometheusMeterRegistry.class, registry);
+
+        // Verify the registry has the JVM metrics registered
+        assertFalse(registry.getMeters().isEmpty());
+    }
+
+    @Test
     public void testTimerMetricsConfiguration() {
         env.setProperty("fcrepo.metrics.enabled", "true");
         initializeContext();

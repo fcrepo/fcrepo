@@ -12,6 +12,8 @@ import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -25,6 +27,7 @@ import dev.failsafe.RetryPolicy;
  * @author pwinckles
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class DbTransactionExecutor {
 
     private static final Logger LOGGER = getLogger(DbTransactionExecutor.class);

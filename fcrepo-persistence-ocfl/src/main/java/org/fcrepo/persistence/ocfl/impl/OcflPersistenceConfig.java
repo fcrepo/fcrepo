@@ -29,6 +29,7 @@ import org.fcrepo.storage.ocfl.cache.CaffeineCache;
 import org.fcrepo.storage.ocfl.cache.NoOpCache;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -37,6 +38,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.ocfl.api.MutableOcflRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
+import org.springframework.context.annotation.Role;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
@@ -50,6 +52,7 @@ import software.amazon.awssdk.services.s3.S3AsyncClient;
  * @since 6.0.0
  */
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class OcflPersistenceConfig {
 
     @Inject
@@ -69,6 +72,7 @@ public class OcflPersistenceConfig {
      * @return the repository
      */
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public MutableOcflRepository repository() throws IOException {
         if (ocflPropsConfig.getStorage() == Storage.OCFL_S3) {
             return createS3Repository(
@@ -90,6 +94,7 @@ public class OcflPersistenceConfig {
     }
 
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public OcflObjectSessionFactory ocflObjectSessionFactory() throws IOException {
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
 
@@ -107,6 +112,7 @@ public class OcflPersistenceConfig {
     }
 
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public ObjectValidator objectValidator() throws IOException {
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         return new ObjectValidator(repository(), objectMapper.readerFor(ResourceHeaders.class));

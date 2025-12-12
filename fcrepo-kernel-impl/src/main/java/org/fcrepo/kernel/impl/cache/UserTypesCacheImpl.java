@@ -23,6 +23,8 @@ import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.apache.jena.graph.Triple;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -34,6 +36,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @author pwinckles
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class UserTypesCacheImpl implements UserTypesCache {
 
     private final Cache<FedoraId, List<URI>> globalCache;

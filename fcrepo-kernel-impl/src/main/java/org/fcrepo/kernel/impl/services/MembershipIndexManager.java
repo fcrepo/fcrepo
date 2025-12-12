@@ -33,6 +33,8 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -47,6 +49,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author bbpennel
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class MembershipIndexManager {
     private static final Logger log = getLogger(MembershipIndexManager.class);
 

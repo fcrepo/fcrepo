@@ -66,6 +66,8 @@ import org.fcrepo.kernel.api.models.WebacAcl;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Statement;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -76,6 +78,7 @@ import com.github.benmanes.caffeine.cache.Cache;
  * @since 9/3/15
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class WebACRolesProvider {
 
     private static final Logger LOGGER = getLogger(WebACRolesProvider.class);

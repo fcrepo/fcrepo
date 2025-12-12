@@ -14,6 +14,8 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -25,6 +27,7 @@ import java.util.stream.Stream;
  * @author pwinckles
  */
 @Component("containmentIndex")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ContainmentIndexMetrics implements ContainmentIndex {
 
     private static final String METRIC_NAME = "fcrepo.db";
