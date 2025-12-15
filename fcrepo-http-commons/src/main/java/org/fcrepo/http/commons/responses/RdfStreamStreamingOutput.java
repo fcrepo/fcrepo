@@ -65,7 +65,7 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private static final Logger LOGGER = getLogger(RdfStreamStreamingOutput.class);
 
-    private static final String JSONLD_EXPANDED = "http://www.w3.org/ns/json-ld#expanded";
+    private static final String JSONLD_COMPACTED = "http://www.w3.org/ns/json-ld#compacted";
 
     private static final String JSONLD_FLATTENED = "http://www.w3.org/ns/json-ld#flattened";
 
@@ -324,11 +324,11 @@ public class RdfStreamStreamingOutput extends AbstractFuture<Void> implements
 
     private static String getFormatFromMediaType(final MediaType mediaType) {
         final String profile = mediaType.getParameters().getOrDefault("profile", "");
-        if (profile.equals(JSONLD_EXPANDED)) {
-            return EXPANDED;
+        if (profile.equals(JSONLD_COMPACTED)) {
+            return COMPACTED;
         } else if (profile.equals(JSONLD_FLATTENED)) {
             return FLATTENED;
         }
-        return COMPACTED;
+        return EXPANDED;
     }
 }
