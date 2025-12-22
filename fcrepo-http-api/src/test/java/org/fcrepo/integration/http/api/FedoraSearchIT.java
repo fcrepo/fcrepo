@@ -35,6 +35,8 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.CREATED;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
@@ -179,6 +181,31 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertNotEquals("Modified date should have changed  but it did not.", modified, newModified);
         }
     }
+    private void assertReturnsNumberOfItems(final String condition, final int expectedCount) throws Exception {
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals(expectedCount, result.getItems().size(),
+                    "expected " + expectedCount + " items where condition = " + condition);
+        }
+    }
+
+    @Test
+    public void testUpdateSearchIndexOnBinaryCreation() throws Exception {
+        final var binCondition = RDF_TYPE + "=" + FEDORA_BINARY.getURI();
+        assertReturnsNumberOfItems(binCondition, 0);
+        final var nonRdfCondition = RDF_TYPE + "=" + FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+        assertReturnsNumberOfItems(nonRdfCondition, 0);
+
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        createDatastream(id, "test_binary", "foo");
+
+        assertReturnsNumberOfItems(binCondition, 1);
+        assertReturnsNumberOfItems(nonRdfCondition, 1);
+    }
 
     @Test
     public void testUpdateSearchIndexOnResourceDelete() throws Exception {
@@ -205,6 +232,26 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(0, result.getItems().size(),
                     "expected 0 items where condition = " + condition);
         }
+    }
+
+    @Test
+    public void testUpdateSearchIndexOnBinaryDeletion() throws Exception {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final var dsUri = createDatastream(id, "test_binary", "foo");
+
+        final var binCondition = RDF_TYPE + "=" + FEDORA_BINARY.getURI();
+        assertReturnsNumberOfItems(binCondition, 1);
+        final var nonRdfCondition = RDF_TYPE + "=" + FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+        assertReturnsNumberOfItems(nonRdfCondition, 1);
+
+        final var httpDelete = new HttpDelete(dsUri);
+        try (final CloseableHttpResponse response = execute(httpDelete)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        assertReturnsNumberOfItems(binCondition, 0);
+        assertReturnsNumberOfItems(nonRdfCondition, 0);
     }
 
     @Test
@@ -509,6 +556,9 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var resourceA = resourceId + "/a-video";
         final var resourceB = resourceId + "/b-image";
         final var resourceC = resourceId + "/c-text";
+        final var resourceAMd = resourceId + "/a-video/fcr:metadata";
+        final var resourceBMd = resourceId + "/b-image/fcr:metadata";
+        final var resourceCMd = resourceId + "/c-text/fcr:metadata";
 
         assertEquals(201, getStatus(putObjMethod(resourceA, "video/mp4",
                 "video")));
@@ -517,8 +567,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
         assertEquals(201, getStatus(putObjMethod(resourceC, "text/plain",
                 "text")));
 
-        final var resources =
-                Stream.of(resourceA, resourceC, resourceB).map(x -> serverAddress + x)
+        final var resources = Stream.of(resourceA, resourceC, resourceB, resourceAMd, resourceBMd, resourceCMd)
+                        .map(x -> serverAddress + x)
                         .collect(Collectors.toList());
         final var condition = FEDORA_ID + "=" + resourceId + "/*";
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
