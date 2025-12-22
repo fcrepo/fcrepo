@@ -120,18 +120,16 @@ public class ReindexService {
 
                 final var fedoraId = headers.getId();
 
-                if (config.isRebuildContinue()) {
-                    try {
-                        ocflIndex.getMapping(tx, fedoraId);
-                        // We got the mapping, so we can skip this resource.
-                        throw new ObjectExistsInOcflIndexException(
-                                String.format("Skipping indexing of %s in transaction %s, because" +
-                                " it already exists in the index.", fedoraId, tx.getId())
-                        );
-                    } catch (FedoraOcflMappingNotFoundException e) {
-                        LOGGER.debug("Indexing object {} in transaction {}, because it does not yet exist in the " +
-                                "index.", fedoraId, tx.getId());
-                    }
+                try {
+                    ocflIndex.getMapping(tx, fedoraId);
+                    // We got the mapping, so we can skip this resource.
+                    throw new ObjectExistsInOcflIndexException(
+                            String.format("Skipping indexing of %s in transaction %s, because" +
+                            " it already exists in the index.", fedoraId, tx.getId())
+                    );
+                } catch (FedoraOcflMappingNotFoundException e) {
+                    LOGGER.debug("Indexing object {} in transaction {}, because it does not yet exist in the " +
+                            "index.", fedoraId, tx.getId());
                 }
 
                 fedoraIds.add(fedoraId);
