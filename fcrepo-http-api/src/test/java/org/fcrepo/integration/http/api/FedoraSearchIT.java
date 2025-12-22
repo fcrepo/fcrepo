@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchResult;
 
@@ -556,9 +557,6 @@ public class FedoraSearchIT extends AbstractResourceIT {
         final var resourceA = resourceId + "/a-video";
         final var resourceB = resourceId + "/b-image";
         final var resourceC = resourceId + "/c-text";
-        final var resourceAMd = resourceId + "/a-video/fcr:metadata";
-        final var resourceBMd = resourceId + "/b-image/fcr:metadata";
-        final var resourceCMd = resourceId + "/c-text/fcr:metadata";
 
         assertEquals(201, getStatus(putObjMethod(resourceA, "video/mp4",
                 "video")));
@@ -567,12 +565,13 @@ public class FedoraSearchIT extends AbstractResourceIT {
         assertEquals(201, getStatus(putObjMethod(resourceC, "text/plain",
                 "text")));
 
-        final var resources = Stream.of(resourceA, resourceC, resourceB, resourceAMd, resourceBMd, resourceCMd)
+        final var resources = Stream.of(resourceA, resourceC, resourceB)
                         .map(x -> serverAddress + x)
                         .collect(Collectors.toList());
         final var condition = FEDORA_ID + "=" + resourceId + "/*";
+        final var condition2 = "rdf_type=" + RdfLexicon.NON_RDF_SOURCE.getURI();
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
-                "&order_by=mime_type&order=desc";
+                "&condition=" + encode(condition2) + "&order_by=mime_type&order=desc";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
