@@ -54,7 +54,6 @@ import static org.springframework.util.CollectionUtils.isEmpty;
 /**
  * Create a RdfSource resource.
  * @author whikloj
- * TODO: bbpennel has thoughts about moving this to HTTP layer.
  */
 @Component
 public class CreateResourceServiceImpl extends AbstractService implements CreateResourceService {
@@ -214,6 +213,10 @@ public class CreateResourceServiceImpl extends AbstractService implements Create
                                   final PersistentStorageSession persistentStorageSession) {
         final var resourceHeaders = persistentStorageSession.getHeaders(fedoraId, null);
         this.searchIndex.addUpdateIndex(tx, resourceHeaders);
+        // If the resource is a binary, then also index the description
+        if (NON_RDF_SOURCE.getURI().equals(resourceHeaders.getInteractionModel())) {
+            this.searchIndex.addUpdateIndex(tx, persistentStorageSession.getHeaders(fedoraId.asDescription(), null));
+        }
     }
 
     /**

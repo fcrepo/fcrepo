@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -26,6 +27,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchParameters;
@@ -71,6 +73,9 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     @Mock
     private FedoraPropsConfig fedoraConfig;
 
+    @Mock
+    private RepositoryInitializer initializer;
+
     private final FedoraId resource1 = FedoraId.create("info:fedora/resource1");
     private final FedoraId resource2 =  FedoraId.create(resource1 + "/resource2");
 
@@ -90,6 +95,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         setField(reindexService, "persistentStorageSessionManager", persistentStorageSessionManager);
         setField(reindexService, "objectValidator", objectValidator);
         setField(reindexService, "config", fedoraConfig);
+        setField(reindexService, "initializer", initializer);
         when(searchIndex.doSearch(any(SearchParameters.class))).thenReturn(containerResult);
 
 
@@ -133,6 +139,74 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
         assertHasOcflId(parentIdPart, parentId);
         assertHasOcflId(parentIdPart, childId);
+
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(FedoraId.getRepositoryRootId()),
+                eq(parentId), any(Instant.class), isNull());
+        verify(containmentIndex).addContainedBy(any(Transaction.class), eq(parentId), eq(childId), any(Instant.class),
+                isNull());
+        verify(referenceService).updateReferences(any(Transaction.class), eq(childId), isNull(), any(RdfStream.class));
+        verify(searchIndex, times(2))
+                .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
+
+        verify(transaction, times(2)).commit();
+        verify(searchIndex, times(2)).doSearch(any(SearchParameters.class));
+    }
+
+    @Test
+    public void testRebuildDuringInitialization() throws Exception {
+        final String parentIdPart = getRandomId();
+        final String childIdPart = getRandomId();
+        final var parentId = FedoraId.create(parentIdPart);
+        final var childId = parentId.resolve(childIdPart);
+        final var session = persistentStorageSessionManager.getSession(transaction);
+
+        createResource(session, parentId, true);
+        createChildResourceRdf(session, parentId, childId);
+
+        session.prepare();
+        session.commit();
+
+        assertHasOcflId(parentIdPart, parentId);
+        assertHasOcflId(parentIdPart, childId);
+
+        // Trigger reindex during in initialization mode, so already indexed entries are skipped.
+        clearInvocations(containmentIndex, referenceService, searchIndex);
+        when(initializer.isInitializationComplete()).thenReturn(false);
+        reindexManager.start();
+        reindexManager.shutdown();
+
+        assertHasOcflId(parentIdPart, parentId);
+        assertHasOcflId(parentIdPart, childId);
+
+        verify(containmentIndex, never()).addContainedBy(any(Transaction.class), any(FedoraId.class),
+                any(FedoraId.class), any(Instant.class), isNull());
+        verify(referenceService, never()).updateReferences(any(Transaction.class), any(FedoraId.class),
+                isNull(), any(RdfStream.class));
+        verify(searchIndex, never())
+                .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
+    }
+
+    @Test
+    public void testRepeatRebuildAfterInitialization() throws Exception {
+        final String parentIdPart = getRandomId();
+        final String childIdPart = getRandomId();
+        final var parentId = FedoraId.create(parentIdPart);
+        final var childId = parentId.resolve(childIdPart);
+        final var session = persistentStorageSessionManager.getSession(transaction);
+
+        createResource(session, parentId, true);
+        createChildResourceRdf(session, parentId, childId);
+
+        session.prepare();
+        session.commit();
+
+        assertHasOcflId(parentIdPart, parentId);
+        assertHasOcflId(parentIdPart, childId);
+
+        // Run the reindex after initialization is complete, so existing entries are reindexed.
+        when(initializer.isInitializationComplete()).thenReturn(true);
+        reindexManager.start();
+        reindexManager.shutdown();
 
         verify(containmentIndex).addContainedBy(any(Transaction.class), eq(FedoraId.getRepositoryRootId()),
                 eq(parentId), any(Instant.class), isNull());
@@ -392,4 +466,13 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertDoesNotHaveOcflId(childId);
     }
 
+    @Test
+    public void testResetReindexService() {
+        reindexService.reset();
+        // OcflIndex is not a mock, so we can't verify it
+        verify(containmentIndex).reset();
+        verify(referenceService).reset();
+        verify(searchIndex).reset();
+        verify(membershipService).reset();
+    }
 }

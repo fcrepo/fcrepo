@@ -273,16 +273,21 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
                     RepositoryStatsByRdfTypeResults.class);
             assertNotNull(result);
             LOGGER.info("result={}", result);
-            final var containerTypes = Arrays.asList("http://www.w3.org/ns/ldp#BasicContainer", "http://www.w3" +
-                    ".org/ns/ldp#Container", "http://www.w3.org/ns/ldp#RDFSource");
+            final var containerTypes = List.of("http://www.w3.org/ns/ldp#BasicContainer",
+                    "http://www.w3.org/ns/ldp#Container");
             for (String ctype : containerTypes) {
                 assertEquals(1, getResourceCountByRdfType(result, ctype));
             }
-            final var binaryTypes = Arrays.asList("http://www.w3.org/ns/ldp#NonRDFSource");
+            // Binary description is also an RDFSource, along with the container
+            final var rdfSourceTypes = List.of("http://www.w3.org/ns/ldp#RDFSource");
+            for (String rtype : rdfSourceTypes) {
+                assertEquals(2, getResourceCountByRdfType(result, rtype));
+            }
+            final var binaryTypes = List.of("http://www.w3.org/ns/ldp#NonRDFSource");
             for (String btype : binaryTypes) {
                 assertEquals(1, getResourceCountByRdfType(result, btype));
             }
-            assertEquals(2, getResourceCountByRdfType(result, "http://www.w3.org/ns/ldp#Resource"));
+            assertEquals(3, getResourceCountByRdfType(result, "http://www.w3.org/ns/ldp#Resource"));
         }
     }
 
