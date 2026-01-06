@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -133,7 +134,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                     MIME_TYPE_COLUMN + "= VALUES(" + MIME_TYPE_COLUMN + ")," +
                     OPERATION_COLUMN + "= VALUES(" + OPERATION_COLUMN + ")";
 
-    private static final String UPSERT_SIMPLE_SEARCH_MYSQL_MARIA =
+    private static final String UPSERT_SIMPLE_SEARCH_MYSQL =
             "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (" + MODIFIED_COLUMN + "," + CREATED_COLUMN + ", " +
                     CONTENT_SIZE_COLUMN + "," + MIME_TYPE_COLUMN + "," +
                     FEDORA_ID_COLUMN + ")  VALUES ( :" + MODIFIED_PARAM + ", :" + CREATED_PARAM +
@@ -142,6 +143,17 @@ public class DbSearchIndexImpl implements SearchIndex {
                     CREATED_COLUMN + "= VALUES(" + CREATED_COLUMN + ")," +
                     CONTENT_SIZE_COLUMN + "= VALUES(" + CONTENT_SIZE_COLUMN + ")," +
                     MIME_TYPE_COLUMN + "= VALUES(" + MIME_TYPE_COLUMN + ")";
+
+    private static final String UPSERT_SIMPLE_SEARCH_MARIA =
+            "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (" + MODIFIED_COLUMN + "," + CREATED_COLUMN + ", " +
+                    CONTENT_SIZE_COLUMN + "," + MIME_TYPE_COLUMN + "," +
+                    FEDORA_ID_COLUMN + ")  VALUES ( :" + MODIFIED_PARAM + ", :" + CREATED_PARAM +
+                    ", :" + CONTENT_SIZE_PARAM + ", :" + MIME_TYPE_PARAM + "," + ":" + FEDORA_ID_PARAM + ") " +
+                    "ON DUPLICATE KEY UPDATE " + MODIFIED_COLUMN + " = VALUES(" + MODIFIED_COLUMN + "), " +
+                    CREATED_COLUMN + "= VALUES(" + CREATED_COLUMN + ")," +
+                    CONTENT_SIZE_COLUMN + "= VALUES(" + CONTENT_SIZE_COLUMN + ")," +
+                    MIME_TYPE_COLUMN + "= VALUES(" + MIME_TYPE_COLUMN + ")" +
+                    " RETURNING " + ID_COLUMN;
 
     private static final String UPSERT_SIMPLE_SEARCH_TRANSACTION_POSTGRESQL =
             "INSERT INTO " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " (" + MODIFIED_COLUMN + "," + CREATED_COLUMN + ", " +
@@ -166,7 +178,8 @@ public class DbSearchIndexImpl implements SearchIndex {
                     "DO UPDATE SET " + MODIFIED_COLUMN + " = EXCLUDED." + MODIFIED_COLUMN + ", " +
                     CREATED_COLUMN + " = EXCLUDED." + CREATED_COLUMN + ", " +
                     CONTENT_SIZE_COLUMN + " = EXCLUDED." + CONTENT_SIZE_COLUMN + ", " +
-                    MIME_TYPE_COLUMN + " = EXCLUDED." + MIME_TYPE_COLUMN;
+                    MIME_TYPE_COLUMN + " = EXCLUDED." + MIME_TYPE_COLUMN +
+                    " RETURNING " + ID_COLUMN;
 
     private static final String UPSERT_COMMIT_SIMPLE_SEARCH_H2 =
             "MERGE INTO " + SIMPLE_SEARCH_TABLE +
@@ -323,8 +336,8 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING = Map.of(
             H2, UPSERT_SIMPLE_SEARCH_H2,
-            DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
-            DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
+            DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_MYSQL,
+            DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_MARIA,
             POSTGRESQL, UPSERT_SIMPLE_SEARCH_POSTGRESQL
     );
 
@@ -627,16 +640,44 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     }
 
+    private static final AtomicLong getResourceDurationNs = new AtomicLong(0);
+    private static final AtomicLong upsertDurationNs = new AtomicLong(0);
+    private static final AtomicLong deleteDurationNs = new AtomicLong(0);
+    private static final AtomicLong insertDurationNs = new AtomicLong(0);
+    private static final AtomicLong newTypesDurationNs = new AtomicLong(0);
+
     private void doDirectUpsert(final Transaction transaction, final ResourceHeaders resourceHeaders,
                                 final FedoraId fedoraId) {
         final var fullId = fedoraId.getFullId();
         try {
+            final var start = System.nanoTime();
             final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);
-            doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);
+            getResourceDurationNs.getAndAdd(System.nanoTime() - start);
+            LOGGER.error("doDirectUpsert getResource in {} ms",
+                    getResourceDurationNs.get() / 1_000_000);
+
+            final var start2 = System.nanoTime();
+            final Long searchId = doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);
+            upsertDurationNs.getAndAdd(System.nanoTime() - start2);
+            LOGGER.error("doDirectUpsert upsert in {} ms",
+                    upsertDurationNs.get() / 1_000_000);
+            final var start3 = System.nanoTime();
             final var rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
+            LOGGER.error("RDF Types for {}", rdfTypes);
             final var newTypes = insertRdfTypes(rdfTypes);
+            insertDurationNs.getAndAdd(System.nanoTime() - start3);
+            LOGGER.error("doDirectUpsert insertRdfTypes in {} ms",
+                    insertDurationNs.get() / 1_000_000);
+            final var start4 = System.nanoTime();
             deleteRdfTypeAssociations(fedoraId);
-            insertRdfTypeAssociations(rdfTypes, newTypes, fedoraId);
+            deleteDurationNs.getAndAdd(System.nanoTime() - start4);
+            LOGGER.error("doDirectUpsert deleteRdfTypeAssociations in {} ms",
+                    deleteDurationNs.get() / 1_000_000);
+            final var start5 = System.nanoTime();
+            insertRdfTypeAssociations(rdfTypes, newTypes, searchId);
+            newTypesDurationNs.getAndAdd(System.nanoTime() - start5);
+            LOGGER.error("doDirectUpsert insertRdfTypeAssociations in {} ms",
+                    newTypesDurationNs.get() / 1_000_000);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed add/updated the search index for : " + fullId, e);
         }
@@ -728,7 +769,7 @@ public class DbSearchIndexImpl implements SearchIndex {
      * @param fedoraId        the resourceId
      * @param resourceHeaders the resources headers
      */
-    private void doUpsertIntoSimpleSearch(final FedoraId fedoraId,
+    private Long doUpsertIntoSimpleSearch(final FedoraId fedoraId,
                                           final ResourceHeaders resourceHeaders) {
         var mimetype = "";
         long contentSize = 0;
@@ -747,7 +788,14 @@ public class DbSearchIndexImpl implements SearchIndex {
         params.addValue(CONTENT_SIZE_PARAM, contentSize);
         params.addValue(CREATED_PARAM, formatInstant(created));
         params.addValue(MODIFIED_PARAM, formatInstant(modified));
-        jdbcTemplate.update(DIRECT_UPSERT_MAPPING.get(dbPlatForm), params);
+
+        if (dbPlatForm == DbPlatform.MYSQL || dbPlatForm == DbPlatform.H2) {
+            jdbcTemplate.update(DIRECT_UPSERT_MAPPING.get(dbPlatForm), params);
+            return jdbcTemplate.queryForObject(SELECT_RESOURCE_SEARCH_ID,
+                    Map.of(FEDORA_ID_PARAM, fedoraId.getFullId()), Long.class);
+        } else {
+            return jdbcTemplate.queryForObject(DIRECT_UPSERT_MAPPING.get(dbPlatForm), params, Long.class);
+        }
     }
 
     private Timestamp formatInstant(final Instant instant) {
@@ -785,25 +833,29 @@ public class DbSearchIndexImpl implements SearchIndex {
                 deleteParams);
     }
 
+    private static final AtomicLong searchIdDurationNs = new AtomicLong(0);
+    private static final AtomicLong rdfTypeIdDurationNs = new AtomicLong(0);
+    private static final AtomicLong typeAssocDurationNs = new AtomicLong(0);
+
     private void insertRdfTypeAssociations(final List<URI> rdfTypes,
                                            final Set<URI> newTypes,
-                                           final FedoraId fedoraId) {
+                                           final Long resourceSearchId) {
         //add rdf type associations
-
-        final var resourceSearchId = jdbcTemplate.queryForObject(
-                SELECT_RESOURCE_SEARCH_ID,
-                Map.of(FEDORA_ID_PARAM, fedoraId.getFullId()), Long.class);
-
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
             final Long rdfTypeId;
+            final var start2 = System.nanoTime();
             if (newTypes.contains(rdfType)) {
                 // The cache MUST NOT be used when the current TX created the record as it will not be committed yet
                 // and it will break other transactions.
                 rdfTypeId = getRdfTypeIdDirect(rdfType);
             } else {
+                LOGGER.error("USING CACHE FOR {}", rdfType);
                 rdfTypeId = getRdfTypeIdCached(rdfType);
             }
+            rdfTypeIdDurationNs.getAndAdd(System.nanoTime() - start2);
+            LOGGER.error("insertRdfTypeAssociations getRdfTypeId in {} ms",
+                    rdfTypeIdDurationNs.get() / 1_000_000);
 
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);
@@ -811,8 +863,12 @@ public class DbSearchIndexImpl implements SearchIndex {
             parameterSourcesList.add(assocParams);
         }
 
+        final var start3 = System.nanoTime();
         final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
         jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_ASSOC, psArray);
+        typeAssocDurationNs.getAndAdd(System.nanoTime() - start3);
+        LOGGER.error("insertRdfTypeAssociations assoc in {} ms",
+                typeAssocDurationNs.get() / 1_000_000);
     }
 
     private Long getRdfTypeIdCached(final URI rdfType) {
