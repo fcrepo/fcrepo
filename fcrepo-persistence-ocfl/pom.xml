@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>7.0.0-alpha2</version>
+    <version>7.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-persistence-ocfl</artifactId>
   <name>Fedora Repository OCFL Persistence Impl</name>
