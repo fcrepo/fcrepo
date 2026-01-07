@@ -650,7 +650,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var fullId = fedoraId.getFullId();
         try {
             final var start = System.nanoTime();
-            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);
+            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId, resourceHeaders);
             getResourceDurationNs.getAndAdd(System.nanoTime() - start);
             LOGGER.error("doDirectUpsert getResource in {} ms",
                     getResourceDurationNs.get() / 1_000_000);
@@ -662,7 +662,6 @@ public class DbSearchIndexImpl implements SearchIndex {
                     upsertDurationNs.get() / 1_000_000);
             final var start3 = System.nanoTime();
             final var rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
-            LOGGER.error("RDF Types for {}", rdfTypes);
             insertRdfTypes(rdfTypes);
             insertDurationNs.getAndAdd(System.nanoTime() - start3);
             LOGGER.error("doDirectUpsert insertRdfTypes in {} ms",
@@ -712,7 +711,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var fullId = fedoraId.getFullId();
         try {
             final var txId = transaction.getId();
-            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);
+            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId, resourceHeaders);
             doUpsertIntoTransactionTables(txId, fedoraId, resourceHeaders, "add");
             // add rdf type associations to the rdf type association table
             final var rdfTypes = Sets.newHashSet(fedoraResource.getTypes());

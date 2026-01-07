@@ -44,6 +44,19 @@ public interface ResourceFactory {
                                                     final Class<T> clazz) throws PathNotFoundException;
 
     /**
+     * Get a FedoraResource for existing resource
+     *
+     * @param transaction The transaction associated with this request or null if not in a transaction.
+     * @param fedoraID The identifier for the resource.
+     * @param headers The resource headers to use.
+     * @return The resource.
+     * @throws PathNotFoundException If the identifier cannot be found.
+     */
+    FedoraResource getResource(final Transaction transaction,
+                                      final FedoraId fedoraID,
+                                      final ResourceHeaders headers) throws PathNotFoundException;
+
+    /**
      * Get the containing resource (if exists).
      * @param transaction The current transaction
      * @param resourceId The internal identifier
