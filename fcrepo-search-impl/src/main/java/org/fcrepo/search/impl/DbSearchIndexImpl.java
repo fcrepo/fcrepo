@@ -24,7 +24,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -664,7 +663,7 @@ public class DbSearchIndexImpl implements SearchIndex {
             final var start3 = System.nanoTime();
             final var rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
             LOGGER.error("RDF Types for {}", rdfTypes);
-            final var newTypes = insertRdfTypes(rdfTypes);
+            insertRdfTypes(rdfTypes);
             insertDurationNs.getAndAdd(System.nanoTime() - start3);
             LOGGER.error("doDirectUpsert insertRdfTypes in {} ms",
                     insertDurationNs.get() / 1_000_000);
@@ -674,7 +673,7 @@ public class DbSearchIndexImpl implements SearchIndex {
             LOGGER.error("doDirectUpsert deleteRdfTypeAssociations in {} ms",
                     deleteDurationNs.get() / 1_000_000);
             final var start5 = System.nanoTime();
-            insertRdfTypeAssociations(rdfTypes, newTypes, searchId);
+            insertRdfTypeAssociations(rdfTypes, searchId);
             newTypesDurationNs.getAndAdd(System.nanoTime() - start5);
             LOGGER.error("doDirectUpsert insertRdfTypeAssociations in {} ms",
                     newTypesDurationNs.get() / 1_000_000);
@@ -690,30 +689,22 @@ public class DbSearchIndexImpl implements SearchIndex {
      * @param rdfTypes the types to attempt to add
      * @return the types that were added
      */
-    private Set<URI> insertRdfTypes(final List<URI> rdfTypes) {
-        final var addTypes = new HashSet<URI>();
-
-        final List<URI> types = new ArrayList<>();
+    private void insertRdfTypes(final List<URI> rdfTypes) {
         final MapSqlParameterSource[] params = rdfTypes.stream()
                 .filter(rdfType -> !rdfTypeIdCache.containsKey(rdfType))
-                .map(r -> {
-                    types.add(r);
-                    return new MapSqlParameterSource().addValue(RDF_TYPE_URI_PARAM, r.toString());
-                })
+                .map(r -> new MapSqlParameterSource().addValue(RDF_TYPE_URI_PARAM, r.toString()))
                 .toArray(MapSqlParameterSource[]::new);
-
         try {
+            if (params.length == 0) {
+                return;
+            }
             jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_MAPPING.get(dbPlatForm), params);
-            addTypes.addAll(types);
-
         } catch (final DuplicateKeyException e) {
             // ignore duplicate keys
         } catch (final CannotAcquireLockException e) {
             // if we can't get a lock
             throw new RepositoryRuntimeException("Failed to add RDF type(s) to search index", e);
         }
-
-        return addTypes;
     }
 
     private void doUpsertWithTransaction(final Transaction transaction, final ResourceHeaders resourceHeaders,
@@ -833,26 +824,16 @@ public class DbSearchIndexImpl implements SearchIndex {
                 deleteParams);
     }
 
-    private static final AtomicLong searchIdDurationNs = new AtomicLong(0);
     private static final AtomicLong rdfTypeIdDurationNs = new AtomicLong(0);
     private static final AtomicLong typeAssocDurationNs = new AtomicLong(0);
 
     private void insertRdfTypeAssociations(final List<URI> rdfTypes,
-                                           final Set<URI> newTypes,
                                            final Long resourceSearchId) {
         //add rdf type associations
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
-            final Long rdfTypeId;
             final var start2 = System.nanoTime();
-            if (newTypes.contains(rdfType)) {
-                // The cache MUST NOT be used when the current TX created the record as it will not be committed yet
-                // and it will break other transactions.
-                rdfTypeId = getRdfTypeIdDirect(rdfType);
-            } else {
-                LOGGER.error("USING CACHE FOR {}", rdfType);
-                rdfTypeId = getRdfTypeIdCached(rdfType);
-            }
+            final Long rdfTypeId = getRdfTypeId(rdfType);
             rdfTypeIdDurationNs.getAndAdd(System.nanoTime() - start2);
             LOGGER.error("insertRdfTypeAssociations getRdfTypeId in {} ms",
                     rdfTypeIdDurationNs.get() / 1_000_000);
@@ -871,14 +852,13 @@ public class DbSearchIndexImpl implements SearchIndex {
                 typeAssocDurationNs.get() / 1_000_000);
     }
 
-    private Long getRdfTypeIdCached(final URI rdfType) {
-        return rdfTypeIdCache.computeIfAbsent(rdfType, this::getRdfTypeIdDirect);
-    }
-
-    private Long getRdfTypeIdDirect(final URI rdfType) {
-        return jdbcTemplate.queryForObject(
-                SELECT_RDF_TYPE_ID,
-                Map.of(RDF_TYPE_URI_PARAM, rdfType.toString()), Long.class);
+    private Long getRdfTypeId(final URI rdfType) {
+        return rdfTypeIdCache.computeIfAbsent(rdfType, uri ->
+                jdbcTemplate.queryForObject(
+                        SELECT_RDF_TYPE_ID,
+                        Map.of(RDF_TYPE_URI_PARAM, uri.toString()),
+                        Long.class)
+        );
     }
 
     @Override
