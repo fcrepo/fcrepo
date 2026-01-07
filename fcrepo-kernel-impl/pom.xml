@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>7.1.0-SNAPSHOT</version>
+    <version>7.0.0-alpha1-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-kernel-impl</artifactId>
   <name>Fedora Repository Kernel Implementation</name>
