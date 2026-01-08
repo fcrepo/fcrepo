@@ -622,6 +622,12 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
+        addUpdateIndex(transaction, resourceHeaders, null);
+    }
+
+    @Override
+    public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders,
+                               final List<URI> rdfTypes) {
         final var fedoraId = resourceHeaders.getId();
         if (fedoraId.isAcl() || fedoraId.isMemento()) {
             LOGGER.debug("The search index does not include acls or mementos. Ignoring resource {}",
@@ -633,7 +639,7 @@ public class DbSearchIndexImpl implements SearchIndex {
             if (!transaction.isShortLived()) {
                 doUpsertWithTransaction(transaction, resourceHeaders, fedoraId);
             } else {
-                doDirectUpsert(transaction, resourceHeaders, fedoraId);
+                doDirectUpsert(transaction, resourceHeaders, fedoraId, rdfTypes);
             }
         });
 
@@ -642,30 +648,42 @@ public class DbSearchIndexImpl implements SearchIndex {
     private static final AtomicLong getResourceDurationNs = new AtomicLong(0);
     private static final AtomicLong upsertDurationNs = new AtomicLong(0);
     private static final AtomicLong deleteDurationNs = new AtomicLong(0);
+    private static final AtomicLong getTypesDurationNs = new AtomicLong(0);
     private static final AtomicLong insertDurationNs = new AtomicLong(0);
     private static final AtomicLong newTypesDurationNs = new AtomicLong(0);
 
     private void doDirectUpsert(final Transaction transaction, final ResourceHeaders resourceHeaders,
-                                final FedoraId fedoraId) {
+                                final FedoraId fedoraId, final List<URI> providedRdfTypes) {
         final var fullId = fedoraId.getFullId();
         try {
-            final var start = System.nanoTime();
-            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId, resourceHeaders);
-            getResourceDurationNs.getAndAdd(System.nanoTime() - start);
-            LOGGER.error("doDirectUpsert getResource in {} ms",
-                    getResourceDurationNs.get() / 1_000_000);
+            // If no RDF types were provided, we need to fetch the resource to get them.
+            List<URI> rdfTypes = providedRdfTypes;
+            if (rdfTypes == null) {
+                final var start = System.nanoTime();
+                final var fedoraResource = resourceFactory.getResource(transaction, fedoraId, resourceHeaders);
+                getResourceDurationNs.getAndAdd(System.nanoTime() - start);
+                LOGGER.error("doDirectUpsert getResource in {} ms",
+                        getResourceDurationNs.get() / 1_000_000);
+
+                final var startTypes = System.nanoTime();
+                rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
+                getTypesDurationNs.getAndAdd(System.nanoTime() - startTypes);
+                LOGGER.error("doDirectUpsert getRdfTypes in {} ms",
+                        getTypesDurationNs.get() / 1_000_000);
+            }
 
             final var start2 = System.nanoTime();
             final Long searchId = doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);
             upsertDurationNs.getAndAdd(System.nanoTime() - start2);
             LOGGER.error("doDirectUpsert upsert in {} ms",
                     upsertDurationNs.get() / 1_000_000);
+
             final var start3 = System.nanoTime();
-            final var rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
             insertRdfTypes(rdfTypes);
             insertDurationNs.getAndAdd(System.nanoTime() - start3);
             LOGGER.error("doDirectUpsert insertRdfTypes in {} ms",
                     insertDurationNs.get() / 1_000_000);
+
             final var start4 = System.nanoTime();
             deleteRdfTypeAssociations(fedoraId);
             deleteDurationNs.getAndAdd(System.nanoTime() - start4);
