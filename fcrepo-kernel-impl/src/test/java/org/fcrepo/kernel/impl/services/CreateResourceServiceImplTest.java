@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,6 +47,7 @@ import jakarta.inject.Inject;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.ContainmentIndex;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.InteractionModelViolationException;
@@ -128,6 +130,9 @@ public class CreateResourceServiceImplTest {
     private ResourceHeaders resourceHeaders;
 
     @Mock
+    private ResourceHeaders childResourceHeaders;
+
+    @Mock
     private ExternalContent extContent;
 
     @Mock
@@ -193,6 +198,8 @@ public class CreateResourceServiceImplTest {
         propsConfig.setServerManagedPropsMode(ServerManagedPropsMode.STRICT);
         when(psManager.getSession(ArgumentMatchers.any())).thenReturn(psSession);
         transaction = TestTransactionHelper.mockTransaction(TX_ID, false);
+        when(resourceHeaders.getInteractionModel()).thenReturn(defaultInteractionModel);
+        when(childResourceHeaders.getInteractionModel()).thenReturn(defaultInteractionModel);
     }
 
     /**
@@ -204,6 +211,7 @@ public class CreateResourceServiceImplTest {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("child");
         when(psSession.getHeaders(fedoraId, null)).thenThrow(PersistentItemNotFoundException.class);
+        when(psSession.getHeaders(childId, null)).thenReturn(childResourceHeaders);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
         verify(transaction).lockResourceAndGhostNodes(childId);
     }
@@ -218,6 +226,7 @@ public class CreateResourceServiceImplTest {
         containmentIndex.addContainedBy(transaction, FedoraId.getRepositoryRootId(), fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.isArchivalGroup()).thenReturn(true);
+        when(psSession.getHeaders(childId, null)).thenReturn(childResourceHeaders);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
         verify(transaction).lockResource(fedoraId);
         verify(transaction).lockResourceAndGhostNodes(childId);
@@ -235,6 +244,7 @@ public class CreateResourceServiceImplTest {
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.isArchivalGroup()).thenReturn(false);
         when(resourceHeaders.getArchivalGroupId()).thenReturn(agId);
+        when(psSession.getHeaders(childId, null)).thenReturn(childResourceHeaders);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
         verify(transaction).lockResource(agId);
         verify(transaction).lockResourceAndGhostNodes(childId);
@@ -298,6 +308,7 @@ public class CreateResourceServiceImplTest {
         containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        when(psSession.getHeaders(childId, null)).thenReturn(childResourceHeaders);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, null, model);
         cleanupList.add(fedoraId);
         verify(psSession).persist(operationCaptor.capture());
@@ -319,6 +330,7 @@ public class CreateResourceServiceImplTest {
         containmentIndex.addContainedBy(transaction, rootId, fedoraId);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        when(psSession.getHeaders(childId, null)).thenReturn(childResourceHeaders);
         createResourceService.perform(transaction, USER_PRINCIPAL, childId, CONTENT_TYPE,
                 FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
         cleanupList.add(fedoraId);
@@ -332,6 +344,7 @@ public class CreateResourceServiceImplTest {
         assertEquals(fedoraId, operation.getParentId());
         assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
         verify(transaction).lockResourceAndGhostNodes(childId);
+        verify(searchIndex).addUpdateIndex(transaction, childResourceHeaders);
     }
 
     /**
@@ -384,17 +397,20 @@ public class CreateResourceServiceImplTest {
 
     /**
      * This test now seems to ensure that the createResourceService will overwrite an existing object
-     * TODO: Review expectations
      */
     @Test
     public void testWithBinary() throws Exception {
         final FedoraId fedoraId = FedoraId.create(UUID.randomUUID().toString());
         final FedoraId childId = fedoraId.resolve("testSlug");
+        final FedoraId childDescId = childId.asDescription();
+        final ResourceHeaders childDescHeaders = mock(ResourceHeaders.class);
         containmentIndex.addContainedBy(transaction, FedoraId.getRepositoryRootId(), fedoraId);
         containmentIndex.commitTransaction(transaction);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
-        when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(childId, null)).thenReturn(childResourceHeaders);
+        when(psSession.getHeaders(childDescId, null)).thenReturn(childDescHeaders);
         when(resourceHeaders.getInteractionModel()).thenReturn(BASIC_CONTAINER.toString());
+        when(childResourceHeaders.getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         createResourceService.perform(transaction, USER_PRINCIPAL, childId,
                 CONTENT_TYPE, FILENAME, CONTENT_SIZE, null, DIGESTS, null, null);
         cleanupList.add(fedoraId);
@@ -412,6 +428,8 @@ public class CreateResourceServiceImplTest {
         assertEquals(persistedId.asDescription(), descOperation.getResourceId());
         assertEquals(1, containmentIndex.getContains(transaction, fedoraId).count());
         verify(transaction).lockResourceAndGhostNodes(childId);
+        verify(searchIndex).addUpdateIndex(transaction, childResourceHeaders);
+        verify(searchIndex).addUpdateIndex(transaction, childDescHeaders);
     }
 
     @Test
@@ -552,6 +570,8 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getArchivalGroupId()).thenReturn(null);
         when(resourceHeaders.isArchivalGroup()).thenReturn(false);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(childId, null)).thenReturn(childResourceHeaders);
+        when(childResourceHeaders.getInteractionModel()).thenReturn(RdfLexicon.FEDORA_BINARY.getURI());
 
         createResourceService.perform(transaction, USER_PRINCIPAL, childId,
                 CONTENT_TYPE, FILENAME, contentString.length(), null, realDigests, null, extContent);
@@ -589,6 +609,8 @@ public class CreateResourceServiceImplTest {
         when(resourceHeaders.getArchivalGroupId()).thenReturn(null);
         when(resourceHeaders.isArchivalGroup()).thenReturn(false);
         when(psSession.getHeaders(fedoraId, null)).thenReturn(resourceHeaders);
+        when(psSession.getHeaders(childId, null)).thenReturn(resourceHeaders);
+        when(childResourceHeaders.getInteractionModel()).thenReturn(RdfLexicon.FEDORA_BINARY.getURI());
 
         createResourceService.perform(transaction, USER_PRINCIPAL, childId,
                 CONTENT_TYPE, FILENAME, contentString.length(), null, realDigests, null, extContent);

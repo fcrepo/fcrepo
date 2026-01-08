@@ -11,6 +11,7 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchResult;
 
@@ -35,6 +36,8 @@ import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
 import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.CREATED;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
@@ -179,6 +182,31 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertNotEquals("Modified date should have changed  but it did not.", modified, newModified);
         }
     }
+    private void assertReturnsNumberOfItems(final String condition, final int expectedCount) throws Exception {
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals(expectedCount, result.getItems().size(),
+                    "expected " + expectedCount + " items where condition = " + condition);
+        }
+    }
+
+    @Test
+    public void testUpdateSearchIndexOnBinaryCreation() throws Exception {
+        final var binCondition = RDF_TYPE + "=" + FEDORA_BINARY.getURI();
+        assertReturnsNumberOfItems(binCondition, 0);
+        final var nonRdfCondition = RDF_TYPE + "=" + FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+        assertReturnsNumberOfItems(nonRdfCondition, 0);
+
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        createDatastream(id, "test_binary", "foo");
+
+        assertReturnsNumberOfItems(binCondition, 1);
+        assertReturnsNumberOfItems(nonRdfCondition, 1);
+    }
 
     @Test
     public void testUpdateSearchIndexOnResourceDelete() throws Exception {
@@ -205,6 +233,26 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(0, result.getItems().size(),
                     "expected 0 items where condition = " + condition);
         }
+    }
+
+    @Test
+    public void testUpdateSearchIndexOnBinaryDeletion() throws Exception {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final var dsUri = createDatastream(id, "test_binary", "foo");
+
+        final var binCondition = RDF_TYPE + "=" + FEDORA_BINARY.getURI();
+        assertReturnsNumberOfItems(binCondition, 1);
+        final var nonRdfCondition = RDF_TYPE + "=" + FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+        assertReturnsNumberOfItems(nonRdfCondition, 1);
+
+        final var httpDelete = new HttpDelete(dsUri);
+        try (final CloseableHttpResponse response = execute(httpDelete)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        assertReturnsNumberOfItems(binCondition, 0);
+        assertReturnsNumberOfItems(nonRdfCondition, 0);
     }
 
     @Test
@@ -517,12 +565,13 @@ public class FedoraSearchIT extends AbstractResourceIT {
         assertEquals(201, getStatus(putObjMethod(resourceC, "text/plain",
                 "text")));
 
-        final var resources =
-                Stream.of(resourceA, resourceC, resourceB).map(x -> serverAddress + x)
+        final var resources = Stream.of(resourceA, resourceC, resourceB)
+                        .map(x -> serverAddress + x)
                         .collect(Collectors.toList());
         final var condition = FEDORA_ID + "=" + resourceId + "/*";
+        final var condition2 = "rdf_type=" + RdfLexicon.NON_RDF_SOURCE.getURI();
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
-                "&order_by=mime_type&order=desc";
+                "&condition=" + encode(condition2) + "&order_by=mime_type&order=desc";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
