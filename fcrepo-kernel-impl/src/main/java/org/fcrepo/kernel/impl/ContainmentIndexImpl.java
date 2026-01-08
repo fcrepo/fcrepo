@@ -750,12 +750,19 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         resourceExistsCache.invalidate(resourceId);
     }
 
+    private long updateParentTimestampTime = 0L;
+
     private void updateParentTimestamp(final String parentId, final Instant startTime, final Instant endTime) {
+        final var start = System.nanoTime();
         final var parameterSource = new MapSqlParameterSource();
         final var updated = endTime == null ? startTime : endTime;
         parameterSource.addValue("resourceId", parentId);
         parameterSource.addValue("updated", formatInstant(updated));
         jdbcTemplate.update(CONDITIONALLY_UPDATE_LAST_UPDATED, parameterSource);
+        final var duration = System.nanoTime() - start;
+        updateParentTimestampTime += duration;
+        LOGGER.error("updateParentTimestamp took {} ns, total time {}", duration / 1_000_000,
+                updateParentTimestampTime / 1_000_000);
     }
 
     @Override
