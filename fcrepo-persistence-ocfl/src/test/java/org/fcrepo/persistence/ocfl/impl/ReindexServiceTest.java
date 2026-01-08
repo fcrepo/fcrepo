@@ -24,10 +24,10 @@ import io.ocfl.api.OcflRepository;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchParameters;
@@ -74,7 +74,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     private FedoraPropsConfig fedoraConfig;
 
     @Mock
-    private RepositoryInitializer initializer;
+    private RepositoryInitializationStatus initializationStatus;
 
     private final FedoraId resource1 = FedoraId.create("info:fedora/resource1");
     private final FedoraId resource2 =  FedoraId.create(resource1 + "/resource2");
@@ -95,7 +95,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         setField(reindexService, "persistentStorageSessionManager", persistentStorageSessionManager);
         setField(reindexService, "objectValidator", objectValidator);
         setField(reindexService, "config", fedoraConfig);
-        setField(reindexService, "initializer", initializer);
+        setField(reindexService, "initializationStatus", initializationStatus);
         when(searchIndex.doSearch(any(SearchParameters.class))).thenReturn(containerResult);
 
 
@@ -171,7 +171,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
         // Trigger reindex during in initialization mode, so already indexed entries are skipped.
         clearInvocations(containmentIndex, referenceService, searchIndex);
-        when(initializer.isInitializationComplete()).thenReturn(false);
+        when(initializationStatus.isInitializationComplete()).thenReturn(false);
         reindexManager.start();
         reindexManager.shutdown();
 
@@ -204,7 +204,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertHasOcflId(parentIdPart, childId);
 
         // Run the reindex after initialization is complete, so existing entries are reindexed.
-        when(initializer.isInitializationComplete()).thenReturn(true);
+        when(initializationStatus.isInitializationComplete()).thenReturn(true);
         reindexManager.start();
         reindexManager.shutdown();
 

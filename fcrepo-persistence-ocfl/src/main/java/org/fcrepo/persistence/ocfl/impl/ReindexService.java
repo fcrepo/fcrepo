@@ -31,6 +31,7 @@ import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -42,7 +43,6 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.ObjectExistsInOcflIndexException;
-import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.search.api.Condition;
@@ -58,7 +58,6 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
@@ -112,8 +111,7 @@ public class ReindexService {
     private int membershipPageSize = 500;
 
     @Inject
-    @Lazy
-    private RepositoryInitializer initializer;
+    private RepositoryInitializationStatus initializationStatus;
 
     private long validatingCacheDurationMs = 0;
     private static final AtomicLong parseRdfDurationNs = new AtomicLong(0);
@@ -146,7 +144,7 @@ public class ReindexService {
                 final var fedoraId = headers.getId();
 
                 // Only check for skip entries when running pre-startup indexing process, live indexing should proceed
-                if (!initializer.isInitializationComplete()) {
+                if (!initializationStatus.isInitializationComplete()) {
                     try {
                         ocflIndex.getMapping(tx, fedoraId);
                         // We got the mapping, so we can skip this resource.
