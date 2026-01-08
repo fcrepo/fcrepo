@@ -11,7 +11,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nonnull;
@@ -22,6 +21,7 @@ import javax.sql.DataSource;
 import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -69,6 +69,9 @@ public class ReferenceServiceImpl implements ReferenceService {
     @Autowired
     @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
+
+    @Inject
+    private RepositoryInitializationStatus initializationStatus;
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -295,22 +298,30 @@ public class ReferenceServiceImpl implements ReferenceService {
     public void updateReferences(@Nonnull final Transaction tx, final FedoraId resourceId, final String userPrincipal,
                                  final RdfStream rdfStream) {
         try {
-            final List<Triple> addReferences = getReferencesFromRdf(rdfStream).collect(Collectors.toList());
-            // This predicate checks for items we are adding, so we don't bother to delete and then re-add them.
-            final Predicate<Quad> notInAdds = q -> !addReferences.contains(q.asTriple());
-            // References from this resource.
-            final List<Quad> existingReferences = getOutboundReferences(tx, resourceId);
-            if (resourceId.isDescription()) {
-                // Resource is a binary description so also get the binary references.
-                existingReferences.addAll(getOutboundReferences(tx, resourceId.asBaseId()));
-            }
-            // Remove any existing references not being re-added.
-            existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(tx, t));
+            final List<Triple> addReferences = getReferencesFromRdf(rdfStream).toList();
+            var referencesStream = addReferences.stream();
+
             final Node resourceNode = NodeFactory.createURI(resourceId.getFullId());
-            // This predicate checks for references that didn't already exist in the database.
-            final Predicate<Triple> alreadyExists = t -> !existingReferences.contains(Quad.create(resourceNode, t));
+            // Only need to check existing references if initialization is complete, indicating we are not reindexing
+            if (initializationStatus.isInitializationComplete()) {
+                // This predicate checks for items we are adding, so we don't bother to delete and then re-add them.
+                final Predicate<Quad> notInAdds = q -> !addReferences.contains(q.asTriple());
+                // References from this resource.
+                final List<Quad> existingReferences = getOutboundReferences(tx, resourceId);
+                if (resourceId.isDescription()) {
+                    // Resource is a binary description so also get the binary references.
+                    existingReferences.addAll(getOutboundReferences(tx, resourceId.asBaseId()));
+                }
+                // Remove any existing references not being re-added.
+                existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(tx, t));
+
+                // This predicate checks for references that didn't already exist in the database.
+                final Predicate<Triple> alreadyExists =
+                        t -> !existingReferences.contains(Quad.create(resourceNode, t));
+                referencesStream = referencesStream.filter(alreadyExists);
+            }
             // Add the new references.
-            addReferences.stream().filter(alreadyExists).forEach(r ->
+            referencesStream.forEach(r ->
                     addReference(tx, Quad.create(resourceNode, r), userPrincipal));
         } catch (final Exception e) {
             LOGGER.warn("Unable to update reference index for resource {} in transaction {}: {}",
