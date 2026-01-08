@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>7.0.0-alpha2</version>
+    <version>7.0.0-alpha3-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-search-impl</artifactId>
   <name>Fedora Repository Search Impl</name>
