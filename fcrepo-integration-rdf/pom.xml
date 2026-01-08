@@ -3,7 +3,7 @@
     <parent>
         <artifactId>fcrepo</artifactId>
         <groupId>org.fcrepo</groupId>
-        <version>7.0.0-alpha3-SNAPSHOT</version>
+        <version>7.0.0-alpha2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
