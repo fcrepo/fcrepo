@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>7.0.0-alpha2</version>
+    <version>7.0.0-alpha3-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-event-serialization</artifactId>
   <name>Fedora Event Serialization</name>
