@@ -7,16 +7,20 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import jakarta.inject.Inject;
@@ -28,8 +32,10 @@ import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
@@ -98,6 +104,9 @@ public class ReindexService {
     @Inject
     private FedoraPropsConfig config;
 
+    @Inject
+    private ResourceFactory resourceFactory;
+
     private static final Logger LOGGER = getLogger(ReindexService.class);
 
     private int membershipPageSize = 500;
@@ -106,18 +115,29 @@ public class ReindexService {
     @Lazy
     private RepositoryInitializer initializer;
 
+    private long validatingCacheDurationMs = 0;
+    private static final AtomicLong parseRdfDurationNs = new AtomicLong(0);
+    private static final AtomicLong containmentDurationNs = new AtomicLong(0);
+    private static final AtomicLong ocflIndexAddMappingDurationNs = new AtomicLong(0);
+    private static final AtomicLong searchIndexUpdateDurationNs = new AtomicLong(0);
+
     public void indexOcflObject(final Transaction tx, final String ocflId) {
-        LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
+        LOGGER.error("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
 
         ocflRepository.invalidateCache(ocflId);
+        final var start2 = System.nanoTime();
         if (config.isRebuildValidation()) {
             objectValidator.validate(ocflId, config.isRebuildFixityCheck());
         }
+        validatingCacheDurationMs += (System.nanoTime() - start2);
+        LOGGER.error("Validated OCFL object in {} ms",
+                validatingCacheDurationMs / 1_000_000);
 
         try (final var session = ocflObjectSessionFactory.newSession(ocflId)) {
             final var rootId = new AtomicReference<FedoraId>();
             final var fedoraIds = new ArrayList<FedoraId>();
             final var headersList = new ArrayList<ResourceHeaders>();
+            final var rdfTypeMap = new HashMap<FedoraId, List<URI>>();
 
             session.invalidateCache(ocflId);
             session.streamResourceHeaders().forEach(storageHeaders -> {
@@ -159,11 +179,22 @@ public class ReindexService {
                     final var created = headers.getCreatedDate();
                     if (!headers.isDeleted()) {
                         if (!headers.getInteractionModel().equals(NON_RDF_SOURCE.toString())) {
+                            final var startRdf = System.nanoTime();
                             final Optional<InputStream> content = session.readContent(fedoraId.getFullId())
                                     .getContentStream();
                             if (content.isPresent()) {
                                 try (final var stream = content.get()) {
-                                    final RdfStream rdf = parseRdf(fedoraId, stream);
+                                    RdfStream rdf = parseRdf(fedoraId, stream);
+                                    parseRdfDurationNs.addAndGet(System.nanoTime() - startRdf);
+                                    LOGGER.error("RDF parse in {} ms", parseRdfDurationNs.get() / 1_000_000);
+                                    rdf = (RdfStream) rdf.peek(t -> {
+                                        LOGGER.error("Peeking at triple with predicate {}", t.getPredicate());
+                                        if (t.predicateMatches(type.asNode())) {
+                                            LOGGER.error("Adding type {} for {}", t.getObject(), fedoraId);
+                                            rdfTypeMap.computeIfAbsent(fedoraId, k -> new ArrayList<>())
+                                                    .add(URI.create(t.getObject().toString()));
+                                        }
+                                    });
                                     this.referenceService.updateReferences(tx, fedoraId, null, rdf);
                                 } catch (final IOException e) {
                                     LOGGER.warn("Content stream for {} closed prematurely, inbound references skipped.",
@@ -173,11 +204,19 @@ public class ReindexService {
                             }
                         }
 
+                        final var startContainment = System.nanoTime();
                         this.containmentIndex.addContainedBy(tx, parentId, fedoraId, created, null);
+                        containmentDurationNs.addAndGet(System.nanoTime() - startContainment);
+                        LOGGER.error("Containment index update in {} ms",
+                                containmentDurationNs.get() / 1_000_000);
                         headersList.add(headers.asKernelHeaders());
                     } else {
                         final var deleted = headers.getLastModifiedDate();
+                        final var startContainment = System.nanoTime();
                         this.containmentIndex.addContainedBy(tx, parentId, fedoraId, created, deleted);
+                        containmentDurationNs.addAndGet(System.nanoTime() - startContainment);
+                        LOGGER.error("Containment deleted index update in {} ms",
+                                containmentDurationNs.get() / 1_000_000);
                     }
                 }
             });
@@ -190,16 +229,32 @@ public class ReindexService {
                         "resources within the object).", ocflId));
             }
 
+            final long start4 = System.nanoTime();
             fedoraIds.forEach(fedoraIdentifier -> {
                 final var rootFedoraIdentifier = rootId.get();
                 ocflIndex.addMapping(tx, fedoraIdentifier, rootFedoraIdentifier, ocflId);
                 LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
             });
+            ocflIndexAddMappingDurationNs.addAndGet(System.nanoTime() - start4);
+            LOGGER.error("Rebuilt ocflIndex in {} ms",
+                    ocflIndexAddMappingDurationNs.get() / 1_000_000);
 
+            final long start5 = System.nanoTime();
             headersList.forEach(headers -> {
-                searchIndex.addUpdateIndex(tx, headers);
-                LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
+                try {
+                    // Get user RDF types from map and combine with system types
+                    final var rdfTypes = rdfTypeMap.getOrDefault(headers.getId(), new ArrayList<>());
+                    rdfTypes.addAll(resourceFactory.getResource(tx, headers.getId(), headers).getSystemTypes(false));
+                    searchIndex.addUpdateIndex(tx, headers, rdfTypes);
+                    LOGGER.error("Rebuilt searchIndex for {}", headers.getId());
+                } catch (PathNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
             });
+            LOGGER.error("RDF type keys: {}", rdfTypeMap.keySet());
+            searchIndexUpdateDurationNs.addAndGet(System.nanoTime() - start5);
+            LOGGER.error("Rebuilt searchIndex in {} ms",
+                    searchIndexUpdateDurationNs.get() / 1_000_000);
         }
     }
 
