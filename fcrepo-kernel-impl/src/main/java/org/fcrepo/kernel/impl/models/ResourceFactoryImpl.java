@@ -78,10 +78,9 @@ public class ResourceFactoryImpl implements ResourceFactory {
 
     @Override
     public FedoraResource getResource(final Transaction transaction,
-                                      final FedoraId fedoraID,
                                       final ResourceHeaders headers)
             throws PathNotFoundException {
-        return instantiateResource(transaction, fedoraID, headers);
+        return instantiateResource(transaction, headers.getId(), headers);
     }
 
 
