@@ -13,6 +13,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -112,6 +113,13 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         when(propsConfig.getReindexingThreads()).thenReturn(2L);
         when(fedoraConfig.isRebuildValidation()).thenReturn(true);
         reindexManager = getReindexManager();
+
+        doAnswer(invocationOnMock -> {
+            // Consume the RdfStream to simulate processing.
+            invocationOnMock.getArgument(3, RdfStream.class).count();
+            return null;
+        }).when(referenceService).updateReferences(any(Transaction.class), any(FedoraId.class),
+                isNull(), any(RdfStream.class));
     }
 
     /**

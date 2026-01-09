@@ -33,6 +33,7 @@ import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
@@ -216,7 +217,7 @@ public class ReindexService {
                     rdfTypes.addAll(resourceFactory.getResource(tx, headers).getSystemTypes(false));
                     searchIndex.addUpdateIndex(tx, headers, rdfTypes);
                 } catch (PathNotFoundException e) {
-                    throw new RuntimeException(e);
+                    throw new PathNotFoundRuntimeException(e.getMessage(), e);
                 }
             });
         }
