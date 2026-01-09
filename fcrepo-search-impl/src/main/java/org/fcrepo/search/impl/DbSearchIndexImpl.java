@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -36,6 +35,7 @@ import javax.sql.DataSource;
 
 import com.google.common.collect.Sets;
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -410,6 +410,9 @@ public class DbSearchIndexImpl implements SearchIndex {
     @Inject
     private ResourceFactory resourceFactory;
 
+    @Inject
+    private RepositoryInitializationStatus initializationStatus;
+
     private DbPlatform dbPlatForm;
 
     private final Map<URI, Long> rdfTypeIdCache;
@@ -645,13 +648,6 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     }
 
-    private static final AtomicLong getResourceDurationNs = new AtomicLong(0);
-    private static final AtomicLong upsertDurationNs = new AtomicLong(0);
-    private static final AtomicLong deleteDurationNs = new AtomicLong(0);
-    private static final AtomicLong getTypesDurationNs = new AtomicLong(0);
-    private static final AtomicLong insertDurationNs = new AtomicLong(0);
-    private static final AtomicLong newTypesDurationNs = new AtomicLong(0);
-
     private void doDirectUpsert(final Transaction transaction, final ResourceHeaders resourceHeaders,
                                 final FedoraId fedoraId, final List<URI> providedRdfTypes) {
         final var fullId = fedoraId.getFullId();
@@ -659,41 +655,18 @@ public class DbSearchIndexImpl implements SearchIndex {
             // If no RDF types were provided, we need to fetch the resource to get them.
             List<URI> rdfTypes = providedRdfTypes;
             if (rdfTypes == null) {
-                final var start = System.nanoTime();
-                final var fedoraResource = resourceFactory.getResource(transaction, fedoraId, resourceHeaders);
-                getResourceDurationNs.getAndAdd(System.nanoTime() - start);
-                LOGGER.error("doDirectUpsert getResource in {} ms",
-                        getResourceDurationNs.get() / 1_000_000);
-
-                final var startTypes = System.nanoTime();
+                final var fedoraResource = resourceFactory.getResource(transaction, resourceHeaders);
                 rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
-                getTypesDurationNs.getAndAdd(System.nanoTime() - startTypes);
-                LOGGER.error("doDirectUpsert getRdfTypes in {} ms",
-                        getTypesDurationNs.get() / 1_000_000);
             }
 
-            final var start2 = System.nanoTime();
             final Long searchId = doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);
-            upsertDurationNs.getAndAdd(System.nanoTime() - start2);
-            LOGGER.error("doDirectUpsert upsert in {} ms",
-                    upsertDurationNs.get() / 1_000_000);
-
-            final var start3 = System.nanoTime();
             insertRdfTypes(rdfTypes);
-            insertDurationNs.getAndAdd(System.nanoTime() - start3);
-            LOGGER.error("doDirectUpsert insertRdfTypes in {} ms",
-                    insertDurationNs.get() / 1_000_000);
 
-            final var start4 = System.nanoTime();
-            deleteRdfTypeAssociations(fedoraId);
-            deleteDurationNs.getAndAdd(System.nanoTime() - start4);
-            LOGGER.error("doDirectUpsert deleteRdfTypeAssociations in {} ms",
-                    deleteDurationNs.get() / 1_000_000);
-            final var start5 = System.nanoTime();
+            // Only need to delete existing type associations for live indexing
+            if (initializationStatus.isInitializationComplete()) {
+                deleteRdfTypeAssociations(fedoraId);
+            }
             insertRdfTypeAssociations(rdfTypes, searchId);
-            newTypesDurationNs.getAndAdd(System.nanoTime() - start5);
-            LOGGER.error("doDirectUpsert insertRdfTypeAssociations in {} ms",
-                    newTypesDurationNs.get() / 1_000_000);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed add/updated the search index for : " + fullId, e);
         }
@@ -729,7 +702,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var fullId = fedoraId.getFullId();
         try {
             final var txId = transaction.getId();
-            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId, resourceHeaders);
+            final var fedoraResource = resourceFactory.getResource(transaction, resourceHeaders);
             doUpsertIntoTransactionTables(txId, fedoraId, resourceHeaders, "add");
             // add rdf type associations to the rdf type association table
             final var rdfTypes = Sets.newHashSet(fedoraResource.getTypes());
@@ -841,19 +814,12 @@ public class DbSearchIndexImpl implements SearchIndex {
                 deleteParams);
     }
 
-    private static final AtomicLong rdfTypeIdDurationNs = new AtomicLong(0);
-    private static final AtomicLong typeAssocDurationNs = new AtomicLong(0);
-
     private void insertRdfTypeAssociations(final List<URI> rdfTypes,
                                            final Long resourceSearchId) {
         //add rdf type associations
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
-            final var start2 = System.nanoTime();
             final Long rdfTypeId = getRdfTypeId(rdfType);
-            rdfTypeIdDurationNs.getAndAdd(System.nanoTime() - start2);
-            LOGGER.error("insertRdfTypeAssociations getRdfTypeId in {} ms",
-                    rdfTypeIdDurationNs.get() / 1_000_000);
 
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);
@@ -861,12 +827,8 @@ public class DbSearchIndexImpl implements SearchIndex {
             parameterSourcesList.add(assocParams);
         }
 
-        final var start3 = System.nanoTime();
         final MapSqlParameterSource[] psArray = parameterSourcesList.toArray(new MapSqlParameterSource[0]);
         jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_ASSOC, psArray);
-        typeAssocDurationNs.getAndAdd(System.nanoTime() - start3);
-        LOGGER.error("insertRdfTypeAssociations assoc in {} ms",
-                typeAssocDurationNs.get() / 1_000_000);
     }
 
     private Long getRdfTypeId(final URI rdfType) {

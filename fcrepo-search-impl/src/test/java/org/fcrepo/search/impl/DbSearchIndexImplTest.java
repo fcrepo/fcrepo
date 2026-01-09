@@ -25,6 +25,7 @@ import java.util.UUID;
 
 import jakarta.inject.Inject;
 
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -68,9 +69,10 @@ public class DbSearchIndexImplTest {
     @Inject
     private DbSearchIndexImpl searchIndex;
 
-    private ResourceHeaders resourceHeaders1;
+    @Inject
+    private RepositoryInitializationStatus initializationStatus;
 
-    private ResourceHeaders resource1ParentHeaders;
+    private ResourceHeaders resourceHeaders1;
 
     private ResourceHeaders resourceHeaders2;
 
@@ -96,12 +98,13 @@ public class DbSearchIndexImplTest {
     @FlywayTest
     public void setUp() throws PathNotFoundException {
         searchIndex.reset();
+        initializationStatus.setInitializationComplete(true);
         testId = FedoraId.create("info:fedora/parentId/testId");
         parentId = FedoraId.create("info:fedora/parentId");
         transaction = makeTransaction();
         resourceHeaders1 = buildContainerResourceHeaders(testId, parentId);
         mockContainerResource(resource1, testId.getResourceId());
-        when(resourceFactory.getResource(transaction, resourceHeaders1.getId())).thenReturn(resource1);
+        when(resourceFactory.getResource(transaction, resourceHeaders1)).thenReturn(resource1);
         setField(searchIndex, "resourceFactory", resourceFactory);
     }
 
@@ -271,7 +274,7 @@ public class DbSearchIndexImplTest {
         final var id2 = FedoraId.create(UUID.randomUUID().toString());
         resourceHeaders2 = buildBinaryResourceHeaders(id2, parentId);
         mockBinaryResource(resource2, id2.getResourceId());
-        when(resourceFactory.getResource(transaction, resourceHeaders2.getId())).thenReturn(resource2);
+        when(resourceFactory.getResource(transaction, resourceHeaders2)).thenReturn(resource2);
         searchIndex.addUpdateIndex(transaction, resourceHeaders2);
         // Search for the original resource
         final var results3 = searchIndex.doSearch(parameters);
@@ -311,7 +314,7 @@ public class DbSearchIndexImplTest {
         final var id2 = FedoraId.create(UUID.randomUUID().toString());
         resourceHeaders2 = buildBinaryResourceHeaders(id2, parentId);
         mockBinaryResource(resource2, id2.getResourceId());
-        when(resourceFactory.getResource(transaction, resourceHeaders2.getId())).thenReturn(resource2);
+        when(resourceFactory.getResource(transaction, resourceHeaders2)).thenReturn(resource2);
         searchIndex.addUpdateIndex(transaction, resourceHeaders2);
 
         final var parameters = new SearchParameters(
@@ -338,7 +341,7 @@ public class DbSearchIndexImplTest {
     @Test
     public void testAddToIndexTransaction() throws Exception {
         transaction = makeTransaction(true);
-        when(resourceFactory.getResource(transaction, resourceHeaders1.getId())).thenReturn(resource1);
+        when(resourceFactory.getResource(transaction, resourceHeaders1)).thenReturn(resource1);
         final var parameters = new SearchParameters(
                 List.of(Condition.Field.FEDORA_ID),
                 List.of(Condition.fromExpression("fedora_id=" + testId.getFullId())),
@@ -368,7 +371,7 @@ public class DbSearchIndexImplTest {
     @Test
     public void testAddToIndexTransactionRollback() throws Exception {
         transaction = makeTransaction(true);
-        when(resourceFactory.getResource(transaction, resourceHeaders1.getId())).thenReturn(resource1);
+        when(resourceFactory.getResource(transaction, resourceHeaders1)).thenReturn(resource1);
         final var parameters = new SearchParameters(
                 List.of(Condition.Field.FEDORA_ID),
                 List.of(Condition.fromExpression("fedora_id=" + testId.getFullId())),
@@ -398,12 +401,12 @@ public class DbSearchIndexImplTest {
     @Test
     public void testAddAndRemoveFromIndexTransaction() throws Exception {
         transaction = makeTransaction(true);
-        when(resourceFactory.getResource(transaction, resourceHeaders1.getId())).thenReturn(resource1);
+        when(resourceFactory.getResource(transaction, resourceHeaders1)).thenReturn(resource1);
         searchIndex.addUpdateIndex(transaction, resourceHeaders1);
         final var id2 = FedoraId.create(UUID.randomUUID().toString());
         resourceHeaders2 = buildBinaryResourceHeaders(id2, parentId);
         mockBinaryResource(resource2, id2.getResourceId());
-        when(resourceFactory.getResource(transaction, resourceHeaders2.getId())).thenReturn(resource2);
+        when(resourceFactory.getResource(transaction, resourceHeaders2)).thenReturn(resource2);
         searchIndex.addUpdateIndex(transaction, resourceHeaders2);
 
         final var parameters = new SearchParameters(
@@ -425,7 +428,7 @@ public class DbSearchIndexImplTest {
         // Create a new transaction
         transaction = makeTransaction(true);
         // Update mock when the transaction changes.
-        when(resourceFactory.getResource(transaction, resourceHeaders1.getId())).thenReturn(resource1);
+        when(resourceFactory.getResource(transaction, resourceHeaders1)).thenReturn(resource1);
         // Remove the first resource from the index
         searchIndex.removeFromIndex(transaction, testId);
         // Search for the resource after removing it from the index
@@ -444,7 +447,7 @@ public class DbSearchIndexImplTest {
     public void testSearchFedoraId() throws Exception {
         final var parentResourceHeaders = buildContainerResourceHeaders(parentId, FedoraId.create(""));
         mockContainerResource(resource1Parent, parentId.getResourceId());
-        when(resourceFactory.getResource(transaction, parentResourceHeaders.getId())).thenReturn(resource1Parent);
+        when(resourceFactory.getResource(transaction, parentResourceHeaders)).thenReturn(resource1Parent);
         searchIndex.addUpdateIndex(transaction, parentResourceHeaders);
         searchIndex.addUpdateIndex(transaction, resourceHeaders1);
         final var parameters = new SearchParameters(
@@ -527,7 +530,7 @@ public class DbSearchIndexImplTest {
         final var id2 = parentId.resolve(UUID.randomUUID().toString());
         resourceHeaders2 = buildBinaryResourceHeaders(id2, parentId);
         mockBinaryResource(resource2, id2.getResourceId());
-        when(resourceFactory.getResource(transaction, resourceHeaders2.getId())).thenReturn(resource2);
+        when(resourceFactory.getResource(transaction, resourceHeaders2)).thenReturn(resource2);
         when(resource2.getTypes()).thenReturn(List.of(
                 URI.create(BASIC_CONTAINER.getURI()),
                 URI.create(FEDORA_CONTAINER.getURI()),
@@ -586,7 +589,7 @@ public class DbSearchIndexImplTest {
         final var id2 = parentId.resolve(UUID.randomUUID().toString());
         resourceHeaders2 = buildBinaryResourceHeaders(id2, parentId);
         mockBinaryResource(resource2, id2.getResourceId());
-        when(resourceFactory.getResource(transaction, resourceHeaders2.getId())).thenReturn(resource2);
+        when(resourceFactory.getResource(transaction, resourceHeaders2)).thenReturn(resource2);
         searchIndex.addUpdateIndex(transaction, resourceHeaders2);
         final var parameters = new SearchParameters(
                 List.of(Condition.Field.FEDORA_ID),
@@ -719,7 +722,7 @@ public class DbSearchIndexImplTest {
         final var id2 = parentId.resolve(UUID.randomUUID().toString());
         resourceHeaders2 = buildBinaryResourceHeaders(id2, parentId);
         mockBinaryResource(resource2, id2.getResourceId());
-        when(resourceFactory.getResource(transaction, resourceHeaders2.getId())).thenReturn(resource2);
+        when(resourceFactory.getResource(transaction, resourceHeaders2)).thenReturn(resource2);
         searchIndex.addUpdateIndex(transaction, resourceHeaders2);
         final var parameters = new SearchParameters(
                 List.of(Condition.Field.CONTENT_SIZE),
@@ -753,7 +756,7 @@ public class DbSearchIndexImplTest {
         final var id2 = parentId.resolve(UUID.randomUUID().toString());
         resourceHeaders2 = buildBinaryResourceHeaders(id2, parentId);
         mockBinaryResource(resource2, id2.getResourceId());
-        when(resourceFactory.getResource(transaction, resourceHeaders2.getId())).thenReturn(resource2);
+        when(resourceFactory.getResource(transaction, resourceHeaders2)).thenReturn(resource2);
         searchIndex.addUpdateIndex(transaction, resourceHeaders1);
         searchIndex.addUpdateIndex(transaction, resourceHeaders2);
         final var parameters = new SearchParameters(

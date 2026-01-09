@@ -47,14 +47,12 @@ public interface ResourceFactory {
      * Get a FedoraResource for existing resource
      *
      * @param transaction The transaction associated with this request or null if not in a transaction.
-     * @param fedoraID The identifier for the resource.
-     * @param headers The resource headers to use.
+     * @param headers     The resource headers to use.
      * @return The resource.
      * @throws PathNotFoundException If the identifier cannot be found.
      */
     FedoraResource getResource(final Transaction transaction,
-                                      final FedoraId fedoraID,
-                                      final ResourceHeaders headers) throws PathNotFoundException;
+                               final ResourceHeaders headers) throws PathNotFoundException;
 
     /**
      * Get the containing resource (if exists).
