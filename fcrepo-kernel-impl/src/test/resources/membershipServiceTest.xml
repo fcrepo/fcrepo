@@ -59,4 +59,8 @@
 
     <bean id="userTypesCache" class="org.fcrepo.kernel.impl.cache.UserTypesCacheImpl">
     </bean>
+
+    <bean id="initializationStatus" class="org.fcrepo.kernel.impl.RepositoryInitializationStatusImpl">
+        <property name="initializationComplete" value="true" />
+    </bean>
 </beans>

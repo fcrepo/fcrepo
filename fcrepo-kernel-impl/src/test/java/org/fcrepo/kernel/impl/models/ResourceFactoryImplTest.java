@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
@@ -452,6 +453,20 @@ public class ResourceFactoryImplTest {
 
         final var resource = factory.getResource(mockTx, timemapId);
         assertInstanceOf(TimeMap.class, resource, "Factory must return a TimeMap");
+    }
+
+    @Test
+    public void getResource_BasicContainer_WithHeaders() throws Exception {
+        populateHeaders(resourceHeaders, BASIC_CONTAINER);
+
+        final var resc = factory.getResource(mockTx, resourceHeaders);
+
+        assertInstanceOf(Container.class, resc, "Factory must return a container");
+        assertEquals(fedoraIdStr, resc.getId());
+        assertStateFieldsMatches(resc);
+
+        // No session calls should be made when headers are provided
+        verify(sessionManager, never()).getSession(mockTx);
     }
 
     private void assertStateFieldsMatches(final FedoraResource resc) {

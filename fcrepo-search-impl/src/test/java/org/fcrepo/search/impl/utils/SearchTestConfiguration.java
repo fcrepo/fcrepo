@@ -9,9 +9,11 @@ import javax.sql.DataSource;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.FlywayFactory;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.impl.ContainmentIndexImpl;
+import org.fcrepo.kernel.impl.RepositoryInitializationStatusImpl;
 import org.fcrepo.kernel.impl.cache.UserTypesCacheImpl;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.search.api.SearchIndex;
@@ -84,5 +86,10 @@ public class SearchTestConfiguration {
     @Bean
     public FedoraPropsConfig fedoraPropsConfig() {
         return new FedoraPropsConfig();
+    }
+
+    @Bean
+    public RepositoryInitializationStatus initializationStatus() {
+        return new RepositoryInitializationStatusImpl();
     }
 }

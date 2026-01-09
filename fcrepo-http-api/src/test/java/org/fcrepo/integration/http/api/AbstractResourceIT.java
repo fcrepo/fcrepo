@@ -44,9 +44,9 @@ import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.test.util.CloseableDataset;
 import org.fcrepo.http.commons.test.util.ContainerWrapper;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.auth.ACLHandle;
 
-import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -161,9 +161,9 @@ public abstract class AbstractResourceIT {
     @BeforeEach
     public void setLogger() throws InterruptedException {
         // must wait for the repo to be initialized
-        final var initializer = getBean(RepositoryInitializer.class);
+        final var status = getBean(RepositoryInitializationStatus.class);
         int i = 0;
-        while (!initializer.isInitializationComplete()) {
+        while (!status.isInitializationComplete()) {
             if (++i > 6000) {
                 throw new RuntimeException("Repository failed to initialize");
             }

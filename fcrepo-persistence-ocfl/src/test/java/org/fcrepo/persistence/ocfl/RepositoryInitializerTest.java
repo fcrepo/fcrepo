@@ -7,9 +7,7 @@ package org.fcrepo.persistence.ocfl;
 
 import static org.fcrepo.config.ServerManagedPropsMode.STRICT;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -18,6 +16,7 @@ import static org.mockito.Mockito.when;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
@@ -96,6 +95,9 @@ public class RepositoryInitializerTest {
 
     @Mock
     private ConfigurableApplicationContext applicationContext;
+
+    @Mock
+    private RepositoryInitializationStatus initializationStatus;
 
     @InjectMocks
     private RepositoryInitializer initializer;
@@ -185,12 +187,12 @@ public class RepositoryInitializerTest {
         when(operationBuilder.build()).thenReturn(operation);
 
         // Should be false initially
-        assertFalse(initializer.isInitializationComplete());
+        verify(initializationStatus, never()).setInitializationComplete(true);
 
         initializer.onApplicationEvent(event);
 
         // Should be true after event processing
-        assertTrue(initializer.isInitializationComplete());
+        verify(initializationStatus).setInitializationComplete(true);
         verify(applicationContext, never()).close();
     }
 
@@ -202,17 +204,7 @@ public class RepositoryInitializerTest {
         initializer.onApplicationEvent(event);
 
         // Even on failure, initialization should be marked complete
-        assertTrue(initializer.isInitializationComplete());
+        verify(initializationStatus).setInitializationComplete(true);
         verify(applicationContext).close();
-    }
-
-    @Test
-    public void testIsInitializationComplete() {
-        // Should be false initially
-        assertFalse(initializer.isInitializationComplete());
-
-        // After manually setting the flag
-        initializer.onApplicationEvent(event);
-        assertTrue(initializer.isInitializationComplete());
     }
 }

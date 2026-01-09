@@ -38,4 +38,11 @@
     <property name="type" value="org.fcrepo.kernel.api.TransactionManager" />
   </bean>
 
+  <bean id="resourceFactory" class="org.fcrepo.common.test.utils.MockitoMockFactoryBean">
+    <property name="type" value="org.fcrepo.kernel.api.models.ResourceFactory" />
+  </bean>
+
+  <bean id="initializationStatus" class="org.fcrepo.kernel.impl.RepositoryInitializationStatusImpl">
+    <property name="initializationComplete" value="true" />
+  </bean>
 </beans>
