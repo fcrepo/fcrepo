@@ -195,6 +195,29 @@ public class ResourceOperationEventBuilderTest {
         assertEquals(resourceTypes, event.getResourceTypes());
     }
 
+    @Test
+    public void populateOtherEventFieldsWithNullUserAgent() {
+        final var operation = new NonRdfSourceOperationFactoryImpl()
+                .updateInternalBinaryBuilder(transaction, FEDORA_ID, new ByteArrayInputStream(new byte[]{}))
+                .userPrincipal(USER)
+                .build();
+
+        final var baseUrl = "http://localhost/rest";
+        final String userAgent = null;
+        final var resourceTypes = Set.of("resource-type");
+
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation, null)
+                .withBaseUrl(baseUrl)
+                .withUserAgent(userAgent)
+                .withResourceTypes(resourceTypes)
+                .build();
+
+        assertEquals(baseUrl, event.getBaseUrl());
+        assertEquals(userAgent, event.getUserAgent());
+        assertEquals(resourceTypes, event.getResourceTypes());
+    }
+
+
     private void assertDefaultEvent(final Event event, final EventType type) {
         assertEquals(FEDORA_ID, event.getFedoraId());
         assertEquals(FEDORA_ID.getFullIdPath(), event.getPath());
