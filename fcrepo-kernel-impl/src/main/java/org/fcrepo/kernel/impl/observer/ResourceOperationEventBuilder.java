@@ -128,7 +128,9 @@ public class ResourceOperationEventBuilder implements EventBuilder {
 
     @Override
     public EventBuilder withUserAgent(final String userAgent) {
-        this.userAgent = (userAgent.contains(" ") ? URLEncoder.encode(userAgent, UTF_8) : userAgent);
+        if (userAgent != null && !userAgent.isEmpty()) {
+            this.userAgent = (userAgent.contains(" ") ? URLEncoder.encode(userAgent, UTF_8) : userAgent);
+        }
         return this;
     }
 
