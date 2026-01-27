@@ -237,7 +237,6 @@ public class FedoraLdp extends ContentExposingResource {
         if (fedoraResource instanceof Binary binary) {
             final MediaType mediaType = getBinaryResourceMediaType(binary);
 
-            // Content negotiation guard clause (do not touch servletResponse/resource-derived side effects on 406 path)
             if (!acceptableMediaTypes.isEmpty()
                     && acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
                 return notAcceptable(
@@ -260,11 +259,9 @@ public class FedoraLdp extends ContentExposingResource {
                 builder.header(DIGEST, handleWantDigestHeader(binary, wantDigest));
             }
 
-            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, fedoraResource);
             return builder.build();
         }
 
-        // RDF / container-ish resources
         if (!acceptableMediaTypes.isEmpty()
                 && NOT_WILDCARD.test(acceptableMediaTypes)
                 && !IS_RDF_TYPE.test(acceptableMediaTypes)) {
