@@ -145,7 +145,7 @@ public class FedoraLdp extends ContentExposingResource {
      */
     private static final List<MediaType> RDF_TYPES = Stream.of(TURTLE_WITH_CHARSET, JSON_LD,
             N3_WITH_CHARSET, N3_ALT2_WITH_CHARSET, RDF_XML, NTRIPLES, TEXT_PLAIN_WITH_CHARSET
-            ).map(MediaType::valueOf).collect(Collectors.toList());
+    ).map(MediaType::valueOf).collect(Collectors.toList());
 
     /**
      * This predicate allows comparing a list of accept headers to a list of RDF types.
@@ -226,26 +226,31 @@ public class FedoraLdp extends ContentExposingResource {
         final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
                 .getAcceptableMediaTypes());
 
-        checkCacheControlHeaders(request, servletResponse, resource(), transaction());
+        final var fedoraResource = resource();
 
-        addResourceHttpHeaders(resource(), inlineDisposition);
+        checkCacheControlHeaders(request, servletResponse, fedoraResource, transaction());
+
+        addResourceHttpHeaders(fedoraResource, inlineDisposition);
 
         Response.ResponseBuilder builder = ok();
 
-        if (resource() instanceof Binary binary) {
+        if (fedoraResource instanceof Binary binary) {
             final MediaType mediaType = getBinaryResourceMediaType(binary);
 
-            if (!acceptableMediaTypes.isEmpty()) {
-                if (acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
-                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
-                }
+            if (!acceptableMediaTypes.isEmpty()
+                    && acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
+                return notAcceptable(
+                        VariantListBuilder.newInstance()
+                                .mediaTypes(mediaType)
+                                .build()
+                ).build();
             }
 
             if (binary.isRedirect()) {
                 builder = temporaryRedirect(binary.getExternalURI());
             }
 
-            // we set the content-type explicitly to avoid content-negotiation from getting in the way
+            // We set the content-type explicitly to avoid content-negotiation from getting in the way
             builder.type(mediaType.toString());
 
             // Respect the Want-Digest header with fixity check
@@ -253,20 +258,22 @@ public class FedoraLdp extends ContentExposingResource {
             if (!isNullOrEmpty(wantDigest)) {
                 builder.header(DIGEST, handleWantDigestHeader(binary, wantDigest));
             }
-        } else {
-            if (!acceptableMediaTypes.isEmpty() && NOT_WILDCARD.test(acceptableMediaTypes)) {
-                // Accept header is not empty and is not */*
-                if (!IS_RDF_TYPE.test(acceptableMediaTypes)) {
-                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes().build()).build();
-                }
-            } else if (acceptableMediaTypes.isEmpty() || !NOT_WILDCARD.test(acceptableMediaTypes)) {
-                // If there is no Accept header or it is */*, so default to text/turtle
-                builder.type(TURTLE_WITH_CHARSET);
-            }
-            setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, resource());
+
+            return builder.build();
         }
 
+        if (!acceptableMediaTypes.isEmpty()
+                && NOT_WILDCARD.test(acceptableMediaTypes)
+                && !IS_RDF_TYPE.test(acceptableMediaTypes)) {
+            return notAcceptable(VariantListBuilder.newInstance().mediaTypes().build()).build();
+        }
 
+        // If there is no Accept header or it is */*, default to text/turtle
+        if (acceptableMediaTypes.isEmpty() || !NOT_WILDCARD.test(acceptableMediaTypes)) {
+            builder.type(TURTLE_WITH_CHARSET);
+        }
+
+        setVaryAndPreferenceAppliedHeaders(servletResponse, prefer, fedoraResource);
         return builder.build();
     }
 
@@ -306,23 +313,38 @@ public class FedoraLdp extends ContentExposingResource {
             return getMemento(datetimeHeader, resource(true), inlineDisposition);
         }
 
-        checkCacheControlHeaders(request, servletResponse, resource(), transaction());
-
         final ImmutableList<MediaType> acceptableMediaTypes = ImmutableList.copyOf(headers
                 .getAcceptableMediaTypes());
 
-        LOGGER.info("GET resource '{}'", externalPath);
-        addResourceHttpHeaders(resource(), inlineDisposition);
+        final var fedoraResource = resource();
 
-        if (resource() instanceof Binary binary) {
-            if (!acceptableMediaTypes.isEmpty()) {
-                final MediaType mediaType = getBinaryResourceMediaType(resource());
+        if (fedoraResource instanceof Binary binary) {
+            final MediaType mediaType = getBinaryResourceMediaType(binary);
 
-                if (acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
-                    return notAcceptable(VariantListBuilder.newInstance().mediaTypes(mediaType).build()).build();
-                }
+            if (!acceptableMediaTypes.isEmpty()
+                    && acceptableMediaTypes.stream().noneMatch(t -> t.isCompatible(mediaType))) {
+                return notAcceptable(
+                        VariantListBuilder.newInstance()
+                                .mediaTypes(mediaType)
+                                .build()
+                ).build();
             }
+        } else {
+            if (!acceptableMediaTypes.isEmpty()
+                    && NOT_WILDCARD.test(acceptableMediaTypes)
+                    && NOT_HTML.test(acceptableMediaTypes)
+                    && !IS_RDF_TYPE.test(acceptableMediaTypes)) {
+                // Accept header is not empty and is not */* and is not text/html and is not a valid RDF type.
+                return notAcceptable(RDF_VARIANT_BUILDER.build()).build();
+            }
+        }
 
+        checkCacheControlHeaders(request, servletResponse, fedoraResource, transaction());
+
+        LOGGER.info("GET resource '{}'", externalPath);
+        addResourceHttpHeaders(fedoraResource, inlineDisposition);
+
+        if (fedoraResource instanceof Binary binary) {
             // Respect the Want-Digest header for fixity check
             final String wantDigest = headers.getHeaderString(WANT_DIGEST);
             if (!isNullOrEmpty(wantDigest)) {
@@ -331,18 +353,12 @@ public class FedoraLdp extends ContentExposingResource {
 
             if (binary.isRedirect()) {
                 return temporaryRedirect(binary.getExternalURI()).build();
-            } else {
-                return getBinaryContent(rangeValue, binary);
             }
-        } else {
-            if (!acceptableMediaTypes.isEmpty() && NOT_WILDCARD.test(acceptableMediaTypes) &&
-                    NOT_HTML.test(acceptableMediaTypes) &&
-                    !IS_RDF_TYPE.test(acceptableMediaTypes)) {
-                // Accept header is not empty and is not */* and is not text/html and is not a valid RDF type.
-                return notAcceptable(RDF_VARIANT_BUILDER.build()).build();
-            }
-            return getContent(getChildrenLimit(), resource());
+
+            return getBinaryContent(rangeValue, binary);
         }
+
+        return getContent(getChildrenLimit(), fedoraResource);
     }
 
     /**
@@ -371,7 +387,7 @@ public class FedoraLdp extends ContentExposingResource {
             return builder;
         } catch (final DateTimeParseException e) {
             throw new MementoDatetimeFormatException("Invalid Accept-Datetime value: " + e.getMessage()
-                + ". Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
+                    + ". Please use RFC-1123 date-time format, such as 'Tue, 3 Jun 2008 11:05:30 GMT'", e);
         }
     }
 
@@ -401,8 +417,8 @@ public class FedoraLdp extends ContentExposingResource {
         if (resource() instanceof NonRdfSourceDescription && resource().isOriginalResource()) {
             LOGGER.debug("Trying to delete binary description directly.");
             throw new ClientErrorException(
-                "NonRDFSource descriptions are removed when their associated NonRDFSource object is removed.",
-                METHOD_NOT_ALLOWED);
+                    "NonRDFSource descriptions are removed when their associated NonRDFSource object is removed.",
+                    METHOD_NOT_ALLOWED);
         }
 
         try {
@@ -444,7 +460,7 @@ public class FedoraLdp extends ContentExposingResource {
             @HeaderParam("Digest") final String digest,
             @HeaderParam(HTTP_HEADER_OVERWRITE_TOMBSTONE) final String overwriteTombstoneRaw)
             throws InvalidChecksumException, MalformedRdfException, UnsupportedAlgorithmException,
-                   PathNotFoundException {
+            PathNotFoundException {
         LOGGER.info("PUT to create resource with ID: {}", externalPath());
 
         final var overwriteTombstone = Boolean.parseBoolean(overwriteTombstoneRaw);
@@ -512,71 +528,71 @@ public class FedoraLdp extends ContentExposingResource {
 
             if ((resourceExists && resource instanceof Binary) ||
                     (!resourceExists && isBinary(interactionModel,
-                                providedContentType,
-                                requestBodyStream != null && providedContentType != null,
-                                extContent != null))) {
-                    ensureArchivalGroupHeaderNotPresentForBinaries(links);
+                            providedContentType,
+                            requestBodyStream != null && providedContentType != null,
+                            extContent != null))) {
+                ensureArchivalGroupHeaderNotPresentForBinaries(links);
 
-                    final Collection<URI> checksums = parseDigestHeader(digest);
-                    final var binaryType = requestContentType != null ?
-                            requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
-                    final var contentType = extContent == null ?
-                            binaryType.toString() : extContent.getContentType();
+                final Collection<URI> checksums = parseDigestHeader(digest);
+                final var binaryType = requestContentType != null ?
+                        requestContentType : DEFAULT_NON_RDF_CONTENT_TYPE;
+                final var contentType = extContent == null ?
+                        binaryType.toString() : extContent.getContentType();
 
-                    final String originalFileName;
-                    final long contentSize;
+                final String originalFileName;
+                final long contentSize;
 
-                    if (StringUtils.isNotBlank(contentDispositionRaw)) {
-                        final var contentDisposition = ContentDisposition.parse(contentDispositionRaw);
-                        originalFileName = contentDisposition.getFilename();
-                        contentSize = contentDisposition.getSize() == null ? -1L : contentDisposition.getSize();
-                    } else {
-                        originalFileName = "";
-                        contentSize = -1L;
-                    }
-
-                    doInDbTx(() -> {
-                        if (resourceExists && !(resource() instanceof Tombstone)) {
-                            replaceBinariesService.perform(transaction,
-                                    getUserPrincipal(),
-                                    fedoraId,
-                                    originalFileName,
-                                    contentType,
-                                    checksums,
-                                    requestBodyStream,
-                                    contentSize,
-                                    extContent);
-                        } else {
-                            createResourceService.perform(transaction,
-                                    getUserPrincipal(),
-                                    fedoraId,
-                                    contentType,
-                                    originalFileName,
-                                    contentSize,
-                                    links,
-                                    checksums,
-                                    requestBodyStream,
-                                    extContent);
-                            created.set(true);
-                        }
-                        transaction.commitIfShortLived();
-                    });
+                if (StringUtils.isNotBlank(contentDispositionRaw)) {
+                    final var contentDisposition = ContentDisposition.parse(contentDispositionRaw);
+                    originalFileName = contentDisposition.getFilename();
+                    contentSize = contentDisposition.getSize() == null ? -1L : contentDisposition.getSize();
                 } else {
-                    final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
-                    final Model model = httpRdfService.bodyToInternalModel(fedoraId, requestBodyStream,
-                            contentType, identifierConverter(), hasLenientPreferHeader());
-
-                    doInDbTxWithRetry(() -> {
-                        if (resourceExists && !(resource() instanceof Tombstone)) {
-                            replacePropertiesService.perform(transaction, getUserPrincipal(), fedoraId, model);
-                        } else {
-                            createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model,
-                                                          isTombstoneOverwrite.get());
-                            created.set(true);
-                        }
-                        transaction.commitIfShortLived();
-                    });
+                    originalFileName = "";
+                    contentSize = -1L;
                 }
+
+                doInDbTx(() -> {
+                    if (resourceExists && !(resource() instanceof Tombstone)) {
+                        replaceBinariesService.perform(transaction,
+                                getUserPrincipal(),
+                                fedoraId,
+                                originalFileName,
+                                contentType,
+                                checksums,
+                                requestBodyStream,
+                                contentSize,
+                                extContent);
+                    } else {
+                        createResourceService.perform(transaction,
+                                getUserPrincipal(),
+                                fedoraId,
+                                contentType,
+                                originalFileName,
+                                contentSize,
+                                links,
+                                checksums,
+                                requestBodyStream,
+                                extContent);
+                        created.set(true);
+                    }
+                    transaction.commitIfShortLived();
+                });
+            } else {
+                final var contentType = requestContentType != null ? requestContentType : DEFAULT_RDF_CONTENT_TYPE;
+                final Model model = httpRdfService.bodyToInternalModel(fedoraId, requestBodyStream,
+                        contentType, identifierConverter(), hasLenientPreferHeader());
+
+                doInDbTxWithRetry(() -> {
+                    if (resourceExists && !(resource() instanceof Tombstone)) {
+                        replacePropertiesService.perform(transaction, getUserPrincipal(), fedoraId, model);
+                    } else {
+                        createResourceService.perform(transaction, getUserPrincipal(), fedoraId, links, model,
+                                isTombstoneOverwrite.get());
+                        created.set(true);
+                    }
+                    transaction.commitIfShortLived();
+                });
+            }
 
             LOGGER.debug("Finished creating resource with path: {}", externalPath());
             return createUpdateResponse(getFedoraResource(transaction, fedoraId), created.get());
@@ -854,8 +870,8 @@ public class FedoraLdp extends ContentExposingResource {
         }
 
         if (links.stream().map(Link::valueOf)
-                      .filter(l -> l.getUri().toString().equals(ARCHIVAL_GROUP.getURI()))
-                      .anyMatch(l -> l.getRel().equals("type"))) {
+                .filter(l -> l.getUri().toString().equals(ARCHIVAL_GROUP.getURI()))
+                .anyMatch(l -> l.getRel().equals("type"))) {
             throw new ClientErrorException("Binary resources cannot be created as an" +
                     " ArchiveGroup. Please remove the ArchiveGroup link header and try again", BAD_REQUEST);
         }
@@ -937,11 +953,11 @@ public class FedoraLdp extends ContentExposingResource {
         } catch (final Exception ex) {
             // Catch the exception to ensure status 405 for any requests on memento.
             LOGGER.debug("Unable to add link and options headers for PATCH request to memento path {}: {}.",
-                externalPath, ex.getMessage());
+                    externalPath, ex.getMessage());
         }
 
         LOGGER.info("Unable to handle {} request on a path containing {}. Path was: {}", request.getMethod(),
-            FedoraTypes.FCR_VERSIONS, externalPath);
+                FedoraTypes.FCR_VERSIONS, externalPath);
     }
 
     private FedoraId mintNewPid(final FedoraId fedoraId, final String slug) {
