@@ -76,6 +76,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
         return clazz.cast(getResource(transaction, identifier));
     }
 
+    @Override
+    public FedoraResource getResource(final Transaction transaction,
+                                      final ResourceHeaders headers)
+            throws PathNotFoundException {
+        return instantiateResource(transaction, headers.getId(), headers);
+    }
+
 
     @Override
     public FedoraResource getContainer(final Transaction transaction, final FedoraId resourceId) {
@@ -115,14 +122,6 @@ public class ResourceFactoryImpl implements ResourceFactory {
         throw new ResourceTypeException("Could not identify the resource type for interaction model " + ixModel);
     }
 
-    /**
-     * Instantiates a new FedoraResource object of the given class.
-     *
-     * @param transaction the transaction id
-     * @param identifier    identifier for the new instance
-     * @return new FedoraResource instance
-     * @throws PathNotFoundException
-     */
     private FedoraResource instantiateResource(final Transaction transaction,
                                                final FedoraId identifier)
             throws PathNotFoundException {
@@ -132,6 +131,28 @@ public class ResourceFactoryImpl implements ResourceFactory {
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
 
             final ResourceHeaders headers = psSession.getHeaders(identifier, versionDateTime);
+            return instantiateResource(transaction, identifier, headers);
+        } catch (final PersistentItemNotFoundException e) {
+            throw new PathNotFoundException(e.getMessage(), e);
+        } catch (final PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Instantiates a new FedoraResource object of the given class.
+     *
+     * @param transaction the transaction id
+     * @param identifier    identifier for the new instance
+     * @return new FedoraResource instance
+     * @throws PathNotFoundException
+     */
+    private FedoraResource instantiateResource(final Transaction transaction,
+                                               final FedoraId identifier,
+                                               final ResourceHeaders headers)
+            throws PathNotFoundException {
+        try {
+            final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
 
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);

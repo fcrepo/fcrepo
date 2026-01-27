@@ -14,6 +14,7 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 
 /**
  * Filter which blocks requests if the repository initialization is ongoing
@@ -23,7 +24,7 @@ import jakarta.servlet.http.HttpServletResponse;
 public class RepositoryInitializationFilter implements Filter {
 
     @Inject
-    private RepositoryInitializer initializer;
+    private RepositoryInitializationStatus initializationStatus;
 
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
@@ -33,7 +34,7 @@ public class RepositoryInitializationFilter implements Filter {
         }
 
         final var httpResponse = (HttpServletResponse) response;
-        if (!initializer.isInitializationComplete()) {
+        if (!initializationStatus.isInitializationComplete()) {
             httpResponse.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return;
         }
