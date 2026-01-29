@@ -8,10 +8,12 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isA;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -24,10 +26,12 @@ import io.ocfl.api.OcflRepository;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
-import org.fcrepo.persistence.ocfl.RepositoryInitializer;
+import org.fcrepo.kernel.impl.models.ResourceFactoryImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchParameters;
@@ -73,8 +77,10 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     @Mock
     private FedoraPropsConfig fedoraConfig;
 
+    private ResourceFactory resourceFactory;
+
     @Mock
-    private RepositoryInitializer initializer;
+    private RepositoryInitializationStatus initializationStatus;
 
     private final FedoraId resource1 = FedoraId.create("info:fedora/resource1");
     private final FedoraId resource2 =  FedoraId.create(resource1 + "/resource2");
@@ -83,10 +89,15 @@ public class ReindexServiceTest extends AbstractReindexerTest {
     public void setup() throws Exception {
         super.setup();
 
+        resourceFactory = new ResourceFactoryImpl();
+        setField(resourceFactory, "containmentIndex", containmentIndex);
+        setField(resourceFactory, "persistentStorageSessionManager", persistentStorageSessionManager);
+
         reindexService = new ReindexService();
         reindexService.setMembershipPageSize(5);
         setField(reindexService, "membershipService", membershipService);
         setField(reindexService, "referenceService", referenceService);
+        setField(reindexService, "resourceFactory", resourceFactory);
         setField(reindexService, "searchIndex", searchIndex);
         setField(reindexService, "containmentIndex", containmentIndex);
         setField(reindexService, "ocflIndex", ocflIndex);
@@ -95,13 +106,20 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         setField(reindexService, "persistentStorageSessionManager", persistentStorageSessionManager);
         setField(reindexService, "objectValidator", objectValidator);
         setField(reindexService, "config", fedoraConfig);
-        setField(reindexService, "initializer", initializer);
+        setField(reindexService, "initializationStatus", initializationStatus);
         when(searchIndex.doSearch(any(SearchParameters.class))).thenReturn(containerResult);
 
 
         when(propsConfig.getReindexingThreads()).thenReturn(2L);
         when(fedoraConfig.isRebuildValidation()).thenReturn(true);
         reindexManager = getReindexManager();
+
+        doAnswer(invocationOnMock -> {
+            // Consume the RdfStream to simulate processing.
+            invocationOnMock.getArgument(3, RdfStream.class).count();
+            return null;
+        }).when(referenceService).updateReferences(any(Transaction.class), any(FedoraId.class),
+                isNull(), any(RdfStream.class));
     }
 
     /**
@@ -145,8 +163,8 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(containmentIndex).addContainedBy(any(Transaction.class), eq(parentId), eq(childId), any(Instant.class),
                 isNull());
         verify(referenceService).updateReferences(any(Transaction.class), eq(childId), isNull(), any(RdfStream.class));
-        verify(searchIndex, times(2))
-                .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
+        verify(searchIndex, times(2)).addUpdateIndex(
+                any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class), anyList());
 
         verify(transaction, times(2)).commit();
         verify(searchIndex, times(2)).doSearch(any(SearchParameters.class));
@@ -171,7 +189,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
         // Trigger reindex during in initialization mode, so already indexed entries are skipped.
         clearInvocations(containmentIndex, referenceService, searchIndex);
-        when(initializer.isInitializationComplete()).thenReturn(false);
+        when(initializationStatus.isInitializationComplete()).thenReturn(false);
         reindexManager.start();
         reindexManager.shutdown();
 
@@ -204,7 +222,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         assertHasOcflId(parentIdPart, childId);
 
         // Run the reindex after initialization is complete, so existing entries are reindexed.
-        when(initializer.isInitializationComplete()).thenReturn(true);
+        when(initializationStatus.isInitializationComplete()).thenReturn(true);
         reindexManager.start();
         reindexManager.shutdown();
 
@@ -213,8 +231,8 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(containmentIndex).addContainedBy(any(Transaction.class), eq(parentId), eq(childId), any(Instant.class),
                 isNull());
         verify(referenceService).updateReferences(any(Transaction.class), eq(childId), isNull(), any(RdfStream.class));
-        verify(searchIndex, times(2))
-                .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
+        verify(searchIndex, times(2)).addUpdateIndex(
+                any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class), anyList());
 
         verify(transaction, times(2)).commit();
         verify(searchIndex, times(2)).doSearch(any(SearchParameters.class));
@@ -285,8 +303,8 @@ public class ReindexServiceTest extends AbstractReindexerTest {
 
         verify(containmentIndex, times(numberContainers)).addContainedBy(any(Transaction.class),
                 eq(FedoraId.getRepositoryRootId()), any(FedoraId.class), any(Instant.class), isNull());
-        verify(searchIndex, times(numberContainers))
-                .addUpdateIndex(any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class));
+        verify(searchIndex, times(numberContainers)).addUpdateIndex(
+                any(Transaction.class), any(org.fcrepo.kernel.api.models.ResourceHeaders.class), anyList());
 
         verify(transaction, times(numberContainers + 1)).commit();
         verify(searchIndex, times(2)).doSearch(any(SearchParameters.class));
@@ -321,7 +339,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(containmentIndex).addContainedBy(any(Transaction.class), eq(resource1), eq(resource2),
                 any(Instant.class), isNull());
         verify(searchIndex, times(2)).addUpdateIndex(any(Transaction.class), isA(
-                org.fcrepo.kernel.api.models.ResourceHeaders.class));
+                org.fcrepo.kernel.api.models.ResourceHeaders.class), anyList());
         verify(transaction, times(2)).commit();
     }
 
@@ -355,7 +373,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 any(Instant.class), isNull());
         verify(transaction, times(3)).commit();
         verify(searchIndex, times(2)).addUpdateIndex(any(Transaction.class),
-                isA(ResourceHeaders.class));
+                isA(ResourceHeaders.class), anyList());
     }
 
     @Test
@@ -396,7 +414,8 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(containmentIndex, never()).addContainedBy(any(Transaction.class), eq(resource1), eq(resource2),
                 any(Instant.class), isNull());
         verify(transaction, times(2)).commit();
-        verify(searchIndex, times(1)).addUpdateIndex(any(Transaction.class), isA(ResourceHeaders.class));
+        verify(searchIndex, times(1)).addUpdateIndex(
+                any(Transaction.class), isA(ResourceHeaders.class), anyList());
     }
 
     // Verify that DirectContainers get membership rebuilt, and that querying/paging for resources works
@@ -429,7 +448,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
                 eq(FedoraId.getRepositoryRootId()), any(FedoraId.class), any(Instant.class), isNull());
         verify(transaction, times(numberContainers + 1)).commit();
         verify(searchIndex, times(numberContainers)).addUpdateIndex(any(Transaction.class), isA(
-                org.fcrepo.kernel.api.models.ResourceHeaders.class));
+                org.fcrepo.kernel.api.models.ResourceHeaders.class), anyList());
         verify(membershipService, times(numberContainers * 2)).populateMembershipHistory(any(Transaction.class),
                 any(FedoraId.class));
     }

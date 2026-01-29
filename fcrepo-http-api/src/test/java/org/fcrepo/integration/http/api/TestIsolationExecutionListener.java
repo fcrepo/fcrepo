@@ -8,6 +8,7 @@ package org.fcrepo.integration.http.api;
 import io.ocfl.api.MutableOcflRepository;
 import org.apache.commons.io.FileUtils;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.persistence.ocfl.RepositoryInitializer;
 import org.flywaydb.core.Flyway;
 import org.springframework.test.context.TestContext;
@@ -32,10 +33,11 @@ public class TestIsolationExecutionListener extends BaseTestExecutionListener {
         final var ocflConfig = getBean(testContext, OcflPropsConfig.class);
         final var flyway = getBean(testContext, Flyway.class);
         final var initializer = getBean(testContext, RepositoryInitializer.class);
+        final var status = getBean(testContext, RepositoryInitializationStatus.class);
 
         // must wait for the initialization to finish
         int i = 0;
-        while (!initializer.isInitializationComplete()) {
+        while (!status.isInitializationComplete()) {
             if (++i > 6000) {
                 throw new RuntimeException("Repository failed to initialize");
             }

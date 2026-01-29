@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,7 +33,7 @@ import java.io.IOException;
 public class RepositoryInitializationFilterTest {
 
     @Mock
-    private RepositoryInitializer initializer;
+    private RepositoryInitializationStatus status;
 
     @Mock
     private HttpServletRequest request;
@@ -48,7 +49,7 @@ public class RepositoryInitializationFilterTest {
 
     @Test
     public void testDoFilterWhenInitializationComplete() throws IOException, ServletException {
-        when(initializer.isInitializationComplete()).thenReturn(true);
+        when(status.isInitializationComplete()).thenReturn(true);
 
         filter.doFilter(request, response, filterChain);
 
@@ -58,7 +59,7 @@ public class RepositoryInitializationFilterTest {
 
     @Test
     public void testDoFilterWhenInitializationNotComplete() throws IOException, ServletException {
-        when(initializer.isInitializationComplete()).thenReturn(false);
+        when(status.isInitializationComplete()).thenReturn(false);
 
         filter.doFilter(request, response, filterChain);
 
