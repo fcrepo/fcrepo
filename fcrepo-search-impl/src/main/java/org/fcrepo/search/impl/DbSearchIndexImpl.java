@@ -673,11 +673,9 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     /**
-     * Adds the list of RDF types to the db, if they aren't already there, and returns a set of types that were
-     * actually added.
+     * Adds the list of RDF types to the db, if they aren't already there.
      *
      * @param rdfTypes the types to attempt to add
-     * @return the types that were added
      */
     private void insertRdfTypes(final List<URI> rdfTypes) {
         final MapSqlParameterSource[] params = rdfTypes.stream()
@@ -745,10 +743,11 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     /**
-     * Do direct upsert into simpl search table.
+     * Do direct upsert into simple search table.
      *
      * @param fedoraId        the resourceId
      * @param resourceHeaders the resources headers
+     * @return the resource's search id
      */
     private Long doUpsertIntoSimpleSearch(final FedoraId fedoraId,
                                           final ResourceHeaders resourceHeaders) {
