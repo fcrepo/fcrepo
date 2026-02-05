@@ -53,7 +53,7 @@ In addition, there are weekly Zoom [technical calls](https://wiki.lyrasis.org/di
 ## Building and running Fedora from source
 
 System Requirements
-* Java 11
+* Java 21
 * Maven 3.6.3
 
 ```bash
@@ -84,7 +84,7 @@ Note: You may need to set the $JAVA_HOME property, since Maven uses it to find t
 `mvn --version` will show which version of Java is being used by Maven, e.g.:
 
 ```bash
-Java version: 11.0.2, vendor: Oracle Corporation, runtime: /Library/Java/JavaVirtualMachines/openjdk-11.0.2.jdk/Contents/Home
+Java version: 21.0.8, vendor: Homebrew, runtime: /opt/homebrew/Cellar/openjdk@21/21.0.8/libexec/openjdk.jdk/Contents/Home
 Default locale: en_US, platform encoding: UTF-8
 ```
 
