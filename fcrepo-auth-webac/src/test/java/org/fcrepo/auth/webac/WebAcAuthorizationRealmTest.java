@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider;
 import org.fcrepo.auth.common.DelegateHeaderPrincipalProvider;
@@ -42,6 +43,13 @@ import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.util.ThreadContext;
+import org.apache.shiro.web.subject.WebSubject;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -65,6 +73,9 @@ public class WebAcAuthorizationRealmTest {
     private HttpServletRequest request;
 
     @Mock
+    private HttpServletResponse response;
+
+    @Mock
     private WebACRolesProvider rolesProvider;
 
     @Mock
@@ -81,6 +92,8 @@ public class WebAcAuthorizationRealmTest {
 
     @InjectMocks
     private WebACAuthorizingRealm webACAuthorizingRealm;
+
+    private DefaultWebSecurityManager securityManager;
 
     private Principal basicUserPrincipal;
 
@@ -115,6 +128,15 @@ public class WebAcAuthorizationRealmTest {
     private void doAllStubbings() throws PathNotFoundException {
         doPrincipalStubbings();
         doRequestStubbings();
+    }
+
+    @BeforeEach
+    public void setUpShiro() {
+        securityManager = new DefaultWebSecurityManager();
+        SecurityUtils.setSecurityManager(securityManager);
+        ThreadContext.bind(securityManager);
+        final var subject = new WebSubject.Builder(securityManager, request, response).buildWebSubject();
+        ThreadContext.bind(subject);
     }
 
     @Test
@@ -191,5 +213,11 @@ public class WebAcAuthorizationRealmTest {
                 .anyMatch(p -> p.implies(new WebACPermission(WEBAC_MODE_READ, requestUri))));
         assertTrue(authzinfo.getObjectPermissions().stream()
                 .anyMatch(p -> p.implies(new WebACPermission(WEBAC_MODE_WRITE, requestUri))));
+    }
+
+    @AfterEach
+    public void tearDownShiro() {
+        ThreadContext.unbindSubject();
+        ThreadContext.unbindSecurityManager();
     }
 }

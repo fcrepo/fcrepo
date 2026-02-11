@@ -106,7 +106,9 @@ public class WebACRolesProvider {
      */
     private Optional<ACLHandle> getEffectiveAclCached(final FedoraResource resource) {
         final var key = resource.getId();
+        LOGGER.info("Getting ACL for {}", key);
         final var cached = authHandleCache.getIfPresent(key);
+        LOGGER.info("Cached: {}", cached);
         // If present in cache and non-empty, use it.
         if (cached != null && cached.isPresent()) {
             return cached;
