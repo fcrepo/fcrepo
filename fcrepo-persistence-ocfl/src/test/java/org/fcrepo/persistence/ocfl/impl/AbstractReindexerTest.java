@@ -23,6 +23,7 @@ import static org.springframework.test.util.ReflectionTestUtils.setField;
 import io.ocfl.api.MutableOcflRepository;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.vocabulary.RDF;
 import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -182,11 +183,13 @@ public class AbstractReindexerTest {
     protected void createChildResourceRdf(final PersistentStorageSession session, final FedoraId parentId,
                                         final FedoraId childId) {
         final var model = ModelFactory.createDefaultModel();
+        final var resc = ResourceFactory.createResource(childId.getFullId());
         model.add(
-                ResourceFactory.createResource(childId.getFullId()),
+                resc,
                 ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/title"),
                 ResourceFactory.createPlainLiteral("Title")
         );
+        model.add(resc, RDF.type, ResourceFactory.createResource("http://example.org/SomeType"));
         final var rdfStream = fromModel(createURI(childId.getFullId()), model);
         final var operation = mock(RdfSourceOperation.class, withSettings().extraInterfaces(
                 CreateResourceOperation.class));

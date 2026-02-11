@@ -8,6 +8,7 @@ package org.fcrepo.persistence.ocfl;
 
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.config.OcflPropsConfig;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -30,8 +31,6 @@ import org.springframework.stereotype.Component;
 import jakarta.inject.Inject;
 
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class is responsible for initializing the repository on start-up.
@@ -64,7 +63,8 @@ public class RepositoryInitializer {
     @Inject
     private TransactionManager txManager;
 
-    private final AtomicBoolean initializationComplete = new AtomicBoolean(false);
+    @Inject
+    private RepositoryInitializationStatus initializationStatus;
 
     // This is used in-place of @PostConstruct so that it is called _after_ the rest of context has been
     // completely initialized.
@@ -77,7 +77,7 @@ public class RepositoryInitializer {
             LOGGER.error("Failed to initialize repository", e);
             ((ConfigurableApplicationContext) event.getApplicationContext()).close();
         } finally {
-            initializationComplete.set(true);
+            initializationStatus.setInitializationComplete(true);
         }
     }
 
@@ -123,9 +123,4 @@ public class RepositoryInitializer {
             throw new RepositoryRuntimeException(ex.getMessage(), ex);
         }
     }
-
-    public boolean isInitializationComplete() {
-        return initializationComplete.get();
-    }
-
 }

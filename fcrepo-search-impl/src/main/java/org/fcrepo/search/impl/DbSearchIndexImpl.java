@@ -24,7 +24,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,6 +35,7 @@ import javax.sql.DataSource;
 
 import com.google.common.collect.Sets;
 import org.fcrepo.common.db.DbPlatform;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -133,7 +133,7 @@ public class DbSearchIndexImpl implements SearchIndex {
                     MIME_TYPE_COLUMN + "= VALUES(" + MIME_TYPE_COLUMN + ")," +
                     OPERATION_COLUMN + "= VALUES(" + OPERATION_COLUMN + ")";
 
-    private static final String UPSERT_SIMPLE_SEARCH_MYSQL_MARIA =
+    private static final String UPSERT_SIMPLE_SEARCH_MYSQL =
             "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (" + MODIFIED_COLUMN + "," + CREATED_COLUMN + ", " +
                     CONTENT_SIZE_COLUMN + "," + MIME_TYPE_COLUMN + "," +
                     FEDORA_ID_COLUMN + ")  VALUES ( :" + MODIFIED_PARAM + ", :" + CREATED_PARAM +
@@ -142,6 +142,17 @@ public class DbSearchIndexImpl implements SearchIndex {
                     CREATED_COLUMN + "= VALUES(" + CREATED_COLUMN + ")," +
                     CONTENT_SIZE_COLUMN + "= VALUES(" + CONTENT_SIZE_COLUMN + ")," +
                     MIME_TYPE_COLUMN + "= VALUES(" + MIME_TYPE_COLUMN + ")";
+
+    private static final String UPSERT_SIMPLE_SEARCH_MARIA =
+            "INSERT INTO " + SIMPLE_SEARCH_TABLE + " (" + MODIFIED_COLUMN + "," + CREATED_COLUMN + ", " +
+                    CONTENT_SIZE_COLUMN + "," + MIME_TYPE_COLUMN + "," +
+                    FEDORA_ID_COLUMN + ")  VALUES ( :" + MODIFIED_PARAM + ", :" + CREATED_PARAM +
+                    ", :" + CONTENT_SIZE_PARAM + ", :" + MIME_TYPE_PARAM + "," + ":" + FEDORA_ID_PARAM + ") " +
+                    "ON DUPLICATE KEY UPDATE " + MODIFIED_COLUMN + " = VALUES(" + MODIFIED_COLUMN + "), " +
+                    CREATED_COLUMN + "= VALUES(" + CREATED_COLUMN + ")," +
+                    CONTENT_SIZE_COLUMN + "= VALUES(" + CONTENT_SIZE_COLUMN + ")," +
+                    MIME_TYPE_COLUMN + "= VALUES(" + MIME_TYPE_COLUMN + ")" +
+                    " RETURNING " + ID_COLUMN;
 
     private static final String UPSERT_SIMPLE_SEARCH_TRANSACTION_POSTGRESQL =
             "INSERT INTO " + SIMPLE_SEARCH_TRANSACTIONS_TABLE + " (" + MODIFIED_COLUMN + "," + CREATED_COLUMN + ", " +
@@ -166,7 +177,8 @@ public class DbSearchIndexImpl implements SearchIndex {
                     "DO UPDATE SET " + MODIFIED_COLUMN + " = EXCLUDED." + MODIFIED_COLUMN + ", " +
                     CREATED_COLUMN + " = EXCLUDED." + CREATED_COLUMN + ", " +
                     CONTENT_SIZE_COLUMN + " = EXCLUDED." + CONTENT_SIZE_COLUMN + ", " +
-                    MIME_TYPE_COLUMN + " = EXCLUDED." + MIME_TYPE_COLUMN;
+                    MIME_TYPE_COLUMN + " = EXCLUDED." + MIME_TYPE_COLUMN +
+                    " RETURNING " + ID_COLUMN;
 
     private static final String UPSERT_COMMIT_SIMPLE_SEARCH_H2 =
             "MERGE INTO " + SIMPLE_SEARCH_TABLE +
@@ -323,8 +335,8 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     private static final Map<DbPlatform, String> DIRECT_UPSERT_MAPPING = Map.of(
             H2, UPSERT_SIMPLE_SEARCH_H2,
-            DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
-            DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_MYSQL_MARIA,
+            DbPlatform.MYSQL, UPSERT_SIMPLE_SEARCH_MYSQL,
+            DbPlatform.MARIADB, UPSERT_SIMPLE_SEARCH_MARIA,
             POSTGRESQL, UPSERT_SIMPLE_SEARCH_POSTGRESQL
     );
 
@@ -397,6 +409,9 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Inject
     private ResourceFactory resourceFactory;
+
+    @Inject
+    private RepositoryInitializationStatus initializationStatus;
 
     private DbPlatform dbPlatForm;
 
@@ -610,6 +625,12 @@ public class DbSearchIndexImpl implements SearchIndex {
 
     @Override
     public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders) {
+        addUpdateIndex(transaction, resourceHeaders, null);
+    }
+
+    @Override
+    public void addUpdateIndex(final Transaction transaction, final ResourceHeaders resourceHeaders,
+                               final List<URI> rdfTypes) {
         final var fedoraId = resourceHeaders.getId();
         if (fedoraId.isAcl() || fedoraId.isMemento()) {
             LOGGER.debug("The search index does not include acls or mementos. Ignoring resource {}",
@@ -621,58 +642,57 @@ public class DbSearchIndexImpl implements SearchIndex {
             if (!transaction.isShortLived()) {
                 doUpsertWithTransaction(transaction, resourceHeaders, fedoraId);
             } else {
-                doDirectUpsert(transaction, resourceHeaders, fedoraId);
+                doDirectUpsert(transaction, resourceHeaders, fedoraId, rdfTypes);
             }
         });
 
     }
 
     private void doDirectUpsert(final Transaction transaction, final ResourceHeaders resourceHeaders,
-                                final FedoraId fedoraId) {
+                                final FedoraId fedoraId, final List<URI> providedRdfTypes) {
         final var fullId = fedoraId.getFullId();
         try {
-            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);
-            doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);
-            final var rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
-            final var newTypes = insertRdfTypes(rdfTypes);
-            deleteRdfTypeAssociations(fedoraId);
-            insertRdfTypeAssociations(rdfTypes, newTypes, fedoraId);
+            // If no RDF types were provided, we need to fetch the resource to get them.
+            List<URI> rdfTypes = providedRdfTypes;
+            if (rdfTypes == null) {
+                final var fedoraResource = resourceFactory.getResource(transaction, resourceHeaders);
+                rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
+            }
+
+            final Long searchId = doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);
+            insertRdfTypes(rdfTypes);
+
+            // Only need to delete existing type associations for live indexing
+            if (initializationStatus.isInitializationComplete()) {
+                deleteRdfTypeAssociations(fedoraId);
+            }
+            insertRdfTypeAssociations(rdfTypes, searchId);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed add/updated the search index for : " + fullId, e);
         }
     }
 
     /**
-     * Adds the list of RDF types to the db, if they aren't already there, and returns a set of types that were
-     * actually added.
+     * Adds the list of RDF types to the db, if they aren't already there.
      *
      * @param rdfTypes the types to attempt to add
-     * @return the types that were added
      */
-    private Set<URI> insertRdfTypes(final List<URI> rdfTypes) {
-        final var addTypes = new HashSet<URI>();
-
-        final List<URI> types = new ArrayList<>();
+    private void insertRdfTypes(final List<URI> rdfTypes) {
         final MapSqlParameterSource[] params = rdfTypes.stream()
                 .filter(rdfType -> !rdfTypeIdCache.containsKey(rdfType))
-                .map(r -> {
-                    types.add(r);
-                    return new MapSqlParameterSource().addValue(RDF_TYPE_URI_PARAM, r.toString());
-                })
+                .map(r -> new MapSqlParameterSource().addValue(RDF_TYPE_URI_PARAM, r.toString()))
                 .toArray(MapSqlParameterSource[]::new);
-
         try {
+            if (params.length == 0) {
+                return;
+            }
             jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_MAPPING.get(dbPlatForm), params);
-            addTypes.addAll(types);
-
         } catch (final DuplicateKeyException e) {
             // ignore duplicate keys
         } catch (final CannotAcquireLockException e) {
             // if we can't get a lock
             throw new RepositoryRuntimeException("Failed to add RDF type(s) to search index", e);
         }
-
-        return addTypes;
     }
 
     private void doUpsertWithTransaction(final Transaction transaction, final ResourceHeaders resourceHeaders,
@@ -680,7 +700,7 @@ public class DbSearchIndexImpl implements SearchIndex {
         final var fullId = fedoraId.getFullId();
         try {
             final var txId = transaction.getId();
-            final var fedoraResource = resourceFactory.getResource(transaction, fedoraId);
+            final var fedoraResource = resourceFactory.getResource(transaction, resourceHeaders);
             doUpsertIntoTransactionTables(txId, fedoraId, resourceHeaders, "add");
             // add rdf type associations to the rdf type association table
             final var rdfTypes = Sets.newHashSet(fedoraResource.getTypes());
@@ -723,12 +743,13 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     /**
-     * Do direct upsert into simpl search table.
+     * Do direct upsert into simple search table.
      *
      * @param fedoraId        the resourceId
      * @param resourceHeaders the resources headers
+     * @return the resource's search id
      */
-    private void doUpsertIntoSimpleSearch(final FedoraId fedoraId,
+    private Long doUpsertIntoSimpleSearch(final FedoraId fedoraId,
                                           final ResourceHeaders resourceHeaders) {
         var mimetype = "";
         long contentSize = 0;
@@ -747,7 +768,14 @@ public class DbSearchIndexImpl implements SearchIndex {
         params.addValue(CONTENT_SIZE_PARAM, contentSize);
         params.addValue(CREATED_PARAM, formatInstant(created));
         params.addValue(MODIFIED_PARAM, formatInstant(modified));
-        jdbcTemplate.update(DIRECT_UPSERT_MAPPING.get(dbPlatForm), params);
+
+        if (dbPlatForm == DbPlatform.MYSQL || dbPlatForm == DbPlatform.H2) {
+            jdbcTemplate.update(DIRECT_UPSERT_MAPPING.get(dbPlatForm), params);
+            return jdbcTemplate.queryForObject(SELECT_RESOURCE_SEARCH_ID,
+                    Map.of(FEDORA_ID_PARAM, fedoraId.getFullId()), Long.class);
+        } else {
+            return jdbcTemplate.queryForObject(DIRECT_UPSERT_MAPPING.get(dbPlatForm), params, Long.class);
+        }
     }
 
     private Timestamp formatInstant(final Instant instant) {
@@ -786,24 +814,11 @@ public class DbSearchIndexImpl implements SearchIndex {
     }
 
     private void insertRdfTypeAssociations(final List<URI> rdfTypes,
-                                           final Set<URI> newTypes,
-                                           final FedoraId fedoraId) {
+                                           final Long resourceSearchId) {
         //add rdf type associations
-
-        final var resourceSearchId = jdbcTemplate.queryForObject(
-                SELECT_RESOURCE_SEARCH_ID,
-                Map.of(FEDORA_ID_PARAM, fedoraId.getFullId()), Long.class);
-
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
-            final Long rdfTypeId;
-            if (newTypes.contains(rdfType)) {
-                // The cache MUST NOT be used when the current TX created the record as it will not be committed yet
-                // and it will break other transactions.
-                rdfTypeId = getRdfTypeIdDirect(rdfType);
-            } else {
-                rdfTypeId = getRdfTypeIdCached(rdfType);
-            }
+            final Long rdfTypeId = getRdfTypeId(rdfType);
 
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);
@@ -815,14 +830,13 @@ public class DbSearchIndexImpl implements SearchIndex {
         jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_ASSOC, psArray);
     }
 
-    private Long getRdfTypeIdCached(final URI rdfType) {
-        return rdfTypeIdCache.computeIfAbsent(rdfType, this::getRdfTypeIdDirect);
-    }
-
-    private Long getRdfTypeIdDirect(final URI rdfType) {
-        return jdbcTemplate.queryForObject(
-                SELECT_RDF_TYPE_ID,
-                Map.of(RDF_TYPE_URI_PARAM, rdfType.toString()), Long.class);
+    private Long getRdfTypeId(final URI rdfType) {
+        return rdfTypeIdCache.computeIfAbsent(rdfType, uri ->
+                jdbcTemplate.queryForObject(
+                        SELECT_RDF_TYPE_ID,
+                        Map.of(RDF_TYPE_URI_PARAM, uri.toString()),
+                        Long.class)
+        );
     }
 
     @Override

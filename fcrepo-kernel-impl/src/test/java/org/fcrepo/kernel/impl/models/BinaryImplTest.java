@@ -305,7 +305,7 @@ class BinaryImplTest {
     @Test
     void testGetTriples() throws Exception {
         // Setup the description to return a mock RDF stream
-        when(mockResourceFactory.getResource(any(), any())).thenReturn(mockDescription);
+        when(mockResourceFactory.getResource(any(), any(FedoraId.class))).thenReturn(mockDescription);
         when(mockDescription.getTriples()).thenReturn(mockRdfStream);
 
         final RdfStream result = binary.getTriples();
