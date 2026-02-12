@@ -27,11 +27,9 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.inject.Inject;
-import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.subject.Subject;
 import org.apache.shiro.web.subject.WebSubject;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
 import org.fcrepo.config.FedoraPropsConfig;
@@ -45,8 +43,6 @@ import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.ResourceFactory;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.shiro.authc.AuthenticationException;
@@ -93,10 +89,17 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     private ContainmentIndex containmentIndex;
 
     private Transaction transaction() {
-        ensureSpringDependencies();
-        final HttpServletRequest request = currentRequest();
+        final HttpServletRequest request;
+        final var subject = SecurityUtils.getSubject();
+        if (subject instanceof WebSubject) {
+            final var req = ((WebSubject) subject).getServletRequest();
+            request = (req instanceof HttpServletRequest) ? (HttpServletRequest) req : null;
+        } else {
+            request = null;
+        }
+
         if (request == null) {
-            log.warn("Current request is null");
+            log.debug("Current request is null");
             return ReadOnlyTransaction.INSTANCE;
         }
 
@@ -109,65 +112,23 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         return txProvider.provide();
     }
 
-    /**
-     * Helper method to retrieve Servlet Request rather than injecting it
-     */
-    private HttpServletRequest currentRequest() {
-        final Subject subject = SecurityUtils.getSubject();
-        if (subject instanceof WebSubject) {
-            final ServletRequest req = ((WebSubject) subject).getServletRequest();
-            if (req instanceof HttpServletRequest) {
-                return (HttpServletRequest) req;
-            }
-        }
-        return null;
-    }
 
-    /**
-     * Ensures all Spring dependencies are available, even if this Realm was not constructed by Spring.
-     */
-    private void ensureSpringDependencies() {
-        // If Shiro created this Realm (not Spring), @Inject/@Autowired fields may be null.
-        if (resourceFactory != null && rolesProvider != null && transactionManager != null
-                && fedoraPropsConfig != null && containmentIndex != null) {
-            return;
-        }
-
-        final HttpServletRequest req = currentRequest();
-        if (req == null) {
-            return;
-        }
-
-        final WebApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(req.getServletContext());
-        if (ctx == null) {
-            return;
-        }
-
-        if (fedoraPropsConfig == null) {
-            fedoraPropsConfig = ctx.getBean(FedoraPropsConfig.class);
-        }
-        if (rolesProvider == null) {
-            rolesProvider = ctx.getBean(WebACRolesProvider.class);
-        }
-        if (transactionManager == null) {
-            transactionManager = ctx.getBean(TransactionManager.class);
-        }
-        if (resourceFactory == null) {
-            resourceFactory = ctx.getBean(ResourceFactory.class);
-        }
-        if (containmentIndex == null) {
-            // match the existing qualifier name
-            containmentIndex = (ContainmentIndex) ctx.getBean("containmentIndex");
-        }
-    }
 
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
-        ensureSpringDependencies();
         final SimpleAuthorizationInfo authzInfo = new SimpleAuthorizationInfo();
-        final HttpServletRequest request = currentRequest();
+
+        final HttpServletRequest request;
+        final var subject = SecurityUtils.getSubject();
+        if (subject instanceof WebSubject) {
+            final var req = ((WebSubject) subject).getServletRequest();
+            request = (req instanceof HttpServletRequest) ? (HttpServletRequest) req : null;
+        } else {
+            request = null;
+        }
+
         if (request == null) {
-            // no servlet request -> no URIS_TO_AUTHORIZE attribute -> return empty authz (or deny)
+            // no servlet request -> no URIS_TO_AUTHORIZE attribute -> return empty authz
             return authzInfo;
         }
         boolean isAdmin = false;
@@ -248,7 +209,15 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private Map<String, Collection<String>> getRolesForPath(final String path) {
-        final HttpServletRequest request = currentRequest();
+        final HttpServletRequest request;
+        final var subject = SecurityUtils.getSubject();
+        if (subject instanceof WebSubject) {
+            final var req = ((WebSubject) subject).getServletRequest();
+            request = (req instanceof HttpServletRequest) ? (HttpServletRequest) req : null;
+        } else {
+            request = null;
+        }
+
         if (request == null) {
             log.warn("No HttpServletRequest available to WebACAuthorizingRealm while resolving roles for path {}",
                     path);
@@ -260,11 +229,6 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private Map<String, Collection<String>> getRolesForId(final FedoraId id) {
-        ensureSpringDependencies();
-        if (rolesProvider == null) {
-            log.error("WebACAuthorizingRealm is not wired: rolesProvider is null");
-            return null;
-        }
         Map<String, Collection<String>> roles = null;
 
         final var txId = FEDORA_ID_PREFIX + "/" + FCR_TX;
@@ -316,15 +280,6 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private FedoraResource getResourceOrParentFromPath(final FedoraId fedoraId) {
-        ensureSpringDependencies();
-        if (resourceFactory == null) {
-            log.error("WebACAuthorizingRealm is not wired: resourceFactory is null");
-            return null;
-        }
-        if (containmentIndex == null) {
-            log.error("WebACAuthorizingRealm is not wired: containmentIndex is null");
-            return null;
-        }
         try {
             log.debug("Testing FedoraResource for {}", fedoraId.getFullIdPath());
             return this.resourceFactory.getResource(transaction(), fedoraId);
