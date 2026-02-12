@@ -12,11 +12,13 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
 
 import java.net.URI;
 import java.security.Principal;
@@ -27,6 +29,7 @@ import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletRequest;
 
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider;
 import org.fcrepo.auth.common.DelegateHeaderPrincipalProvider;
@@ -43,6 +46,7 @@ import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.subject.Subject;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.util.ThreadContext;
@@ -180,6 +184,25 @@ public class WebAcAuthorizationRealmTest {
     }
 
     @Test
+    public void testDoGetAuthorizationInfoNoWebSubjectReturnsEmpty() throws Exception {
+        // Bind a non-web Subject so the realm cannot resolve an HttpServletRequest
+        final Subject subject = mock(Subject.class);
+        ThreadContext.bind(subject);
+
+        final var principals = new SimplePrincipalCollection();
+
+        // doGetAuthorizationInfo is protected; invoke via reflection
+        final var m = org.fcrepo.auth.webac.WebACAuthorizingRealm.class.getDeclaredMethod(
+                "doGetAuthorizationInfo",
+                org.apache.shiro.subject.PrincipalCollection.class);
+        m.setAccessible(true);
+
+        final var authz = (org.apache.shiro.authz.AuthorizationInfo) m.invoke(webACAuthorizingRealm, principals);
+
+        assertTrue(authz.getRoles() == null || authz.getRoles().isEmpty());
+    }
+
+    @Test
     public void testMultipleDelegateHeaders() {
         principalCollection = new SimplePrincipalCollection();
         principalCollection.add(new BasicUserPrincipal("admin"), "testRealm");
@@ -213,6 +236,35 @@ public class WebAcAuthorizationRealmTest {
                 .anyMatch(p -> p.implies(new WebACPermission(WEBAC_MODE_READ, requestUri))));
         assertTrue(authzinfo.getObjectPermissions().stream()
                 .anyMatch(p -> p.implies(new WebACPermission(WEBAC_MODE_WRITE, requestUri))));
+    }
+
+    @Test
+    public void testTransactionFallsBackWhenServletRequestNotHttp() throws Exception {
+        final WebSubject webSubject = mock(WebSubject.class);
+        final ServletRequest nonHttpRequest = mock(ServletRequest.class);
+        when(webSubject.getServletRequest()).thenReturn(nonHttpRequest);
+        ThreadContext.bind(webSubject);
+
+        final var m = org.fcrepo.auth.webac.WebACAuthorizingRealm.class.getDeclaredMethod("transaction");
+        m.setAccessible(true);
+
+        final var tx = (org.fcrepo.kernel.api.Transaction) m.invoke(webACAuthorizingRealm);
+
+        assertSame(org.fcrepo.kernel.api.ReadOnlyTransaction.INSTANCE, tx);
+    }
+
+    @Test
+    public void testTransactionFallsBackWhenServletRequestNull() throws Exception {
+        final WebSubject webSubject = mock(WebSubject.class);
+        when(webSubject.getServletRequest()).thenReturn(null);
+        ThreadContext.bind(webSubject);
+
+        final var m = org.fcrepo.auth.webac.WebACAuthorizingRealm.class.getDeclaredMethod("transaction");
+        m.setAccessible(true);
+
+        final var tx = (org.fcrepo.kernel.api.Transaction) m.invoke(webACAuthorizingRealm);
+
+        assertSame(org.fcrepo.kernel.api.ReadOnlyTransaction.INSTANCE, tx);
     }
 
     @AfterEach
