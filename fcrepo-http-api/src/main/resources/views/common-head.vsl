@@ -4,3 +4,5 @@
 <link rel="stylesheet" type="text/css" href="$staticBaseUrl/static/css/common.css">
 
 <script type="text/javascript" src="$staticBaseUrl/static/js/common.js"></script>
+<script type="text/javascript" src="$staticBaseUrl/static/js/bootstrap.bundle.min.js"></script>
+

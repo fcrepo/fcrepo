@@ -28,11 +28,6 @@
 </nav>
 
 <!-- Modal -->
-<button id="showErrorModal" type="button"
-        class="d-none"
-        data-bs-toggle="modal"
-        data-bs-target="#errorModal"></button>
-
 <div class="modal fade" id="errorModal" tabindex="-1"
      aria-labelledby="errorLabel" aria-hidden="true">
     <div class="modal-dialog">
