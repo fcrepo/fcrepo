@@ -609,7 +609,9 @@
     function ajaxErrorHandler(xhr, errorThrown) {
         document.getElementById('errorLabel').textContent = errorThrown || xhr.statusText;
         document.getElementById('errorText').textContent = xhr.responseText;
-        document.getElementById('showErrorModal').click();
+        // Trigger modal directly using Bootstrap 5 API
+        const errorModal = new bootstrap.Modal(document.getElementById('errorModal'));
+        errorModal.show();
         (document.getElementById('btn_action_create') || {}).disabled = false;
         (document.getElementById('binary_update_content') || {}).disabled = false;
     }
