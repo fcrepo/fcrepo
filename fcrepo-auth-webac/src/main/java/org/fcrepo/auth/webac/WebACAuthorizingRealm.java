@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.inject.Inject;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.apache.shiro.SecurityUtils;
@@ -88,20 +89,23 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
-    private Transaction transaction() {
-        final HttpServletRequest request;
+    /**
+     * Resolve the current HttpServletRequest from Shiro's WebSubject.
+     * Avoids injecting HttpServletRequest into this singleton realm.
+     */
+    private HttpServletRequest currentRequest() {
         final var subject = SecurityUtils.getSubject();
         if (subject instanceof WebSubject) {
-            final var req = ((WebSubject) subject).getServletRequest();
-            request = (req instanceof HttpServletRequest) ? (HttpServletRequest) req : null;
-        } else {
-            request = null;
+            final ServletRequest req = ((WebSubject) subject).getServletRequest();
+            if (req instanceof HttpServletRequest) {
+                return (HttpServletRequest) req;
+            }
         }
+        return null;
+    }
 
-        if (request == null) {
-            log.debug("Current request is null");
-            return ReadOnlyTransaction.INSTANCE;
-        }
+    private Transaction transaction() {
+        final HttpServletRequest request = currentRequest();
 
         final String txId = request.getHeader(ATOMIC_ID_HEADER);
         if (txId == null) {
@@ -118,14 +122,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
         final SimpleAuthorizationInfo authzInfo = new SimpleAuthorizationInfo();
 
-        final HttpServletRequest request;
-        final var subject = SecurityUtils.getSubject();
-        if (subject instanceof WebSubject) {
-            final var req = ((WebSubject) subject).getServletRequest();
-            request = (req instanceof HttpServletRequest) ? (HttpServletRequest) req : null;
-        } else {
-            request = null;
-        }
+        final HttpServletRequest request = currentRequest();
 
         if (request == null) {
             // no servlet request -> no URIS_TO_AUTHORIZE attribute -> return empty authz
@@ -209,14 +206,7 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private Map<String, Collection<String>> getRolesForPath(final String path) {
-        final HttpServletRequest request;
-        final var subject = SecurityUtils.getSubject();
-        if (subject instanceof WebSubject) {
-            final var req = ((WebSubject) subject).getServletRequest();
-            request = (req instanceof HttpServletRequest) ? (HttpServletRequest) req : null;
-        } else {
-            request = null;
-        }
+        final HttpServletRequest request = currentRequest();
 
         if (request == null) {
             log.warn("No HttpServletRequest available to WebACAuthorizingRealm while resolving roles for path {}",
