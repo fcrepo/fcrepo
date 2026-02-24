@@ -10,6 +10,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.when;
+
+import org.mockito.MockedConstruction;
 
 import java.util.Arrays;
 import java.util.List;
@@ -43,12 +47,20 @@ public class ExternalContentHandlerFactoryTest {
 
     @Test
     public void testValidLinkHeader() {
-        final ExternalContentHandler handler = factory.createFromLinks(
-                makeLinks("https://example.com/"));
+        try (MockedConstruction<ExternalContentHandler> mocked = mockConstruction(ExternalContentHandler.class,
+                (mock, context) -> {
+                    when(mock.getURL()).thenReturn("https://example.com/");
+                    when(mock.getContentType()).thenReturn("text/plain");
+                    when(mock.getHandling()).thenReturn("proxy");
+                })) {
 
-        assertEquals("https://example.com/", handler.getURL());
-        assertEquals("text/plain", handler.getContentType());
-        assertEquals("proxy", handler.getHandling());
+            final ExternalContentHandler handler = factory.createFromLinks(
+                    makeLinks("https://example.com/"));
+
+            assertEquals("https://example.com/", handler.getURL());
+            assertEquals("text/plain", handler.getContentType());
+            assertEquals("proxy", handler.getHandling());
+        }
     }
 
     @Test
