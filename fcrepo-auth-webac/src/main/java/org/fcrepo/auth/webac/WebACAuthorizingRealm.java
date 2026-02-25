@@ -101,7 +101,8 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
                 return (HttpServletRequest) req;
             }
         }
-        return null;
+        throw new IllegalStateException("HttpServletRequest not available in WebACAuthorizingRealm. " +
+                "This realm must be used in a web application context with Shiro's web support enabled.");
     }
 
     private Transaction transaction() {
