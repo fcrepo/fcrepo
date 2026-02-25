@@ -96,6 +96,38 @@ public class WebACRolesProvider {
     @Inject
     private Cache<String, Optional<ACLHandle>> authHandleCache;
 
+    /**
+     * Retrieve an effective ACL using the cache, but do not negatively-cache empty results.
+     *
+     * Caffeine will cache whatever value is returned by the mapping function, including Optional.empty().
+     * If ACL resolution transiently fails (e.g., during concurrent writes/index lag), caching an empty
+     * value can cause authorization to incorrectly fall back to the classpath/root ACL until the
+     * entry expires or the process restarts.
+     */
+    private Optional<ACLHandle> getEffectiveAclCached(final FedoraResource resource) {
+        final var key = resource.getId();
+        LOGGER.info("Getting ACL for {}", key);
+        final var cached = authHandleCache.getIfPresent(key);
+        LOGGER.info("Cached: {}", cached);
+        // If present in cache and non-empty, use it.
+        if (cached != null && cached.isPresent()) {
+            return cached;
+        }
+
+        // Compute fresh.
+        final var computed = getEffectiveAcl(resource, false);
+
+        // Only cache positive results.
+        if (computed.isPresent()) {
+            authHandleCache.put(key, computed);
+        } else {
+            // Ensure we don't keep a stale negative cache entry.
+            authHandleCache.invalidate(key);
+        }
+
+        return computed;
+    }
+
     private String userBaseUri;
     private String groupBaseUri;
 
@@ -122,8 +154,7 @@ public class WebACRolesProvider {
         final List<String> resourcePaths = new ArrayList<>();
 
         // See if the root acl has been updated
-        final var effectiveAcl = authHandleCache.get(fedoraResource.getId(),
-                                                     key -> getEffectiveAcl(fedoraResource, false));
+        final var effectiveAcl = getEffectiveAclCached(fedoraResource);
         effectiveAcl.map(ACLHandle::getResource)
             .filter(effectiveResource -> !effectiveResource.getId().equals(id.getResourceId()))
             .ifPresent(effectiveResource -> {
@@ -157,8 +188,7 @@ public class WebACRolesProvider {
         LOGGER.debug("Getting agent roles for resource: {}", resource.getId());
 
         // Get the effective ACL by searching the target node and any ancestors.
-        final Optional<ACLHandle> effectiveAcl = authHandleCache.get(resource.getId(),
-                key -> getEffectiveAcl(resource, false));
+        final Optional<ACLHandle> effectiveAcl = getEffectiveAclCached(resource);
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();

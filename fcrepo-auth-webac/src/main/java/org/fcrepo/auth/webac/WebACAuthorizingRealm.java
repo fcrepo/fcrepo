@@ -27,8 +27,11 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.inject.Inject;
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.web.subject.WebSubject;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider.ContainerRolesPrincipal;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.session.TransactionProvider;
@@ -74,9 +77,6 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     private FedoraPropsConfig fedoraPropsConfig;
 
     @Inject
-    private HttpServletRequest request;
-
-    @Inject
     private WebACRolesProvider rolesProvider;
 
     @Inject
@@ -89,7 +89,25 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
 
+    /**
+     * Resolve the current HttpServletRequest from Shiro's WebSubject.
+     * Avoids injecting HttpServletRequest into this singleton realm.
+     */
+    private HttpServletRequest currentRequest() {
+        final var subject = SecurityUtils.getSubject();
+        if (subject instanceof WebSubject) {
+            final ServletRequest req = ((WebSubject) subject).getServletRequest();
+            if (req instanceof HttpServletRequest) {
+                return (HttpServletRequest) req;
+            }
+        }
+        throw new IllegalStateException("HttpServletRequest not available in WebACAuthorizingRealm. " +
+                "This realm must be used in a web application context with Shiro's web support enabled.");
+    }
+
     private Transaction transaction() {
+        final HttpServletRequest request = currentRequest();
+
         final String txId = request.getHeader(ATOMIC_ID_HEADER);
         if (txId == null) {
             return ReadOnlyTransaction.INSTANCE;
@@ -99,9 +117,14 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
         return txProvider.provide();
     }
 
+
+
     @Override
     protected AuthorizationInfo doGetAuthorizationInfo(final PrincipalCollection principals) {
         final SimpleAuthorizationInfo authzInfo = new SimpleAuthorizationInfo();
+
+        final HttpServletRequest request = currentRequest();
+
         boolean isAdmin = false;
 
         final Collection<DelegatedHeaderPrincipal> delegatePrincipals =
@@ -180,6 +203,8 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
     }
 
     private Map<String, Collection<String>> getRolesForPath(final String path) {
+        final HttpServletRequest request = currentRequest();
+
         final FedoraId id = identifierConverter(request).pathToInternalId(path);
         return getRolesForId(id);
     }

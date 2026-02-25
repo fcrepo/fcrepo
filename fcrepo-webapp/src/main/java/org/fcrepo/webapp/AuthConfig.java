@@ -22,8 +22,6 @@ import org.fcrepo.auth.webac.WebACFilter;
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.config.ConditionOnPropertyTrue;
 
-import org.apache.shiro.realm.AuthenticatingRealm;
-import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.filter.InvalidRequestFilter;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
@@ -126,7 +124,7 @@ public class AuthConfig {
      */
     @Bean
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    public static AuthorizingRealm webACAuthorizingRealm() {
+    public WebACAuthorizingRealm webACAuthorizingRealm() {
         return new WebACAuthorizingRealm();
     }
 
@@ -137,18 +135,21 @@ public class AuthConfig {
      */
     @Bean
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    public static AuthenticatingRealm servletContainerAuthenticatingRealm() {
+    public ServletContainerAuthenticatingRealm servletContainerAuthenticatingRealm() {
         return new ServletContainerAuthenticatingRealm();
     }
 
     /**
      * @return Security Manager
+     * @param webACAuthorizingRealm authorizing Realm
+     * @param servletContainerAuthenticatingRealm authenticating Realm
      */
     @Bean
     @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-    public static WebSecurityManager securityManager() {
+    public WebSecurityManager securityManager(final WebACAuthorizingRealm webACAuthorizingRealm,
+                                      final ServletContainerAuthenticatingRealm servletContainerAuthenticatingRealm) {
         final var manager = new DefaultWebSecurityManager();
-        manager.setRealms(List.of(webACAuthorizingRealm(), servletContainerAuthenticatingRealm()));
+        manager.setRealms(List.of(webACAuthorizingRealm, servletContainerAuthenticatingRealm));
         return manager;
     }
 
@@ -192,13 +193,15 @@ public class AuthConfig {
      * principal provider filters, and finally the webACFilter
      *
      * @param propsConfig config properties
+     * @param securityManager the Shiro WebSecurityManager bean
      * @return shiro filter
      */
     @Bean
     @Order(100)
-    public ShiroFilterFactoryBean shiroFilter(final AuthPropsConfig propsConfig) {
+    public ShiroFilterFactoryBean shiroFilter(final AuthPropsConfig propsConfig,
+                                              final WebSecurityManager securityManager) {
         final var filter = new ShiroFilterFactoryBean();
-        filter.setSecurityManager(securityManager());
+        filter.setSecurityManager(securityManager);
         filter.setFilterChainDefinitions("/** = servletContainerAuthFilter,"
                 + principalProviderChain(propsConfig) + "webACFilter");
         return filter;

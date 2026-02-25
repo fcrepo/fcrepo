@@ -10,8 +10,10 @@ import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_READ_VALUE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE;
 import static org.fcrepo.auth.webac.URIConstants.WEBAC_MODE_WRITE_VALUE;
 import static org.fcrepo.auth.webac.WebACAuthorizingRealm.URIS_TO_AUTHORIZE;
+import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,7 +28,9 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
+import org.apache.shiro.web.subject.WebSubject;
 import org.fcrepo.auth.common.ContainerRolesPrincipalProvider;
 import org.fcrepo.auth.common.DelegateHeaderPrincipalProvider;
 import org.fcrepo.config.FedoraPropsConfig;
@@ -42,6 +46,12 @@ import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.apache.http.auth.BasicUserPrincipal;
 import org.apache.shiro.authz.AuthorizationInfo;
 import org.apache.shiro.subject.SimplePrincipalCollection;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.util.ThreadContext;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -65,6 +75,9 @@ public class WebAcAuthorizationRealmTest {
     private HttpServletRequest request;
 
     @Mock
+    private HttpServletResponse response;
+
+    @Mock
     private WebACRolesProvider rolesProvider;
 
     @Mock
@@ -81,6 +94,8 @@ public class WebAcAuthorizationRealmTest {
 
     @InjectMocks
     private WebACAuthorizingRealm webACAuthorizingRealm;
+
+    private DefaultWebSecurityManager securityManager;
 
     private Principal basicUserPrincipal;
 
@@ -115,6 +130,15 @@ public class WebAcAuthorizationRealmTest {
     private void doAllStubbings() throws PathNotFoundException {
         doPrincipalStubbings();
         doRequestStubbings();
+    }
+
+    @BeforeEach
+    public void setUpShiro() {
+        securityManager = new DefaultWebSecurityManager();
+        SecurityUtils.setSecurityManager(securityManager);
+        ThreadContext.bind(securityManager);
+        final var subject = new WebSubject.Builder(securityManager, request, response).buildWebSubject();
+        ThreadContext.bind(subject);
     }
 
     @Test
@@ -191,5 +215,24 @@ public class WebAcAuthorizationRealmTest {
                 .anyMatch(p -> p.implies(new WebACPermission(WEBAC_MODE_READ, requestUri))));
         assertTrue(authzinfo.getObjectPermissions().stream()
                 .anyMatch(p -> p.implies(new WebACPermission(WEBAC_MODE_WRITE, requestUri))));
+    }
+
+    @Test
+    public void testTransactionReturnsReadOnlyWhenNoAtomicIdHeader() throws Exception {
+        // Ensure we have a proper web request bound (setUpShiro already bound the subject)
+        when(request.getHeader(ATOMIC_ID_HEADER)).thenReturn(null);
+
+        final var m = WebACAuthorizingRealm.class.getDeclaredMethod("transaction");
+        m.setAccessible(true);
+
+        final var tx = (Transaction) m.invoke(webACAuthorizingRealm);
+
+        assertSame(org.fcrepo.kernel.api.ReadOnlyTransaction.INSTANCE, tx);
+    }
+
+    @AfterEach
+    public void tearDownShiro() {
+        ThreadContext.unbindSubject();
+        ThreadContext.unbindSecurityManager();
     }
 }
