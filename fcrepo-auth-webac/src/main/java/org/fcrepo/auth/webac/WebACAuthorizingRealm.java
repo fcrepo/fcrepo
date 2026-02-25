@@ -125,10 +125,6 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
         final HttpServletRequest request = currentRequest();
 
-        if (request == null) {
-            // no servlet request -> no URIS_TO_AUTHORIZE attribute -> return empty authz
-            return authzInfo;
-        }
         boolean isAdmin = false;
 
         final Collection<DelegatedHeaderPrincipal> delegatePrincipals =
@@ -208,12 +204,6 @@ public class WebACAuthorizingRealm extends AuthorizingRealm {
 
     private Map<String, Collection<String>> getRolesForPath(final String path) {
         final HttpServletRequest request = currentRequest();
-
-        if (request == null) {
-            log.warn("No HttpServletRequest available to WebACAuthorizingRealm while resolving roles for path {}",
-                    path);
-            return null;
-        }
 
         final FedoraId id = identifierConverter(request).pathToInternalId(path);
         return getRolesForId(id);
