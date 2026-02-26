@@ -637,16 +637,6 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             final ContentDisposition.Builder dispositionBuilder = (dispositionInline ? ContentDisposition.inline() :
                     ContentDisposition.attachment());
 
-            // TODO: Size, created-date and modification-date have been deprecated by Spring and the RFC-6266 Appendix B
-            dispositionBuilder.size(binary.getContentSize());
-
-            if (binary.getCreatedDate() != null) {
-                dispositionBuilder.creationDate(binary.getCreatedDate().atZone(ZoneOffset.UTC));
-            }
-            if (binary.getLastModifiedDate() != null) {
-                dispositionBuilder.modificationDate(binary.getLastModifiedDate().atZone(ZoneOffset.UTC));
-            }
-
             if (StringUtils.isNotBlank(binary.getFilename())) {
                 final var encoder = StandardCharsets.ISO_8859_1.newEncoder();
 
