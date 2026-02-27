@@ -1,7 +1,7 @@
 #if($fedoraProps.getBannerEnabled() )
 <div class="alert alert-info" role="alert">
     <p>
-        Fedora is an open source project supported entirely by its users. To continue the on-going maintenance of the software and ensure Fedora is meeting the needs of the community, we are working to gather information on current installations. We strongly encourage all users to register their instance in the DuraSpace Community Supported Program Registry hosted by LYRASIS.
+        Fedora is an open source project supported entirely by its users. To continue the on-going maintenance of the software and ensure Fedora is meeting the needs of the community, we are working to gather information on current installations. We strongly encourage all users to register their instance in the Fedora Registry hosted by Lyrasis.
     </p>
     <p>
         <a class="btn btn-primary" href="https://fedora.lyrasis.org/register-your-site/" role="button">
