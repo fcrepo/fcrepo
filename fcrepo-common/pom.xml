@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>7.0.0-alpha3-SNAPSHOT</version>
+    <version>7.0.0-beta1</version>
   </parent>
 
   <artifactId>fcrepo-common</artifactId>
