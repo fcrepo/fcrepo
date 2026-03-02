@@ -57,7 +57,7 @@
     <javaee-api.version>8.0.1</javaee-api.version>
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.version>4.0.5</jaxb.version>
-    <jackson2.version>2.19.0</jackson2.version>
+    <jackson2.version>2.21.1</jackson2.version>
     <jackson2.databind.version>2.19.0</jackson2.databind.version>
     <jena.version>5.5.0</jena.version>
     <jersey.version>3.1.10</jersey.version>
