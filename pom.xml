@@ -60,8 +60,8 @@
     <jackson2.version>2.19.0</jackson2.version>
     <jackson2.databind.version>2.19.0</jackson2.databind.version>
     <jena.version>5.5.0</jena.version>
-    <jersey.version>3.1.10</jersey.version>
-    <jetty.version>12.0.23</jetty.version>
+    <jersey.version>3.1.11</jersey.version>
+    <jetty.version>12.0.32</jetty.version>
     <jsonld.version>0.13.6</jsonld.version>
     <logback.version>1.5.18</logback.version>
     <maven.changelog.version>3.0.0-M1</maven.changelog.version>
@@ -74,7 +74,7 @@
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>2.0.4</shiro.version>
     <slf4j.version>2.0.17</slf4j.version>
-    <spring.version>6.2.11</spring.version>
+    <spring.version>6.2.16</spring.version>
     <titanium.version>1.7.0</titanium.version>
     <xerces.version>2.12.2</xerces.version>
     <velocity.version>2.4.1</velocity.version>
