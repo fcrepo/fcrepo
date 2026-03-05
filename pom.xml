@@ -57,8 +57,8 @@
     <javaee-api.version>8.0.1</javaee-api.version>
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.version>4.0.5</jaxb.version>
-    <jackson2.version>2.19.0</jackson2.version>
-    <jackson2.databind.version>2.19.0</jackson2.databind.version>
+    <jackson2.version>2.21.1</jackson2.version>
+    <jackson2.annotations.version>2.21</jackson2.annotations.version>
     <jena.version>5.5.0</jena.version>
     <jersey.version>3.1.11</jersey.version>
     <jetty.version>12.0.32</jetty.version>
@@ -359,12 +359,12 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson2.version}</version>
+        <version>${jackson2.annotations.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>${jackson2.databind.version}</version>
+        <version>${jackson2.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
