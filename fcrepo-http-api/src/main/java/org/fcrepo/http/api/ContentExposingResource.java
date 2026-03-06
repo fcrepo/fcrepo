@@ -181,6 +181,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
     protected MultiPrefer prefer;
 
     private FedoraResource fedoraResource;
+    private EntityTag cachedRdfEtag;
 
     @Inject
     protected ExternalContentHandlerFactory extContentHandlerFactory;
@@ -715,8 +716,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             etag = new EntityTag(resource.getEtagValue());
         } else {
             // Use a weak ETag for the LDP-RS
-            etag = new EntityTag(etagService.getRdfResourceEtag(transaction, resource, getLdpPreferTag(),
-                    headers.getAcceptableMediaTypes()), true);
+            etag = getCachedRdfEtag(transaction, resource);
         }
 
         date = resource.getLastModifiedDate();
@@ -736,6 +736,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             servletResponse.addDateHeader("Last-Modified", date.toEpochMilli());
         }
     }
+
+    private EntityTag getCachedRdfEtag(final Transaction transaction, final FedoraResource resource) {
+        if (cachedRdfEtag == null) {
+            cachedRdfEtag = new EntityTag(
+                    etagService.getRdfResourceEtag(transaction, resource, getLdpPreferTag(),
+                            headers.getAcceptableMediaTypes()), true);
+        }
+        return cachedRdfEtag;
+    }
+
 
     /**
      * Evaluate request preconditions to ensure the resource is the expected state
@@ -788,8 +798,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
             etag = new EntityTag(resource.getEtagValue());
         } else {
             // Use a strong ETag for the LDP-RS when validating If-(None)-Match headers
-            etag = new EntityTag(etagService.getRdfResourceEtag(transaction, resource, getLdpPreferTag(),
-                    headers.getAcceptableMediaTypes()), false);
+            etag = getCachedRdfEtag(transaction, resource);
         }
 
         date = resource.getLastModifiedDate();
