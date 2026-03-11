@@ -25,9 +25,9 @@
     <fcrepo-storage-ocfl.version>7.0.0</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
     <activemq.version>5.16.7</activemq.version>
-    <aws.sdk.version>2.25.29</aws.sdk.version>
-    <aws.crt.version>0.29.16</aws.crt.version>
-    <caffeine.version>3.2.0</caffeine.version>
+    <aws.sdk.version>2.42.5</aws.sdk.version>
+    <aws.crt.version>0.43.6</aws.crt.version>
+    <caffeine.version>3.2.3</caffeine.version>
     <commons-codec.version>1.21.0</commons-codec.version>
     <commons-collections.version>4.5.0</commons-collections.version>
     <commons-io.version>2.21.0</commons-io.version>
@@ -36,7 +36,7 @@
     <failsafe.version>3.3.2</failsafe.version>
     <flyway.version>11.20.3</flyway.version>
     <flyway.test.version>10.0.0</flyway.test.version>
-    <guava.version>33.4.8-jre</guava.version>
+    <guava.version>33.5.0-jre</guava.version>
     <h2database.version>2.4.240</h2database.version>
     <hamcrest.version>3.0</hamcrest.version>
     <hikari.version>6.3.2</hikari.version>
@@ -67,7 +67,7 @@
     <maven.changelog.version>3.0.0-M1</maven.changelog.version>
     <micrometer.version>1.15.0</micrometer.version>
     <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
-    <netty.version>4.1.68.Final</netty.version>
+    <netty.version>4.1.131.Final</netty.version>
     <ocfl-java.version>2.2.1</ocfl-java.version>
     <prometheus.version>1.3.6</prometheus.version>
     <prometheus.jmx.version>1.0.1</prometheus.jmx.version>
