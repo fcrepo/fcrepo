@@ -28,16 +28,16 @@
     <aws.sdk.version>2.42.5</aws.sdk.version>
     <aws.crt.version>0.43.6</aws.crt.version>
     <caffeine.version>3.2.3</caffeine.version>
-    <commons-codec.version>1.18.0</commons-codec.version>
+    <commons-codec.version>1.21.0</commons-codec.version>
     <commons-collections.version>4.5.0</commons-collections.version>
-    <commons-io.version>2.19.0</commons-io.version>
-    <commons-lang.version>3.18.0</commons-lang.version>
-    <commons-text.version>1.13.1</commons-text.version>
+    <commons-io.version>2.21.0</commons-io.version>
+    <commons-lang.version>3.20.0</commons-lang.version>
+    <commons-text.version>1.15.0</commons-text.version>
     <failsafe.version>3.3.2</failsafe.version>
-    <flyway.version>11.10.4</flyway.version>
+    <flyway.version>11.20.3</flyway.version>
     <flyway.test.version>10.0.0</flyway.test.version>
     <guava.version>33.5.0-jre</guava.version>
-    <h2database.version>2.2.220</h2database.version>
+    <h2database.version>2.4.240</h2database.version>
     <hamcrest.version>3.0</hamcrest.version>
     <hikari.version>6.3.2</hikari.version>
     <hk2.version>3.1.1</hk2.version>
@@ -57,11 +57,11 @@
     <javaee-api.version>8.0.1</javaee-api.version>
     <javaee.xml.version>2.3.1</javaee.xml.version>
     <jaxb.version>4.0.5</jaxb.version>
-    <jackson2.version>2.19.0</jackson2.version>
-    <jackson2.databind.version>2.19.0</jackson2.databind.version>
+    <jackson2.version>2.21.1</jackson2.version>
+    <jackson2.annotations.version>2.21</jackson2.annotations.version>
     <jena.version>5.5.0</jena.version>
-    <jersey.version>3.1.10</jersey.version>
-    <jetty.version>12.0.23</jetty.version>
+    <jersey.version>3.1.11</jersey.version>
+    <jetty.version>12.0.32</jetty.version>
     <jsonld.version>0.13.6</jsonld.version>
     <logback.version>1.5.18</logback.version>
     <maven.changelog.version>3.0.0-M1</maven.changelog.version>
@@ -74,14 +74,14 @@
     <reactivestreams.version>1.0.3</reactivestreams.version>
     <shiro.version>2.0.4</shiro.version>
     <slf4j.version>2.0.17</slf4j.version>
-    <spring.version>6.2.11</spring.version>
+    <spring.version>6.2.16</spring.version>
     <titanium.version>1.7.0</titanium.version>
     <xerces.version>2.12.2</xerces.version>
     <velocity.version>2.4.1</velocity.version>
     <!-- JDBC dependencies -->
-    <postgresql.version>42.7.7</postgresql.version>
+    <postgresql.version>42.7.10</postgresql.version>
     <mariadb.version>3.5.3</mariadb.version>
-    <mysql.version>8.2.0</mysql.version>
+    <mysql.version>8.4.0</mysql.version>
     <!-- test gear -->
     <awaitility.version>4.3.0</awaitility.version>
     <grizzly.version>4.1.0-M1</grizzly.version>
@@ -359,12 +359,12 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson2.version}</version>
+        <version>${jackson2.annotations.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>${jackson2.databind.version}</version>
+        <version>${jackson2.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
