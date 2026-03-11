@@ -84,7 +84,7 @@ public class FixityServiceImpl extends AbstractService implements FixityService 
     public RdfStream checkFixity(final Binary binary)
             throws InvalidChecksumException {
         final Model model = createDefaultModel();
-        final Resource subject = model.createResource(binary.getId());
+        final Resource subject = model.createResource(binary.getFedoraId().getFullId());
         final Resource fixityResult = model.createResource(
                 binary.getFedoraId().resolve("#" + UUID.randomUUID().toString()).getFullId());
         model.add(subject, HAS_FIXITY_RESULT, fixityResult);
