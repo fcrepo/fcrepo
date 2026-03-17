@@ -532,6 +532,17 @@ public class FedoraIdTest {
         assertNotEquals(id1, id3);
     }
 
+    @Test
+    public void testFixity() {
+        final var mementoId = FedoraId.create("original").asMemento("20200401101900");
+        final var mementoFixityId = mementoId.getFullId() + "/fcr:fixity";
+        assertEquals(FEDORA_ID_PREFIX + "/original/fcr:versions/20200401101900/fcr:fixity", mementoFixityId);
+        final var fixityId = FedoraId.create(mementoFixityId);
+        assertTrue(fixityId.isMemento());
+        assertEquals("20200401101900", fixityId.getMementoString());
+        assertEquals(FEDORA_ID_PREFIX + "/original", fixityId.getBaseId());
+    }
+
     private void assertAsMemento(final String original, final String expected) {
         final var id = FedoraId.create(original);
         assertEquals(FedoraTypes.FEDORA_ID_PREFIX + "/" + expected,
