@@ -541,6 +541,7 @@ public class FedoraIdTest {
         assertTrue(fixityId.isMemento());
         assertEquals("20200401101900", fixityId.getMementoString());
         assertEquals(FEDORA_ID_PREFIX + "/original", fixityId.getBaseId());
+        assertThrows(InvalidResourceIdentifierException.class, () -> FedoraId.create(mementoFixityId + "/extra"));
     }
 
     private void assertAsMemento(final String original, final String expected) {
