@@ -23,9 +23,9 @@ import static org.mockito.Mockito.when;
 import java.net.URI;
 import java.util.Set;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.Session;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.Session;
 
 import org.apache.activemq.command.ActiveMQTextMessage;
 
