@@ -32,6 +32,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
@@ -215,6 +216,23 @@ public class ResourceOperationEventBuilderTest {
         assertEquals(baseUrl, event.getBaseUrl());
         assertEquals(userAgent, event.getUserAgent());
         assertEquals(resourceTypes, event.getResourceTypes());
+    }
+
+    @Test
+    public void eventWithURLEncodedFedoraId() {
+        final var fedoraId = FedoraId.create("/foo bar");
+
+        final var operation = new RdfSourceOperationFactoryImpl()
+                .createBuilder(transaction, fedoraId, RDF_SOURCE.toString(), ServerManagedPropsMode.RELAXED)
+                .userPrincipal(USER)
+                .build();
+
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(fedoraId, operation, null)
+                .withBaseUrl(BASE_URL)
+                .build();
+        System.out.println(event.toString());
+        assertTrue(event.toString().contains("fedoraId=info:fedora/foo%20bar"));
+
     }
 
 
