@@ -522,11 +522,11 @@ public class FedoraId {
             if (versionSplits.length == 2 && versionSplits[1].isEmpty()) {
                 this.isTimemap = true;
             } else {
-                if (versionSplits.length == 2 && versionSplits[1].contains(FCR_FIXITY)) {
+                if (versionSplits.length == 2 && versionSplits[1].contains("/" + FCR_FIXITY)) {
                     // This is a fixity request for a memento, so remove the fixity part and
                     // check that there is only a memento datetime left.
                     final var checkVersion = split(versionSplits[1], FCR_FIXITY);
-                    if (checkVersion.length == 1 || (checkVersion.length == 2 && checkVersion[1].isEmpty())) {
+                    if (checkVersion.length == 2 && checkVersion[1].isEmpty()) {
                         versionSplits[1] = checkVersion[0];
                     } else {
                         throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", fullPath));
