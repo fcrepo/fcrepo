@@ -232,7 +232,8 @@
           <executions>
             <execution>
               <id>checkstyle</id>
-              <phase>verify</phase>
+              <!-- Run before integration test lifecycle to avoid plugin classloader issues. -->
+              <phase>validate</phase>
               <goals>
                 <goal>check</goal>
               </goals>
