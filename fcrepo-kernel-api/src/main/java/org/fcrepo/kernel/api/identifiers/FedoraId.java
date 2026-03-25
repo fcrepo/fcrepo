@@ -450,7 +450,7 @@ public class FedoraId {
     @JsonValue
     @Override
     public String toString() {
-        return getFullId();
+        return getEncodedFullId();
     }
 
     /**

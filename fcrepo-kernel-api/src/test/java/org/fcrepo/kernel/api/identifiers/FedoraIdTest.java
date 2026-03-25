@@ -61,6 +61,13 @@ public class FedoraIdTest {
     }
 
     @Test
+    public void testURLEncoding() throws Exception {
+        final String testID = FEDORA_ID_PREFIX + "/includes space";
+        final FedoraId fedoraID = FedoraId.create(testID);
+        assertTrue(fedoraID.getEncodedFullId().equals(FEDORA_ID_PREFIX + "/includes%20space"));
+    }
+
+    @Test
     public void testNormalAcl() throws Exception {
         final String testID = FEDORA_ID_PREFIX + "/first-object/" + FCR_ACL;
         final FedoraId fedoraID = FedoraId.create(testID);
