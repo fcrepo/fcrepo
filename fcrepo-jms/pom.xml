@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>7.0.0-beta2-SNAPSHOT</version>
+    <version>7.0.0-RC1</version>
   </parent>
   <artifactId>fcrepo-jms</artifactId>
   <name>Fedora Repository JMS Module</name>
