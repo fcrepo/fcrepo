@@ -305,6 +305,34 @@ public class DbSearchIndexImplTest {
         assertEquals(2, results5.getPagination().getTotalResults());
     }
 
+    @Test
+    public void testAddToIndexDuplicateTypes() throws Exception {
+        final var parameters = new SearchParameters(
+                List.of(Condition.Field.FEDORA_ID),
+                List.of(Condition.fromExpression("fedora_id=" + testId.getFullId())),
+                10,
+                0,
+                Condition.Field.FEDORA_ID,
+                "asc",
+                true
+        );
+        // Search for the resource before adding it to the index
+        final var results = searchIndex.doSearch(parameters);
+        assertEquals(0, results.getPagination().getTotalResults());
+
+        final List<URI> containerUserTypes = List.of(
+                URI.create(RDF_SOURCE.getURI()),
+                URI.create(RESOURCE.getURI()),
+                URI.create("http://example.fcrepo/user-defined-type"),
+                URI.create("http://example.fcrepo/user-defined-type")
+        );
+        // Add the resource to the index
+        searchIndex.addUpdateIndex(transaction, resourceHeaders1, containerUserTypes);
+        // Search for the resource after adding it to the index
+        final var results2 = searchIndex.doSearch(parameters);
+        assertEquals(1, results2.getPagination().getTotalResults());
+    }
+
     /**
      * Test removing a resource from the index using a short lived transaction.
      */
