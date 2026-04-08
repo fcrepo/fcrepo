@@ -652,9 +652,11 @@ public class DbSearchIndexImpl implements SearchIndex {
                                 final FedoraId fedoraId, final List<URI> providedRdfTypes) {
         final var fullId = fedoraId.getFullId();
         try {
-            // If no RDF types were provided, we need to fetch the resource to get them.
-            List<URI> rdfTypes = providedRdfTypes;
-            if (rdfTypes == null) {
+            final List<URI> rdfTypes;
+            if (providedRdfTypes != null) {
+                rdfTypes = new ArrayList<>(Sets.newHashSet(providedRdfTypes));
+            } else {
+                // If no RDF types were provided, we need to fetch the resource to get them.
                 final var fedoraResource = resourceFactory.getResource(transaction, resourceHeaders);
                 rdfTypes = new ArrayList<>(Sets.newHashSet(fedoraResource.getTypes()));
             }
