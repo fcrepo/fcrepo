@@ -21,11 +21,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * @author acoburn
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration({ "/spring-test/jms-topic.xml", "/spring-test/fcrepo-config.xml",
+@ContextConfiguration({"/spring-test/jms-topic-artemis.xml", "/spring-test/fcrepo-config.xml",
     "/spring-test/eventing.xml" })
 @DirtiesContext
 public class JmsTopicIT extends AbstractJmsIT {
     protected Destination createDestination() throws JMSException {
-        return jmsSession.createTopic("fedora");
+        return jmsSession.createTopic("/fedora");
     }
 }

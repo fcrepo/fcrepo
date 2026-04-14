@@ -17,14 +17,18 @@ import org.fcrepo.jms.JMSEventMessageFactory;
 import org.fcrepo.jms.JMSQueuePublisher;
 import org.fcrepo.jms.JMSTopicPublisher;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
 import org.apache.activemq.xbean.BrokerFactoryBean;
+import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
+import jakarta.jms.ConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
  * Spring config for jms
@@ -40,6 +44,24 @@ public class JmsConfig {
     static class JmsEnabled extends ConditionOnPropertyTrue {
         JmsEnabled() {
             super(FedoraPropsConfig.FCREPO_JMS_ENABLED, true);
+        }
+    }
+
+    static class ActiveMqConfigured implements Condition {
+        @Override
+        public boolean matches(final ConditionContext context, final AnnotatedTypeMetadata metadata) {
+            final var provider = context.getEnvironment().getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER,
+                    "activemq");
+            return "activemq".equalsIgnoreCase(provider);
+        }
+    }
+
+    static class ArtemisConfigured implements Condition {
+        @Override
+        public boolean matches(final ConditionContext context, final AnnotatedTypeMetadata metadata) {
+            final var provider = context.getEnvironment().getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER,
+                    "activemq");
+            return "artemis".equalsIgnoreCase(provider);
         }
     }
 
@@ -74,13 +96,14 @@ public class JmsConfig {
     }
 
     /**
-     * JMS Broker configuration
+     * ActiveMQ 5 broker configuration
      *
      * @param propsConfig config properties
-     * @return jms broker
+     * @return ActiveMQ 5 broker factory
      */
-    @Bean
-    public BrokerFactoryBean jmsBroker(final FedoraPropsConfig propsConfig) {
+    @Bean(name = "jmsBroker")
+    @Conditional(ActiveMqConfigured.class)
+    public BrokerFactoryBean activeMqBroker(final FedoraPropsConfig propsConfig) {
         final var factory = new BrokerFactoryBean();
         factory.setConfig(propsConfig.getActiveMQConfiguration());
         factory.setStart(true);
@@ -88,18 +111,46 @@ public class JmsConfig {
     }
 
     /**
-     * ActiveMQ connection
+     * Artemis broker configuration
      *
      * @param propsConfig config properties
-     * @return ActiveMQ connection factory
+     * @return embedded Artemis broker
+     * @throws Exception if the broker configuration cannot be loaded
+     */
+    @Bean(name = "jmsBroker", initMethod = "start", destroyMethod = "stop")
+    @Conditional(ArtemisConfigured.class)
+    public EmbeddedActiveMQ artemisBroker(final FedoraPropsConfig propsConfig) throws Exception {
+        final var broker = new EmbeddedActiveMQ();
+        broker.setConfigResourcePath(propsConfig.getArtemisConfiguration().getURI().toString());
+        return broker;
+    }
+
+    /**
+     * ActiveMQ 5 JMS connection
+     *
+     * @param propsConfig config properties
+     * @return ActiveMQ 5 connection factory
      */
     @Bean
     @DependsOn("jmsBroker")
-    public ActiveMQConnectionFactory connectionFactory(final FedoraPropsConfig propsConfig) {
-        final var factory = new ActiveMQConnectionFactory();
-        factory.setBrokerURL(String.format("vm://%s:%s?create=false",
+    @Conditional(ActiveMqConfigured.class)
+    public ConnectionFactory activeMqConnectionFactory(final FedoraPropsConfig propsConfig) {
+        return new org.apache.activemq.ActiveMQConnectionFactory(String.format("tcp://%s:%s",
                 propsConfig.getJmsHost(), propsConfig.getJmsPort()));
-        return factory;
+    }
+
+    /**
+     * Artemis JMS connection
+     *
+     * @param propsConfig config properties
+     * @return Artemis connection factory
+     */
+    @Bean
+    @DependsOn("jmsBroker")
+    @Conditional(ArtemisConfigured.class)
+    public ConnectionFactory artemisConnectionFactory(final FedoraPropsConfig propsConfig) {
+        return new org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory(String.format("tcp://%s:%s",
+                propsConfig.getJmsHost(), propsConfig.getJmsPort()));
     }
 
 }

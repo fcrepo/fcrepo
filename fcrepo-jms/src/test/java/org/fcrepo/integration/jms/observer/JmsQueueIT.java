@@ -21,12 +21,12 @@ import jakarta.jms.JMSException;
  * @author acoburn
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration({ "/spring-test/jms-queue.xml", "/spring-test/fcrepo-config.xml",
+@ContextConfiguration({"/spring-test/jms-queue-artemis.xml", "/spring-test/fcrepo-config.xml",
     "/spring-test/eventing.xml" })
 @DirtiesContext
 public class JmsQueueIT extends AbstractJmsIT {
 
     protected Destination createDestination() throws JMSException {
-        return jmsSession.createQueue("fcrepo-queue");
+        return jmsSession.createQueue("/fedora");
     }
 }

@@ -73,7 +73,7 @@ public class FedoraPropsConfigTest {
         assertEquals("localhost", config.getJmsHost());
         assertEquals("61616", config.getJmsPort());
         assertEquals("61613", config.getStompPort());
-        assertNotNull(config.getActiveMQConfiguration());
+        assertNotNull(config.getArtemisConfiguration());
         assertEquals(Paths.get("fcrepo-home/data/ActiveMQ/kahadb").toAbsolutePath().toString(),
                 config.getActiveMqDirectory());
         assertEquals("classpath:/namespaces.yml", config.getNamespaceRegistry());

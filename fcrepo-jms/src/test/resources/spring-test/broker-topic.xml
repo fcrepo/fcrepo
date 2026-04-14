@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns="urn:activemq"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
+
+    <core xmlns="urn:activemq:core">
+        <name>localhost</name>
+        <persistence-enabled>false</persistence-enabled>
+        <security-enabled>false</security-enabled>
+
+        <acceptors>
+            <acceptor name="artemis">tcp://0.0.0.0:${fedora.jms.port:61616}?protocols=CORE,OPENWIRE,STOMP</acceptor>
+        </acceptors>
+
+        <address-settings>
+            <address-setting match="#">
+                <auto-create-queues>true</auto-create-queues>
+                <auto-delete-queues>false</auto-delete-queues>
+                <auto-create-addresses>true</auto-create-addresses>
+                <auto-delete-addresses>false</auto-delete-addresses>
+            </address-setting>
+        </address-settings>
+
+        <addresses>
+            <address name="/fedora">
+                <multicast/>
+            </address>
+        </addresses>
+
+    </core>
+</configuration>

@@ -69,7 +69,7 @@ import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
+import javax.jms.ConnectionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
@@ -159,7 +159,7 @@ abstract class AbstractJmsIT implements MessageListener {
     private DeleteResourceService deleteResourceService;
 
     @Inject
-    private ActiveMQConnectionFactory connectionFactory;
+    private ConnectionFactory connectionFactory;
 
     @Autowired
     @Qualifier("referenceService")

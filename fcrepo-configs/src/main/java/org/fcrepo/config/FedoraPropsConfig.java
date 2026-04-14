@@ -35,10 +35,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public static final String FCREPO_JMS_HOST = "fcrepo.jms.host";
     public static final String FCREPO_DYNAMIC_JMS_PORT = "fcrepo.dynamic.jms.port";
     public static final String FCREPO_DYNAMIC_STOMP_PORT = "fcrepo.dynamic.stomp.port";
+    public static final String FCREPO_ARTEMIS_CONFIGURATION = "fcrepo.artemis.configuration";
     public static final String FCREPO_ACTIVEMQ_CONFIGURATION = "fcrepo.activemq.configuration";
     public static final String FCREPO_NAMESPACE_REGISTRY = "fcrepo.namespace.registry";
     public static final String FCREPO_EXTERNAL_CONTENT_ALLOWED = "fcrepo.external.content.allowed";
     private static final String FCREPO_ACTIVEMQ_DIRECTORY = "fcrepo.activemq.directory";
+    private static final String FCREPO_ARTEMIS_DIRECTORY = "fcrepo.artemis.directory";
     private static final String FCREPO_SESSION_TIMEOUT = "fcrepo.session.timeout";
     private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
     private static final String FCREPO_REBUILD_VALIDATION = "fcrepo.rebuild.validation";
@@ -46,6 +48,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
     private static final String FCREPO_REBUILD_CONTINUE = "fcrepo.rebuild.continue";
     private static final String FCREPO_REBUILD = "fcrepo.rebuild";
+    public static final String FCREPO_JMS_PROVIDER = "fcrepo.jms.provider";
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
     private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
     private static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
@@ -56,6 +59,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String LOG_DIR_DEFAULT_VALUE = "logs";
+    private static final String ARTEMIS_DIR_DEFAULT_VALUE = "Artemis/db";
     private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
 
     @Value("${" + FCREPO_HOME_PROPERTY + ":" + DEFAULT_FCREPO_HOME_VALUE + "}")
@@ -66,6 +70,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + LOG_DIR_DEFAULT_VALUE + "')}")
     private Path fedoraLogs;
+
+    @Value("${" + FCREPO_JMS_PROVIDER + ":activemq}")
+    private String jmsProvider;
 
     @Value("${" + FCREPO_JMS_HOST + ":localhost}")
     private String jmsHost;
@@ -82,6 +89,13 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_ACTIVEMQ_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" +
             ACTIVE_MQ_DIR_DEFAULT_VALUE + "').toAbsolutePath().toString()}}")
     private String activeMqDirectory;
+
+    @Value("${" + FCREPO_ARTEMIS_CONFIGURATION + ":classpath:/config/broker.xml}")
+    private Resource artemisConfiguration;
+
+    @Value("${" + FCREPO_ARTEMIS_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" +
+            ARTEMIS_DIR_DEFAULT_VALUE + "').toAbsolutePath().toString()}}")
+    private String artemisDirectory;
 
     @Value("${" + FCREPO_NAMESPACE_REGISTRY + ":classpath:/namespaces.yml}")
     private String namespaceRegistry;
@@ -286,6 +300,20 @@ public class FedoraPropsConfig extends BasePropsConfig {
     }
 
     /**
+     * @return The Artemis data directory
+     */
+    public String getArtemisDirectory() {
+        return artemisDirectory;
+    }
+
+    /**
+     * @return The path to the Artemis broker xml configuration.
+     */
+    public Resource getArtemisConfiguration() {
+        return artemisConfiguration;
+    }
+
+    /**
      * @return The path to the allowed external content pattern definitions.
      */
     public String getExternalContentAllowed() {
@@ -374,6 +402,13 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public void setRebuildEnabled(final boolean rebuildEnabled) {
         this.rebuildEnabled = rebuildEnabled;
+    }
+
+    /**
+     * @return the JMS provider e.g. 'activemq' or 'artemis'
+     */
+    public String getJmsProvider() {
+        return jmsProvider;
     }
 
     /**
