@@ -31,7 +31,8 @@ import org.slf4j.Logger;
  */
 public class DefaultMessageFactory implements JMSEventMessageFactory {
 
-    private static final String JMS_NAMESPACE = "org.fcrepo.jms.";
+    // Artemis requires JMS property names to be valid Java identifiers, so use underscores, not dots.
+    private static final String JMS_NAMESPACE = "org_fcrepo_jms_";
 
     public static final String TIMESTAMP_HEADER_NAME = JMS_NAMESPACE
             + "timestamp";
