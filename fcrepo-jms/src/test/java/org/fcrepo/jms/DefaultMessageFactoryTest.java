@@ -17,18 +17,17 @@ import static org.fcrepo.jms.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
 import static org.fcrepo.jms.DefaultMessageFactory.USER_HEADER_NAME;
 import static org.fcrepo.jms.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import jakarta.jms.Session;
-import jakarta.jms.TextMessage;
 
 import org.apache.activemq.command.ActiveMQTextMessage;
 
@@ -36,18 +35,13 @@ import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * Verifies that {@link DefaultMessageFactory} populates the JMS message correctly using only the
- * standard {@link jakarta.jms.TextMessage} API. Each test runs against multiple {@link TextMessage}
- * implementations so we exercise both the ActiveMQ Classic message type and a strict
- * JMS-only in-memory implementation that mirrors Artemis's identifier-only property-name rule.
+ * <p>DefaultMessageFactoryTest class.</p>
  *
  * @author ajs6f
  */
@@ -62,40 +56,51 @@ public class DefaultMessageFactoryTest {
 
     private DefaultMessageFactory testDefaultMessageFactory;
 
-    static Stream<Arguments> textMessageProviders() {
-        final Supplier<TextMessage> activeMqClassic = ActiveMQTextMessage::new;
-        final Supplier<TextMessage> jmsStandard = InMemoryTextMessage::new;
-        return Stream.of(
-                Arguments.of("activemq-classic", activeMqClassic),
-                Arguments.of("jms-standard (artemis-compatible)", jmsStandard));
-    }
-
     @BeforeEach
     public void setUp() {
         testDefaultMessageFactory = new DefaultMessageFactory();
     }
 
-    @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("textMessageProviders")
-    public void testBuildMessage(final String label, final Supplier<TextMessage> messageFactory) throws JMSException {
-        when(mockSession.createTextMessage(anyString())).thenReturn(messageFactory.get());
+    @Test
+    public void testBuildMessage() throws JMSException {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage("base-url", "Test UserAgent", testPath);
         assertEquals(testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME), "Got wrong identifier in message!");
     }
 
-    @ParameterizedTest(name = "[{index}] {0}")
-    @MethodSource("textMessageProviders")
-    public void testBuildMessageNullUrl(final String label, final Supplier<TextMessage> messageFactory)
-            throws JMSException {
-        when(mockSession.createTextMessage(anyString())).thenReturn(messageFactory.get());
+    @Test
+    public void testBuildMessageNullUrl() throws JMSException {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage(null, null, testPath);
         assertEquals(testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME), "Got wrong identifier in message!");
     }
 
+    /**
+     * Artemis enforces the JMS spec rule that property names must be valid Java identifiers; ActiveMQ Classic does
+     * not. A regression that re-introduced dotted names would slip past the other unit tests (which use an
+     * ActiveMQ-Classic message) and only fail in the Artemis ITs. Asserting the constants here catches it at
+     * unit-test time.
+     */
+    @Test
+    public void testHeaderNamesAreValidJavaIdentifiers() {
+        final List<String> headers = List.of(
+                TIMESTAMP_HEADER_NAME,
+                IDENTIFIER_HEADER_NAME,
+                EVENT_TYPE_HEADER_NAME,
+                BASE_URL_HEADER_NAME,
+                RESOURCE_TYPE_HEADER_NAME,
+                USER_HEADER_NAME,
+                USER_AGENT_HEADER_NAME,
+                EVENT_ID_HEADER_NAME);
+        for (final String header : headers) {
+            assertTrue(header.matches("[A-Za-z_$][A-Za-z0-9_$]*"),
+                    "JMS header name must be a valid Java identifier (Artemis requirement): " + header);
+        }
+    }
+
     private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
             throws JMSException {
+        when(mockSession.createTextMessage(anyString())).thenReturn(new ActiveMQTextMessage());
         final Long testDate = 46647758568747L;
 
         when(mockEvent.getBaseUrl()).thenReturn(baseUrl);
