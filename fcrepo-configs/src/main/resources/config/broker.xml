@@ -6,14 +6,15 @@
     <core xmlns="urn:activemq:core">
         <name>localhost</name>
         <persistence-enabled>true</persistence-enabled>
-
+        <security-enabled>false</security-enabled>
         <bindings-directory>${activemq.data.dir:./data}/bindings</bindings-directory>
         <journal-directory>${activemq.data.dir:./data}/journal</journal-directory>
         <paging-directory>${activemq.data.dir:./data}/paging</paging-directory>
         <large-messages-directory>${activemq.data.dir:./data}/large-messages</large-messages-directory>
+        <journal-pool-files>20</journal-pool-files>
 
         <acceptors>
-            <acceptor name="artemis">tcp://0.0.0.0:${fedora.jms.port:61616}?protocols=CORE,OPENWIRE,STOMP</acceptor>
+            <acceptor name="artemis">tcp://0.0.0.0:${fedora.jms.port:61616}?protocols=CORE,STOMP</acceptor>
         </acceptors>
 
         <address-settings>
@@ -60,19 +61,5 @@
             -->
         </addresses>
 
-        <security-settings>
-            <security-setting match="#">
-                <permission type="createNonDurableQueue" roles="amq"/>
-                <permission type="deleteNonDurableQueue" roles="amq"/>
-                <permission type="createDurableQueue" roles="amq"/>
-                <permission type="deleteDurableQueue" roles="amq"/>
-                <permission type="createAddress" roles="amq"/>
-                <permission type="deleteAddress" roles="amq"/>
-                <permission type="consume" roles="amq"/>
-                <permission type="browse" roles="amq"/>
-                <permission type="send" roles="amq"/>
-                <permission type="manage" roles="amq"/>
-            </security-setting>
-        </security-settings>
     </core>
 </configuration>

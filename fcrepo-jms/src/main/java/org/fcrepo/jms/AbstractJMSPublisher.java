@@ -18,7 +18,7 @@ import jakarta.jms.MessageProducer;
 import jakarta.jms.Session;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
-import javax.jms.ConnectionFactory;
+import jakarta.jms.ConnectionFactory;
 import org.fcrepo.kernel.api.observer.Event;
 import org.slf4j.Logger;
 

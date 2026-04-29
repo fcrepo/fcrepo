@@ -14,18 +14,17 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * <p>
- * JmsTopicIT class.
- * </p>
+ * Queue-based JMS integration test running against an embedded ActiveMQ Classic broker.
  *
  * @author acoburn
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration({"/spring-test/jms-topic-artemis.xml", "/spring-test/fcrepo-config.xml",
+@ContextConfiguration({"/spring-test/jms-queue.xml", "/spring-test/fcrepo-config.xml",
     "/spring-test/eventing.xml" })
 @DirtiesContext
-public class JmsTopicIT extends AbstractJmsIT {
+public class JmsQueueActiveMQIT extends AbstractJmsIT {
+
     protected Destination createDestination() throws JMSException {
-        return jmsSession.createTopic("/fedora");
+        return jmsSession.createQueue("/fedora");
     }
 }

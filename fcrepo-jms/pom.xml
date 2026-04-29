@@ -86,7 +86,7 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.activemq</groupId>
+      <groupId>org.apache.artemis</groupId>
       <artifactId>artemis-server</artifactId>
       <version>${artemis.version}</version>
       <exclusions>
@@ -97,17 +97,12 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>org.apache.activemq</groupId>
-      <artifactId>artemis-jms-client</artifactId>
+      <groupId>org.apache.artemis</groupId>
+      <artifactId>artemis-jakarta-client</artifactId>
       <version>${artemis.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.activemq</groupId>
-      <artifactId>artemis-openwire-protocol</artifactId>
-      <version>${artemis.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.activemq</groupId>
+      <groupId>org.apache.artemis</groupId>
       <artifactId>artemis-stomp-protocol</artifactId>
       <version>${artemis.version}</version>
     </dependency>

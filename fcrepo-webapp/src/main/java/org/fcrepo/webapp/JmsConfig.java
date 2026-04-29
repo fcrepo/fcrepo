@@ -20,6 +20,14 @@ import org.fcrepo.jms.JMSTopicPublisher;
 import org.apache.activemq.xbean.BrokerFactoryBean;
 import org.apache.activemq.artemis.core.server.embedded.EmbeddedActiveMQ;
 import jakarta.jms.ConnectionFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
+import org.springframework.core.io.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
@@ -121,8 +129,34 @@ public class JmsConfig {
     @Conditional(ArtemisConfigured.class)
     public EmbeddedActiveMQ artemisBroker(final FedoraPropsConfig propsConfig) throws Exception {
         final var broker = new EmbeddedActiveMQ();
-        broker.setConfigResourcePath(propsConfig.getArtemisConfiguration().getURI().toString());
+        final var configuration = materializeArtemisConfiguration(propsConfig.getArtemisConfiguration());
+        LOGGER.info("Using Artemis broker configuration at {}", configuration);
+        broker.setConfigResourcePath(configuration.toUri().toString());
         return broker;
+    }
+
+    private Path materializeArtemisConfiguration(final Resource configuration) throws IOException {
+        if (!configuration.exists()) {
+            throw new IOException("Artemis configuration does not exist: " + configuration);
+        }
+
+        if (configuration.isFile()) {
+            try {
+                return configuration.getFile().toPath();
+            } catch (final IOException e) {
+                LOGGER.debug("Artemis configuration is not directly accessible as a file: {}",
+                        configuration, e);
+            }
+        }
+
+        final Path tempFile = Files.createTempFile("fcrepo-artemis-", "-broker.xml");
+        tempFile.toFile().deleteOnExit();
+
+        try (InputStream input = configuration.getInputStream()) {
+            Files.copy(input, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+
+        return tempFile;
     }
 
     /**

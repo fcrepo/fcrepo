@@ -24,9 +24,9 @@
     <project_organization>fcrepo</project_organization>
     <fcrepo-storage-ocfl.version>7.0.0</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
-    <activemq.version>6.2.1</activemq.version>
+    <activemq.version>6.2.4</activemq.version>
     <artemis.version>2.53.0</artemis.version>
-    <aws.sdk.version>2.42.5</aws.sdk.version>
+    <aws.sdk.version>2.42.24</aws.sdk.version>
     <aws.crt.version>0.43.6</aws.crt.version>
     <caffeine.version>3.2.3</caffeine.version>
     <commons-codec.version>1.21.0</commons-codec.version>
@@ -747,6 +747,20 @@
         <groupId>com.h2database</groupId>
         <artifactId>h2</artifactId>
         <version>${h2database.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>io.netty</groupId>
+        <artifactId>netty-bom</artifactId>
+        <version>${netty.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.artemis</groupId>
+        <artifactId>artemis-bom</artifactId>
+        <version>2.53.0</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
     </dependencies>
   </dependencyManagement>

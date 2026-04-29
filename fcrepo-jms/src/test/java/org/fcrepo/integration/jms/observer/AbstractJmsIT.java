@@ -69,7 +69,7 @@ import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 
-import javax.jms.ConnectionFactory;
+import jakarta.jms.ConnectionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;

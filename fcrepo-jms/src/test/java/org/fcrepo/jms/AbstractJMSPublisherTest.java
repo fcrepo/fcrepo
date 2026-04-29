@@ -15,11 +15,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import jakarta.jms.Connection;
+import jakarta.jms.ConnectionFactory;
 import jakarta.jms.JMSException;
 import jakarta.jms.Message;
 import jakarta.jms.MessageProducer;
-
-import org.apache.activemq.ActiveMQConnectionFactory;
 
 import org.fcrepo.kernel.api.observer.Event;
 
@@ -32,7 +31,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.google.common.eventbus.EventBus;
 
 /**
- * <p>JMSTopicPublisherTest class.</p>
+ * Shared unit tests for {@link AbstractJMSPublisher} subclasses. Mocks the JMS API directly
+ * so the tests are broker-agnostic and apply equally to ActiveMQ Classic and Artemis; the
+ * concrete broker behaviours are verified separately by the integration tests.
  *
  * @author awoods
  */
@@ -50,7 +51,7 @@ abstract class AbstractJMSPublisherTest {
     private MessageProducer mockProducer;
 
     @Mock
-    private ActiveMQConnectionFactory mockConnections;
+    private ConnectionFactory mockConnections;
 
     @Mock
     private EventBus mockBus;
