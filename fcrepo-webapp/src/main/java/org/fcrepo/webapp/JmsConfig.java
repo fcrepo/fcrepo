@@ -60,8 +60,10 @@ public class JmsConfig {
         public boolean matches(final ConditionContext context, final AnnotatedTypeMetadata metadata) {
             final var provider = context.getEnvironment().getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER,
                     "activemq");
+            LOGGER.info("ActiveMQ support is deprecated and will likely be removed in version 8");
             return "activemq".equalsIgnoreCase(provider);
         }
+
     }
 
     static class ArtemisConfigured implements Condition {

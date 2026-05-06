@@ -113,7 +113,7 @@
         <transportConnectors>
             <!-- DOS protection, limit concurrent connections to 1000 and frame size to 100MB -->
             <transportConnector name="openwire"
-                                uri="tcp://0.0.0.0:#{fedoraPropsConfig.jmsPort}?maximumConnections=1000&amp;wireformat.maxFrameSize=104857600"
+                uri="tcp://0.0.0.0:#{fedoraPropsConfig.jmsPort}?maximumConnections=1000&amp;wireformat.maxFrameSize=104857600"
             />
             <transportConnector name="stomp"
                                 uri="stomp://0.0.0.0:#{fedoraPropsConfig.stompPort}"/>
@@ -122,7 +122,7 @@
         <!-- destroy the spring context on shutdown to stop jetty -->
         <shutdownHooks>
             <bean xmlns="http://www.springframework.org/schema/beans"
-                  class="org.apache.activemq.hooks.SpringContextHook"/>
+                class="org.apache.activemq.hooks.SpringContextHook"/>
         </shutdownHooks>
     </broker>
 
