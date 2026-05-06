@@ -94,6 +94,30 @@ public class DefaultMessageFactoryTest {
         }
     }
 
+    /**
+     * ActiveMQ Classic does not enforce the JMS spec rule on property names, and existing downstream consumers
+     * rely on the historical dotted form (e.g. {@code org.fcrepo.jms.timestamp}). This test pins that namespace
+     * so a regression that flipped ActiveMQ headers to underscores would be caught at unit-test time.
+     */
+    @Test
+    public void testHeaderNamesUseDottedNamespaceForActiveMq() {
+        final DefaultMessageFactory activeMqFactory = new DefaultMessageFactory();
+        activeMqFactory.setJmsProvider("activemq");
+        final List<String> headers = List.of(
+                activeMqFactory.getTimestampHeaderName(),
+                activeMqFactory.getIdentifierHeaderName(),
+                activeMqFactory.getEventTypeHeaderName(),
+                activeMqFactory.getBaseUrlHeaderName(),
+                activeMqFactory.getResourceTypeHeaderName(),
+                activeMqFactory.getUserHeaderName(),
+                activeMqFactory.getUserAgentHeaderName(),
+                activeMqFactory.getEventIdHeaderName());
+        for (final String header : headers) {
+            assertTrue(header.startsWith("org.fcrepo.jms."),
+                    "ActiveMQ JMS header name must use the dotted namespace 'org.fcrepo.jms.': " + header);
+        }
+    }
+
     private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
             throws JMSException {
         when(mockSession.createTextMessage(anyString())).thenReturn(new ActiveMQTextMessage());
