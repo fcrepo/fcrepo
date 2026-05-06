@@ -16,7 +16,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 /**
  * Topic-based JMS integration test running against an embedded ActiveMQ Classic broker.
  *
- * @author acoburn
+ * @author Dan Field
  */
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration({"/spring-test/jms-topic.xml", "/spring-test/fcrepo-config.xml",
