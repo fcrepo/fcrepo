@@ -31,26 +31,62 @@ import org.slf4j.Logger;
  */
 public class DefaultMessageFactory implements JMSEventMessageFactory {
 
-    // Artemis requires JMS property names to be valid Java identifiers, so use underscores, not dots.
-    private static final String JMS_NAMESPACE = "org_fcrepo_jms_";
+    public static String TIMESTAMP_HEADER_NAME = "timestamp";
+    public static String IDENTIFIER_HEADER_NAME = "identifier";
+    public static String EVENT_TYPE_HEADER_NAME = "eventType";
+    public static String BASE_URL_HEADER_NAME = "baseURL";
+    public static String RESOURCE_TYPE_HEADER_NAME = "resourceType";
+    public static String USER_HEADER_NAME = "user";
+    public static String USER_AGENT_HEADER_NAME = "userAgent";
+    public static String EVENT_ID_HEADER_NAME = "eventID";
 
-    public static final String TIMESTAMP_HEADER_NAME = JMS_NAMESPACE
-            + "timestamp";
+    private String jmsProvider = "activemq";
+    private String jmsNamespace;
 
-    public static final String IDENTIFIER_HEADER_NAME = JMS_NAMESPACE
-            + "identifier";
+    public void setJmsProvider(final String jmsProvider) {
+        this.jmsProvider = jmsProvider;
+        this.jmsNamespace = null;
+    }
 
-    public static final String EVENT_TYPE_HEADER_NAME = JMS_NAMESPACE
-            + "eventType";
+    private String getJmsNamespace() {
+        if (jmsNamespace == null) {
+            // Artemis enforces the JMS spec rule that property names must be valid Java identifiers.
+            jmsNamespace = "artemis".equalsIgnoreCase(jmsProvider) ? "org_fcrepo_jms_" : "org.fcrepo.jms.";
+        }
+        return jmsNamespace;
+    }
 
-    public static final String BASE_URL_HEADER_NAME = JMS_NAMESPACE
-            + "baseURL";
+    public String getTimestampHeaderName() {
+        return getJmsNamespace() + TIMESTAMP_HEADER_NAME;
+    }
 
-    public static final String RESOURCE_TYPE_HEADER_NAME = JMS_NAMESPACE + "resourceType";
+    public String getIdentifierHeaderName() {
+        return getJmsNamespace() + IDENTIFIER_HEADER_NAME;
+    }
 
-    public static final String USER_HEADER_NAME = JMS_NAMESPACE + "user";
-    public static final String USER_AGENT_HEADER_NAME = JMS_NAMESPACE + "userAgent";
-    public static final String EVENT_ID_HEADER_NAME = JMS_NAMESPACE + "eventID";
+    public String getEventTypeHeaderName() {
+        return getJmsNamespace() + EVENT_TYPE_HEADER_NAME;
+    }
+
+    public String getBaseUrlHeaderName() {
+        return getJmsNamespace() + BASE_URL_HEADER_NAME;
+    }
+
+    public String getResourceTypeHeaderName() {
+        return getJmsNamespace() + RESOURCE_TYPE_HEADER_NAME;
+    }
+
+    public String getUserHeaderName() {
+        return getJmsNamespace() + USER_HEADER_NAME;
+    }
+
+    public String getUserAgentHeaderName() {
+        return getJmsNamespace() + USER_AGENT_HEADER_NAME;
+    }
+
+    public String getEventIdHeaderName() {
+        return getJmsNamespace() + EVENT_ID_HEADER_NAME;
+    }
 
     @Override
     public Message getMessage(final Event event, final Session jmsSession)
@@ -60,18 +96,18 @@ public class DefaultMessageFactory implements JMSEventMessageFactory {
         final String body = serializer.serialize(event);
         final Message message = jmsSession.createTextMessage(body);
 
-        message.setLongProperty(TIMESTAMP_HEADER_NAME, event.getDate().toEpochMilli());
-        message.setStringProperty(BASE_URL_HEADER_NAME, event.getBaseUrl());
+        message.setLongProperty(getTimestampHeaderName(), event.getDate().toEpochMilli());
+        message.setStringProperty(getBaseUrlHeaderName(), event.getBaseUrl());
 
         if (event.getUserAgent() != null) {
-            message.setStringProperty(USER_AGENT_HEADER_NAME, event.getUserAgent());
+            message.setStringProperty(getUserAgentHeaderName(), event.getUserAgent());
         }
 
-        message.setStringProperty(IDENTIFIER_HEADER_NAME, event.getPath());
-        message.setStringProperty(EVENT_TYPE_HEADER_NAME, getEventURIs(event.getTypes()));
-        message.setStringProperty(USER_HEADER_NAME, event.getUserID());
-        message.setStringProperty(RESOURCE_TYPE_HEADER_NAME, join(",", event.getResourceTypes()));
-        message.setStringProperty(EVENT_ID_HEADER_NAME, event.getEventID());
+        message.setStringProperty(getIdentifierHeaderName(), event.getPath());
+        message.setStringProperty(getEventTypeHeaderName(), getEventURIs(event.getTypes()));
+        message.setStringProperty(getUserHeaderName(), event.getUserID());
+        message.setStringProperty(getResourceTypeHeaderName(), join(",", event.getResourceTypes()));
+        message.setStringProperty(getEventIdHeaderName(), event.getEventID());
 
         LOGGER.trace("getMessage() returning: {}", message);
         return message;

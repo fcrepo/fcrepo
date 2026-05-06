@@ -98,11 +98,14 @@ public class JmsConfig {
     /**
      * translates events into JMS header-only format
      *
+     * @param propsConfig config properties
      * @return JMS message factory
      */
     @Bean
-    public JMSEventMessageFactory messageFactory() {
-        return new DefaultMessageFactory();
+    public JMSEventMessageFactory messageFactory(final FedoraPropsConfig propsConfig) {
+        final var factory = new DefaultMessageFactory();
+        factory.setJmsProvider(propsConfig.getJmsProvider());
+        return factory;
     }
 
     /**

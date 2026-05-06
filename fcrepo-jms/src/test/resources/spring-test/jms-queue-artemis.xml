@@ -25,6 +25,8 @@
         <constructor-arg type="java.lang.String" value="/fedora"/>
     </bean>
 
-    <bean class="org.fcrepo.jms.DefaultMessageFactory"/>
+    <bean class="org.fcrepo.jms.DefaultMessageFactory">
+        <property name="jmsProvider" value="artemis"/>
+    </bean>
 
 </beans>

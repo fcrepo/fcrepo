@@ -8,14 +8,6 @@ package org.fcrepo.jms;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.time.Instant.ofEpochMilli;
 import static java.util.Collections.singleton;
-import static org.fcrepo.jms.DefaultMessageFactory.BASE_URL_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.RESOURCE_TYPE_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.USER_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -65,14 +57,16 @@ public class DefaultMessageFactoryTest {
     public void testBuildMessage() throws JMSException {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage("base-url", "Test UserAgent", testPath);
-        assertEquals(testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME), "Got wrong identifier in message!");
+        assertEquals(testPath, msg.getStringProperty(testDefaultMessageFactory.getIdentifierHeaderName()),
+                "Got wrong identifier in message!");
     }
 
     @Test
     public void testBuildMessageNullUrl() throws JMSException {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage(null, null, testPath);
-        assertEquals(testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME), "Got wrong identifier in message!");
+        assertEquals(testPath, msg.getStringProperty(testDefaultMessageFactory.getIdentifierHeaderName()),
+                "Got wrong identifier in message!");
     }
 
     /**
@@ -82,16 +76,18 @@ public class DefaultMessageFactoryTest {
      * unit-test time.
      */
     @Test
-    public void testHeaderNamesAreValidJavaIdentifiers() {
+    public void testHeaderNamesAreValidJavaIdentifiersForArtemis() {
+        final DefaultMessageFactory artemisFactory = new DefaultMessageFactory();
+        artemisFactory.setJmsProvider("artemis");
         final List<String> headers = List.of(
-                TIMESTAMP_HEADER_NAME,
-                IDENTIFIER_HEADER_NAME,
-                EVENT_TYPE_HEADER_NAME,
-                BASE_URL_HEADER_NAME,
-                RESOURCE_TYPE_HEADER_NAME,
-                USER_HEADER_NAME,
-                USER_AGENT_HEADER_NAME,
-                EVENT_ID_HEADER_NAME);
+                artemisFactory.getTimestampHeaderName(),
+                artemisFactory.getIdentifierHeaderName(),
+                artemisFactory.getEventTypeHeaderName(),
+                artemisFactory.getBaseUrlHeaderName(),
+                artemisFactory.getResourceTypeHeaderName(),
+                artemisFactory.getUserHeaderName(),
+                artemisFactory.getUserAgentHeaderName(),
+                artemisFactory.getEventIdHeaderName());
         for (final String header : headers) {
             assertTrue(header.matches("[A-Za-z_$][A-Za-z0-9_$]*"),
                     "JMS header name must be a valid Java identifier (Artemis requirement): " + header);
@@ -125,13 +121,20 @@ public class DefaultMessageFactoryTest {
             trimmedBaseUrl = trimmedBaseUrl.substring(0, trimmedBaseUrl.length() - 1);
         }
 
-        assertEquals(testDate, (Long) msg.getLongProperty(TIMESTAMP_HEADER_NAME), "Got wrong date in message!");
-        assertEquals(testReturnType, msg.getStringProperty(EVENT_TYPE_HEADER_NAME), "Got wrong type in message!");
-        assertEquals(trimmedBaseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME), "Got wrong base-url in message");
-        assertEquals(prop, msg.getStringProperty(RESOURCE_TYPE_HEADER_NAME), "Got wrong resource type in message");
-        assertEquals(testUser, msg.getStringProperty(USER_HEADER_NAME), "Got wrong userID in message");
-        assertEquals(userAgent, msg.getStringProperty(USER_AGENT_HEADER_NAME), "Got wrong userAgent in message");
-        assertEquals(eventID, msg.getStringProperty(EVENT_ID_HEADER_NAME), "Got wrong eventID in message");
+        assertEquals(testDate, (Long) msg.getLongProperty(testDefaultMessageFactory.getTimestampHeaderName()),
+                "Got wrong date in message!");
+        assertEquals(testReturnType, msg.getStringProperty(testDefaultMessageFactory.getEventTypeHeaderName()),
+                "Got wrong type in message!");
+        assertEquals(trimmedBaseUrl, msg.getStringProperty(testDefaultMessageFactory.getBaseUrlHeaderName()),
+                "Got wrong base-url in message");
+        assertEquals(prop, msg.getStringProperty(testDefaultMessageFactory.getResourceTypeHeaderName()),
+                "Got wrong resource type in message");
+        assertEquals(testUser, msg.getStringProperty(testDefaultMessageFactory.getUserHeaderName()),
+                "Got wrong userID in message");
+        assertEquals(userAgent, msg.getStringProperty(testDefaultMessageFactory.getUserAgentHeaderName()),
+                "Got wrong userAgent in message");
+        assertEquals(eventID, msg.getStringProperty(testDefaultMessageFactory.getEventIdHeaderName()),
+                "Got wrong eventID in message");
         return msg;
     }
 
