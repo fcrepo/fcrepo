@@ -19,7 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
  * @author Dan Field
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration({"/spring-test/jms-topic.xml", "/spring-test/fcrepo-config.xml",
+@ContextConfiguration({"/spring-test/jms-topic-activemq.xml", "/spring-test/fcrepo-config.xml",
     "/spring-test/eventing.xml" })
 @DirtiesContext
 public class JmsTopicActiveMQIT extends AbstractJmsIT {
