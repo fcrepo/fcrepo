@@ -230,6 +230,44 @@ public class FedoraPropsConfigTest {
     }
 
     @Test
+    public void testJmsProviderDefaultsToActiveMq() {
+        initializeContext();
+        initializeConfig();
+
+        assertEquals("activemq", config.getJmsProvider());
+    }
+
+    @Test
+    public void testJmsProviderArtemisAccepted() {
+        env.setProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "artemis");
+        initializeContext();
+        initializeConfig();
+
+        assertEquals("artemis", config.getJmsProvider());
+    }
+
+    @Test
+    public void testJmsProviderUnknownValueFallsBackToActiveMq() {
+        final var logger = (Logger) LoggerFactory.getLogger(FedoraPropsConfig.class);
+        final var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            env.setProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "rabbitmq");
+            initializeContext();
+            initializeConfig();
+
+            assertEquals("activemq", config.getJmsProvider());
+            assertTrue(appender.list.stream().anyMatch(event ->
+                    event.getLevel().equals(ch.qos.logback.classic.Level.WARN) &&
+                            event.getFormattedMessage().contains("rabbitmq") &&
+                            event.getFormattedMessage().contains("Falling back to 'activemq'")));
+        } finally {
+            logger.detachAppender(appender);
+        }
+    }
+
+    @Test
     public void testCheckDeprecatedPropertiesWarningsLogged() {
         // Set up a custom appender to capture log messages
         final var logger = (Logger) LoggerFactory.getLogger(FedoraPropsConfig.class);

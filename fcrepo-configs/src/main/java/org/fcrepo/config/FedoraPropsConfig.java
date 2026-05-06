@@ -196,9 +196,19 @@ public class FedoraPropsConfig extends BasePropsConfig {
         serverManagedPropsMode = ServerManagedPropsMode.fromString(serverManagedPropsModeStr);
         sessionTimeout = Duration.ofMillis(sessionTimeoutLong);
         jmsDestinationType = JmsDestination.fromString(jmsDestinationTypeStr);
+        jmsProvider = normalizeJmsProvider(jmsProvider);
 
         checkRebuildProps();
         checkDeprecatedProperties();
+    }
+
+    private String normalizeJmsProvider(final String provider) {
+        if ("activemq".equalsIgnoreCase(provider) || "artemis".equalsIgnoreCase(provider)) {
+            return provider.toLowerCase();
+        }
+        LOGGER.warn("Unrecognised value '{}' for property '{}'. Falling back to 'activemq'. " +
+                "Valid values are 'activemq' and 'artemis'.", provider, FCREPO_JMS_PROVIDER);
+        return "activemq";
     }
 
     /**
