@@ -80,7 +80,7 @@
     <xerces.version>2.12.2</xerces.version>
     <velocity.version>2.4.1</velocity.version>
     <!-- JDBC dependencies -->
-    <postgresql.version>42.7.10</postgresql.version>
+    <postgresql.version>42.7.11</postgresql.version>
     <mariadb.version>3.5.3</mariadb.version>
     <mysql.version>8.4.0</mysql.version>
     <!-- test gear -->
