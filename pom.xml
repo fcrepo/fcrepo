@@ -26,7 +26,7 @@
     <!-- Dependency version properties -->
     <activemq.version>5.16.7</activemq.version>
     <aws.sdk.version>2.33.13</aws.sdk.version>
-    <aws.crt.version>0.29.16</aws.crt.version>
+    <aws.crt.version>0.45.4</aws.crt.version>
     <caffeine.version>3.0.4</caffeine.version>
     <commons-codec.version>1.15</commons-codec.version>
     <commons-collections.version>3.2.2</commons-collections.version>
@@ -598,6 +598,13 @@
             <artifactId>el-api</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <!-- Pin aws-crt ahead of the AWS SDK BOM. The BOM ships an older aws-crt that is missing
+           S3MetaRequestOptions$ResponseFileOption, causing ClassNotFoundException on S3 writes. -->
+      <dependency>
+        <groupId>software.amazon.awssdk.crt</groupId>
+        <artifactId>aws-crt</artifactId>
+        <version>${aws.crt.version}</version>
       </dependency>
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
