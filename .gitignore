@@ -14,7 +14,6 @@ ObjectStore/
 fcrepo-home/
 *.iml
 .idea/
+.vscode/
+.java-version
 .checkstyle
-fcrepo-integration-ldp/report-*
-fcrepo-integration-ldp/report
-fcrepo-integration-ldp/test-output

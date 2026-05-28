@@ -10,7 +10,9 @@ import java.nio.file.Path;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 /**
  * Auth related configuration properties
@@ -18,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
  * @author pwinckles
  */
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class AuthPropsConfig extends BasePropsConfig {
 
     public static final String FCREPO_AUTH_ENABLED = "fcrepo.auth.enabled";

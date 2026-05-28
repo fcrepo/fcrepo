@@ -5,7 +5,7 @@
  */
 package org.fcrepo.http.commons.api.rdf;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.fcrepo.kernel.api.models.FedoraResource;
 

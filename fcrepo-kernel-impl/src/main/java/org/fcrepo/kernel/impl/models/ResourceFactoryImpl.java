@@ -16,7 +16,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.time.Instant;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
@@ -38,6 +38,8 @@ import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 /**
@@ -47,6 +49,7 @@ import org.springframework.stereotype.Component;
  * @since 2019-09-23
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ResourceFactoryImpl implements ResourceFactory {
 
     private static final Logger LOGGER = getLogger(ResourceFactoryImpl.class);
@@ -71,6 +74,13 @@ public class ResourceFactoryImpl implements ResourceFactory {
     public <T extends FedoraResource> T getResource(final Transaction transaction, final FedoraId identifier,
                                                     final Class<T> clazz) throws PathNotFoundException {
         return clazz.cast(getResource(transaction, identifier));
+    }
+
+    @Override
+    public FedoraResource getResource(final Transaction transaction,
+                                      final ResourceHeaders headers)
+            throws PathNotFoundException {
+        return instantiateResource(transaction, headers.getId(), headers);
     }
 
 
@@ -112,14 +122,6 @@ public class ResourceFactoryImpl implements ResourceFactory {
         throw new ResourceTypeException("Could not identify the resource type for interaction model " + ixModel);
     }
 
-    /**
-     * Instantiates a new FedoraResource object of the given class.
-     *
-     * @param transaction the transaction id
-     * @param identifier    identifier for the new instance
-     * @return new FedoraResource instance
-     * @throws PathNotFoundException
-     */
     private FedoraResource instantiateResource(final Transaction transaction,
                                                final FedoraId identifier)
             throws PathNotFoundException {
@@ -129,6 +131,28 @@ public class ResourceFactoryImpl implements ResourceFactory {
             final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
 
             final ResourceHeaders headers = psSession.getHeaders(identifier, versionDateTime);
+            return instantiateResource(transaction, identifier, headers);
+        } catch (final PersistentItemNotFoundException e) {
+            throw new PathNotFoundException(e.getMessage(), e);
+        } catch (final PersistentStorageException e) {
+            throw new RepositoryRuntimeException(e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Instantiates a new FedoraResource object of the given class.
+     *
+     * @param transaction the transaction id
+     * @param identifier    identifier for the new instance
+     * @return new FedoraResource instance
+     * @throws PathNotFoundException
+     */
+    private FedoraResource instantiateResource(final Transaction transaction,
+                                               final FedoraId identifier,
+                                               final ResourceHeaders headers)
+            throws PathNotFoundException {
+        try {
+            final Instant versionDateTime = identifier.isMemento() ? identifier.getMementoInstant() : null;
 
             // Determine the appropriate class from headers
             final var createClass = getClassForTypes(headers);

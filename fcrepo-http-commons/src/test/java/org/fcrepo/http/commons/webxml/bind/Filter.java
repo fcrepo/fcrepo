@@ -9,8 +9,8 @@ import static java.util.Collections.emptyList;
 
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElements;
 
 /**
  * <p>Filter class.</p>
@@ -20,17 +20,17 @@ import javax.xml.bind.annotation.XmlElements;
 public class Filter extends Displayable {
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "init-param")})
     List<InitParam> initParams;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "filter-name")})
     String filterName;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "filter-class")})
     String filterClass;
 

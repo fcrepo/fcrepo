@@ -9,36 +9,36 @@ import static java.util.Collections.emptyList;
 
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElements;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
  * <p>Servlet class.</p>
  *
  * @author awoods
  */
-@XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
+@XmlRootElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
         name = "listener")
 public class Servlet extends Displayable {
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "init-param")})
     List<InitParam> initParams;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "servlet-name")})
     String servletName;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "servlet-class")})
     String servletClass;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "load-on-startup")})
     String loadOnStartUp;
 

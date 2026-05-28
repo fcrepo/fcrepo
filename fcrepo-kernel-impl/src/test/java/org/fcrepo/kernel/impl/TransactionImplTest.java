@@ -5,29 +5,28 @@
  */
 package org.fcrepo.kernel.impl;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Phaser;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.base.Stopwatch;
 import org.fcrepo.common.db.DbTransactionExecutor;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.TransactionState;
 import org.fcrepo.kernel.api.cache.UserTypesCache;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.exception.TransactionClosedException;
+import org.fcrepo.kernel.api.exception.TransactionRuntimeException;
+import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.lock.ResourceLockManager;
 import org.fcrepo.kernel.api.observer.EventAccumulator;
 import org.fcrepo.kernel.api.services.MembershipService;
@@ -36,11 +35,19 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.search.api.SearchIndex;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Phaser;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -49,7 +56,8 @@ import org.mockito.junit.MockitoJUnitRunner;
  *
  * @author mohideen
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionImplTest {
 
     private TransactionImpl testTx;
@@ -87,7 +95,7 @@ public class TransactionImplTest {
     private static final long DEFAULT_SESSION_MILLI = 180000;
     private static final Duration DEFAULT_SESSION_DURATION = Duration.ofMillis(DEFAULT_SESSION_MILLI);
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testTx = new TransactionImpl("123", txManager, DEFAULT_SESSION_DURATION);
         when(pssManager.getSession(testTx)).thenReturn(psSession);
@@ -138,35 +146,26 @@ public class TransactionImplTest {
         verify(psSession, never()).commit();
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testCommitExpired() throws Exception {
         testTx.expire();
-        try {
-            testTx.commit();
-        } finally {
-            verify(psSession, never()).commit();
-        }
+        assertThrows(TransactionClosedException.class, () -> testTx.commit());
+        verify(psSession, never()).commit();
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testCommitRolledbackTx() throws Exception {
         testTx.rollback();
-        try {
-            testTx.commit();
-        } finally {
-            verify(psSession, never()).commit();
-        }
+        assertThrows(TransactionClosedException.class, () -> testTx.commit());
+        verify(psSession, never()).commit();
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void testEnsureRollbackOnFailedCommit() throws Exception {
         doThrow(new PersistentStorageException("Failed")).when(psSession).commit();
-        try {
-            testTx.commit();
-        } finally {
-            verify(psSession).commit();
-            verify(psSession).rollback();
-        }
+        assertThrows(RepositoryRuntimeException.class, () -> testTx.commit());
+        verify(psSession).commit();
+        verify(psSession).rollback();
     }
 
     @Test
@@ -191,26 +190,23 @@ public class TransactionImplTest {
 
     @Test
     public void shouldRollbackAllWhenContainmentThrowsException() throws Exception {
-        doThrow(new RuntimeException()).when(containmentIndex).rollbackTransaction(testTx);
+        doThrow(new RuntimeException("Rollback exception")).when(containmentIndex).rollbackTransaction(testTx);
         testTx.rollback();
         verifyRollback();
     }
 
     @Test
     public void shouldRollbackAllWhenEventsThrowsException() throws Exception {
-        doThrow(new RuntimeException()).when(eventAccumulator).clearEvents(testTx);
+        doThrow(new RuntimeException("Rollback exception")).when(eventAccumulator).clearEvents(testTx);
         testTx.rollback();
         verifyRollback();
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testRollbackCommited() throws Exception {
         testTx.commit();
-        try {
-            testTx.rollback();
-        } finally {
-            verify(psSession, never()).rollback();
-        }
+        assertThrows(TransactionClosedException.class, () -> testTx.rollback());
+        verify(psSession, never()).rollback();
     }
 
     @Test
@@ -257,20 +253,17 @@ public class TransactionImplTest {
         final var lowerBound = expected.minusSeconds(plusMinusSeconds);
         final var upperBound = expected.plusSeconds(plusMinusSeconds);
         final var expires = testTx.getExpires();
-        assertTrue("Expires does not match expected value +- " + plusMinusSeconds + " secs."
-                        + " expected expires: " + expected + ", actual expires: "  + expires,
-                expires.isAfter(lowerBound) && expires.isBefore(upperBound));
+        assertTrue(expires.isAfter(lowerBound) && expires.isBefore(upperBound),
+                "Expires does not match expected value +- " + plusMinusSeconds + " secs."
+                        + " expected expires: " + expected + ", actual expires: "  + expires);
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testUpdateExpiryOnExpired() {
         testTx.expire();
         final Instant previousExpiry = testTx.getExpires();
-        try {
-            testTx.updateExpiry(Duration.ofSeconds(1));
-        } finally {
-            assertEquals(testTx.getExpires(), previousExpiry);
-        }
+        assertThrows(TransactionClosedException.class, () -> testTx.updateExpiry(Duration.ofSeconds(1)));
+        assertEquals(testTx.getExpires(), previousExpiry);
     }
 
     @Test
@@ -281,15 +274,12 @@ public class TransactionImplTest {
         assertTrue(testTx.getExpires().isAfter(previousExpiry));
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void testRefreshOnExpired() {
         testTx.expire();
         final Instant previousExpiry = testTx.getExpires();
-        try {
-            testTx.refresh();
-        } finally {
-            assertEquals(testTx.getExpires(), previousExpiry);
-        }
+        assertThrows(TransactionClosedException.class, () -> testTx.refresh());
+        assertEquals(testTx.getExpires(), previousExpiry);
     }
 
     @Test
@@ -297,12 +287,12 @@ public class TransactionImplTest {
         assertTrue(testTx.getExpires().isAfter(Instant.now()));
     }
 
-    @Test(expected = TransactionClosedException.class)
+    @Test
     public void operationsShouldFailWhenTxNotOpen() {
         testTx.commit();
-        testTx.doInTx(() -> {
+        assertThrows(TransactionClosedException.class, () -> testTx.doInTx(() -> {
             fail("This code should not be executed");
-        });
+        }));
     }
 
     @Test
@@ -348,5 +338,191 @@ public class TransactionImplTest {
         testTx.commit();
         verify(eventAccumulator, times(1))
                 .emitEvents(testTx, null, null);
+    }
+
+
+
+    @Test
+    public void testFail() {
+        // Transaction should initially be open
+        assertTrue(testTx.isOpen());
+
+        // Mark transaction as failed
+        testTx.fail();
+
+        // Transaction should no longer be open
+        assertFalse(testTx.isOpen());
+
+        // Try to commit should throw exception
+        assertThrows(TransactionRuntimeException.class, () -> testTx.commit());
+    }
+
+    @Test
+    public void testFailWhenNotOpen() {
+        // First put transaction in a non-open state
+        testTx.commit();
+
+        // Mark as failed should not change state
+        testTx.fail();
+
+        // Should still be in committed state
+        assertTrue(testTx.isCommitted());
+    }
+
+    @Test
+    public void testIsRolledBack() {
+        // Initially should not be rolled back
+        assertFalse(testTx.isRolledBack());
+
+        // Roll it back
+        testTx.rollback();
+
+        // Now it should be rolled back
+        assertTrue(testTx.isRolledBack());
+    }
+
+    @Test
+    public void testIsOpenLongRunning() {
+        // By default, transaction is short-lived and open
+        assertTrue(testTx.isOpen());
+        assertFalse(testTx.isOpenLongRunning());
+
+        // Make it long-running
+        testTx.setShortLived(false);
+
+        // Now it should be open long-running
+        assertTrue(testTx.isOpenLongRunning());
+
+        // Commit the transaction
+        testTx.commit();
+
+        // Should no longer be open long-running
+        assertFalse(testTx.isOpenLongRunning());
+    }
+
+    @Test
+    public void testIsOpen() {
+        // Initially should be open
+        assertTrue(testTx.isOpen());
+
+        // After commit, it shouldn't be open
+        testTx.commit();
+        assertFalse(testTx.isOpen());
+    }
+
+    @Test
+    public void testIsOpenRollback() {
+        testTx.rollback();
+        assertFalse(testTx.isOpen());
+    }
+
+    @Test
+    public void testIsOpenExpired() {
+        testTx.expire();
+        assertFalse(testTx.isOpen());
+    }
+
+    @Test
+    public void testEnsureCommitting() {
+        // Initially the transaction is not committing
+        assertThrows(TransactionRuntimeException.class, () -> testTx.ensureCommitting());
+
+        testTx.updateState(TransactionState.COMMITTING);
+        // It should now pass
+        testTx.ensureCommitting();
+    }
+
+    @Test
+    public void testIsReadOnly() {
+        // TransactionImpl is never read-only
+        assertFalse(testTx.isReadOnly());
+    }
+
+    @Test
+    public void testLockResource() {
+        final FedoraId resourceId = FedoraId.create("test-resource");
+
+        testTx.lockResource(resourceId);
+
+        verify(resourceLockManager).acquireExclusive(testTx.getId(), resourceId);
+    }
+
+    @Test
+    public void testLockResourceNonExclusive() {
+        final FedoraId resourceId = FedoraId.create("test-resource");
+
+        testTx.lockResourceNonExclusive(resourceId);
+
+        verify(resourceLockManager).acquireNonExclusive(testTx.getId(), resourceId);
+    }
+
+    @Test
+    public void testLockResourceAndGhostNodes() {
+        final FedoraId resourceId = FedoraId.create("test/nested/resource");
+        final FedoraId parentId = FedoraId.create("test");
+
+        // Mock the containment index to return the parent id
+        when(containmentIndex.getContainerIdByPath(testTx, resourceId, false))
+                .thenReturn(parentId);
+
+        testTx.lockResourceAndGhostNodes(resourceId);
+
+        // Should lock the resource itself
+        verify(resourceLockManager).acquireExclusive(testTx.getId(), resourceId);
+
+        // Should also lock ghost nodes
+        verify(resourceLockManager).acquireExclusive(testTx.getId(), FedoraId.create("test/nested"));
+    }
+
+    @Test
+    public void testReleaseResourceLocksIfShortLived() {
+        // Default transaction is short-lived
+        testTx.releaseResourceLocksIfShortLived();
+
+        // Should release all locks
+        verify(resourceLockManager).releaseAll(testTx.getId());
+    }
+
+    @Test
+    public void testReleaseResourceLocksIfNotShortLived() {
+        // Make transaction long-running
+        testTx.setShortLived(false);
+
+        testTx.releaseResourceLocksIfShortLived();
+
+        // Should not release locks
+        verify(resourceLockManager, never()).releaseAll(testTx.getId());
+    }
+
+    @Test
+    public void testCommitLongRunning() throws Exception {
+        // Make transaction long-running
+        testTx.setShortLived(false);
+
+        testTx.commit();
+
+        // For long-running transactions, the transaction index should be committed
+        verify(containmentIndex).commitTransaction(testTx);
+        verify(referenceService).commitTransaction(testTx);
+        verify(membershipService).commitTransaction(testTx);
+        verify(searchIndex).commitTransaction(testTx);
+
+        // Storage session should be committed
+        verify(psSession).prepare();
+        verify(psSession).commit();
+
+        // User types cache should be merged
+        verify(userTypesCache).mergeSessionCache(testTx.getId());
+    }
+
+    @Test
+    public void testToString() {
+        assertEquals("123", testTx.toString());
+    }
+
+    @Test
+    public void testConstructorWithNoId() {
+        assertThrows(IllegalArgumentException.class,
+                () -> new TransactionImpl(null, txManager, DEFAULT_SESSION_DURATION));
     }
 }

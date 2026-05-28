@@ -5,15 +5,16 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import javax.ws.rs.ClientErrorException;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Provider;
+import jakarta.ws.rs.ClientErrorException;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Provider;
 
 import org.slf4j.Logger;
 
-import static javax.ws.rs.core.Response.fromResponse;
+import static jakarta.ws.rs.core.Response.fromResponse;
 import static org.fcrepo.http.commons.domain.RDFMediaType.TEXT_PLAIN_WITH_CHARSET;
+
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**

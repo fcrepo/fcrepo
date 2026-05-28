@@ -8,7 +8,8 @@ package org.fcrepo.persistence.common;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -18,7 +19,7 @@ import org.apache.commons.io.IOUtils;
 import org.fcrepo.kernel.api.exception.InvalidChecksumException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.config.DigestAlgorithm;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author bbpennel
@@ -79,7 +80,7 @@ public class MultiDigestInputStreamWrapperTest {
         wrapper.checkFixity();
     }
 
-    @Test(expected = InvalidChecksumException.class)
+    @Test
     public void checkFixity_InvalidDigest() throws Exception {
         final var digests = asList(MD5_URI, URI.create("urn:sha1:totallybusted"), SHA512_URI);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, null);
@@ -87,16 +88,15 @@ public class MultiDigestInputStreamWrapperTest {
         // Read the stream to allow digest calculation
         IOUtils.toString(wrapper.getInputStream(), UTF_8);
 
-        // Expect no failures
-        wrapper.checkFixity();
+        assertThrows(InvalidChecksumException.class, wrapper::checkFixity);
     }
 
-    @Test(expected = RepositoryRuntimeException.class)
+    @Test
     public void unsupportedDigestAlgorithm() throws Exception {
         final var digests = asList(URI.create("urn:yum:123456"), SHA512_URI);
         final var wrapper = new MultiDigestInputStreamWrapper(contentStream, digests, null);
 
-        wrapper.getInputStream();
+        assertThrows(RepositoryRuntimeException.class, wrapper::getInputStream);
     }
 
     @Test
@@ -133,7 +133,7 @@ public class MultiDigestInputStreamWrapperTest {
         wrapper.checkFixity();
     }
 
-    @Test(expected = InvalidChecksumException.class)
+    @Test
     public void checkFixity_OverlappingWantDigestAndProvided_InvalidDigest() throws Exception {
         final var digests = asList(URI.create("urn:sha1:totallybusted"));
         final var wantDigests = asList(DigestAlgorithm.SHA1);
@@ -143,7 +143,7 @@ public class MultiDigestInputStreamWrapperTest {
         IOUtils.toString(wrapper.getInputStream(), UTF_8);
 
         // Expect no failures
-        wrapper.checkFixity();
+        assertThrows(InvalidChecksumException.class, wrapper::checkFixity);
     }
 
     @Test

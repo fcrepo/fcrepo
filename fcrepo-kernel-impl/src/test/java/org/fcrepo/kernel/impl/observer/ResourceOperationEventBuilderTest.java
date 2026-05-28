@@ -16,11 +16,13 @@ import org.fcrepo.kernel.impl.operations.NonRdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.RdfSourceOperationFactoryImpl;
 import org.fcrepo.kernel.impl.operations.VersionResourceOperationFactoryImpl;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.io.ByteArrayInputStream;
 import java.util.Set;
@@ -29,14 +31,16 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.when;
 
 /**
  * @author pwinckles
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ResourceOperationEventBuilderTest {
 
     private static final FedoraId FEDORA_ID = FedoraId.create("/test");
@@ -46,7 +50,7 @@ public class ResourceOperationEventBuilderTest {
     @Mock
     private Transaction transaction;
 
-    @Before
+    @BeforeEach
     public void setup() {
         when(transaction.getId()).thenReturn("tx-123");
     }
@@ -191,6 +195,46 @@ public class ResourceOperationEventBuilderTest {
         assertEquals(userAgent, event.getUserAgent());
         assertEquals(resourceTypes, event.getResourceTypes());
     }
+
+    @Test
+    public void populateOtherEventFieldsWithNullUserAgent() {
+        final var operation = new NonRdfSourceOperationFactoryImpl()
+                .updateInternalBinaryBuilder(transaction, FEDORA_ID, new ByteArrayInputStream(new byte[]{}))
+                .userPrincipal(USER)
+                .build();
+
+        final var baseUrl = "http://localhost/rest";
+        final String userAgent = null;
+        final var resourceTypes = Set.of("resource-type");
+
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(FEDORA_ID, operation, null)
+                .withBaseUrl(baseUrl)
+                .withUserAgent(userAgent)
+                .withResourceTypes(resourceTypes)
+                .build();
+
+        assertEquals(baseUrl, event.getBaseUrl());
+        assertEquals(userAgent, event.getUserAgent());
+        assertEquals(resourceTypes, event.getResourceTypes());
+    }
+
+    @Test
+    public void eventWithURLEncodedFedoraId() {
+        final var fedoraId = FedoraId.create("/foo bar");
+
+        final var operation = new RdfSourceOperationFactoryImpl()
+                .createBuilder(transaction, fedoraId, RDF_SOURCE.toString(), ServerManagedPropsMode.RELAXED)
+                .userPrincipal(USER)
+                .build();
+
+        final var event = ResourceOperationEventBuilder.fromResourceOperation(fedoraId, operation, null)
+                .withBaseUrl(BASE_URL)
+                .build();
+        System.out.println(event.toString());
+        assertTrue(event.toString().contains("fedoraId=info:fedora/foo%20bar"));
+
+    }
+
 
     private void assertDefaultEvent(final Event event, final EventType type) {
         assertEquals(FEDORA_ID, event.getFedoraId());

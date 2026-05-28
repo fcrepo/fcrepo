@@ -8,7 +8,7 @@ package org.fcrepo.kernel.api.services.functions;
 import org.springframework.stereotype.Component;
 
 import static java.util.UUID.randomUUID;
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.StringJoiner;
 import java.util.stream.IntStream;
 import org.fcrepo.config.FedoraPropsConfig;

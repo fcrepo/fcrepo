@@ -6,6 +6,7 @@
 
 package org.fcrepo.config;
 
+import io.micrometer.core.instrument.Clock;
 import io.micrometer.core.instrument.Meter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
@@ -17,40 +18,51 @@ import io.micrometer.core.instrument.binder.system.UptimeMetrics;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.micrometer.core.instrument.distribution.DistributionStatisticConfig;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import io.prometheus.client.CollectorRegistry;
+import io.micrometer.prometheusmetrics.PrometheusConfig;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
-import java.time.Duration;
 
 /**
  * @author pwinckles
  */
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class MetricsConfig extends BasePropsConfig {
+    private final boolean metricsEnabled;
 
-    @Value("${fcrepo.metrics.enable:false}")
-    private boolean metricsEnabled;
+    private static final Logger LOGGER = LoggerFactory.getLogger(MetricsConfig.class);
+
+    public MetricsConfig(
+            @Deprecated @Value("${fcrepo.metrics.enable:false}") final boolean metricsEnable,
+            @Value("${fcrepo.metrics.enabled:false}") final boolean metricsEnabled) {
+        if (metricsEnable) {
+            LOGGER.warn("Property fcrepo.metrics.enable is deprecated...");
+        }
+        // If either the new or the deprecated property is set, enable metrics
+        this.metricsEnabled = metricsEnabled || metricsEnable;
+    }
 
     @Bean
-    public MeterRegistry meterRegistry() {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static MeterRegistry meterRegistry(
+            @Deprecated @Value("${fcrepo.metrics.enable:false}") final boolean metricsEnable,
+            @Value("${fcrepo.metrics.enabled:false}") final boolean metricsEnabled
+    ) {
         final MeterRegistry registry;
 
-        if (metricsEnabled) {
-            registry = new PrometheusMeterRegistry(new PrometheusConfig() {
-                @Override
-                public Duration step() {
-                    return Duration.ofSeconds(30);
-                }
-                @Override
-                public String get(final String key) {
-                    return null;
-                }
-            });
-            // Enables distribution stats for all timer metrics
+        final boolean effectiveMetricsEnabled = metricsEnabled || metricsEnable;
+
+        if (effectiveMetricsEnabled) {
+            registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT, PrometheusRegistry.defaultRegistry,
+                    Clock.SYSTEM);
             registry.config().meterFilter(new MeterFilter() {
                 @Override
                 public DistributionStatisticConfig configure(final Meter.Id id,
@@ -69,21 +81,11 @@ public class MetricsConfig extends BasePropsConfig {
             new JvmMemoryMetrics().bindTo(registry);
             new ProcessorMetrics().bindTo(registry);
             new UptimeMetrics().bindTo(registry);
+            Metrics.addRegistry(registry);
         } else {
             registry = new SimpleMeterRegistry();
         }
-
-        Metrics.addRegistry(registry);
-
         return registry;
-    }
-
-    @Bean
-    public CollectorRegistry collectorRegistry(final MeterRegistry meterRegistry) {
-        if (meterRegistry instanceof PrometheusMeterRegistry) {
-            return ((PrometheusMeterRegistry) meterRegistry).getPrometheusRegistry();
-        }
-        return CollectorRegistry.defaultRegistry;
     }
 
     /**
@@ -92,5 +94,4 @@ public class MetricsConfig extends BasePropsConfig {
     public boolean isMetricsEnabled() {
         return metricsEnabled;
     }
-
 }

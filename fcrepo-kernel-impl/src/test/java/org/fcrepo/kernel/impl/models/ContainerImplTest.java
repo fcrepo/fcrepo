@@ -5,33 +5,40 @@
  */
 package org.fcrepo.kernel.impl.models;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.Container;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.persistence.api.PersistentStorageSessionManager;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
  * @author bbpennel
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @ContextConfiguration("/containmentIndexTest.xml")
 public class ContainerImplTest {
     @Mock
@@ -45,7 +52,7 @@ public class ContainerImplTest {
 
     private FedoraId fedoraId;
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         MockitoAnnotations.openMocks(this);
         when(transaction.getId()).thenReturn(UUID.randomUUID().toString());
@@ -69,5 +76,25 @@ public class ContainerImplTest {
 
         assertTrue(childrenList.stream().anyMatch(c -> c instanceof Container));
         assertTrue(childrenList.stream().anyMatch(c -> c instanceof Binary));
+    }
+
+    @Test
+    void testGetSystemTypes() {
+        final var container = new ContainerImpl(fedoraId, transaction, sessionManager, resourceFactory, null);
+        container.setInteractionModel(RdfLexicon.BASIC_CONTAINER.getURI());
+
+        final var typesList = container.getSystemTypes(false).stream()
+                .map(URI::toString)
+                .collect(Collectors.toList());
+
+        assertTrue(typesList.contains(RdfLexicon.CONTAINER.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.FEDORA_CONTAINER.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.RDF_SOURCE.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.RESOURCE.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.FEDORA_RESOURCE.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.VERSIONING_TIMEGATE_TYPE));
+        assertTrue(typesList.contains(RdfLexicon.VERSIONED_RESOURCE.getURI()));
+        assertTrue(typesList.contains(RdfLexicon.BASIC_CONTAINER.getURI()));
+        assertEquals(8, typesList.size());
     }
 }

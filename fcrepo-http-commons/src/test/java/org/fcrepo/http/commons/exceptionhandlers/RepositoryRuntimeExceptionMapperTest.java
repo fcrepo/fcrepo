@@ -5,24 +5,29 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
 
-import javax.ws.rs.core.Response;
-import javax.ws.rs.ext.ExceptionMapper;
-import javax.ws.rs.ext.Providers;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.ext.ExceptionMapper;
+import jakarta.ws.rs.ext.Providers;
 
-import org.fcrepo.kernel.api.exception.RepositoryException;
+import org.fcrepo.kernel.api.exception.RepositoryConfigurationException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 /**
  * @author cabeer
  */
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class RepositoryRuntimeExceptionMapperTest {
 
     @Mock
@@ -31,19 +36,17 @@ public class RepositoryRuntimeExceptionMapperTest {
     private RepositoryRuntimeExceptionMapper testObj;
 
     @Mock
-    private ExceptionMapper<RepositoryException> mockProvider;
+    private ExceptionMapper<RepositoryConfigurationException> mockProvider;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        initMocks(this);
-
         testObj = new RepositoryRuntimeExceptionMapper(mockProviders);
     }
 
     @Test
     public void testToResponseWithHandledRepositoryException() {
-        when(mockProviders.getExceptionMapper(RepositoryException.class)).thenReturn(mockProvider);
-        final RepositoryException cause = new RepositoryException("xyz");
+        when(mockProviders.getExceptionMapper(RepositoryConfigurationException.class)).thenReturn(mockProvider);
+        final RepositoryConfigurationException cause = new RepositoryConfigurationException("xyz");
         final RepositoryRuntimeException ex = new RepositoryRuntimeException(cause.getMessage(), cause);
         testObj.toResponse(ex);
         verify(mockProvider).toResponse(cause);

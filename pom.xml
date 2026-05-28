@@ -4,13 +4,13 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo-parent</artifactId>
-    <version>6.5.1</version>
+    <version>7.1.0-SNAPSHOT</version>
     <relativePath>./fcrepo-parent</relativePath>
   </parent>
 
   <groupId>org.fcrepo</groupId>
   <artifactId>fcrepo</artifactId>
-  <version>6.5.1</version>
+  <version>7.1.0-SNAPSHOT</version>
   <name>Fedora Commons</name>
   <description>Parent project for Fedora Commons Repository</description>
   <url>http://fedorarepository.org</url>
@@ -22,65 +22,75 @@
       (for scm, site-distribution, etc -->
     <project_name>fcrepo</project_name>
     <project_organization>fcrepo</project_organization>
-    <fcrepo-storage-ocfl.version>6.4.0-SNAPSHOT</fcrepo-storage-ocfl.version>
+    <fcrepo-storage-ocfl.version>7.0.0</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
-    <activemq.version>5.16.7</activemq.version>
-    <aws.sdk.version>2.33.13</aws.sdk.version>
-    <aws.crt.version>0.45.4</aws.crt.version>
-    <caffeine.version>3.0.4</caffeine.version>
-    <commons-codec.version>1.15</commons-codec.version>
-    <commons-collections.version>3.2.2</commons-collections.version>
-    <commons-io.version>2.14.0</commons-io.version>
-    <commons-lang.version>3.12.0</commons-lang.version>
-    <failsafe.version>2.4.4</failsafe.version>
-    <flyway.version>9.22.3</flyway.version>
-    <flyway.test.version>9.5.0</flyway.test.version>
-    <guava.version>32.0.0-jre</guava.version>
-    <h2database.version>2.2.220</h2database.version>
-    <hikari.version>5.0.0</hikari.version>
-    <hk2.version>2.6.1</hk2.version>
-    <htmlunit.version>2.53.0</htmlunit.version>
-    <httpclient.version>4.5.13</httpclient.version>
-    <httpmime.version>4.5.13</httpmime.version>
-    <httpcore.version>4.4.14</httpcore.version>
+    <activemq.version>6.2.1</activemq.version>
+    <aws.sdk.version>2.42.5</aws.sdk.version>
+    <aws.crt.version>0.43.6</aws.crt.version>
+    <caffeine.version>3.2.3</caffeine.version>
+    <commons-codec.version>1.21.0</commons-codec.version>
+    <commons-collections.version>4.5.0</commons-collections.version>
+    <commons-io.version>2.21.0</commons-io.version>
+    <commons-lang.version>3.20.0</commons-lang.version>
+    <commons-text.version>1.15.0</commons-text.version>
+    <failsafe.version>3.3.2</failsafe.version>
+    <flyway.version>11.20.3</flyway.version>
+    <flyway.test.version>10.0.0</flyway.test.version>
+    <guava.version>33.5.0-jre</guava.version>
+    <h2database.version>2.4.240</h2database.version>
+    <hamcrest.version>3.0</hamcrest.version>
+    <hikari.version>6.3.2</hikari.version>
+    <hk2.version>3.1.1</hk2.version>
+    <!-- Last version that supports our version of jquery -->
+    <htmlunit.version>4.14.0</htmlunit.version>
+    <httpclient.version>4.5.14</httpclient.version>
+    <httpmime.version>4.5.14</httpmime.version>
+    <httpcore.version>4.4.16</httpcore.version>
+    <jakarta.inject.version>2.6.1</jakarta.inject.version>
+    <jakarta.servlet.version>6.0.0</jakarta.servlet.version>
+    <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
+    <jakarta.jakartaee-api.version>10.0.0</jakarta.jakartaee-api.version>
+    <jakarta.jms.version>3.1.0</jakarta.jms.version>
+    <jakarta.xml.version>4.0.2</jakarta.xml.version>
+    <jakarta.ws.version>4.0.0</jakarta.ws.version>
     <javax.servlet-api.version>4.0.1</javax.servlet-api.version>
     <javax.annotation.version>1.3.2</javax.annotation.version>
     <javaee-api.version>8.0.1</javaee-api.version>
     <javaee.xml.version>2.3.1</javaee.xml.version>
-    <jaxb.core.version>2.3.0.1</jaxb.core.version>
-    <jaxb.impl.version>2.3.1</jaxb.impl.version>
-    <jackson2.version>2.15.0</jackson2.version>
-    <jackson2.databind.version>2.15.0</jackson2.databind.version>
-    <jboss-logging.version>3.4.2.Final</jboss-logging.version>
-    <jena.version>4.2.0</jena.version>
-    <jersey.version>2.35</jersey.version>
-    <jetty.version>9.4.44.v20210927</jetty.version>
-    <jgroups.version>5.1.9.Final</jgroups.version>
-    <jsonld.version>0.13.3</jsonld.version>
-    <logback.version>1.2.13</logback.version>
-    <micrometer.version>1.7.4</micrometer.version>
-    <netty.version>4.1.68.Final</netty.version>
+    <jaxb.version>4.0.5</jaxb.version>
+    <jackson2.version>2.21.1</jackson2.version>
+    <jackson2.annotations.version>2.21</jackson2.annotations.version>
+    <jena.version>5.5.0</jena.version>
+    <jersey.version>3.1.11</jersey.version>
+    <jetty.version>12.0.32</jetty.version>
+    <jsonld.version>0.13.6</jsonld.version>
+    <logback.version>1.5.18</logback.version>
+    <maven.changelog.version>3.0.0-M1</maven.changelog.version>
+    <micrometer.version>1.15.0</micrometer.version>
+    <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
+    <netty.version>4.1.131.Final</netty.version>
     <ocfl-java.version>2.2.1</ocfl-java.version>
-    <prometheus.version>0.10.0</prometheus.version>
+    <prometheus.version>1.3.6</prometheus.version>
+    <prometheus.jmx.version>1.0.1</prometheus.jmx.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
-    <shiro.version>1.13.0</shiro.version>
-    <slf4j.version>1.7.32</slf4j.version>
-    <spring.version>5.3.39</spring.version>
+    <shiro.version>2.0.4</shiro.version>
+    <slf4j.version>2.0.17</slf4j.version>
+    <spring.version>6.2.16</spring.version>
+    <titanium.version>1.7.0</titanium.version>
     <xerces.version>2.12.2</xerces.version>
-    <xml-apis.version>1.4.01</xml-apis.version>
-    <velocity.version>1.7</velocity.version>
-    <!-- JCBC dependencies -->
-    <postgresql.version>42.4.4</postgresql.version>
-    <mysql.version>8.0.28</mysql.version>
-    <mariadb.version>2.7.4</mariadb.version>
+    <velocity.version>2.4.1</velocity.version>
+    <!-- JDBC dependencies -->
+    <postgresql.version>42.7.11</postgresql.version>
+    <mariadb.version>3.5.3</mariadb.version>
+    <mysql.version>8.4.0</mysql.version>
     <!-- test gear -->
-    <awaitility.version>4.1.0</awaitility.version>
-    <grizzly.version>2.4.4</grizzly.version>
+    <awaitility.version>4.3.0</awaitility.version>
+    <grizzly.version>4.1.0-M1</grizzly.version>
     <junit.version>4.13.2</junit.version>
-    <system-rules.version>1.19.0</system-rules.version>
-    <mockito.version>3.12.4</mockito.version>
-    <!-- fcrepo5-specific plugins -->
-    <enforcer.plugin.version>3.0.0</enforcer.plugin.version>
+    <junit5.version>5.11.4</junit5.version>
+    <mockito.junit5.version>5.17.0</mockito.junit5.version>
+    <!-- fcrepo-specific plugins -->
+    <enforcer.plugin.version>3.4.1</enforcer.plugin.version>
     <war.plugin.version>3.3.2</war.plugin.version>
     <!-- default properties that can be altered on the command line -->
     <fcrepo.test.context.path />
@@ -97,7 +107,6 @@
     <module>fcrepo-auth-common</module>
     <module>fcrepo-configs</module>
     <module>fcrepo-parent</module>
-    <module>fcrepo-integration-ldp</module>
     <module>fcrepo-integration-rdf</module>
     <module>fcrepo-auth-webac</module>
     <module>fcrepo-persistence-api</module>
@@ -112,36 +121,51 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>org.jboss.logging</groupId>
-        <artifactId>jboss-logging</artifactId>
-        <version>${jboss-logging.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>javax</groupId>
-        <artifactId>javaee-api</artifactId>
-        <version>${javaee-api.version}</version>
+        <groupId>jakarta.platform</groupId>
+        <artifactId>jakarta.jakartaee-api</artifactId>
+        <version>${jakarta.jakartaee-api.version}</version>
         <scope>provided</scope>
       </dependency>
-      <!--  modules needed for Java 11 support EE modules. -->
       <dependency>
-        <groupId>javax.xml.bind</groupId>
-        <artifactId>jaxb-api</artifactId>
-        <version>${javaee.xml.version}</version>
+        <groupId>jakarta.annotation</groupId>
+        <artifactId>jakarta.annotation-api</artifactId>
+        <version>${jakarta.annotation.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>${jakarta.servlet.version}</version>
+        <scope>provided</scope>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.ws.rs</groupId>
+        <artifactId>jakarta.ws.rs-api</artifactId>
+        <version>${jakarta.ws.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.xml.bind</groupId>
+        <artifactId>jakarta.xml.bind-api</artifactId>
+        <version>${jakarta.xml.version}</version>
 	  </dependency>
-	  <dependency>
+      <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-core</artifactId>
-        <version>${jaxb.core.version}</version>
+        <version>${jaxb.version}</version>
 	  </dependency>
-	  <dependency>
+      <dependency>
         <groupId>com.sun.xml.bind</groupId>
         <artifactId>jaxb-impl</artifactId>
-        <version>${jaxb.impl.version}</version>
-         </dependency>
+        <version>${jaxb.version}</version>
+      </dependency>
       <dependency>
-        <groupId>javax.annotation</groupId>
-        <artifactId>javax.annotation-api</artifactId>
-        <version>${javax.annotation.version}</version>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>${jaxb.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.jms</groupId>
+        <artifactId>jakarta.jms-api</artifactId>
+        <version>${jakarta.jms.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
@@ -149,52 +173,80 @@
         <version>${jersey.version}</version>
         <exclusions>
           <exclusion>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
+            <groupId>org.osgi</groupId>
+            <artifactId>osgi.core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>osgi-resource-locator</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.inject</groupId>
+        <artifactId>jersey-hk2</artifactId>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.core</groupId>
         <artifactId>jersey-server</artifactId>
         <version>${jersey.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>jakarta.xml.bind</groupId>
-            <artifactId>jakarta.xml.bind-api</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.ext</groupId>
-        <artifactId>jersey-spring5</artifactId>
+        <artifactId>jersey-spring6</artifactId>
         <version>${jersey.version}</version>
         <exclusions>
           <exclusion>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
+            <groupId>org.glassfish.hk2.external</groupId>
+            <artifactId>aopalliance-repackaged</artifactId>
           </exclusion>
           <exclusion>
-            <groupId>jakarta.xml.bind</groupId>
-            <artifactId>jakarta.xml.bind-api</artifactId>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>hk2-utils</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>hk2-api</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.glassfish.hk2</groupId>
+            <artifactId>hk2</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
       <dependency>
-        <groupId>org.glassfish.hk2.external</groupId>
-        <artifactId>jakarta.inject</artifactId>
+        <groupId>org.glassfish.jersey.media</groupId>
+        <artifactId>jersey-media-json-jackson</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <!-- define these versions to make the hk2 versions consistent -->
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2</artifactId>
         <version>${hk2.version}</version>
       </dependency>
       <dependency>
-        <groupId>javax.servlet</groupId>
-        <artifactId>javax.servlet-api</artifactId>
-        <version>${javax.servlet-api.version}</version>
-        <scope>provided</scope>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2-api</artifactId>
+        <version>${hk2.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2-locator</artifactId>
+        <version>${hk2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>hk2-utils</artifactId>
+        <version>${hk2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.hk2</groupId>
+        <artifactId>spring-bridge</artifactId>
+        <version>${hk2.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>ch.qos.logback</groupId>
         <artifactId>logback-classic</artifactId>
@@ -248,6 +300,10 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -268,14 +324,19 @@
             <artifactId>commons-codec</artifactId>
           </exclusion>
           <exclusion>
-            <groupId>javax.servlet</groupId>
-            <artifactId>servlet-api</artifactId>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
       <dependency>
+        <groupId>com.apicatalog</groupId>
+        <artifactId>titanium-json-ld</artifactId>
+        <version>${titanium.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.apache.velocity</groupId>
-        <artifactId>velocity</artifactId>
+        <artifactId>velocity-engine-core</artifactId>
         <version>${velocity.version}</version>
         <exclusions>
           <exclusion>
@@ -290,12 +351,11 @@
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-collections4</artifactId>
+          </exclusion>
         </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.jgroups</groupId>
-        <artifactId>jgroups</artifactId>
-        <version>${jgroups.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
@@ -305,12 +365,12 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${jackson2.version}</version>
+        <version>${jackson2.annotations.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>${jackson2.databind.version}</version>
+        <version>${jackson2.version}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
@@ -346,32 +406,32 @@
       </dependency>
       <dependency>
         <groupId>io.micrometer</groupId>
-        <artifactId>micrometer-jersey2</artifactId>
-        <version>${micrometer.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.glassfish.jersey.inject</groupId>
-            <artifactId>jersey-hk2</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
         <version>${micrometer.version}</version>
       </dependency>
       <dependency>
         <groupId>io.prometheus</groupId>
-        <artifactId>simpleclient_servlet</artifactId>
+        <artifactId>prometheus-metrics-core</artifactId>
         <version>${prometheus.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jersey.ext</groupId>
+        <artifactId>jersey-micrometer</artifactId>
+        <version>${jersey.version}</version>
       </dependency>
       <dependency>
         <groupId>com.github.ben-manes.caffeine</groupId>
         <artifactId>caffeine</artifactId>
         <version>${caffeine.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.errorprone</groupId>
+            <artifactId>error_prone_annotations</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
-        <groupId>net.jodah</groupId>
+        <groupId>dev.failsafe</groupId>
         <artifactId>failsafe</artifactId>
         <version>${failsafe.version}</version>
       </dependency>
@@ -406,6 +466,14 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
+          <exclusion>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-commons</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-observation</artifactId>
+          </exclusion>
         </exclusions>
       </dependency>
       <dependency>
@@ -417,27 +485,9 @@
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-aop</artifactId>
-        <version>${spring.version}</version>
-        <exclusions>
           <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-aspects</artifactId>
-        <version>${spring.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-observation</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -469,11 +519,6 @@
         <version>${commons-lang.version}</version>
       </dependency>
       <dependency>
-        <groupId>xml-apis</groupId>
-        <artifactId>xml-apis</artifactId>
-        <version>${xml-apis.version}</version>
-      </dependency>
-      <dependency>
         <groupId>xerces</groupId>
         <artifactId>xercesImpl</artifactId>
         <version>${xerces.version}</version>
@@ -487,6 +532,11 @@
         <groupId>commons-codec</groupId>
         <artifactId>commons-codec</artifactId>
         <version>${commons-codec.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-text</artifactId>
+        <version>${commons-text.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -530,9 +580,15 @@
         <version>${mariadb.version}</version>
       </dependency>
       <dependency>
-        <groupId>mysql</groupId>
-        <artifactId>mysql-connector-java</artifactId>
+        <groupId>com.mysql</groupId>
+        <artifactId>mysql-connector-j</artifactId>
         <version>${mysql.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
@@ -549,10 +605,21 @@
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-core</artifactId>
         <version>${flyway.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-mysql</artifactId>
+        <version>${flyway.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-database-postgresql</artifactId>
         <version>${flyway.version}</version>
       </dependency>
 
@@ -575,29 +642,10 @@
       </dependency>
       <dependency>
         <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-core</artifactId>
+        <artifactId>shiro-bom</artifactId>
         <version>${shiro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>commons-collections</groupId>
-            <artifactId>commons-collections</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.shiro</groupId>
-        <artifactId>shiro-spring</artifactId>
-        <version>${shiro.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>javax.servlet.jsp</groupId>
-            <artifactId>jsp-api</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>javax.el</groupId>
-            <artifactId>el-api</artifactId>
-          </exclusion>
-        </exclusions>
+        <scope>import</scope>
+        <type>pom</type>
       </dependency>
       <!-- Pin aws-crt ahead of the AWS SDK BOM. The BOM ships an older aws-crt that is missing
            S3MetaRequestOptions$ResponseFileOption, causing ClassNotFoundException on S3 writes. -->
@@ -615,21 +663,15 @@
       </dependency>
       <!-- test gear -->
       <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>${junit.version}</version>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${junit5.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.hamcrest</groupId>
-        <artifactId>hamcrest-all</artifactId>
-        <version>1.3</version>
-        <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>com.github.stefanbirkner</groupId>
-        <artifactId>system-rules</artifactId>
-        <version>${system-rules.version}</version>
+        <artifactId>hamcrest</artifactId>
+        <version>${hamcrest.version}</version>
         <scope>test</scope>
       </dependency>
       <dependency>
@@ -646,17 +688,9 @@
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
-        <artifactId>mockito-core</artifactId>
-        <version>${mockito.version}</version>
+        <artifactId>mockito-junit-jupiter</artifactId>
+        <version>${mockito.junit5.version}</version>
         <scope>test</scope>
-        <exclusions>
-          <!-- mockito-core depends on hamcrest-core-1.0, but junit pulls
-            in the more recent 1.3 -->
-          <exclusion>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
@@ -683,22 +717,23 @@
         <version>${grizzly.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.glassfish.jersey.containers</groupId>
+        <artifactId>jersey-container-grizzly2-http</artifactId>
+        <version>${jersey.version}</version>
+      </dependency>
+      <dependency>
         <groupId>org.glassfish.jersey.test-framework.providers</groupId>
         <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
         <version>${jersey.version}</version>
         <scope>test</scope>
         <exclusions>
           <exclusion>
-            <groupId>jakarta.activation</groupId>
-            <artifactId>jakarta.activation-api</artifactId>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
           </exclusion>
           <exclusion>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -764,15 +799,20 @@
         </plugin>
 
         <plugin>
-          <groupId>org.eclipse.jetty</groupId>
-          <artifactId>jetty-maven-plugin</artifactId>
+          <groupId>org.eclipse.jetty.ee10</groupId>
+          <artifactId>jetty-ee10-maven-plugin</artifactId>
           <version>${jetty.version}</version>
+          <configuration>
+            <webApp>
+              <contextPath>/</contextPath>
+            </webApp>
+          </configuration>
         </plugin>
 
         <plugin>
           <groupId>io.github.git-commit-id</groupId>
           <artifactId>git-commit-id-maven-plugin</artifactId>
-          <version>5.0.0</version>
+          <version>9.0.2</version>
         </plugin>
       </plugins>
     </pluginManagement>
@@ -789,11 +829,6 @@
       </plugin>
 
       <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
-
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
       </plugin>
@@ -805,7 +840,7 @@
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.it.arg}</argLine>
+          <argLine>-XX:MaxMetaspaceSize=512m --add-opens=java.base/java.lang=ALL-UNNAMED ${jacoco.agent.it.arg}</argLine>
         </configuration>
       </plugin>
 
@@ -818,28 +853,43 @@
       </plugin>
 
       <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <!-- this generates the jar paths used by the surefire plugin for the mockito jar -->
+        <executions>
+          <execution>
+            <goals>
+              <goal>properties</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <!--
             This line enables code-coverage. However, it also blows the build's permgen.
             Fix me!
           -->
-          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.unit.arg}</argLine>
+          <argLine>-XX:MaxMetaspaceSize=512m ${jacoco.agent.unit.arg} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.junit5.version}/mockito-core-${mockito.junit5.version}.jar</argLine>
         </configuration>
       </plugin>
 
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
+          <configuration>
+            <excludes>
+              <exclude>**/SearchIndexMetrics.class</exclude>
+            </excludes>
+          </configuration>
           <executions>
             <execution>
               <id>default-prepare-agent</id>
               <goals>
                 <goal>prepare-agent</goal>
               </goals>
-
               <configuration>
-                <destFile>${sonar.jacoco.reportPath}</destFile>
                 <propertyName>jacoco.agent.unit.arg</propertyName>
                 <append>true</append>
               </configuration>
@@ -850,7 +900,6 @@
                 <goal>prepare-agent-integration</goal>
               </goals>
               <configuration>
-                <destFile>${sonar.jacoco.itReportPath}</destFile>
                 <propertyName>jacoco.agent.it.arg</propertyName>
                 <append>true</append>
                 <excludes>
@@ -860,16 +909,46 @@
               </configuration>
             </execution>
             <execution>
-              <id>default-report</id>
+              <id>report</id>
+              <phase>verify</phase>
               <goals>
                 <goal>report</goal>
               </goals>
+              <configuration>
+                <outputDirectory>${project.build.directory}/jacoco</outputDirectory>
+                <formats>XML</formats>
+              </configuration>
             </execution>
             <execution>
-              <id>default-report-integration</id>
+              <id>merge-coverage</id>
+              <phase>verify</phase>
               <goals>
-                <goal>report-integration</goal>
+                <goal>merge</goal>
               </goals>
+              <configuration>
+                <fileSets>
+                  <fileSet>
+                    <directory>${project.build.directory}</directory>
+                    <includes>
+                      <include>jacoco.exec</include>
+                      <include>jacoco-it.exec</include>
+                    </includes>
+                  </fileSet>
+                </fileSets>
+                <destFile>${project.build.directory}/jacoco/jacoco-merged.exec</destFile>
+              </configuration>
+            </execution>
+            <execution>
+              <id>generate-report</id>
+              <phase>verify</phase>
+              <goals>
+                <goal>report</goal>
+              </goals>
+              <configuration>
+                <dataFile>${project.build.directory}/jacoco/jacoco-merged.exec</dataFile>
+                <outputDirectory>${project.build.directory}/jacoco</outputDirectory>
+                <formats>XML</formats>
+              </configuration>
             </execution>
           </executions>
       </plugin>
@@ -885,7 +964,9 @@
       </plugin>
 
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-changelog-plugin</artifactId>
+        <version>${maven.changelog.version}</version>
       </plugin>
 
       <plugin>
@@ -904,7 +985,7 @@
                   <version>[3.6.3,)</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[11,)</version>
+                  <version>[21,)</version>
                 </requireJavaVersion>
                 <DependencyConvergence />
                 <bannedDependencies>
@@ -1043,13 +1124,6 @@
           <plugin>
             <groupId>com.mycila</groupId>
             <artifactId>license-maven-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>

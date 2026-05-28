@@ -40,8 +40,8 @@ public interface CreateResourceService {
                  String contentType, String filename, long contentSize, List<String> linkHeaders,
                  Collection<URI> digest, InputStream requestBody, ExternalContent externalContent);
 
-    default void perform(Transaction tx, String userPrincipal, FedoraId fedoraId,
-                         List<String> linkHeaders, Model model) {
+    default void perform(final Transaction tx, final String userPrincipal, final FedoraId fedoraId,
+                         final List<String> linkHeaders, final Model model) {
         perform(tx, userPrincipal, fedoraId, linkHeaders, model, false);
     }
 

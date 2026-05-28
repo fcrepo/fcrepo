@@ -5,27 +5,27 @@
  */
 package org.fcrepo.http.commons.webxml.bind;
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /**
  * <p>FilterMapping class.</p>
  *
  * @author awoods
  */
-@XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
+@XmlRootElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
         name = "filter-mapping")
 public class FilterMapping extends UrlMappable {
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "filter-name")
     String filterName;
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "servlet-name")
     String servletName;
 
-    @XmlElement(namespace = "http://java.sun.com/xml/ns/javaee",
+    @XmlElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "dispatcher")
     String dispatcher;
 

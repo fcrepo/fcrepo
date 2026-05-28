@@ -23,6 +23,8 @@ import org.fcrepo.kernel.api.lock.ResourceLockType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -34,6 +36,7 @@ import com.google.common.collect.Sets;
  * @author pwinckles
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class InMemoryResourceLockManager implements ResourceLockManager {
 
     private static final Logger LOG = LoggerFactory.getLogger(InMemoryResourceLockManager.class);

@@ -26,8 +26,8 @@ import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.apache.commons.io.IOUtils;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.riot.RDFDataMgr;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author pwinckles
@@ -45,7 +45,7 @@ public class UserTypesCacheImplTest {
 
     private String sessionId2;
 
-    @Before
+    @BeforeEach
     public void setup() {
         final var props = new FedoraPropsConfig();
         props.setUserTypesCacheSize(1024);

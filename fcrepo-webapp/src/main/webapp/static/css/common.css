@@ -1,86 +1,103 @@
-.fcrepo_root #action_delete {
-    display: none;
+/* --- Your custom app rules (unchanged) --- */
+.fcrepo_root #action_delete { display: none; }
+.fcrepo_binary #action_create { display: none; }
+.fcrepo_binary #action_import, .fcrepo_resource #action_import { display: none; }
+
+dl { padding-left: 19px; }
+dd { padding-left: 38px; word-wrap: break-word; }
+
+#binary_payload_container { display: none; }
+#binary_mime_type_container { display: none; }
+
+#toggle-actions { float: right; margin-bottom: 1em; }
+#actions { margin-bottom: 3em; }
+
+.namespace { font-size: .8em; }
+
+.standalone { margin-bottom: 20px; }
+
+#showErrorModal { display: none; }
+
+#search_results th, #search_results td { padding: 2px; }
+#search_results th { text-align: center; }
+
+#search_results thead tr :not(:last-child),
+#search_results tbody tr :not(:last-child) { border-right: 1px solid black; }
+
+#search_results tbody tr:nth-child(odd) { background-color: #dedede; }
+
+#action_search label { padding: 2px 5px; }
+
+/* --- Bootstrap 5 migrations --- */
+.breadcrumb {
+    background-color: #f5f5f5;   /* BS3 breadcrumb background */
+    padding: 8px 15px;           /* BS3 spacing */
+    margin-bottom: 20px;         /* optional, matches BS3 */
+    border-radius: 4px;          /* BS3 rounded corners */
 }
 
-.fcrepo_binary #action_create {
-    display: none;
+.breadcrumb-item + .breadcrumb-item::before {
+    color: #ccc; /* BS3 breadcrumb divider color */
 }
 
-.fcrepo_binary #action_import, .fcrepo_resource #action_import {
-    display: none;
+/* Accordion header when expanded */
+.accordion-button:not(.collapsed) {
+    background-color: #f5f5f5;   /* BS3 panel-default background */
+    color: #212529;              /* normal body text color */
+    box-shadow: none;            /* remove BS5 inset shadow */
+}
+.accordion-button {
+    background-color: #f5f5f5;
+    color: #212529;
+}
+.accordion-item {
+    border: 1px solid #ddd;   /* BS3 panel-default border */
+    border-radius: 4px;
 }
 
-dl {
-    padding-left: 19px;
-}
+/* BS3 .well --> BS5 .card .card-body (or any .card-body) */
+.card .card-body dl { padding-left: 0; }
 
-dd {
-    padding-left: 38px;
-    word-wrap: break-word;
-}
-
-.well dl {
-    padding-left: 0;
-}
-
-.well {
+/* If you used .well to create an indented block, mimic it on .card-body */
+.card .card-body {
     text-indent: -35px;
     padding-left: 54px;
 }
 
-#metadata .panel-body {
+/* Restore Bootstrap 3-style "info" text color */
+.text-info {
+    color: #31708f !important;   /* BS3's text-info blue */
+}
+
+/* BS3 .panel-body under #metadata --> BS5 .card-body */
+#metadata .card-body {
     word-wrap: break-word;
     text-indent: -35px;
     padding-left: 35px;
 }
 
-#metadata .panel-body .nodetype-properties {
-    text-indent: 0px;
-}
+#metadata .card-body .nodetype-properties { text-indent: 0; }
+#metadata .card-body .nodetype-properties h5 { font-weight: bold; }
 
-#metadata .panel-body .nodetype-properties h5 {
-    font-weight: bold;
-}
-
-#binary_payload_container {
-    display: none;
-}
-
-#binary_mime_type_container {
-    display: none;
-}
-
-#actions.visible-lg.in, #actions.visible-lg.collapsing, #actions.visible-md.in, #actions.visible-md.collapsing  {
-    display: block !important;
-}
-
-#toggle-actions {
-    float:right;
-    margin-bottom: 1em;
-}
-
-#actions {
-    margin-bottom: 3em;
-}
-
-.namespace {
-    font-size: .8em;
-}
-
+/* Your custom ".panel-content" can stay; map headings to BS5 card header */
 .panel-content {
-	text-indent:60px;
-	background-color:#fff;
-	border:none;
+    text-indent: 60px;
+    background-color: #fff;
+    border: none;
 }
 
-.panel .panel-heading {
-	font-size: 20px;
-}
+/* BS3 .panel .panel-heading --> BS5 .card .card-header */
+.card .card-header { font-size: 20px; }
 
-.panel-content .panel-heading {
-	font-size: 16px;
-}
+/* When used inside your ".panel-content" block, slightly smaller */
+.panel-content .card .card-header,
+.panel-content .card-header { font-size: 16px; }
 
+/* Title links inside card headers */
+.card-header .card-title a,
+.card-header a { color: #428bca; }
+
+/* Collapse toggles: BS5 uses .collapsed on the trigger and .show on target */
 .ctitle:after {
     content: "-";
     color: grey;
@@ -88,7 +105,6 @@ dd {
     font-size: 0.8em;
     line-height: normal;
 }
-
 .collapsed .ctitle:after {
     color: grey;
     content: "+";
@@ -97,38 +113,31 @@ dd {
     line-height: normal;
 }
 
-.panel-title > a {
-    color: #428bca;
+/* BS3 visibility helpers (.visible-lg .in) --> BS5 display utilities + .show
+   Target the collapse container when it’s shown at specific breakpoints. */
+#actions.d-lg-block.show,
+#actions.d-lg-block.collapsing,
+#actions.d-md-block.show,
+#actions.d-md-block.collapsing {
+    display: block !important;
 }
 
-.nav-form {
-    text-align: center;
+/* Optional: if your trigger controls a collapse with id="actions" and
+   you use data-bs-toggle="collapse", ensure the container itself can
+   be block-level at the desired breakpoints even before it’s shown. */
+@media (min-width: 768px) { /* md */
+    #actions.d-md-block { display: block; }
+}
+@media (min-width: 992px) { /* lg */
+    #actions.d-lg-block { display: block; }
 }
 
-.standalone {
-    margin-bottom: 20px;
-}
-#showErrorModal {
-    display: none;
-}
-
-#search_results th, #search_results td {
-    padding: 2px;
+/* Restore alignment for properties in metadata e.g. rdf type */
+@media (min-width: 576px) { /* at sm and up */
+    dl.row dd + dd {
+        margin-left: 25%;   /* 3 of 12 columns = col-sm-3 width */
+    }
 }
 
-#search_results th {
-  text-align: center;
-}
-
-#search_results thead tr :not(:last-child),
-#search_results tbody tr :not(:last-child) {
-    border-right: 1px solid black;
-}
-
-#search_results tbody tr:nth-child(odd) {
-    background-color: #dedede;
-}
-
-#action_search label {
-  padding: 2px 5px;
-}
+/* Misc layout helpers */
+.nav-form { text-align: center; }

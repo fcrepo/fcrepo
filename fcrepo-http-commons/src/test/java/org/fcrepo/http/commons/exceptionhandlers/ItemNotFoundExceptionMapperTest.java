@@ -5,13 +5,13 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static org.junit.Assert.assertEquals;
+import static jakarta.ws.rs.core.Response.Status.NOT_FOUND;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 import org.fcrepo.kernel.api.exception.ItemNotFoundException;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 
 /**
@@ -23,7 +23,7 @@ public class ItemNotFoundExceptionMapperTest {
 
     private ItemNotFoundExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new ItemNotFoundExceptionMapper();
     }

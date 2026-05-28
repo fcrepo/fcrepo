@@ -6,14 +6,15 @@
 package org.fcrepo.persistence.ocfl;
 
 import java.io.IOException;
-import javax.inject.Inject;
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.inject.Inject;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 
 /**
  * Filter which blocks requests if the repository initialization is ongoing
@@ -23,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 public class RepositoryInitializationFilter implements Filter {
 
     @Inject
-    private RepositoryInitializer initializer;
+    private RepositoryInitializationStatus initializationStatus;
 
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
@@ -33,7 +34,7 @@ public class RepositoryInitializationFilter implements Filter {
         }
 
         final var httpResponse = (HttpServletResponse) response;
-        if (!initializer.isInitializationComplete()) {
+        if (!initializationStatus.isInitializationComplete()) {
             httpResponse.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
             return;
         }

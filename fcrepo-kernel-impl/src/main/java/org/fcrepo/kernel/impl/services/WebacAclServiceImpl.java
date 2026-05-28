@@ -10,7 +10,7 @@ import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
 
 import java.util.Optional;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;

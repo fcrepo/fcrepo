@@ -14,7 +14,7 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class RepositoryStatsResult {
 
-    private Long resourceCount = 0l;
+    private Long resourceCount = 0L;
 
     public void setResourceCount(final Long resourceCount) {
         this.resourceCount = resourceCount;

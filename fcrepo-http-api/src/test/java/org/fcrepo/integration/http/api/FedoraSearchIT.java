@@ -11,9 +11,11 @@ import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.entity.StringEntity;
+import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.search.api.Condition;
 import org.fcrepo.search.api.SearchResult;
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 import java.io.IOException;
@@ -21,8 +23,8 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -30,20 +32,25 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_BINARY;
+import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
 import static org.fcrepo.search.api.Condition.Field.CONTENT_SIZE;
 import static org.fcrepo.search.api.Condition.Field.CREATED;
 import static org.fcrepo.search.api.Condition.Field.FEDORA_ID;
 import static org.fcrepo.search.api.Condition.Field.MIME_TYPE;
 import static org.fcrepo.search.api.Condition.Field.MODIFIED;
 import static org.fcrepo.search.api.Condition.Field.RDF_TYPE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static java.lang.Thread.sleep;
+import static java.time.ZoneOffset.UTC;
 
 /**
  * @author dbernstein
@@ -104,7 +111,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertNotNull(result);
             assertNotNull(result.getPagination());
-            assertTrue("Items not found! " + resources, result.getItems().size() > 0);
+            assertTrue(result.getItems().size() > 0, "Items not found! " + resources);
             final var resultingFedoraIds =
                     result.getItems().stream().map(x -> x.get("fedora_id")).collect(Collectors.toList());
 
@@ -132,8 +139,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
                 assertEquals(OK.getStatusCode(), getStatus(response));
                 final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                         SearchResult.class);
-                assertEquals("expected " + count + " items where condition = " + condition, count,
-                        result.getItems().size());
+                assertEquals(count, result.getItems().size(),
+                        "expected " + count + " items where condition = " + condition);
 
                 assertTrue(result.getItems().stream().map(x -> x.get(FEDORA_ID.toString()))
                         .allMatch(x -> x.toString().startsWith(urlPrefix)));
@@ -151,8 +158,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected 1 item where condition = " + condition, 1,
-                    result.getItems().size());
+            assertEquals(1, result.getItems().size(),
+                    "expected 1 item where condition = " + condition);
             modified = result.getItems().get(0).get(MODIFIED.toString()).toString();
         }
 
@@ -169,11 +176,36 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected 1 item where condition = " + condition, 1,
-                    result.getItems().size());
+            assertEquals(1, result.getItems().size(),
+                    "expected 1 item where condition = " + condition);
             final var newModified = result.getItems().get(0).get(MODIFIED.toString()).toString();
             assertNotEquals("Modified date should have changed  but it did not.", modified, newModified);
         }
+    }
+    private void assertReturnsNumberOfItems(final String condition, final int expectedCount) throws Exception {
+        final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition);
+        try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
+                    SearchResult.class);
+            assertEquals(expectedCount, result.getItems().size(),
+                    "expected " + expectedCount + " items where condition = " + condition);
+        }
+    }
+
+    @Test
+    public void testUpdateSearchIndexOnBinaryCreation() throws Exception {
+        final var binCondition = RDF_TYPE + "=" + FEDORA_BINARY.getURI();
+        assertReturnsNumberOfItems(binCondition, 0);
+        final var nonRdfCondition = RDF_TYPE + "=" + FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+        assertReturnsNumberOfItems(nonRdfCondition, 0);
+
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        createDatastream(id, "test_binary", "foo");
+
+        assertReturnsNumberOfItems(binCondition, 1);
+        assertReturnsNumberOfItems(nonRdfCondition, 1);
     }
 
     @Test
@@ -185,8 +217,8 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected 1 item where condition = " + condition, 1,
-                    result.getItems().size());
+            assertEquals(1, result.getItems().size(),
+                    "expected 1 item where condition = " + condition);
         }
 
         final var httpDelete = new HttpDelete(resourceId);
@@ -198,104 +230,123 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected 0 items where condition = " + condition, 0,
-                    result.getItems().size());
+            assertEquals(0, result.getItems().size(),
+                    "expected 0 items where condition = " + condition);
         }
     }
 
+    @Test
+    public void testUpdateSearchIndexOnBinaryDeletion() throws Exception {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final var dsUri = createDatastream(id, "test_binary", "foo");
+
+        final var binCondition = RDF_TYPE + "=" + FEDORA_BINARY.getURI();
+        assertReturnsNumberOfItems(binCondition, 1);
+        final var nonRdfCondition = RDF_TYPE + "=" + FEDORA_NON_RDF_SOURCE_DESCRIPTION_URI;
+        assertReturnsNumberOfItems(nonRdfCondition, 1);
+
+        final var httpDelete = new HttpDelete(dsUri);
+        try (final CloseableHttpResponse response = execute(httpDelete)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+        }
+
+        assertReturnsNumberOfItems(binCondition, 0);
+        assertReturnsNumberOfItems(nonRdfCondition, 0);
+    }
+
+    @Test
     public void testModifiedGreaterAndLessThan() throws Exception {
         final var id = getRandomUniqueId();
         final int count = 1;
         final var instant = Instant.now();
-        final var now = instant.toString();
-        final var tomorrow = instant.plus(Duration.ofDays(1)).toString();
-        createResources(id, count);
-        final var fedoraId = FEDORA_ID_PREFIX + "/" + id;
-        final var fedoraIdCondition = FEDORA_ID + "=" + fedoraId;
-        final var lessThanNow = MODIFIED + "<" + now;
-        final var greaterThanNow = MODIFIED + ">" + now;
-        final var lessThanTomorrow = MODIFIED + "<" + tomorrow;
-        final var greaterThanTomorrow = MODIFIED + ">" + tomorrow;
+        final var formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(UTC);
 
-        //no results for resources modified before now
+        final var tomorrow = instant.plus(Duration.ofDays(1));
+        // ensure there is a delay between instant and the creation/modification time of the resources.
+        sleep(1000);
+        final var resources = createResources(id, count);
+        assertEquals(1, resources.size());
+        final var externalFedoraId = resources.get(0);
+        final var lessThanNow = MODIFIED + encode("<") + formatter.format(instant);
+        final var greaterThanNow = MODIFIED + encode(">") + formatter.format(instant);
+        final var lessThanTomorrow = MODIFIED + encode("<") + formatter.format(tomorrow);
+        final var greaterThanTomorrow = MODIFIED + encode(">") + formatter.format(tomorrow);
+
+        // no results for resources modified before now
         String searchUrl =
-                getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + lessThanNow;
+                getSearchEndpoint() + "condition=" + lessThanNow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected no results", 0,
-                    result.getItems().size());
+            assertEquals(0, result.getItems().size(), "expected no results");
         }
-        //no results for resources modified after tomorrow
+        // no results for resources modified after tomorrow
         searchUrl =
-                getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + greaterThanTomorrow;
+                getSearchEndpoint() + "condition=" + greaterThanTomorrow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected no results", 0,
-                    result.getItems().size());
+            assertEquals(0, result.getItems().size(), "expected no results");
         }
 
         // ensure that greater than now returns a result
-        searchUrl = getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + greaterThanNow;
+        searchUrl = getSearchEndpoint() + "condition=" + greaterThanNow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected " + count + " results", count,
-                    result.getItems().size());
+            assertEquals(count, result.getItems().size(), "expected " + count + " results");
 
             assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
-                    .allMatch(x -> x.toString().equals(fedoraId)));
+                    .allMatch(x -> x.toString().startsWith(externalFedoraId)));
         }
 
         // ensure that less than tomorrow returns a result
-        searchUrl = getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + lessThanTomorrow;
+        searchUrl = getSearchEndpoint() + "condition=" + lessThanTomorrow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected " + count + " results", count,
-                    result.getItems().size());
+            assertEquals(count, result.getItems().size(), "expected " + count + " results");
 
             assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
-                    .allMatch(x -> x.toString().equals(fedoraId)));
+                    .allMatch(x -> x.toString().startsWith(externalFedoraId)));
         }
 
         // ensure that between now and tomorrow returns a result.
-        searchUrl = getSearchEndpoint() + "condition=" + encode(fedoraIdCondition) + "&" + greaterThanNow +
-                "&" + lessThanTomorrow;
+        searchUrl = getSearchEndpoint() + "condition=" + greaterThanNow +
+                "&condition=" + lessThanTomorrow;
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(),
                     SearchResult.class);
-            assertEquals("expected " + count + " results ", count,
-                    result.getItems().size());
+            assertEquals(count, result.getItems().size(), "expected " + count + " results ");
             assertTrue(result.getItems().stream().map(x -> x.get("fedora_id"))
-                    .allMatch(x -> x.toString().equals(fedoraId)));
+                    .allMatch(x -> x.toString().startsWith(externalFedoraId)));
         }
     }
 
     @Test
     public void testFieldsReturnsSpecifiedFields() throws Exception {
-        testFieldsReturnsOnlySpecifiedFields(Arrays.asList(FEDORA_ID, CREATED));
+        testFieldsReturnsOnlySpecifiedFields(List.of(FEDORA_ID, CREATED));
     }
 
     @Test
     public void testFieldsReturnsMimeType() throws Exception {
-        testFieldsReturnsOnlySpecifiedFields(Arrays.asList(MIME_TYPE));
+        testFieldsReturnsOnlySpecifiedFields(List.of(MIME_TYPE));
     }
 
     @Test
     public void testFieldsReturnsContentSize() throws Exception {
-        testFieldsReturnsOnlySpecifiedFields(Arrays.asList(CONTENT_SIZE));
+        testFieldsReturnsOnlySpecifiedFields(List.of(CONTENT_SIZE));
     }
 
     @Test
     public void testFieldsReturnsRDFType() throws Exception {
-        testFieldsReturnsOnlySpecifiedFields(Arrays.asList(RDF_TYPE));
+        testFieldsReturnsOnlySpecifiedFields(List.of(RDF_TYPE));
     }
 
 
@@ -312,11 +363,11 @@ public class FedoraSearchIT extends AbstractResourceIT {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             final var items = result.getItems();
-            assertEquals("expected " + count + " items", count, items.size());
+            assertEquals(count, items.size(), "expected " + count + " items");
             for (final Map<String, Object> item : items) {
-                assertEquals("expected " + fields.size() + " fields returned", fields.size(), item.size());
+                assertEquals(fields.size(), item.size(), "expected " + fields.size() + " fields returned");
                 for (final String field : fields) {
-                    assertTrue("Result does not contain expected field: " + field, item.containsKey(field));
+                    assertTrue(item.containsKey(field), "Result does not contain expected field: " + field);
                 }
             }
         }
@@ -447,7 +498,7 @@ public class FedoraSearchIT extends AbstractResourceIT {
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);
             assertNotNull(result);
             assertNotNull(result.getPagination());
-            assertEquals("No results expected.", 0, result.getItems().size());
+            assertEquals(0, result.getItems().size(), "No results expected.");
         }
     }
 
@@ -514,12 +565,13 @@ public class FedoraSearchIT extends AbstractResourceIT {
         assertEquals(201, getStatus(putObjMethod(resourceC, "text/plain",
                 "text")));
 
-        final var resources =
-                Stream.of(resourceA, resourceC, resourceB).map(x -> serverAddress + x)
+        final var resources = Stream.of(resourceA, resourceC, resourceB)
+                        .map(x -> serverAddress + x)
                         .collect(Collectors.toList());
         final var condition = FEDORA_ID + "=" + resourceId + "/*";
+        final var condition2 = "rdf_type=" + RdfLexicon.NON_RDF_SOURCE.getURI();
         final String searchUrl = getSearchEndpoint() + "condition=" + encode(condition) +
-                "&order_by=mime_type&order=desc";
+                "&condition=" + encode(condition2) + "&order_by=mime_type&order=desc";
         try (final CloseableHttpResponse response = execute(new HttpGet(searchUrl))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
             final SearchResult result = objectMapper.readValue(response.getEntity().getContent(), SearchResult.class);

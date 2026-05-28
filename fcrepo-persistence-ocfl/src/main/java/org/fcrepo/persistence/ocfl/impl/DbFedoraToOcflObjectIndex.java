@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
@@ -30,6 +30,8 @@ import org.fcrepo.storage.ocfl.cache.CaffeineCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -50,6 +52,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @author pwinckles
  */
 @Component("ocflIndexImpl")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DbFedoraToOcflObjectIndex.class);
@@ -180,11 +183,28 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     /*
      * Delete records from the mapping table that are to be deleted in this transaction.
      */
-    private static final String COMMIT_DELETE_RECORDS = "DELETE FROM " + MAPPING_TABLE + " WHERE " +
+    private static final String COMMIT_DELETE_RECORDS_H2 = "DELETE FROM " + MAPPING_TABLE + " WHERE " +
             "EXISTS (SELECT * FROM " + TRANSACTION_OPERATIONS_TABLE + " WHERE " +
             TRANSACTION_ID_COLUMN + " = :transactionId AND " +  OPERATION_COLUMN + " = 'delete' AND " +
             MAPPING_TABLE + "." + FEDORA_ID_COLUMN + " = " + TRANSACTION_OPERATIONS_TABLE + "." + FEDORA_ID_COLUMN +
             ")";
+    private static final String COMMIT_DELETE_RECORDS_MYSQL = "DELETE mt" +
+            " FROM " + MAPPING_TABLE + " mt JOIN " + TRANSACTION_OPERATIONS_TABLE + " tot" +
+            " ON mt." + FEDORA_ID_COLUMN + " = tot." + FEDORA_ID_COLUMN +
+            " WHERE tot." + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND tot." + OPERATION_COLUMN + " = 'delete'";
+    private static final String COMMIT_DELETE_RECORDS_POSTGRES = "DELETE FROM " + MAPPING_TABLE + " mt" +
+            " USING " + TRANSACTION_OPERATIONS_TABLE + " tot" +
+            " WHERE  tot." + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND mt." + FEDORA_ID_COLUMN + " = tot." + FEDORA_ID_COLUMN +
+            " AND tot." + OPERATION_COLUMN + " = 'delete'";
+
+    private static final Map<DbPlatform, String> COMMIT_DELETE_RECORDS_MAP = Map.of(
+            DbPlatform.MYSQL, COMMIT_DELETE_RECORDS_MYSQL,
+            DbPlatform.MARIADB, COMMIT_DELETE_RECORDS_MYSQL,
+            DbPlatform.H2, COMMIT_DELETE_RECORDS_H2,
+            DbPlatform.POSTGRESQL, COMMIT_DELETE_RECORDS_POSTGRES
+    );
 
     /*
      * Collect IDs to invalidate on transaction commit.
@@ -345,7 +365,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
             final Map<String, String> map = Map.of("transactionId", transaction.getId());
             try {
                 final List<String> deleteIds = jdbcTemplate.queryForList(GET_DELETE_IDS, map, String.class);
-                jdbcTemplate.update(COMMIT_DELETE_RECORDS, map);
+                jdbcTemplate.update(COMMIT_DELETE_RECORDS_MAP.get(dbPlatform), map);
                 jdbcTemplate.update(COMMIT_ADD_MAPPING_MAP.get(dbPlatform), map);
                 jdbcTemplate.update(DELETE_ENTIRE_TRANSACTION, map);
                 this.mappingCache.invalidateAll(deleteIds);
@@ -365,7 +385,7 @@ public class DbFedoraToOcflObjectIndex implements FedoraToOcflObjectIndex {
     }
 
     private void handleInsertException(final FedoraId fedoraId, final Exception e) {
-        if (e.getMessage().contains("too long for")) {
+        if (e.getMessage().contains("too long for") || e.getCause().getMessage().contains("too long for")) {
             throw new InvalidResourceIdentifierException("Database error - Fedora ID path too long",e);
         } else if (e instanceof DuplicateKeyException) {
             throw new RepositoryRuntimeException("Database error - primary key already exists for Fedora ID: " +

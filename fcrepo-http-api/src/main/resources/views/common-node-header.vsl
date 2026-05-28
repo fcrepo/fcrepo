@@ -1,8 +1,10 @@
 #parse("views/common-header.vsl")
 <div class="container">
-  <div class="row">
-      <div class="col-md-9">
-          <h1>$esc.html($helpers.getObjectTitle($rdf, $topic))</h1>
-      </div>
-  </div>
+    <div class="row">
+        <div class="col-lg-9">
+            <h1 class="h2">
+                $esc.html($helpers.getObjectTitle($rdf, $topic))
+            </h1>
+        </div>
+    </div>
 </div>

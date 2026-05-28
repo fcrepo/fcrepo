@@ -12,12 +12,14 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 
 /**
  * Fedora's OCFL related configuration properties
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.Configuration;
  * @since 6.0.0
  */
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class OcflPropsConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcflPropsConfig.class);
@@ -171,8 +174,11 @@ public class OcflPropsConfig extends BasePropsConfig {
             LOGGER.info("Fedora OCFL root: {}", ocflRepoRoot);
             createDirectories(ocflRepoRoot);
         } else if (storage == Storage.OCFL_S3) {
-            Objects.requireNonNull(ocflS3Bucket,
-                    String.format("The property %s must be set when OCFL S3 storage is used", FCREPO_OCFL_S3_BUCKET));
+            if (ocflS3Bucket == null || ocflS3Bucket.isBlank()) {
+                throw new IllegalArgumentException(
+                        String.format("The property %s must be set when OCFL S3 storage is used",
+                                FCREPO_OCFL_S3_BUCKET));
+            }
 
             LOGGER.info("Fedora AWS access key: {}", awsAccessKey);
             LOGGER.info("Fedora AWS secret key set: {}", Objects.isNull(awsSecretKey));

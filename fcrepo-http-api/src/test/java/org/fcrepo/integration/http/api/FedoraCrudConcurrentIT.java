@@ -5,9 +5,9 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static org.junit.Assert.assertEquals;
+import static jakarta.ws.rs.core.HttpHeaders.CONTENT_TYPE;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -20,7 +20,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.BasicHttpEntity;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**
@@ -283,7 +283,7 @@ public class FedoraCrudConcurrentIT extends AbstractResourceIT {
                 logger.info("{} {} with status {} in {} ms.",
                             taskName, request.getURI().toString(),
                             statusCode, String.valueOf(responseTime));
-                assertEquals(taskName + " exited abnormally.", expectedStatusCode, statusCode);
+                assertEquals(expectedStatusCode, statusCode, taskName + " exited abnormally.");
             } catch (final IOException e) {
                 logger.error("Error {} {} got IOException: {}", taskName, request.getURI().toString(), e.getMessage());
             } finally {

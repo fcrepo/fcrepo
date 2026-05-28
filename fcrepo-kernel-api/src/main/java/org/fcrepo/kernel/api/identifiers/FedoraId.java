@@ -6,6 +6,7 @@
 package org.fcrepo.kernel.api.identifiers;
 
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
@@ -449,7 +450,7 @@ public class FedoraId {
     @JsonValue
     @Override
     public String toString() {
-        return getFullId();
+        return getEncodedFullId();
     }
 
     /**
@@ -518,13 +519,19 @@ public class FedoraId {
         }
         if (processID.contains(FCR_VERSIONS)) {
             final String[] versionSplits = split(processID, FCR_VERSIONS);
-            if (versionSplits.length > 2) {
-                throw new InvalidResourceIdentifierException(String.format(
-                        "Path <%s> is invalid. May not contain multiple %s parts.",
-                        fullPath, FCR_VERSIONS));
-            } else if (versionSplits.length == 2 && versionSplits[1].isEmpty()) {
+            if (versionSplits.length == 2 && versionSplits[1].isEmpty()) {
                 this.isTimemap = true;
             } else {
+                if (versionSplits.length == 2 && versionSplits[1].contains("/" + FCR_FIXITY)) {
+                    // This is a fixity request for a memento, so remove the fixity part and
+                    // check that there is only a memento datetime left.
+                    final var checkVersion = split(versionSplits[1], FCR_FIXITY);
+                    if (checkVersion.length == 2 && checkVersion[1].isEmpty()) {
+                        versionSplits[1] = checkVersion[0];
+                    } else {
+                        throw new InvalidResourceIdentifierException(String.format("Path is invalid: %s", fullPath));
+                    }
+                }
                 final String afterVersion = versionSplits[1];
                 if (afterVersion.matches("/\\d{14}")) {
                     this.isMemento = true;

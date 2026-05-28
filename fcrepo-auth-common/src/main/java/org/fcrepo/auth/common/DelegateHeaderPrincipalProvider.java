@@ -5,7 +5,7 @@
  */
 package org.fcrepo.auth.common;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.io.Serializable;
 import java.security.Principal;
@@ -78,7 +78,7 @@ public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider
     public Principal getDelegate(final HttpServletRequest request) {
         final Set<Principal> principals = getPrincipals(request);
         // No delegate
-        if (principals.size() == 0) {
+        if (principals.isEmpty()) {
             return null;
         }
 
@@ -91,7 +91,7 @@ public class DelegateHeaderPrincipalProvider extends HttpHeaderPrincipalProvider
     }
 
     @Override
-    protected Principal createPrincipal(final String name) {
+    public Principal createPrincipal(final String name) {
         return new DelegatedHeaderPrincipal(name.trim());
     }
 

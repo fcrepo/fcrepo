@@ -38,12 +38,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.StringJoiner;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 
 import org.apache.jena.graph.Graph;
 import org.apache.jena.graph.NodeFactory;
 import org.apache.jena.graph.Triple;
-import org.apache.jena.graph.impl.LiteralLabel;
 import org.apache.jena.vocabulary.DCTerms;
 
 import org.fcrepo.http.commons.api.rdf.TripleOrdering;
@@ -174,8 +173,8 @@ public class ViewHelpers {
             return "";
         }
         final Optional<String> title = TITLE_PROPERTIES.stream().map(Property::asNode).flatMap(p -> listObjects(
-                graph, sub, p).toList().stream()).filter(Node::isLiteral).map(Node::getLiteral).map(
-                        LiteralLabel::toString).findFirst();
+                graph, sub, p).toList().stream()).filter(Node::isLiteral).map(Node::getLiteralValue).map(
+                        Object::toString).findFirst();
         return title.orElse(sub.isURI() ? sub.getURI() : sub.isBlank() ? sub.getBlankNodeLabel() : sub.toString());
     }
 

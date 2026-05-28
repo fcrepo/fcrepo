@@ -24,9 +24,9 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import javax.sql.DataSource;
 
 import org.fcrepo.common.db.DbPlatform;
@@ -37,6 +37,8 @@ import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -53,6 +55,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
  * @since 6.0.0
  */
 @Component("containmentIndexImpl")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ContainmentIndexImpl implements ContainmentIndex {
 
     private static final Logger LOGGER = getLogger(ContainmentIndexImpl.class);
@@ -305,12 +308,33 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     /*
      * Remove from the main table all rows from transaction operation table marked 'purge' for this transaction.
      */
-    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE + " WHERE " +
-            "EXISTS (SELECT 1 FROM " + TRANSACTION_OPERATIONS_TABLE + " t WHERE t." +
-            TRANSACTION_ID_COLUMN + " = :transactionId AND t." +  OPERATION_COLUMN + " = 'purge' AND" +
-            " t." + FEDORA_ID_COLUMN + " = " + RESOURCES_TABLE + "." + FEDORA_ID_COLUMN +
-            " AND t." + PARENT_COLUMN + " = " + RESOURCES_TABLE + "." + PARENT_COLUMN + ")";
 
+    private static final String COMMIT_PURGE_RECORDS = "DELETE FROM " + RESOURCES_TABLE +
+            " WHERE (" + FEDORA_ID_COLUMN + ", " + PARENT_COLUMN + ") IN (" +
+            " SELECT t." + FEDORA_ID_COLUMN + ", t." + PARENT_COLUMN +
+            " FROM " + TRANSACTION_OPERATIONS_TABLE + " t " +
+            " WHERE t." + TRANSACTION_ID_COLUMN + " = :transactionId " +
+            " AND t." + OPERATION_COLUMN + " = 'purge')";
+    private static final String COMMIT_PURGE_RECORDS_POSTGRES = "DELETE FROM " + RESOURCES_TABLE + " r" +
+            " USING " + TRANSACTION_OPERATIONS_TABLE + " t" +
+            " WHERE t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN +
+            " AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN +
+            " AND t." + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND t." + OPERATION_COLUMN + " = 'purge'";
+    private static final String COMMIT_PURGE_RECORDS_MYSQL = "DELETE r" +
+            " FROM " + RESOURCES_TABLE + " r" +
+            " INNER JOIN " + TRANSACTION_OPERATIONS_TABLE + " t" +
+            " ON t." + FEDORA_ID_COLUMN + " = r." + FEDORA_ID_COLUMN +
+            " AND t." + PARENT_COLUMN + " = r." + PARENT_COLUMN +
+            " WHERE t." + TRANSACTION_ID_COLUMN + " = :transactionId" +
+            " AND t." + OPERATION_COLUMN + " = 'purge'";
+
+    private static final Map<DbPlatform, String> COMMIT_PURGE_RECORDS_MAP = Map.of(
+            DbPlatform.H2, COMMIT_PURGE_RECORDS,
+            DbPlatform.MYSQL, COMMIT_PURGE_RECORDS_MYSQL,
+            DbPlatform.MARIADB, COMMIT_PURGE_RECORDS_MYSQL,
+            DbPlatform.POSTGRESQL, COMMIT_PURGE_RECORDS_POSTGRES
+    );
     /*
      * Query if a resource exists in the main table and is not deleted.
      */
@@ -354,7 +378,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      * Get the parent ID for this resource from the main table if not deleted.
      */
     private static final String PARENT_EXISTS = "SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE +
-            " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + END_TIME_COLUMN + " IS NULL";
+            " WHERE " + FEDORA_ID_COLUMN + " = :child";
 
     /*
      * Get the parent ID for this resource from the operations table for an 'add' operation in this transaction, but
@@ -362,7 +386,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
      */
     private static final String PARENT_EXISTS_IN_TRANSACTION = "SELECT x." + PARENT_COLUMN + " FROM" +
             " (SELECT " + PARENT_COLUMN + " FROM " + RESOURCES_TABLE + " WHERE " + FEDORA_ID_COLUMN + " = :child" +
-            " AND " + END_TIME_COLUMN + " IS NULL" +
             " UNION SELECT " + PARENT_COLUMN + " FROM " + TRANSACTION_OPERATIONS_TABLE +
             " WHERE " + FEDORA_ID_COLUMN + " = :child AND " + TRANSACTION_ID_COLUMN + " = :transactionId" +
             " AND " + OPERATION_COLUMN + " = 'add') x" +
@@ -654,7 +677,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         tx.doInTx(() -> {
             final String resourceID = resource.getFullId();
 
-            final String parent = getContainedByDeleted(tx, resource);
+            final String parent = getContainedBy(tx, resource);
 
             if (parent != null) {
                 LOGGER.debug("Removing containment relationship between parent ({}) and child ({})",
@@ -735,26 +758,6 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         jdbcTemplate.update(CONDITIONALLY_UPDATE_LAST_UPDATED, parameterSource);
     }
 
-    /**
-     * Find parent for a resource using a deleted containment relationship.
-     * @param tx the transaction.
-     * @param resource the child resource id.
-     * @return the parent id.
-     */
-    private String getContainedByDeleted(final Transaction tx, final FedoraId resource) {
-        final String resourceID = resource.getFullId();
-        final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("child", resourceID);
-        final List<String> parentID;
-        if (tx.isOpenLongRunning()) {
-            parameterSource.addValue("transactionId", tx.getId());
-            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED_IN_TRANSACTION, parameterSource, String.class);
-        } else {
-            parentID = jdbcTemplate.queryForList(PARENT_EXISTS_DELETED, parameterSource, String.class);
-        }
-        return parentID.stream().findFirst().orElse(null);
-    }
-
     @Override
     public void commitTransaction(final Transaction tx) {
         if (!tx.isShortLived()) {
@@ -768,7 +771,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
                         String.class);
                 final List<String> addedResources = jdbcTemplate.queryForList(GET_ADDED_RESOURCES, parameterSource,
                         String.class);
-                final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS, parameterSource);
+                final int purged = jdbcTemplate.update(COMMIT_PURGE_RECORDS_MAP.get(dbPlatform), parameterSource);
                 final int deleted = jdbcTemplate.update(COMMIT_DELETE_RECORDS.get(dbPlatform), parameterSource);
                 final int added = jdbcTemplate.update(COMMIT_ADD_RECORDS_MAP.get(dbPlatform), parameterSource);
                 for (final var parent : changedParents) {
@@ -876,7 +879,14 @@ public class ContainmentIndexImpl implements ContainmentIndex {
     @Override
     public boolean hasResourcesStartingWith(final Transaction tx, final FedoraId fedoraId) {
         final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
-        parameterSource.addValue("resourceId", fedoraId.getFullId() + "/%");
+        String resourceId = fedoraId.getFullId();
+        if (resourceId.contains("_")) {
+            resourceId = resourceId.replaceAll("_", "\\\\_");
+        }
+        if (resourceId.contains("%")) {
+            resourceId = resourceId.replaceAll("%", "\\\\%");
+        }
+        parameterSource.addValue("resourceId", resourceId + "/%");
         final boolean matchingIds;
         if (tx.isOpenLongRunning()) {
             parameterSource.addValue("transactionId", tx.getId());

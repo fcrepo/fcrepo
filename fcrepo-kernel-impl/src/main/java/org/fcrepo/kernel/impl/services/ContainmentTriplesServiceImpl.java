@@ -38,7 +38,25 @@ public class ContainmentTriplesServiceImpl implements ContainmentTriplesService 
         final var nodeUri = fedoraId.isMemento() ? fedoraId.getBaseId() : fedoraId.getFullId();
         final Node currentNode = createURI(nodeUri);
         return containmentIndex.getContains(tx, fedoraId).map(c ->
-                new Triple(currentNode, CONTAINS.asNode(), createURI(c)));
+                Triple.create(currentNode, CONTAINS.asNode(), createURI(c)));
     }
 
+    @Override
+    public Stream<Triple> getContainedBy(final Transaction tx, final FedoraResource objectResource) {
+        var objectId = objectResource.getFedoraId();
+        final String nodeUri;
+        if (objectId.isMemento() || objectId.isDescription()) {
+            objectId = objectId.asBaseId();
+            nodeUri = objectId.getBaseId();
+        } else {
+            nodeUri = objectId.getFullId();
+        }
+        final var containedBy = containmentIndex.getContainedBy(tx, objectId);
+        if (containedBy == null) {
+            return Stream.empty();
+        }
+        return Stream.of(Triple.create(createURI(containedBy),
+                        CONTAINS.asNode(),
+                        createURI(nodeUri)));
+    }
 }

@@ -8,9 +8,9 @@ package org.fcrepo.auth.webac;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-import static javax.servlet.http.HttpServletResponse.SC_CONFLICT;
-import static javax.servlet.http.HttpServletResponse.SC_FORBIDDEN;
+import static jakarta.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static jakarta.servlet.http.HttpServletResponse.SC_CONFLICT;
+import static jakarta.servlet.http.HttpServletResponse.SC_FORBIDDEN;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeJSONLD;
@@ -50,17 +50,18 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
-import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Link;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.inject.Inject;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.Link;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriBuilder;
 
+import org.apache.jena.riot.RDFDataMgr;
 import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
 import org.fcrepo.http.commons.domain.MultiPrefer;
@@ -87,7 +88,6 @@ import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.query.QueryParseException;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.RDFReaderI;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.riot.Lang;
@@ -701,14 +701,14 @@ public class WebACFilter extends RequestContextFilter {
      */
     private URI getHasMemberFromRequest(final HttpServletRequest request) throws IOException {
         final String baseUri = request.getRequestURL().toString();
-        final RDFReaderI reader;
         final String contentType = request.getContentType();
         final Lang format = contentTypeToLang(contentType);
-        final Model inputModel;
+        if (format == null) {
+            throw new BadRequestException("Unsupported content type: " + contentType);
+        }
         try {
-            inputModel = createDefaultModel();
-            reader = inputModel.getReader(format.getName().toUpperCase());
-            reader.read(inputModel, request.getInputStream(), baseUri);
+            final Model inputModel = createDefaultModel();
+            RDFDataMgr.read(inputModel, request.getInputStream(), baseUri, format);
             final Statement st = inputModel.getProperty(null, MEMBERSHIP_RESOURCE);
             return (st != null ? URI.create(st.getObject().toString()) : null);
         } catch (final RiotException e) {

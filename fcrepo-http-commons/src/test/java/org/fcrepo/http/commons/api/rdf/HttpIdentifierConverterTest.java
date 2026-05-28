@@ -9,24 +9,28 @@ import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_VERSIONS;
 import static org.fcrepo.kernel.api.FedoraTypes.FEDORA_ID_PREFIX;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 
 import java.util.UUID;
 
 /**
  * @author whikloj
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class HttpIdentifierConverterTest {
 
     private HttpIdentifierConverter converter;
@@ -37,16 +41,16 @@ public class HttpIdentifierConverterTest {
 
     private UriBuilder uriBuilder;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         uriBuilder = UriBuilder.fromUri(uriTemplate);
         converter = new HttpIdentifierConverter(uriBuilder);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testBlankUri() {
         final String testUri = "";
-        converter.toInternalId(testUri);
+        assertThrows(IllegalArgumentException.class, () -> converter.toInternalId(testUri));
     }
 
     /**
@@ -59,10 +63,10 @@ public class HttpIdentifierConverterTest {
         assertEquals(uriBase + "/", fedoraUri);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testBlankId() {
         final String testId = "";
-        final String fedoraId = converter.toExternalId(testId);
+        assertThrows(IllegalArgumentException.class, () -> converter.toExternalId(testId));
     }
 
     @Test
@@ -316,6 +320,24 @@ public class HttpIdentifierConverterTest {
         final String fedoraId = converter.toInternalId(testUri);
         final String expectedId = FEDORA_ID_PREFIX + "/+&";
         assertEquals(expectedId, fedoraId);
+    }
+
+    @Test
+    public void testTranslateInternalUri() {
+        final String testUri = "/some/uri";
+        assertEquals(uriBase + "/uri", converter.translateUri(testUri));
+    }
+
+    @Test
+    public void testTranslateExternalUri() {
+        final String testUri = "http://example.com/some/uri";
+        assertEquals(testUri, converter.translateUri(testUri));
+    }
+
+    @Test
+    public void testBuildHashUri() {
+        final String testUri = "/uri#hashuri";
+        assertEquals(uriBase + testUri, converter.toDomain(testUri));
     }
 
     /**

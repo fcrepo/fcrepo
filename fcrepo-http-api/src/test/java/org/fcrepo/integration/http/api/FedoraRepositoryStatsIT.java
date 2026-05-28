@@ -6,14 +6,14 @@
 package org.fcrepo.integration.http.api;
 
 import static java.net.URLEncoder.encode;
-import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.BAD_REQUEST;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.NOT_ACCEPTABLE;
+import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -33,7 +33,7 @@ import org.apache.http.message.BasicHeader;
 import org.fcrepo.stats.api.AggregatedRepositoryStatsResults;
 import org.fcrepo.stats.api.RepositoryStatsByMimeTypeResults;
 import org.fcrepo.stats.api.RepositoryStatsByRdfTypeResults;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
@@ -273,16 +273,21 @@ public class FedoraRepositoryStatsIT extends AbstractResourceIT {
                     RepositoryStatsByRdfTypeResults.class);
             assertNotNull(result);
             LOGGER.info("result={}", result);
-            final var containerTypes = Arrays.asList("http://www.w3.org/ns/ldp#BasicContainer", "http://www.w3" +
-                    ".org/ns/ldp#Container", "http://www.w3.org/ns/ldp#RDFSource");
+            final var containerTypes = List.of("http://www.w3.org/ns/ldp#BasicContainer",
+                    "http://www.w3.org/ns/ldp#Container");
             for (String ctype : containerTypes) {
                 assertEquals(1, getResourceCountByRdfType(result, ctype));
             }
-            final var binaryTypes = Arrays.asList("http://www.w3.org/ns/ldp#NonRDFSource");
+            // Binary description is also an RDFSource, along with the container
+            final var rdfSourceTypes = List.of("http://www.w3.org/ns/ldp#RDFSource");
+            for (String rtype : rdfSourceTypes) {
+                assertEquals(2, getResourceCountByRdfType(result, rtype));
+            }
+            final var binaryTypes = List.of("http://www.w3.org/ns/ldp#NonRDFSource");
             for (String btype : binaryTypes) {
                 assertEquals(1, getResourceCountByRdfType(result, btype));
             }
-            assertEquals(2, getResourceCountByRdfType(result, "http://www.w3.org/ns/ldp#Resource"));
+            assertEquals(3, getResourceCountByRdfType(result, "http://www.w3.org/ns/ldp#Resource"));
         }
     }
 

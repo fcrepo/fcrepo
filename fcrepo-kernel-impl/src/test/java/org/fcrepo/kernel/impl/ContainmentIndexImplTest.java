@@ -8,12 +8,12 @@ package org.fcrepo.kernel.impl;
 import static java.time.ZoneOffset.UTC;
 import static java.util.stream.Collectors.toList;
 import static org.fcrepo.kernel.api.services.VersionService.MEMENTO_LABEL_FORMATTER;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -32,22 +32,24 @@ import org.fcrepo.kernel.api.models.FedoraResource;
 
 import org.flywaydb.test.FlywayTestExecutionListener;
 import org.flywaydb.test.annotation.FlywayTest;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 /**
  * @author peichman
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @ContextConfiguration("/containmentIndexTest.xml")
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class, FlywayTestExecutionListener.class })
 public class ContainmentIndexImplTest {
@@ -73,13 +75,10 @@ public class ContainmentIndexImplTest {
     @Inject
     private ContainmentIndexImpl containmentIndex;
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule().silent();
-
     private final Map<String, FedoraResource> id_to_resource = new HashMap<>();
     private final Map<String, Transaction> id_to_transaction = new HashMap<>();
 
-    @Before
+    @BeforeEach
     @FlywayTest
     public void setUp() {
         id_to_resource.put("parent1", parent1);
@@ -466,7 +465,9 @@ public class ContainmentIndexImplTest {
         containmentIndex.removeResource(transaction1, child1.getFedoraId());
         containmentIndex.commitTransaction(transaction1);
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
-        assertNull(containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
+        // Parent can still be found from the child
+        assertEquals(parent1.getFedoraId().getFullId(),
+                containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
     }
 
     @Test
@@ -489,7 +490,9 @@ public class ContainmentIndexImplTest {
         containmentIndex.removeResource(transaction2, child1.getFedoraId());
         containmentIndex.commitTransaction(transaction2);
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
-        assertNull(containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
+        // Parent can still be found from the child
+        assertEquals(parent1.getFedoraId().getFullId(),
+                containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
         assertEquals(1, containmentIndex.getContains(transaction1, parent2.getFedoraId()).count());
         assertEquals(child1.getFedoraId().getFullId(),
                 containmentIndex.getContains(transaction1, parent2.getFedoraId()).findFirst().get());
@@ -513,7 +516,9 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(transaction1, parent1.getFedoraId()).count());
         containmentIndex.commitTransaction(transaction1);
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
-        assertNull(containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
+        // Parent can still be found from the child.
+        assertEquals(parent1.getFedoraId().getFullId(),
+                containmentIndex.getContainedBy(shortLivedTx, child1.getFedoraId()));
         assertEquals(0, containmentIndex.getContains(transaction1, parent1.getFedoraId()).count());
     }
 
@@ -614,6 +619,34 @@ public class ContainmentIndexImplTest {
         containmentIndex.commitTransaction(transaction1);
         // Still no similar paths.
         assertFalse(containmentIndex.hasResourcesStartingWith(shortLivedTx, parent1.getFedoraId()));
+    }
+
+    @Test
+    public void testHasResourcesStartingFailureUnderscore() {
+        stubObject("parent1");
+        final var subSubPathId = parent1.getFedoraId().resolve("abc/123");
+        final var subPathIdWithUnderscore = parent1.getFedoraId().resolve("a_c");
+        stubObject("transaction1");
+        // Add a resource.
+        containmentIndex.addContainedBy(transaction1, FedoraId.getRepositoryRootId(), subSubPathId);
+        // That resource's ID does not start with the id containing underscores we are checking
+        // as underscores are not treated as wildcards
+        assertFalse(subSubPathId.getFullId().startsWith(subPathIdWithUnderscore.getFullId()));
+        assertFalse(containmentIndex.hasResourcesStartingWith(transaction1, subPathIdWithUnderscore));
+    }
+
+    @Test
+    public void testHasResourcesStartingFailurePercent() {
+        stubObject("parent1");
+        final var subSubPathId = parent1.getFedoraId().resolve("abbc/123");
+        final var subPathIdWithPercent = parent1.getFedoraId().resolve("a%c");
+        stubObject("transaction1");
+        // Add a resource.
+        containmentIndex.addContainedBy(transaction1, FedoraId.getRepositoryRootId(), subSubPathId);
+        // That resource's ID does not start with the id containing percent signs we are checking
+        // as percent signs are not treated as wildcards
+        assertFalse(subSubPathId.getFullId().startsWith(subPathIdWithPercent.getFullId()));
+        assertFalse(containmentIndex.hasResourcesStartingWith(transaction1, subPathIdWithPercent));
     }
 
     @Test
@@ -768,6 +801,18 @@ public class ContainmentIndexImplTest {
         assertEquals(0, containmentIndex.getContains(transaction1, parent1.getFedoraId()).count());
         // outside of the transaction, it still shouldn't show up
         assertEquals(0, containmentIndex.getContains(shortLivedTx, parent1.getFedoraId()).count());
+    }
+
+    @Test
+    public void testGetContainedByBinaryDescription() {
+        stubObject("parent1");
+        stubObject("child1");
+        final var binaryId1 = child1.getFedoraId();
+        final var descriptionId1 = child1.getFedoraId().asDescription();
+        when(child1.getFedoraId()).thenReturn(descriptionId1);
+
+        containmentIndex.addContainedBy(shortLivedTx, parent1.getFedoraId(), binaryId1);
+        assertNull(containmentIndex.getContainedBy(shortLivedTx, descriptionId1));
     }
 }
 

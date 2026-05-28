@@ -15,9 +15,11 @@ import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -35,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 2019-09-20
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class OcflPersistentSessionManager implements PersistentStorageSessionManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcflPersistentSessionManager.class);

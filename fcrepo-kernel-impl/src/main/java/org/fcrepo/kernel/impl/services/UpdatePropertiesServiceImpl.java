@@ -8,7 +8,7 @@ package org.fcrepo.kernel.impl.services;
 
 import static org.fcrepo.kernel.api.RdfCollectors.toModel;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.AccessDeniedException;

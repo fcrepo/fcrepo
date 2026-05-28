@@ -14,9 +14,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElements;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import org.fcrepo.http.commons.webxml.bind.ContextParam;
 import org.fcrepo.http.commons.webxml.bind.Displayable;
@@ -31,36 +31,36 @@ import org.fcrepo.http.commons.webxml.bind.ServletMapping;
  *
  * @author awoods
  */
-@XmlRootElement(namespace = "http://java.sun.com/xml/ns/javaee",
+@XmlRootElement(namespace = "https://jakarta.ee/xml/ns/jakartaee",
         name = "web-app")
 public class WebAppConfig extends Displayable {
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "context-param")})
     List<ContextParam> contextParams;
 
     @XmlElements(
             value = {@XmlElement(
-                    namespace = "http://java.sun.com/xml/ns/javaee",
+                    namespace = "https://jakarta.ee/xml/ns/jakartaee",
                     name = "listener")})
     List<Listener> listeners;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee", name = "servlet")})
+            namespace = "https://jakarta.ee/xml/ns/jakartaee", name = "servlet")})
     List<Servlet> servlets;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee", name = "filter")})
+            namespace = "https://jakarta.ee/xml/ns/jakartaee", name = "filter")})
     List<Filter> filters;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "servlet-mapping")})
     List<ServletMapping> servletMappings;
 
     @XmlElements(value = {@XmlElement(
-            namespace = "http://java.sun.com/xml/ns/javaee",
+            namespace = "https://jakarta.ee/xml/ns/jakartaee",
             name = "filter-mapping")})
     List<FilterMapping> filterMappings;
 

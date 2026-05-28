@@ -2,9 +2,9 @@
 #* @vtlvariable name="rdf" type="org.apache.jena.graph.Graph" *#
 #* @vtlvariable name="model" type="org.apache.jena.rdf.model.Model" *#
 <!DOCTYPE html>
-#set( $title = $helpers.getObjectTitle($rdf, $topic) )
+    #set( $title = $helpers.getObjectTitle($rdf, $topic) )
 
-#parse("views/common.vsl")
+    #parse("views/common.vsl")
 <html>
 <head>
     <title>$title</title>
@@ -12,59 +12,69 @@
     #parse("views/common-head.vsl")
 </head>
 
-
 <body class="fcrepo_resource">
-<div  id="main" class="container" resource="$topic.getURI()">
+<div id="main" class="container" resource="$topic.getURI()">
     #parse("views/common-node-header.vsl")
 
-
     <div class="row">
-
-        <div class="col-md-12">
+        <div class="col-12">
             #parse("views/common-breadcrumb.vsl")
         </div>
 
+        <!-- Main -->
+        <div class="col-lg-9">
 
-        <div id="sidebar" class="col-md-3 col-md-push-9 clearfix">
-            <button id="toggle-actions" type="button" class="visible-xs visible-sm btn btn-danger" data-toggle="collapse" data-target=".actions">
+            <!-- Properties -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">Properties</h4>
+                </div>
+                <div class="card-body">
+                    #triples($topic)
+                </div>
+
+                ## Fixity section (optional)
+                #set($hasFixity = $helpers.createURI("http://www.loc.gov/premis/rdf/v1#hasFixity"))
+                #set($fixities = $rdf.find($topic, $hasFixity, $nodeany))
+                #if ($fixities.hasNext())
+                    #set($triple = $fixities.next())
+                    #set($sub = $helpers.createURI($triple.getObject().getURI()))
+                    <div class="card-header border-top">
+                        <h4 class="card-title mb-0">
+                            Fixity Properties
+                            <br>
+                            <small>
+                                <a href="$triple.getObject().getURI()">
+                                    $esc.html($helpers.getObjectTitle($rdf, $sub))
+                                </a>
+                            </small>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        #triples($sub)
+                    </div>
+                #end
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div id="sidebar" class="col-lg-3">
+            <button id="toggle-actions" type="button"
+                    class="btn btn-danger d-md-none mb-3"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#actions"
+                    aria-expanded="false"
+                    aria-controls="actions">
                 <span>Toggle actions</span>
             </button>
 
-        ## output actions
-            <div class="actions collapse visible-lg visible-md" id="actions">
+            <div class="actions collapse d-md-block" id="actions">
                 #parse("views/common-node-actions.vsl")
             </div>
         </div>
 
-
-        <div class="col-md-9 col-md-pull-3">
-
-        ## output triples for the topic node
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h4 class="panel-title">Properties</h4>
-                </div>
-                <div class="panel-body">
-                    #triples($topic)
-                </div>
-                
-            	## output triples for fixity
-
-				#set($hasFixity = $helpers.createURI("http://www.loc.gov/premis/rdf/v1#hasFixity"))
-				#set($fixities = $rdf.find($topic, $hasFixity, $nodeany))
-				#if ($fixities.hasNext())		            
-	            	#set($triple = $fixities.next())
-                    #set($sub = $helpers.createURI($triple.getObject().getURI()))
-	                <div class="panel-heading">
-	                    <h4 class="panel-title">Fixity Properties <br/><small><a href="$triple.getObject().getURI()">$esc.html($helpers.getObjectTitle($rdf, $sub))</a></small></h4>
-	                </div>
-	                <div class="panel-body">
-	                    #triples($sub)
-	                </div>
-		         #end
-		     </div>
-        </div>
     </div>
+
     #parse("views/common-footer.vsl")
 </div>
 </body>

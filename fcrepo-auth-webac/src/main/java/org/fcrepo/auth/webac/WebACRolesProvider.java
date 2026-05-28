@@ -47,8 +47,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 
 import org.fcrepo.config.AuthPropsConfig;
 import org.fcrepo.kernel.api.Transaction;
@@ -56,7 +56,6 @@ import org.fcrepo.kernel.api.auth.ACLHandle;
 import org.fcrepo.kernel.api.auth.WebACAuthorization;
 import org.fcrepo.kernel.api.exception.PathNotFoundException;
 import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
-import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.FedoraResource;
 import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
@@ -67,6 +66,8 @@ import org.fcrepo.kernel.api.models.WebacAcl;
 import org.apache.jena.graph.Triple;
 import org.apache.jena.rdf.model.Statement;
 import org.slf4j.Logger;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -77,6 +78,7 @@ import com.github.benmanes.caffeine.cache.Cache;
  * @since 9/3/15
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class WebACRolesProvider {
 
     private static final Logger LOGGER = getLogger(WebACRolesProvider.class);
@@ -93,6 +95,38 @@ public class WebACRolesProvider {
 
     @Inject
     private Cache<String, Optional<ACLHandle>> authHandleCache;
+
+    /**
+     * Retrieve an effective ACL using the cache, but do not negatively-cache empty results.
+     *
+     * Caffeine will cache whatever value is returned by the mapping function, including Optional.empty().
+     * If ACL resolution transiently fails (e.g., during concurrent writes/index lag), caching an empty
+     * value can cause authorization to incorrectly fall back to the classpath/root ACL until the
+     * entry expires or the process restarts.
+     */
+    private Optional<ACLHandle> getEffectiveAclCached(final FedoraResource resource) {
+        final var key = resource.getId();
+        LOGGER.info("Getting ACL for {}", key);
+        final var cached = authHandleCache.getIfPresent(key);
+        LOGGER.info("Cached: {}", cached);
+        // If present in cache and non-empty, use it.
+        if (cached != null && cached.isPresent()) {
+            return cached;
+        }
+
+        // Compute fresh.
+        final var computed = getEffectiveAcl(resource, false);
+
+        // Only cache positive results.
+        if (computed.isPresent()) {
+            authHandleCache.put(key, computed);
+        } else {
+            // Ensure we don't keep a stale negative cache entry.
+            authHandleCache.invalidate(key);
+        }
+
+        return computed;
+    }
 
     private String userBaseUri;
     private String groupBaseUri;
@@ -120,8 +154,7 @@ public class WebACRolesProvider {
         final List<String> resourcePaths = new ArrayList<>();
 
         // See if the root acl has been updated
-        final var effectiveAcl = authHandleCache.get(fedoraResource.getId(),
-                                                     key -> getEffectiveAcl(fedoraResource, false));
+        final var effectiveAcl = getEffectiveAclCached(fedoraResource);
         effectiveAcl.map(ACLHandle::getResource)
             .filter(effectiveResource -> !effectiveResource.getId().equals(id.getResourceId()))
             .ifPresent(effectiveResource -> {
@@ -155,8 +188,7 @@ public class WebACRolesProvider {
         LOGGER.debug("Getting agent roles for resource: {}", resource.getId());
 
         // Get the effective ACL by searching the target node and any ancestors.
-        final Optional<ACLHandle> effectiveAcl = authHandleCache.get(resource.getId(),
-                key -> getEffectiveAcl(resource, false));
+        final Optional<ACLHandle> effectiveAcl = getEffectiveAclCached(resource);
 
         // Construct a list of acceptable acl:accessTo values for the target resource.
         final List<String> resourcePaths = new ArrayList<>();
@@ -449,37 +481,32 @@ public class WebACRolesProvider {
      * @param ancestorAcl the flag for looking up ACL from ancestor hierarchy resources
      */
     Optional<ACLHandle> getEffectiveAcl(final FedoraResource resource, final boolean ancestorAcl) {
-        try {
 
-            final FedoraResource aclResource = resource.getAcl();
+        final FedoraResource aclResource = resource.getAcl();
 
-            if (aclResource != null) {
-                final List<WebACAuthorization> authorizations =
-                    getAuthorizations(aclResource, ancestorAcl);
-                if (authorizations.size() > 0) {
-                    return Optional.of(
-                        new ACLHandleImpl(resource, authorizations));
-                }
+        if (aclResource != null) {
+            final List<WebACAuthorization> authorizations =
+                getAuthorizations(aclResource, ancestorAcl);
+            if (authorizations.size() > 0) {
+                return Optional.of(
+                    new ACLHandleImpl(resource, authorizations));
             }
+        }
 
-            FedoraResource container = resource.getContainer();
-            // The resource is not ldp:contained by anything, so checked its described resource.
-            if (container == null && (resource instanceof NonRdfSourceDescription || resource instanceof TimeMap)) {
-                final var described = resource.getDescribedResource();
-                if (!Objects.equals(resource, described)) {
-                    container = described;
-                }
+        FedoraResource container = resource.getContainer();
+        // The resource is not ldp:contained by anything, so checked its described resource.
+        if (container == null && (resource instanceof NonRdfSourceDescription || resource instanceof TimeMap)) {
+            final var described = resource.getDescribedResource();
+            if (!Objects.equals(resource, described)) {
+                container = described;
             }
-            if (container == null) {
-                LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
-                return Optional.empty();
-            } else {
-                LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getId());
-                return getEffectiveAcl(container, true);
-            }
-        } catch (final RepositoryException ex) {
-            LOGGER.debug("Exception finding effective ACL: {}", ex.getMessage());
+        }
+        if (container == null) {
+            LOGGER.debug("No ACLs defined on this node or in parent hierarchy");
             return Optional.empty();
+        } else {
+            LOGGER.trace("Checking parent resource for ACL. No ACL found at {}", resource.getId());
+            return getEffectiveAcl(container, true);
         }
     }
 

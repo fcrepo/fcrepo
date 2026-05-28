@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<web-app xmlns="http://java.sun.com/xml/ns/javaee"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
-	version="3.0">
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         version="5.0">
 
 	<display-name>Fedora Repository</display-name>
 
@@ -21,7 +21,7 @@
     <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
 
     <init-param>
-      <param-name>javax.ws.rs.Application</param-name>
+      <param-name>jakarta.ws.rs.Application</param-name>
       <param-value>org.fcrepo.http.commons.FedoraApplication</param-value>
     </init-param>
 
@@ -34,15 +34,17 @@
 
 	</servlet-mapping>
 
+    <!-- TODO: Fix Prometheus endpoint - https://fedora-repository.atlassian.net/browse/FCREPO-4021-->
+    <!--
   <servlet>
       <servlet-name>prometheus</servlet-name>
-      <servlet-class>org.fcrepo.http.commons.metrics.PrometheusMetricsServlet</servlet-class>
+      <servlet-class>org.fcrepo.http.commons.metrics.LocalPrometheusMetricsServlet</servlet-class>
   </servlet>
   <servlet-mapping>
       <servlet-name>prometheus</servlet-name>
       <url-pattern>/prometheus</url-pattern>
   </servlet-mapping>
-
+    -->
   <filter>
     <filter-name>ETagFilter</filter-name>
     <filter-class>org.springframework.web.filter.ShallowEtagHeaderFilter</filter-class>
@@ -62,5 +64,5 @@
     <filter-name>repositoryInitializationFilter</filter-name>
     <url-pattern>/rest/*</url-pattern>
   </filter-mapping>
-
+  <absolute-ordering />
 </web-app>

@@ -7,17 +7,16 @@ package org.fcrepo.auth.integration;
 
 import org.fcrepo.http.commons.AbstractResource;
 import org.fcrepo.http.commons.api.rdf.HttpIdentifierConverter;
-import org.fcrepo.kernel.api.exception.RepositoryException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.slf4j.Logger;
 import org.springframework.context.annotation.Scope;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.core.Response;
 import java.net.URI;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -58,7 +57,7 @@ public class RootTestResource extends AbstractResource {
         return doRequest(id);
     }
 
-    private Response doRequest(final FedoraId id) throws RepositoryException {
+    private Response doRequest(final FedoraId id) {
         final URI location = URI.create(identifierConverter().toExternalId(id.getFullId()));
         return Response.created(location).build();
     }

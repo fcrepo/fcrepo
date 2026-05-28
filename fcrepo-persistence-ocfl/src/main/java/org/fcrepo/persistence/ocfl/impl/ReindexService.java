@@ -7,20 +7,22 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.inject.Inject;
-import javax.validation.constraints.NotNull;
+import jakarta.inject.Inject;
 
 import io.ocfl.api.OcflRepository;
 import org.apache.jena.rdf.model.Resource;
@@ -28,9 +30,13 @@ import org.fcrepo.config.FedoraPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfLexicon;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.exception.PathNotFoundException;
+import org.fcrepo.kernel.api.exception.PathNotFoundRuntimeException;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.services.MembershipService;
@@ -51,6 +57,8 @@ import org.apache.jena.riot.RDFDataMgr;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.stereotype.Component;
 
 /**
@@ -58,6 +66,7 @@ import org.springframework.stereotype.Component;
  * @author whikloj
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ReindexService {
 
     @Inject
@@ -94,9 +103,15 @@ public class ReindexService {
     @Inject
     private FedoraPropsConfig config;
 
+    @Inject
+    private ResourceFactory resourceFactory;
+
     private static final Logger LOGGER = getLogger(ReindexService.class);
 
     private int membershipPageSize = 500;
+
+    @Inject
+    private RepositoryInitializationStatus initializationStatus;
 
     public void indexOcflObject(final Transaction tx, final String ocflId) {
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
@@ -110,6 +125,7 @@ public class ReindexService {
             final var rootId = new AtomicReference<FedoraId>();
             final var fedoraIds = new ArrayList<FedoraId>();
             final var headersList = new ArrayList<ResourceHeaders>();
+            final var rdfTypeMap = new HashMap<FedoraId, List<URI>>();
 
             session.invalidateCache(ocflId);
             session.streamResourceHeaders().forEach(storageHeaders -> {
@@ -117,13 +133,14 @@ public class ReindexService {
 
                 final var fedoraId = headers.getId();
 
-                if (config.isRebuildContinue()) {
+                // Only check for skip entries when running pre-startup indexing process, live indexing should proceed
+                if (!initializationStatus.isInitializationComplete()) {
                     try {
                         ocflIndex.getMapping(tx, fedoraId);
                         // We got the mapping, so we can skip this resource.
                         throw new ObjectExistsInOcflIndexException(
                                 String.format("Skipping indexing of %s in transaction %s, because" +
-                                " it already exists in the index.", fedoraId, tx.getId())
+                                        " it already exists in the index.", fedoraId, tx.getId())
                         );
                     } catch (FedoraOcflMappingNotFoundException e) {
                         LOGGER.debug("Indexing object {} in transaction {}, because it does not yet exist in the " +
@@ -154,7 +171,13 @@ public class ReindexService {
                                     .getContentStream();
                             if (content.isPresent()) {
                                 try (final var stream = content.get()) {
-                                    final RdfStream rdf = parseRdf(fedoraId, stream);
+                                    RdfStream rdf = parseRdf(fedoraId, stream);
+                                    rdf = (RdfStream) rdf.peek(t -> {
+                                        if (t.predicateMatches(type.asNode())) {
+                                            rdfTypeMap.computeIfAbsent(fedoraId, k -> new ArrayList<>())
+                                                    .add(URI.create(t.getObject().toString()));
+                                        }
+                                    });
                                     this.referenceService.updateReferences(tx, fedoraId, null, rdf);
                                 } catch (final IOException e) {
                                     LOGGER.warn("Content stream for {} closed prematurely, inbound references skipped.",
@@ -188,8 +211,14 @@ public class ReindexService {
             });
 
             headersList.forEach(headers -> {
-                searchIndex.addUpdateIndex(tx, headers);
-                LOGGER.debug("Rebuilt searchIndex for {}", headers.getId());
+                try {
+                    // Get user RDF types from map and combine with system types
+                    final var rdfTypes = rdfTypeMap.getOrDefault(headers.getId(), new ArrayList<>());
+                    rdfTypes.addAll(resourceFactory.getResource(tx, headers).getSystemTypes(false));
+                    searchIndex.addUpdateIndex(tx, headers, rdfTypes);
+                } catch (PathNotFoundException e) {
+                    throw new PathNotFoundRuntimeException(e.getMessage(), e);
+                }
             });
         }
     }
@@ -260,17 +289,6 @@ public class ReindexService {
             throw new RepositoryRuntimeException("Failed to repopulate membership history", e);
         }
         LOGGER.debug("Finished indexMembership for transaction {}", transaction);
-    }
-
-    /**
-     * Rollback changes in the transaction.
-     * @param tx the transaction
-     */
-    public void rollbackMembership(@NotNull final Transaction tx) {
-        execQuietly("Failed to rollback membership index transaction " + tx.getId(), () -> {
-            membershipService.rollbackTransaction(tx);
-            return null;
-        });
     }
 
     /**

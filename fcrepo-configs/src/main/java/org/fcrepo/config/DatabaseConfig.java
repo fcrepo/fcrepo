@@ -11,7 +11,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
+import jakarta.annotation.PostConstruct;
 import javax.sql.DataSource;
 
 import com.zaxxer.hikari.HikariConfig;
@@ -19,8 +21,10 @@ import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.core.convert.converter.ConverterRegistry;
 import org.springframework.core.convert.support.DefaultConversionService;
@@ -32,12 +36,14 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.metrics.micrometer.MicrometerMetricsTrackerFactory;
 
 /**
  * @author pwinckles
  */
 @EnableTransactionManagement
 @Configuration
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class DatabaseConfig extends BasePropsConfig {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseConfig.class);
@@ -89,7 +95,8 @@ public class DatabaseConfig extends BasePropsConfig {
     }
 
     @Bean
-    public DataSource dataSource() throws Exception {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public DataSource dataSource(final MeterRegistry registry) throws Exception {
         final var driver = identifyDbDriver();
 
         LOGGER.info("JDBC URL: {}", dbUrl);
@@ -124,10 +131,16 @@ public class DatabaseConfig extends BasePropsConfig {
             }
             config.setMaximumPoolSize(maxPoolSize);
         }
+        if (driver.equalsIgnoreCase("mariadb")) {
+            config.addDataSourceProperty("useServerPrepStmts", "false");
+        }
         config.setDriverClassName(driver);
         config.setJdbcUrl(dbUrl);
         config.setUsername(dbUser);
         config.setPassword(dbPassword);
+        if (registry instanceof PrometheusMeterRegistry) {
+            config.setMetricsTrackerFactory(new MicrometerMetricsTrackerFactory(registry));
+        }
 
         final var dataSource = new HikariDataSource(config);
 
@@ -160,20 +173,23 @@ public class DatabaseConfig extends BasePropsConfig {
     }
 
     @Bean
-    public DataSourceTransactionManager txManager(final DataSource dataSource) {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static DataSourceTransactionManager txManager(final DataSource dataSource) {
         final var txManager = new DataSourceTransactionManager();
         txManager.setDataSource(dataSource);
         return txManager;
     }
 
     @Bean
-    public TransactionTemplate txTemplate(final PlatformTransactionManager txManager) {
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
+    public static TransactionTemplate txTemplate(final PlatformTransactionManager txManager) {
         final var txDefinition = new DefaultTransactionDefinition();
         txDefinition.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
         return new TransactionTemplate(txManager, txDefinition);
     }
 
     @Bean
+    @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
     public Flyway flyway(final DataSource source) throws Exception {
         LOGGER.debug("Instantiating a new flyway bean");
         return FlywayFactory.create().setDataSource(source).setDatabaseType(getDbType())

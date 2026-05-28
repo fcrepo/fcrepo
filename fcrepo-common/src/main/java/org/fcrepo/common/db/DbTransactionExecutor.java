@@ -12,12 +12,14 @@ import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.dao.DeadlockLoserDataAccessException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import net.jodah.failsafe.Failsafe;
-import net.jodah.failsafe.RetryPolicy;
+import dev.failsafe.Failsafe;
+import dev.failsafe.RetryPolicy;
 
 /**
  * Wrapper around Spring's db transaction management
@@ -25,21 +27,23 @@ import net.jodah.failsafe.RetryPolicy;
  * @author pwinckles
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class DbTransactionExecutor {
 
     private static final Logger LOGGER = getLogger(DbTransactionExecutor.class);
 
-    private static final RetryPolicy<Object> DB_RETRY = new RetryPolicy<>()
+    private static final RetryPolicy<Object> DB_RETRY = RetryPolicy.builder()
             .handleIf(e -> {
                 return e instanceof DeadlockLoserDataAccessException
                         || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
             })
             .onRetry(event -> {
-                LOGGER.debug("Retrying operation that failed with the following exception", event.getLastFailure());
+                LOGGER.debug("Retrying operation that failed with the following exception", event.getLastException());
             })
             .withBackoff(10, 100, ChronoUnit.MILLIS, 1.5)
             .withJitter(0.1)
-            .withMaxRetries(10);
+            .withMaxRetries(10)
+            .build();
 
     @Autowired
     private TransactionTemplate transactionTemplate;

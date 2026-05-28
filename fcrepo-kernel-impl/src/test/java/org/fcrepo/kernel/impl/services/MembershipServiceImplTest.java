@@ -6,13 +6,14 @@
 package org.fcrepo.kernel.impl.services;
 
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.apache.jena.vocabulary.VOID.property;
 import static org.fcrepo.kernel.api.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.api.rdf.DefaultRdfStream.fromModel;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -27,7 +28,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.ContainmentIndex;
@@ -53,22 +54,22 @@ import org.apache.jena.rdf.model.Property;
 import org.apache.jena.rdf.model.Resource;
 import org.flywaydb.test.FlywayTestExecutionListener;
 import org.flywaydb.test.annotation.FlywayTest;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 /**
  * @author bbpennel
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @ContextConfiguration("/membershipServiceTest.xml")
 @TestExecutionListeners({DependencyInjectionTestExecutionListener.class, FlywayTestExecutionListener.class })
 public class MembershipServiceImplTest {
@@ -121,7 +122,7 @@ public class MembershipServiceImplTest {
 
     private Transaction readOnlyTx;
 
-    @Before
+    @BeforeEach
     @FlywayTest
     public void setup() {
         MockitoAnnotations.openMocks(this);
@@ -194,8 +195,8 @@ public class MembershipServiceImplTest {
         membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, member1Id, member2Id);
-        assertEquals("Last updated timestamp should not change during commit",
-                lastUpdated, membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId));
+        assertEquals(lastUpdated, membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId),
+                "Last updated timestamp should not change during commit");
     }
 
     @Test
@@ -231,8 +232,8 @@ public class MembershipServiceImplTest {
         assertNotNull(member1Updated);
         final var member2Updated = membershipService.getLastUpdatedTimestamp(transaction, member2Id);
         assertNotNull(member2Updated);
-        assertNull("No membership expected for the membership resource",
-                membershipService.getLastUpdatedTimestamp(transaction, membershipRescId));
+        assertNull(membershipService.getLastUpdatedTimestamp(transaction, membershipRescId),
+                "No membership expected for the membership resource");
 
         // Commit the transaction and verify we can still get the added members
         membershipService.commitTransaction(transaction);
@@ -653,6 +654,14 @@ public class MembershipServiceImplTest {
         assertCommittedMembershipCount(membershipRescId, 0);
         assertUncommittedMembershipCount(transaction, membershipRescId, 3);
 
+        // Asserting membership can be found from the perspective of each member
+        assertCommittedMembershipByObjectCount(outerMemberId, 0);
+        assertUncommittedMembershipByObjectCount(transaction, outerMemberId, 1);
+        assertCommittedMembershipByObjectCount(nestedDcId, 0);
+        assertUncommittedMembershipByObjectCount(transaction, nestedDcId, 1);
+        assertCommittedMembershipByObjectCount(nestedMemberId, 0);
+        assertUncommittedMembershipByObjectCount(transaction, nestedMemberId, 1);
+
         membershipService.commitTransaction(transaction);
 
         assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, outerMemberId, nestedDcId, nestedMemberId);
@@ -702,8 +711,8 @@ public class MembershipServiceImplTest {
 
         final var msRescUpdatedAfter = membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipRescId);
         assertNotNull(msRescUpdatedAfter);
-        assertNotEquals("First membership resc should have changed last_updated timestamp",
-                msRescUpdated, msRescUpdatedAfter);
+        assertNotEquals(msRescUpdated, msRescUpdatedAfter,
+                "First membership resc should have changed last_updated timestamp");
         assertNotNull(membershipService.getLastUpdatedTimestamp(readOnlyTx, membershipResc2Id));
     }
 
@@ -1451,6 +1460,77 @@ public class MembershipServiceImplTest {
         assertHasMembersNoTx(membershipRescId, OTHER_HAS_MEMBER, member1Id);
     }
 
+
+    @Test
+    public void getMembership_MemberProxiedInMultipleIDCs() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(transaction, membershipRescId);
+
+        // Create the target which will be member of two IDCs
+        final var member1Id = createDCMember(rootId, BASIC_CONTAINER);
+
+        // Create first IDC
+        final var idcId = createIndirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(transaction, idcId);
+
+        createProxy(idcId, member1Id, CREATED_DATE, true);
+
+        assertUncommittedMembershipCount(transaction, membershipRescId, 1);
+        assertCommittedMembershipCount(membershipRescId, 0);
+        membershipService.commitTransaction(transaction);
+        assertCommittedMembershipCount(membershipRescId, 1);
+
+        final var idcId2 = createIndirectContainer(membershipRescId, OTHER_HAS_MEMBER, false);
+        membershipService.resourceCreated(transaction, idcId2);
+
+        createProxy(idcId2, member1Id, CREATED_DATE, true);
+
+        assertUncommittedMembershipCount(transaction, membershipRescId, 2);
+        assertCommittedMembershipCount(membershipRescId, 1);
+        membershipService.commitTransaction(transaction);
+        assertCommittedMembershipCount(membershipRescId, 2);
+
+        // Two relations to the same member. They have different properties, but we aren't checking that here
+        assertHasMembersNoTx(membershipRescId, null, member1Id, member1Id);
+
+        // Verify that membership from the objects perspective returns relations from both IDCs
+        final var membershipByObjectList = getMembershipListByObject(transaction, member1Id);
+        assertEquals(2, membershipByObjectList.size());
+        assertContainsMembership(membershipByObjectList, membershipRescId, RdfLexicon.LDP_MEMBER, member1Id);
+        assertContainsMembership(membershipByObjectList, membershipRescId, OTHER_HAS_MEMBER, member1Id);
+    }
+
+    @Test
+    public void populateMembershipHistory_IDC_MissingInsertedContentRelation() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(transaction, membershipRescId);
+
+        final var idcId = createIndirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(transaction, idcId);
+
+        // First member has a proxy missing the insertedContentRelation property
+        final var proxyId = createDCMember(idcId, BASIC_CONTAINER);
+        mockGetHeaders(transaction, proxyId, idcId, BASIC_CONTAINER, CREATED_DATE, LAST_MODIFIED_DATE);
+        final var model = ModelFactory.createDefaultModel();
+        mockGetTriplesForDC(proxyId, null, model);
+        membershipService.resourceCreated(transaction, proxyId);
+
+        // Second member is valid
+        final var member2Id = createDCMember(rootId, BASIC_CONTAINER);
+        createProxy(idcId, member2Id, CREATED_DATE, false);
+
+        membershipService.reset();
+
+        // Trigger population of membership history
+        mockListVersion(idcId, CREATED_DATE);
+        // First member proxy missing insertedContentRelation, so should be skipped but not throw an error
+        membershipService.populateMembershipHistory(transaction, idcId);
+        membershipService.commitTransaction(transaction);
+
+        // Only the valid member should show up in the membership
+        assertCommittedMembershipCount(membershipRescId, 1);
+    }
+
     private void mockListVersion(final FedoraId fedoraId, final Instant... versions) {
         when(psSession.listVersions(fedoraId.asResourceId())).thenReturn(Arrays.asList(versions));
     }
@@ -1467,6 +1547,14 @@ public class MembershipServiceImplTest {
         final var subjectId = membershipRescId.asBaseId();
         for (final FedoraId memberId : memberIds) {
             assertContainsMembership(membershipList, subjectId, hasMemberRelation, memberId);
+            final FedoraId memberIdMemento;
+            if (membershipRescId.isMemento()) {
+                memberIdMemento = memberId.asMemento(membershipRescId.getMementoInstant());
+            } else {
+                memberIdMemento = memberId;
+            }
+            final var membershipByObjectList = getMembershipListByObject(transaction, memberIdMemento);
+            assertContainsMembership(membershipByObjectList, subjectId, hasMemberRelation, memberId);
         }
     }
 
@@ -1484,6 +1572,11 @@ public class MembershipServiceImplTest {
 
     private List<Triple> getMembershipList(final Transaction transaction, final FedoraId fedoraId) {
         final var results = membershipService.getMembership(transaction, fedoraId);
+        return results.collect(Collectors.toList());
+    }
+
+    private List<Triple> getMembershipListByObject(final Transaction transaction, final FedoraId objectId) {
+        final var results = membershipService.getMembershipByObject(transaction, objectId);
         return results.collect(Collectors.toList());
     }
 
@@ -1656,23 +1749,37 @@ public class MembershipServiceImplTest {
         final var subjectNode = NodeFactory.createURI(subjectId.getFullId());
         final var objectNode = NodeFactory.createURI(objectId.getFullId());
 
-        assertTrue("Membership set did not contain: " + subjectId + " " + property.getURI() + " " + objectId,
-                membershipList.stream().anyMatch(t -> t.getSubject().equals(subjectNode)
-                        && t.getPredicate().equals(property.asNode())
-                        && t.getObject().equals(objectNode)));
+        assertTrue(membershipList.stream().anyMatch(t -> t.getSubject().equals(subjectNode)
+                        && (property == null || t.getPredicate().equals(property.asNode()))
+                        && t.getObject().equals(objectNode)),
+                "Membership set did not contain: " + subjectId + " " + property + " " + objectId);
     }
 
     private void assertCommittedMembershipCount(final FedoraId subjectId, final int expected) {
         final var results = membershipService.getMembership(shortLivedTx, subjectId);
-        assertEquals("Incorrect number of committed membership properties for " + subjectId,
-                expected, results.count());
+        assertEquals(expected, results.count(),
+                "Incorrect number of committed membership properties for " + subjectId);
+    }
+
+    private void assertCommittedMembershipByObjectCount(final FedoraId objectId, final int expected) {
+        final var results = membershipService.getMembershipByObject(shortLivedTx, objectId);
+        assertEquals(expected, results.count(),
+                "Incorrect number of committed membership properties for object " + objectId);
     }
 
     private void assertUncommittedMembershipCount(final Transaction transaction,
                                                   final FedoraId subjectId,
                                                   final int expected) {
         final var results = membershipService.getMembership(transaction, subjectId);
-        assertEquals("Incorrect number of uncommitted membership properties for " + subjectId,
-                expected, results.count());
+        assertEquals(expected, results.count(),
+                "Incorrect number of uncommitted membership properties for " + subjectId);
+    }
+
+    private void assertUncommittedMembershipByObjectCount(final Transaction transaction,
+                                                  final FedoraId objectId,
+                                                  final int expected) {
+        final var results = membershipService.getMembershipByObject(transaction, objectId);
+        assertEquals(expected, results.count(),
+                "Incorrect number of uncommitted membership properties for object " + objectId);
     }
 }

@@ -3,35 +3,13 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>6.5.1</version>
+    <version>7.1.0-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-kernel-api</artifactId>
   <name>Fedora Repository Kernel API</name>
   <description>Fedora Repository Kernel API, containing types and constants for working with Fedora</description>
 
-  <packaging>bundle</packaging>
-
-  <properties>
-    <osgi.import.packages>
-      com.google.common.*,
-      org.apache.jena.*,
-      org.apache.commons.codec.binary,
-      javax.inject,
-      *
-    </osgi.import.packages>
-    <osgi.export.packages>
-      org.fcrepo.kernel.api.*;version=${project.version}
-    </osgi.export.packages>
-  </properties>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-bundle-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  <packaging>jar</packaging>
 
   <dependencies>
     <dependency>
@@ -65,18 +43,20 @@
       <artifactId>spring-context</artifactId>
     </dependency>
     <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
+      <groupId>jakarta.platform</groupId>
+      <artifactId>jakarta.jakartaee-api</artifactId>
+      <scope>provided</scope>
     </dependency>
 
     <!-- test gear -->
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
     </dependency>
     <dependency>
       <groupId>org.mockito</groupId>
-      <artifactId>mockito-core</artifactId>
+      <artifactId>mockito-junit-jupiter</artifactId>
+      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>ch.qos.logback</groupId>
@@ -87,6 +67,17 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.fcrepo</groupId>
+      <artifactId>fcrepo-common</artifactId>
+      <version>${project.version}</version>
+      <scope>compile</scope>
+      <type>test-jar</type>
     </dependency>
 
   </dependencies>

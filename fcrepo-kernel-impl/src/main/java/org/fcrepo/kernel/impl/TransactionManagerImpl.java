@@ -23,12 +23,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
-import javax.inject.Inject;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -40,6 +42,7 @@ import static java.util.UUID.randomUUID;
  * @author mohideen
  */
 @Component
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class TransactionManagerImpl implements TransactionManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TransactionManagerImpl.class);
@@ -161,11 +164,14 @@ public class TransactionManagerImpl implements TransactionManager {
             final var txEntry = txIt.next();
             final var tx = txEntry.getValue();
 
-            if ((tx.isOpen() || tx.hasExpired()) && !tx.isRolledBack()) {
+            if ((tx.isOpen() || tx.hasExpired()) && !tx.isRolledBack() ) {
                 LOGGER.debug("Rolling back transaction as part of shutdown {}", tx.getId());
                 try {
                     tx.rollback();
                     pSessionManager.removeSession(tx.getId());
+                } catch (TransactionClosedException ignore) {
+                    // ignore. Already committed
+                    LOGGER.info("Failed to rollback transaction {} as already committed", tx.getId(), ignore);
                 } catch (final RuntimeException e) {
                     LOGGER.error("Failed to rollback transaction {}", tx.getId(), e);
                 }

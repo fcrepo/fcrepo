@@ -6,7 +6,7 @@
 
 package org.fcrepo.webapp;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 
 import org.fcrepo.config.ConditionOnPropertyTrue;
 import org.fcrepo.config.FedoraPropsConfig;

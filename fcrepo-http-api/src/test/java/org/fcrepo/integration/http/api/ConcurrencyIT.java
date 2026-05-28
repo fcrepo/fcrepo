@@ -6,9 +6,9 @@
 
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.HttpHeaders.LINK;
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static org.junit.Assert.assertEquals;
+import static jakarta.ws.rs.core.HttpHeaders.LINK;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -21,10 +21,10 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.slf4j.Logger;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.test.context.TestExecutionListeners;
 
@@ -38,18 +38,31 @@ import com.google.common.base.Stopwatch;
         mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public class ConcurrencyIT extends AbstractResourceIT {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConcurrencyIT.class);
-
     private static final int THREAD_COUNT = 4;
 
     private static ExecutorService executor;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() {
         executor = Executors.newFixedThreadPool(THREAD_COUNT);
+        logger = LoggerFactory.getLogger(ConcurrencyIT.class);
     }
 
-    @AfterClass
+    /**
+     * Warmup the server by creating a few containers. Only needed for MySQL
+     */
+    @BeforeEach
+    public void warmup() throws IOException {
+        for (int i = 0; i < 10; i++) {
+            final var post = postObjMethod();
+            post.setHeader(LINK, BASIC_CONTAINER_LINK_HEADER);
+            try (final CloseableHttpResponse response = execute(post)) {
+                assertEquals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode());
+            }
+        }
+    }
+
+    @AfterAll
     public static void afterClass() {
         executor.shutdown();
     }
@@ -90,8 +103,8 @@ public class ConcurrencyIT extends AbstractResourceIT {
 
         final var total = succeeded.get() + failed.get();
 
-        assertEquals(String.format("%s requests out of %s failed", failed.get(), total),
-                0, failed.get());
+        assertEquals(0, failed.get(),
+                String.format("%s requests out of %s failed", failed.get(), total));
     }
 
     private boolean postCreateContainer() {
@@ -101,10 +114,10 @@ public class ConcurrencyIT extends AbstractResourceIT {
             if (Objects.equals(CREATED.getStatusCode(), response.getStatusLine().getStatusCode())) {
                 return true;
             } else {
-                LOGGER.error("Concurrent request failed: {}", response.getStatusLine());
+                logger.error("Concurrent request failed: {}", response.getStatusLine());
             }
         } catch (IOException e) {
-            LOGGER.error("Failed to execute request", e);
+            logger.error("Failed to execute request", e);
             return false;
         }
         return false;

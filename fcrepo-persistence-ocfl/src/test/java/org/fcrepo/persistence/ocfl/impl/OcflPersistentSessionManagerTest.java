@@ -5,6 +5,15 @@
  */
 package org.fcrepo.persistence.ocfl.impl;
 
+import static java.util.UUID.randomUUID;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.setField;
+
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.operations.ResourceOperation;
@@ -12,36 +21,27 @@ import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.api.exceptions.PersistentStorageException;
 import org.fcrepo.persistence.ocfl.api.FedoraToOcflObjectIndex;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static java.util.UUID.randomUUID;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
 /**
  * Test class for {@link OcflPersistentSessionManager}
  *
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class OcflPersistentSessionManagerTest {
-    @Rule
-    public TemporaryFolder tempFolder = new TemporaryFolder();
+    @TempDir
+    public Path tempFolder;
 
     private OcflPersistentSessionManager sessionManager;
 
@@ -66,7 +66,7 @@ public class OcflPersistentSessionManagerTest {
     @Mock
     private OcflPropsConfig ocflPropsConfig;
 
-    @Before
+    @BeforeEach
     public void setUp() throws IOException {
         this.sessionManager = new OcflPersistentSessionManager();
         when(transaction.getId()).thenReturn(testSessionId);
@@ -77,19 +77,25 @@ public class OcflPersistentSessionManagerTest {
         readOnlySession = this.sessionManager.getReadOnlySession();
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void testUnsupportedOperationOnUnrecognizedOperation() throws Exception {
-        readWriteSession.persist(mockOperation);
+        assertThrows(UnsupportedOperationException.class, () -> {
+            readWriteSession.persist(mockOperation);
+        });
     }
 
-    @Test(expected = PersistentStorageException.class)
+    @Test
     public void testPersistNoSession() throws Exception {
-        readOnlySession.persist(mockOperation);
+        assertThrows(PersistentStorageException.class, () -> {
+            readOnlySession.persist(mockOperation);
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNullSessionId() {
-        this.sessionManager.getSession(null);
+        assertThrows(IllegalArgumentException.class, () -> {
+            this.sessionManager.getSession(null);
+        });
     }
 
     @Test
@@ -101,7 +107,7 @@ public class OcflPersistentSessionManagerTest {
 
     @Test
     public void clearAllSessions() throws Exception {
-        final var stagingPath = tempFolder.newFolder("staging").toPath();
+        final var stagingPath = tempFolder.resolve("staging");
         final var stagedPath = stagingPath.resolve("path/to/staged");
         Files.createDirectories(stagedPath);
         Files.createFile(stagedPath.resolve("file1.txt"));
@@ -111,7 +117,7 @@ public class OcflPersistentSessionManagerTest {
 
         verify(index).clearAllTransactions();
         try (DirectoryStream<Path> directory = Files.newDirectoryStream(stagingPath)) {
-            assertFalse("Staging directory must be empty", directory.iterator().hasNext());
+            assertFalse(directory.iterator().hasNext(), "Staging directory must be empty");
         }
     }
 

@@ -5,12 +5,12 @@
  */
 package org.fcrepo.integration.http.api;
 
-import static javax.ws.rs.core.Response.Status.CREATED;
-import static javax.ws.rs.core.Response.Status.NO_CONTENT;
-import static javax.ws.rs.core.Response.Status.OK;
-import static javax.ws.rs.core.Response.Status.PRECONDITION_FAILED;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static jakarta.ws.rs.core.Response.Status.CREATED;
+import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
+import static jakarta.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.PRECONDITION_FAILED;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.IOException;
 
@@ -20,7 +20,7 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.StringEntity;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.springframework.test.context.TestExecutionListeners;
 
 /**
@@ -40,7 +40,7 @@ public class StateTokensIT extends AbstractResourceIT {
         createObjectAndClose(id);
         try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + id))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            assertNotNull(X_STATE_TOKEN_HEADER, response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
+            assertNotNull(response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
         }
     }
 
@@ -50,7 +50,7 @@ public class StateTokensIT extends AbstractResourceIT {
         createObjectAndClose(id);
         try (final CloseableHttpResponse response = execute(new HttpHead(serverAddress + id))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            assertNotNull(X_STATE_TOKEN_HEADER, response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
+            assertNotNull(response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
         }
     }
 
@@ -69,7 +69,7 @@ public class StateTokensIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + aclPid))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            assertNotNull(X_STATE_TOKEN_HEADER, response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
+            assertNotNull(response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
         }
     }
 
@@ -88,7 +88,7 @@ public class StateTokensIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpHead(serverAddress + aclPid))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            assertNotNull(X_STATE_TOKEN_HEADER, response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
+            assertNotNull(response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
         }
     }
 
@@ -98,7 +98,7 @@ public class StateTokensIT extends AbstractResourceIT {
         createObjectAndClose(id);
         try (final CloseableHttpResponse response = execute(new HttpGet(serverAddress + id + "/fcr:versions"))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            assertNotNull(X_STATE_TOKEN_HEADER, response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
+            assertNotNull(response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
         }
     }
 
@@ -108,7 +108,7 @@ public class StateTokensIT extends AbstractResourceIT {
         createObjectAndClose(id);
         try (final CloseableHttpResponse response = execute(new HttpHead(serverAddress + id + "/fcr:versions"))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            assertNotNull(X_STATE_TOKEN_HEADER, response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
+            assertNotNull(response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
         }
     }
 
@@ -123,7 +123,7 @@ public class StateTokensIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpGet(location))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            assertNotNull(X_STATE_TOKEN_HEADER, response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
+            assertNotNull(response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
         }
     }
 
@@ -138,7 +138,7 @@ public class StateTokensIT extends AbstractResourceIT {
 
         try (final CloseableHttpResponse response = execute(new HttpHead(location))) {
             assertEquals(OK.getStatusCode(), getStatus(response));
-            assertNotNull(X_STATE_TOKEN_HEADER, response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
+            assertNotNull(response.getFirstHeader(X_STATE_TOKEN_HEADER).getValue());
         }
     }
 

@@ -6,7 +6,7 @@
 package org.fcrepo.kernel.api;
 
 import org.fcrepo.kernel.api.identifiers.FedoraId;
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 
 import java.time.Instant;
 import java.util.stream.Stream;

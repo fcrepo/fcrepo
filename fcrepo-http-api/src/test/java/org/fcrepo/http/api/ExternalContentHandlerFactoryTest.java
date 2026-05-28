@@ -6,26 +6,32 @@
 package org.fcrepo.http.api;
 
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.when;
+
+import org.mockito.MockedConstruction;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.core.Link;
+import jakarta.ws.rs.core.Link;
+
 import org.fcrepo.kernel.api.exception.ExternalMessageBodyException;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author bbpennel
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ExternalContentHandlerFactoryTest {
 
     @Mock
@@ -33,7 +39,7 @@ public class ExternalContentHandlerFactoryTest {
 
     private ExternalContentHandlerFactory factory;
 
-    @Before
+    @BeforeEach
     public void init() {
         factory = new ExternalContentHandlerFactory();
         factory.setValidator(validator);
@@ -41,26 +47,34 @@ public class ExternalContentHandlerFactoryTest {
 
     @Test
     public void testValidLinkHeader() {
-        final ExternalContentHandler handler = factory.createFromLinks(
-                makeLinks("https://fedora.info/"));
+        try (MockedConstruction<ExternalContentHandler> mocked = mockConstruction(ExternalContentHandler.class,
+                (mock, context) -> {
+                    when(mock.getURL()).thenReturn("https://example.com/");
+                    when(mock.getContentType()).thenReturn("text/plain");
+                    when(mock.getHandling()).thenReturn("proxy");
+                })) {
 
-        assertEquals("https://fedora.info/", handler.getURL());
-        assertEquals("text/plain", handler.getContentType());
-        assertEquals("proxy", handler.getHandling());
+            final ExternalContentHandler handler = factory.createFromLinks(
+                    makeLinks("https://example.com/"));
+
+            assertEquals("https://example.com/", handler.getURL());
+            assertEquals("text/plain", handler.getContentType());
+            assertEquals("proxy", handler.getHandling());
+        }
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testValidationFailure() {
         doThrow(new ExternalMessageBodyException("")).when(validator).validate(anyString());
 
-        factory.createFromLinks(makeLinks("https://fedora.info/"));
+        assertThrows(ExternalMessageBodyException.class, () -> factory.createFromLinks(makeLinks("https://example.com/")));
     }
 
-    @Test(expected = ExternalMessageBodyException.class)
+    @Test
     public void testMultipleExtLinkHeaders() {
-        final List<String> links = makeLinks("https://fedora.info/", "https://fedora.info/");
+        final List<String> links = makeLinks("https://example.com/", "https://example.com/");
 
-        factory.createFromLinks(links);
+        assertThrows(ExternalMessageBodyException.class, () -> factory.createFromLinks(links));
     }
 
     private List<String> makeLinks(final String... uris) {

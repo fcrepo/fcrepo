@@ -5,14 +5,14 @@
  */
 package org.fcrepo.http.commons.exceptionhandlers;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
-import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.WebApplicationException;
+import jakarta.ws.rs.core.Response;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.stream.Stream;
 
@@ -26,7 +26,7 @@ public class WebApplicationExceptionMapperTest {
 
     private WebApplicationExceptionMapper testObj;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         testObj = new WebApplicationExceptionMapper();
     }
@@ -47,8 +47,8 @@ public class WebApplicationExceptionMapperTest {
         Stream.of(204, 205, 304).forEach(status -> {
                     final WebApplicationException input = new WebApplicationException("Error message", status);
                     final Response actual = testObj.toResponse(input);
-                    assertNull("Responses with a " + status + " status code MUST NOT carry an entity body.",
-                            actual.getEntity());
+                    assertNull(actual.getEntity(),
+                            "Responses with a " + status + " status code MUST NOT carry an entity body.");
                 }
         );
 

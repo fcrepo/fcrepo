@@ -31,7 +31,7 @@ public class InvalidResourceIdentifierException extends RepositoryRuntimeExcepti
      * @param msg root cause
      * @param e root cause exception
      */
-    public InvalidResourceIdentifierException(final String msg, final Exception e) {
+    public InvalidResourceIdentifierException(final String msg, final Throwable e) {
         super(msg,e);
     }
 }

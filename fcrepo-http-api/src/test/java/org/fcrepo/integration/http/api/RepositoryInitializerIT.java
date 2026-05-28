@@ -11,29 +11,29 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
 import org.fcrepo.kernel.api.RdfLexicon;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.annotation.DirtiesContext.ClassMode;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.TestExecutionListeners.MergeMode;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
-import javax.ws.rs.core.Link;
+import jakarta.ws.rs.core.Link;
 import java.net.ConnectException;
 
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.fcrepo.kernel.api.RdfLexicon.MEMENTO_TYPE;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.slf4j.LoggerFactory.getLogger;
 
 /**
  * @author dbernstein
  */
-@RunWith(SpringJUnit4ClassRunner.class)
+@ExtendWith(SpringExtension.class)
 @DirtiesContext(classMode = ClassMode.BEFORE_CLASS)
 @TestExecutionListeners(listeners = {
         DependencyInjectionTestExecutionListener.class,
@@ -48,7 +48,7 @@ public class RepositoryInitializerIT extends AbstractResourceIT {
         System.setProperty("fcrepo.autoversioning.enabled", "false");
     }
 
-    @Before
+    @BeforeEach
     public void init() throws Exception {
         // Because of the dirtied context, need to wait for fedora to restart before testing
         int triesRemaining = 50;
@@ -74,13 +74,14 @@ public class RepositoryInitializerIT extends AbstractResourceIT {
     public void testRootResourceIsVersioned() throws Exception {
         final var model = getModel("/fcr:versions");
         final var statements = model.listStatements((Resource) null, RdfLexicon.CONTAINS, (RDFNode) null).toList();
-        assertEquals("Should be one version contained by time map", 1, statements.size());
+        assertEquals(1, statements.size(), "Should be one version contained by time map");
         final var mementURI = statements.get(0).getObject().asResource().getURI();
 
-        assertEquals("The contained link should be a memento", 1,
+        assertEquals(1,
                 getLinkHeaders(new HttpGet(mementURI)).stream()
-                        .map(x -> Link.valueOf(x))
+                        .map(Link::valueOf)
                         .filter(x -> x.getRel().equals("type"))
-                        .filter(x -> x.getUri().toString().equals(MEMENTO_TYPE)).count());
+                        .filter(x -> x.getUri().toString().equals(MEMENTO_TYPE)).count(),
+                "The contained link should be a memento");
     }
 }

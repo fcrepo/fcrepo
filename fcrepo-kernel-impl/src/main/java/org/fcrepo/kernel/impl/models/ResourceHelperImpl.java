@@ -7,7 +7,7 @@ package org.fcrepo.kernel.impl.models;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.Transaction;

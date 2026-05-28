@@ -1,39 +1,48 @@
-#* @vtlvariable name="quad" type="org.apache.jena.sparql.core.Quad" *#
-#* @vtlvariable name="rdf" type="org.apache.jena.graph.Graph" *#
-#* @vtlvariable name="model" type="org.apache.jena.rdf.model.Model" *#
-#* @vtlvariable name="triple" type="org.apache.jena.graph.Triple" *#
 #macro( triples $sub )
-        <dl>
+<dl class="row">
+    #set ($last_quad = false)
+    #foreach($triple in $helpers.getSortedTriples($model, $rdf.find($sub, $nodeany, $nodeany)))
+        #if( $helpers.isManagedProperty($triple.getPredicate()) )
+            #set ($prop_status = ' text-info" title="managed predicate')
+            #set ($dt_class = 'col-sm-3')  ## extra class holder, applied below
+        #else
+            #set ($prop_status = '')
+            #set ($dt_class = 'col-sm-3')
+        #end
 
-            #set ($last_quad = false)
-            #foreach($triple in $helpers.getSortedTriples($model, $rdf.find($sub, $nodeany, $nodeany)))
-                #if( $helpers.isManagedProperty($triple.getPredicate()) )
-                  #set ($prop_status = ' class="text-info" title="managed predicate"')
+        #if($last_quad == false || !$last_quad.getPredicate().equals($triple.getPredicate()))
+            <dt class="$dt_class mb-1#if($prop_status) text-info#end"
+                #if($helpers.isManagedProperty($triple.getPredicate())) title="managed predicate"#end>
+                #if($last_quad == false || !$last_quad.getPredicate().getNameSpace().equals($triple.getPredicate().getNameSpace()))
+                    <span class="namespace text-muted" title="$triple.getPredicate().getNameSpace()">
+                        $helpers.getNamespacePrefix($model, $triple.getPredicate().getNameSpace(), false)
+                    </span>
                 #else
-                  #set ($prop_status = "")
+                    <span class="namespace text-muted" title="$triple.getPredicate().getNameSpace()">
+                        $helpers.getNamespacePrefix($model, $triple.getPredicate().getNameSpace(), true)
+                    </span>
                 #end
+                <span class="localName">$triple.getPredicate().getLocalName()</span>
+            </dt>
+        #end
 
-                #if($last_quad == false || !$last_quad.getPredicate().equals($triple.getPredicate()))
-                    <dt$prop_status>
-                        #if($last_quad == false || !$last_quad.getPredicate().getNameSpace().equals($triple.getPredicate().getNameSpace()))
-                        <span class="namespace text-muted" title="$triple.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $triple.getPredicate().getNameSpace(), false)</span>
-                        #else
-                        <span class="namespace text-muted" title="$triple.getPredicate().getNameSpace()">$helpers.getNamespacePrefix($model, $triple.getPredicate().getNameSpace(), true)</span>
-                        #end
-                        <span class="localName">$triple.getPredicate().getLocalName()</span>
-                    </dt>
-                #end
-                    <dd>
-                        #if($triple.getObject().isURI() && $triple.getObject().getURI().startsWith("http"))
-                            <a href="$triple.getObject().getURI()"  property="$triple.getPredicate().toString()">$esc.html($triple.getObject())</a>
-                        #elseif ($triple.getObject().isLiteral())
-                            <span property="$triple.getPredicate().toString()">$esc.html($triple.getObject().getLiteral().getLexicalForm())</span>
-                        #else
-                            <span property="$triple.getPredicate().toString()">$esc.html($triple.getObject())</span>
-                        #end
-                    </dd>
-                #set ($last_quad = $triple)
-
+        <dd class="col-sm-9 mb-2">
+            #if($triple.getObject().isURI() && $triple.getObject().getURI().startsWith("http"))
+                <a href="$triple.getObject().getURI()" property="$triple.getPredicate().toString()">
+                    $esc.html($triple.getObject())
+                </a>
+            #elseif ($triple.getObject().isLiteral())
+                <span property="$triple.getPredicate().toString()">
+                    $esc.html($triple.getObject().getLiteral().getLexicalForm())
+                </span>
+            #else
+                <span property="$triple.getPredicate().toString()">
+                    $esc.html($triple.getObject())
+                </span>
             #end
-        </dl>
+        </dd>
+
+        #set ($last_quad = $triple)
+    #end
+</dl>
 #end

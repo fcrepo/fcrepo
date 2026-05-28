@@ -33,7 +33,7 @@ public class ResourceHeadersImpl implements ResourceHeaders {
 
     private String filename;
 
-    private long contentSize;
+    private long contentSize = -1L;
 
     private Collection<URI> digests;
 

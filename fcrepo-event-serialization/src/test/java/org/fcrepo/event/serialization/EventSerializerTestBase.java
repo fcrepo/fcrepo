@@ -5,6 +5,8 @@
  */
 
 package org.fcrepo.event.serialization;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import static java.time.Instant.ofEpochMilli;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
@@ -14,8 +16,6 @@ import static org.fcrepo.kernel.api.RdfLexicon.ACTIVITY_STREAMS_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.FEDORA_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.PROV_NAMESPACE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
@@ -23,16 +23,17 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFNode;
 import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.SimpleSelector;
 import org.fcrepo.kernel.api.observer.Event;
 import org.fcrepo.kernel.api.observer.EventType;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
 
 /**
  * <p>
@@ -42,7 +43,8 @@ import org.mockito.junit.MockitoJUnitRunner;
  * @author acoburn
  * @author dbernstein
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class EventSerializerTestBase {
 
     @Mock
@@ -112,8 +114,8 @@ public class EventSerializerTestBase {
                     (RDFNode) null));
 
         final AtomicInteger actors = new AtomicInteger();
-        model.listStatements(new SimpleSelector(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "actor"),
-                blankNode))
+        model.listStatements(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "actor"),
+                        (RDFNode) null)
                 .forEachRemaining(statement -> {
                     final Resource r = statement.getResource();
                     if (r.hasProperty(type, createResource(ACTIVITY_STREAMS_NAMESPACE + "Person"))) {
@@ -125,11 +127,11 @@ public class EventSerializerTestBase {
                     }
                     actors.incrementAndGet();
                 });
-        assertEquals(actors.get(), 2);
+        assertEquals(2, actors.get());
 
         final AtomicInteger eventName = new AtomicInteger();
-        model.listStatements(new SimpleSelector(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"),
-                blankNode))
+        model.listStatements(eventSubject, createProperty(ACTIVITY_STREAMS_NAMESPACE + "name"),
+                        (RDFNode) null)
                 .forEachRemaining(statement -> {
                     assertEquals(EventType.RESOURCE_MODIFICATION.getName(), statement.getString());
                     eventName.incrementAndGet();

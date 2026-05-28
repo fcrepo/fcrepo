@@ -9,7 +9,7 @@ import static java.util.Objects.requireNonNull;
 
 import java.util.stream.Stream;
 
-import javax.ws.rs.core.Link;
+import jakarta.ws.rs.core.Link;
 
 /**
  * Stream of links for Memento TimeMaps

@@ -11,16 +11,17 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import javax.annotation.Nonnull;
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 import javax.sql.DataSource;
 
+import org.fcrepo.common.db.DbPlatform;
 import org.fcrepo.kernel.api.ContainmentIndex;
 import org.fcrepo.kernel.api.RdfStream;
+import org.fcrepo.kernel.api.RepositoryInitializationStatus;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.exception.RepositoryRuntimeException;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
@@ -39,6 +40,8 @@ import org.apache.jena.sparql.core.Quad;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.annotation.Role;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -52,6 +55,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @since 6.0.0
  */
 @Component("referenceServiceImpl")
+@Role(BeanDefinition.ROLE_INFRASTRUCTURE)
 public class ReferenceServiceImpl implements ReferenceService {
 
     private static final Logger LOGGER = getLogger(ReferenceServiceImpl.class);
@@ -65,6 +69,9 @@ public class ReferenceServiceImpl implements ReferenceService {
     @Autowired
     @Qualifier("containmentIndex")
     private ContainmentIndex containmentIndex;
+
+    @Inject
+    private RepositoryInitializationStatus initializationStatus;
 
     private NamedParameterJdbcTemplate jdbcTemplate;
 
@@ -156,6 +163,29 @@ public class ReferenceServiceImpl implements ReferenceService {
             " t." + SUBJECT_COLUMN + " = " + TABLE_NAME + "." + SUBJECT_COLUMN +
             " AND t." + PROPERTY_COLUMN + " = " + TABLE_NAME + "." + PROPERTY_COLUMN +
             " AND t." + TARGET_COLUMN + " = " + TABLE_NAME + "." + TARGET_COLUMN + ")";
+    private static final String COMMIT_DELETE_RECORD_POSTGRES = "DELETE FROM " + TABLE_NAME + " r" +
+            " USING " + TRANSACTION_TABLE + " rto" +
+            " WHERE r." + RESOURCE_COLUMN + " = rto." + RESOURCE_COLUMN +
+            " AND r." + SUBJECT_COLUMN + " = rto." + SUBJECT_COLUMN +
+            " AND r." + PROPERTY_COLUMN + " = rto." + PROPERTY_COLUMN +
+            " AND r." + TARGET_COLUMN + " = rto." + TARGET_COLUMN +
+            " AND rto." + TRANSACTION_COLUMN + " = :transactionId" +
+            " AND rto." + OPERATION_COLUMN + " = 'delete'";
+    private static final String COMMIT_DELETE_RECORD_MYSQL = "DELETE r" +
+            " FROM " + TABLE_NAME + " r" +
+            " INNER JOIN " + TRANSACTION_TABLE + " rto" +
+            " ON r." + RESOURCE_COLUMN + " = rto." + RESOURCE_COLUMN +
+            " AND r." + SUBJECT_COLUMN + " = rto." + SUBJECT_COLUMN +
+            " AND r." + PROPERTY_COLUMN + " = rto." + PROPERTY_COLUMN +
+            " AND r." + TARGET_COLUMN + " = rto." + TARGET_COLUMN +
+            " WHERE rto." + TRANSACTION_COLUMN + " = :transactionId" +
+            " AND rto." + OPERATION_COLUMN + " = 'delete'";
+    private static final Map<DbPlatform, String> COMMIT_DELETE_RECORD_MAP = Map.of(
+            DbPlatform.POSTGRESQL, COMMIT_DELETE_RECORD_POSTGRES,
+            DbPlatform.MYSQL, COMMIT_DELETE_RECORD_MYSQL,
+            DbPlatform.MARIADB, COMMIT_DELETE_RECORD_MYSQL,
+            DbPlatform.H2, COMMIT_DELETE_RECORDS
+            );
 
     private static final String DELETE_TRANSACTION = "DELETE FROM " + TRANSACTION_TABLE + " WHERE " +
             TRANSACTION_COLUMN + " = :transactionId";
@@ -163,8 +193,11 @@ public class ReferenceServiceImpl implements ReferenceService {
     private static final String TRUNCATE_TABLE = "TRUNCATE TABLE " + TABLE_NAME;
     private static final String TRUNCATE_TX_TABLE = "TRUNCATE TABLE " + TRANSACTION_TABLE;
 
+    private DbPlatform dbPlatform;
+
     @PostConstruct
     public void setUp() {
+        dbPlatform = DbPlatform.fromDataSource(dataSource);
         jdbcTemplate = new NamedParameterJdbcTemplate(getDataSource());
     }
 
@@ -265,22 +298,30 @@ public class ReferenceServiceImpl implements ReferenceService {
     public void updateReferences(@Nonnull final Transaction tx, final FedoraId resourceId, final String userPrincipal,
                                  final RdfStream rdfStream) {
         try {
-            final List<Triple> addReferences = getReferencesFromRdf(rdfStream).collect(Collectors.toList());
-            // This predicate checks for items we are adding, so we don't bother to delete and then re-add them.
-            final Predicate<Quad> notInAdds = q -> !addReferences.contains(q.asTriple());
-            // References from this resource.
-            final List<Quad> existingReferences = getOutboundReferences(tx, resourceId);
-            if (resourceId.isDescription()) {
-                // Resource is a binary description so also get the binary references.
-                existingReferences.addAll(getOutboundReferences(tx, resourceId.asBaseId()));
-            }
-            // Remove any existing references not being re-added.
-            existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(tx, t));
+            final List<Triple> addReferences = getReferencesFromRdf(rdfStream).toList();
+            var referencesStream = addReferences.stream();
+
             final Node resourceNode = NodeFactory.createURI(resourceId.getFullId());
-            // This predicate checks for references that didn't already exist in the database.
-            final Predicate<Triple> alreadyExists = t -> !existingReferences.contains(Quad.create(resourceNode, t));
+            // Only need to check existing references if initialization is complete, indicating we are not reindexing
+            if (initializationStatus.isInitializationComplete()) {
+                // This predicate checks for items we are adding, so we don't bother to delete and then re-add them.
+                final Predicate<Quad> notInAdds = q -> !addReferences.contains(q.asTriple());
+                // References from this resource.
+                final List<Quad> existingReferences = getOutboundReferences(tx, resourceId);
+                if (resourceId.isDescription()) {
+                    // Resource is a binary description so also get the binary references.
+                    existingReferences.addAll(getOutboundReferences(tx, resourceId.asBaseId()));
+                }
+                // Remove any existing references not being re-added.
+                existingReferences.stream().filter(notInAdds).forEach(t -> removeReference(tx, t));
+
+                // This predicate checks for references that didn't already exist in the database.
+                final Predicate<Triple> alreadyExists =
+                        t -> !existingReferences.contains(Quad.create(resourceNode, t));
+                referencesStream = referencesStream.filter(alreadyExists);
+            }
             // Add the new references.
-            addReferences.stream().filter(alreadyExists).forEach(r ->
+            referencesStream.forEach(r ->
                     addReference(tx, Quad.create(resourceNode, r), userPrincipal));
         } catch (final Exception e) {
             LOGGER.warn("Unable to update reference index for resource {} in transaction {}: {}",
@@ -295,7 +336,7 @@ public class ReferenceServiceImpl implements ReferenceService {
             tx.ensureCommitting();
             try {
                 final Map<String, String> parameterSource = Map.of("transactionId", tx.getId());
-                jdbcTemplate.update(COMMIT_DELETE_RECORDS, parameterSource);
+                jdbcTemplate.update(COMMIT_DELETE_RECORD_MAP.get(dbPlatform), parameterSource);
                 jdbcTemplate.update(COMMIT_ADD_RECORDS, parameterSource);
                 jdbcTemplate.update(DELETE_TRANSACTION, parameterSource);
             } catch (final Exception e) {
