@@ -169,7 +169,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
                 "on-going maintenance of the software and ensure Fedora is meeting the needs of the " +
                 "community, we are working to gather information on current installations. We strongly " +
                 "encourage all users to register their instance in the DuraSpace Community Supported " +
-                "Program Registry hosted by LYRASIS at https://fedora.lyrasis.org/register-your-site/");
+                "Program Registry hosted by LYRASIS at https://fedorarepository.org/register-your-site/");
         LOGGER.info("Fedora home: {}", fedoraHome);
         LOGGER.debug("Fedora home data: {}", fedoraData);
         try {
