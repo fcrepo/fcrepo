@@ -647,6 +647,13 @@
         <scope>import</scope>
         <type>pom</type>
       </dependency>
+      <!-- Pin aws-crt ahead of the AWS SDK BOM. The BOM ships an older aws-crt that is missing
+           S3MetaRequestOptions$ResponseFileOption, causing ClassNotFoundException on S3 writes. -->
+      <dependency>
+        <groupId>software.amazon.awssdk.crt</groupId>
+        <artifactId>aws-crt</artifactId>
+        <version>${aws.crt.version}</version>
+      </dependency>
       <dependency>
         <groupId>software.amazon.awssdk</groupId>
         <artifactId>bom</artifactId>

@@ -150,7 +150,10 @@ public class OcflPersistenceConfig {
     }
 
     private S3AsyncClient s3Client() {
-        final var builder = S3AsyncClient.builder();
+        // multipartEnabled lets the client transparently use UploadPartCopy for objects larger than the 5GB
+        // single-operation CopyObject limit. ocfl-java's OcflS3Client.copyObject() goes through this client, so
+        // without this, committing objects with files over 5GB fails with an S3 exception.
+        final var builder = S3AsyncClient.builder().multipartEnabled(true);
 
         if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {
             builder.region(Region.of(ocflPropsConfig.getAwsRegion()));
