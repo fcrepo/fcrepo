@@ -171,7 +171,7 @@ public class OcflPersistenceConfig {
 
         // May want to do additional HTTP client configuration, connection pool, etc
         final var httpClientBuilder = NettyNioAsyncHttpClient.builder()
-                .connectionAcquisitionTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ConnectionTimeout()))
+                .connectionTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ConnectionTimeout()))
                 .writeTimeout(Duration.ofSeconds(ocflPropsConfig.getS3WriteTimeout()))
                 .readTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ReadTimeout()))
                 .maxConcurrency(ocflPropsConfig.getS3MaxConcurrency());
