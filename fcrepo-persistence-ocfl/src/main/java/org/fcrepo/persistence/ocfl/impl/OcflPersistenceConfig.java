@@ -104,7 +104,7 @@ public class OcflPersistenceConfig {
                 createCache("resourceHeadersCache"),
                 createCache("rootIdCache"),
                 commitType(),
-                "Authored by Fedora 6",
+                "Authored by Fedora 7",
                 "fedoraAdmin",
                 "info:fedora/fedoraAdmin");
         factory.useUnsafeWrite(ocflPropsConfig.isUnsafeWriteEnabled());

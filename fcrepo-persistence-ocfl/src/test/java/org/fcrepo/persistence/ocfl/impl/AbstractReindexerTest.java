@@ -123,7 +123,7 @@ public class AbstractReindexerTest {
         ocflObjectSessionFactory = new DefaultOcflObjectSessionFactory(repository,
                 tempFolder, objectMapper, new NoOpCache<>(), new NoOpCache<>(),
                 CommitType.NEW_VERSION,
-                "Fedora 6 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
+                "Fedora 7 test", "fedoraAdmin", "info:fedora/fedoraAdmin");
 
         persistentStorageSessionManager = new OcflPersistentSessionManager();
         setField(persistentStorageSessionManager, "ocflIndex", ocflIndex);
