@@ -19,6 +19,7 @@ import javax.sql.DataSource;
 import org.fcrepo.config.MetricsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.config.Storage;
+import org.fcrepo.config.SystemInfoConfig;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.validation.ObjectValidator;
@@ -67,6 +68,9 @@ public class OcflPersistenceConfig {
     @Inject
     private DataSource dataSource;
 
+    @Inject
+    private SystemInfoConfig systemInfoConfig;
+
     /**
      * Create an OCFL Repository
      * @return the repository
@@ -104,7 +108,7 @@ public class OcflPersistenceConfig {
                 createCache("resourceHeadersCache"),
                 createCache("rootIdCache"),
                 commitType(),
-                "Authored by Fedora 7",
+                versionMessage(),
                 "fedoraAdmin",
                 "info:fedora/fedoraAdmin");
         factory.useUnsafeWrite(ocflPropsConfig.isUnsafeWriteEnabled());
@@ -116,6 +120,11 @@ public class OcflPersistenceConfig {
     public ObjectValidator objectValidator() throws IOException {
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         return new ObjectValidator(repository(), objectMapper.readerFor(ResourceHeaders.class));
+    }
+
+    private String versionMessage() {
+        final var version = systemInfoConfig.getImplementationVersion();
+        return StringUtils.isBlank(version) ? "Authored by Fedora" : "Authored by Fedora " + version;
     }
 
     private CommitType commitType() {
