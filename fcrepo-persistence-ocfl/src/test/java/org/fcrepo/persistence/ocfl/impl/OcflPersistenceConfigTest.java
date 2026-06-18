@@ -30,6 +30,7 @@ import org.fcrepo.config.DigestAlgorithm;
 import org.fcrepo.config.MetricsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.config.Storage;
+import org.fcrepo.config.SystemInfoConfig;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.OcflObjectSessionFactory;
@@ -74,6 +75,9 @@ public class OcflPersistenceConfigTest {
     private DataSource dataSource;
 
     @Mock
+    private SystemInfoConfig systemInfoConfig;
+
+    @Mock
     private MeterRegistry meterRegistry;
 
     @Captor
@@ -111,6 +115,7 @@ public class OcflPersistenceConfigTest {
         when(ocflPropsConfig.isOcflUpgradeOnWrite()).thenReturn(false);
         when(ocflPropsConfig.verifyInventory()).thenReturn(true);
         when(ocflPropsConfig.isUnsafeWriteEnabled()).thenReturn(false);
+        when(systemInfoConfig.getImplementationVersion()).thenReturn("7.1.0");
     }
 
     @Test

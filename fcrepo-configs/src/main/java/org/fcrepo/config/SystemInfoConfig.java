@@ -18,15 +18,19 @@ public class SystemInfoConfig extends BasePropsConfig {
 
     public static final String GIT_COMMIT = "git.commit.id.abbrev";
 
+    public static final String FCREPO_VERSION = "fcrepo.version";
+
     @Value("${" + GIT_COMMIT + ":}")
     private String gitCommit;
+
+    @Value("${" + FCREPO_VERSION + ":}")
+    private String implementationVersion;
 
     public String getGitCommit() {
         return gitCommit;
     }
 
     public String getImplementationVersion() {
-        final var version = SystemInfoConfig.class.getPackage().getImplementationVersion();
-        return version != null ? version : "";
+        return implementationVersion;
     }
 }
