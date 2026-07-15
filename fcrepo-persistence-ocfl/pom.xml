@@ -3,7 +3,7 @@
   <parent>
     <groupId>org.fcrepo</groupId>
     <artifactId>fcrepo</artifactId>
-    <version>6.5.1</version>
+    <version>6.5.2-SNAPSHOT</version>
   </parent>
   <artifactId>fcrepo-persistence-ocfl</artifactId>
   <name>Fedora Repository OCFL Persistence Impl</name>
@@ -79,6 +79,10 @@
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>netty-nio-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>sts</artifactId>
     </dependency>
 
     <dependency>

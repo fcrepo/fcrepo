@@ -140,7 +140,10 @@ public class OcflPersistenceConfig {
     }
 
     private S3AsyncClient s3Client() {
-        final var builder = S3AsyncClient.builder();
+        // multipartEnabled lets the client transparently use UploadPartCopy for objects larger than the 5GB
+        // single-operation CopyObject limit. ocfl-java's OcflS3Client.copyObject() goes through this client, so
+        // without this, committing objects with files over 5GB fails with an S3 exception.
+        final var builder = S3AsyncClient.builder().multipartEnabled(true);
 
         if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {
             builder.region(Region.of(ocflPropsConfig.getAwsRegion()));
@@ -161,7 +164,7 @@ public class OcflPersistenceConfig {
 
         // May want to do additional HTTP client configuration, connection pool, etc
         final var httpClientBuilder = NettyNioAsyncHttpClient.builder()
-                .connectionAcquisitionTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ConnectionTimeout()))
+                .connectionTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ConnectionTimeout()))
                 .writeTimeout(Duration.ofSeconds(ocflPropsConfig.getS3WriteTimeout()))
                 .readTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ReadTimeout()))
                 .maxConcurrency(ocflPropsConfig.getS3MaxConcurrency());
