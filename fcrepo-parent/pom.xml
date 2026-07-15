@@ -52,7 +52,6 @@
     <javadoc.plugin.version>3.3.1</javadoc.plugin.version>
     <jxr.plugin.version>3.1.1</jxr.plugin.version>
     <license.plugin.version>4.1</license.plugin.version>
-    <nexus-staging.plugin.version>1.6.8</nexus-staging.plugin.version>
     <project-info-reports.plugin.version>3.1.2</project-info-reports.plugin.version>
     <release.plugin.version>2.5.3</release.plugin.version>
     <remote-resources.plugin.version>1.7</remote-resources.plugin.version>
@@ -68,7 +67,6 @@
     <jacoco.out.it.file>jacoco-it.exec</jacoco.out.it.file>
     <sonar.jacoco.reportPath>${jacoco.outputDir}/${jacoco.out.unit.file}</sonar.jacoco.reportPath>
     <sonar.jacoco.itReportPath>${jacoco.outputDir}/${jacoco.out.it.file}</sonar.jacoco.itReportPath>
-    <sonatype.host>s01.oss.sonatype.org</sonatype.host>
   </properties>
 
   <build>
@@ -386,19 +384,19 @@
           <artifactId>jacoco-maven-plugin</artifactId>
           <version>${jacoco.plugin.version}</version>
         </plugin>
-        <plugin>
-          <groupId>org.sonatype.plugins</groupId>
-          <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>${nexus-staging.plugin.version}</version>
-          <extensions>true</extensions>
-          <configuration>
-            <serverId>sonatype-nexus-snapshots</serverId>
-            <nexusUrl>https://${sonatype.host}/</nexusUrl>
-            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-          </configuration>
-        </plugin>
       </plugins>
     </pluginManagement>
+    <plugins>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.9.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+        </configuration>
+      </plugin>
+    </plugins>
   </build>
 
   <reporting>
@@ -466,32 +464,6 @@
       </plugin>
     </plugins>
   </reporting>
-
-  <pluginRepositories>
-    <pluginRepository>
-      <id>sonatype-nexus-snapshots</id>
-      <name>Sonatype Nexus Snapshots</name>
-      <url>https://${sonatype.host}/content/repositories/snapshots</url>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-
-    <pluginRepository>
-      <id>sonatype-nexus-staging</id>
-      <name>Nexus Release Repository</name>
-      <url>https://${sonatype.host}/content/repositories/releases</url>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
 
   <profiles>
     <profile>
@@ -561,12 +533,8 @@
     <snapshotRepository>
       <id>sonatype-nexus-snapshots</id>
       <name>Sonatype Nexus Shapshots</name>
-      <url>https://${sonatype.host}/content/repositories/snapshots/</url>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
     </snapshotRepository>
-    <repository>
-      <id>sonatype-nexus-staging</id>
-      <url>https://${sonatype.host}/service/local/staging/deploy/maven2/</url>
-    </repository>
   </distributionManagement>
 
   <mailingLists>
@@ -713,7 +681,7 @@
   <repositories>
     <repository>
       <id>oss.sonatype.org-snapshot</id>
-      <url>https://${sonatype.host}/content/repositories/snapshots</url>
+      <url>https://central.sonatype.com/repository/maven-snapshots/</url>
       <releases>
         <enabled>false</enabled>
       </releases>
