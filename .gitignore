@@ -18,6 +18,5 @@ fcrepo-home/
 .java-version
 .checkstyle
 
-# Personal, per-user Claude Code config and caches (shared files stay tracked)
+# Personal, per-user Claude Code settings
 .claude/settings.local.json
-.claude/hooks/__pycache__/
