@@ -145,39 +145,18 @@ passed.
 ## Token & model usage logging
 
 The project records **token and model usage** alongside contributions so we can
-understand the cost and footprint of AI-assisted work. Where possible this is
-captured automatically; where not, disclose it manually.
+understand the cost and footprint of AI-assisted work.
 
 Quantitative usage stats are stored **privately** in the
 [`fcrepo/fcrepo-llm-usage`](https://github.com/fcrepo/fcrepo-llm-usage) audit
 repo. The public PR carries only the qualitative AI disclosure the policy
 requires; token/cost numbers are not published per-PR or per-contributor.
 
-- **Automated (Claude Code).** A `SessionEnd` hook (`.claude/hooks/log_llm_usage.py`)
-  parses the session transcript, sums token usage per model, and writes **one
-  JSON file per session** to `fcrepo-llm-usage` via your existing `gh` auth. A
-  workflow there consolidates records into `usage.csv` and regenerates the
-  README totals. Each record holds repo, branch, `session_id`, timestamp, model
-  id(s), and input / output / cache token counts — nothing else.
-- **Opt-in.** The hook does nothing unless you set `FCREPO_LLM_USAGE=1`. Register
-  it in your `.claude/settings.local.json`:
-
-  ```json
-  {
-    "hooks": {
-      "SessionEnd": [
-        { "type": "command", "command": "python3 .claude/hooks/log_llm_usage.py" }
-      ]
-    }
-  }
-  ```
-
-  It writes using your GitHub credentials — no secret is distributed. If you lack
-  write access to the audit repo (e.g. external contributors), it silently
-  no-ops; log your usage manually in the PR disclosure instead.
-- **Other AI tools.** If your tool doesn't support the hook, record the model
-  used and approximate token/usage figures in the PR's AI Usage Disclosure
-  section manually.
+- **Record.** For each contribution, capture the model(s) used and input /
+  output / cache token counts, along with the repo, branch, and timestamp —
+  nothing else.
+- **Disclose in the PR.** Note the model(s) used in the PR's AI Usage Disclosure
+  section.
 - **Correlating to a PR.** Because one PR may span multiple sessions, records are
   keyed by **repo + branch**. Reference the branch in the PR so usage can be
   matched; do not paste raw token dumps into the PR body.
