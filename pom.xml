@@ -66,7 +66,7 @@
     <jsonld.version>0.13.6</jsonld.version>
     <logback.version>1.5.18</logback.version>
     <maven.changelog.version>3.0.0-M1</maven.changelog.version>
-    <micrometer.version>1.15.0</micrometer.version>
+    <micrometer.version>1.15.12</micrometer.version>
     <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
     <netty.version>4.1.131.Final</netty.version>
     <ocfl-java.version>2.2.1</ocfl-java.version>
