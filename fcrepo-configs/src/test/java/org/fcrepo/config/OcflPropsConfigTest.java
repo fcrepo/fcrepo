@@ -86,6 +86,7 @@ public class OcflPropsConfigTest {
         assertFalse(config.isOcflUpgradeOnWrite());
         assertTrue(config.verifyInventory());
         assertEquals(60, config.getS3ConnectionTimeout());
+        assertEquals(60, config.getS3ConnectionAcquisitionTimeout());
         assertEquals(60, config.getS3WriteTimeout());
         assertEquals(60, config.getS3ReadTimeout());
         assertEquals(100, config.getS3MaxConcurrency());
