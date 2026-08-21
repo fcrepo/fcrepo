@@ -242,6 +242,7 @@ public class OcflPersistenceConfigTest {
         // Need to provide mock values for S3 client configuration
         when(ocflPropsConfig.getAwsRegion()).thenReturn("us-east-1");
         when(ocflPropsConfig.getS3ConnectionTimeout()).thenReturn(30);
+        when(ocflPropsConfig.getS3ConnectionAcquisitionTimeout()).thenReturn(30);
         when(ocflPropsConfig.getS3ReadTimeout()).thenReturn(30);
         when(ocflPropsConfig.getS3WriteTimeout()).thenReturn(30);
         when(ocflPropsConfig.getS3MaxConcurrency()).thenReturn(100);
@@ -279,6 +280,7 @@ public class OcflPersistenceConfigTest {
         // Need to provide mock values for S3 client configuration
         when(ocflPropsConfig.getAwsRegion()).thenReturn("us-east-1");
         when(ocflPropsConfig.getS3ConnectionTimeout()).thenReturn(30);
+        when(ocflPropsConfig.getS3ConnectionAcquisitionTimeout()).thenReturn(30);
         when(ocflPropsConfig.getS3ReadTimeout()).thenReturn(30);
         when(ocflPropsConfig.getS3WriteTimeout()).thenReturn(30);
         when(ocflPropsConfig.getS3MaxConcurrency()).thenReturn(100);
