@@ -6,19 +6,28 @@
 package org.fcrepo.kernel.impl.services;
 
 import static java.util.stream.Stream.of;
+import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
 import static org.apache.jena.graph.NodeFactory.createLiteralString;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
+
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
 import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
 import org.fcrepo.kernel.api.services.ContainmentTriplesService;
@@ -66,6 +75,9 @@ public class ResourceTripleServiceImplTest {
     private FedoraResource resource;
 
     @Mock
+    private NonRdfSourceDescription resource2;
+
+    @Mock
     private LdpTriplePreferences preferences;
 
     @InjectMocks
@@ -73,6 +85,7 @@ public class ResourceTripleServiceImplTest {
 
     private Node resourceSubject;
     private FedoraId resourceId;
+    private FedoraId resourceId2;
 
     private Triple userTriple1;
     private Triple userTriple2;
@@ -86,6 +99,14 @@ public class ResourceTripleServiceImplTest {
     private Triple referenceTriple2;
     private Triple membershipByObjectTriple;
     private Triple containedByTriple;
+    // Server managed premis:hasSize
+    private Triple hasSizeTriple;
+    // User provided premis:hasSize
+    private Triple hasSizeTriple2;
+    // Server managed premis3:size
+    private Triple hasSize3Triple;
+    // User provided premis3:size
+    private Triple hasSize3Triple2;
 
     @BeforeEach
     public void setup() {
@@ -138,6 +159,14 @@ public class ResourceTripleServiceImplTest {
         containedByTriple = Triple.create(createURI("info:fedora/parent"),
                 createURI("http://www.w3.org/ns/ldp#contains"),
                 resourceSubject);
+
+        hasSizeTriple = Triple.create(resourceSubject, HAS_SIZE.asNode(), createLiteralByValue(123L));
+        hasSizeTriple2 = Triple.create(resourceSubject, HAS_SIZE.asNode(),
+                createLiteralByValue("123", XSDDatatype.XSDint));
+        hasSize3Triple = Triple.create(resourceSubject, SIZE.asNode(),
+                createLiteralByValue(123, XSDDatatype.XSDnonNegativeInteger));
+        hasSize3Triple2 = Triple.create(resourceSubject, SIZE.asNode(),
+                createLiteralByValue("123", XSDDatatype.XSDint));
 
         when(resource.getTriples()).thenReturn(rdfStreamOf(userTriple1, userTriple2));
         when(managedPropertiesService.get(resource)).thenReturn(of(serverTriple1, serverTriple2));
@@ -270,5 +299,120 @@ public class ResourceTripleServiceImplTest {
         verify(referenceService).getInboundReferences(transaction, resource);
         verify(membershipService).getMembershipByObject(transaction, resourceId);
         verify(containmentTriplesService).getContainedBy(transaction, resource);
+    }
+
+    /**
+     * Don't deduplicate when size/hasSize triples are not exact copies
+     */
+    @Test
+    public void testShowAllSizesWhenNotMatch() {
+        // Make a NonRdfDescription
+        resourceId2 = resourceId.asDescription();
+        when(resource2.getFedoraId()).thenReturn(resourceId2);
+        resource = mock(Binary.class);
+        when(resource.getId()).thenReturn(resourceId.getFullId());
+        when(((Binary)resource).getContentSize()).thenReturn(123L);
+        when(resource2.getDescribedResource()).thenReturn(resource);
+
+
+        // Setup preferences - turn off the other services
+        when(preferences.displayUserRdf()).thenReturn(true);
+        when(preferences.displayServerManaged()).thenReturn(true);
+        when(preferences.displayContainment()).thenReturn(false);
+        when(preferences.displayMembership()).thenReturn(false);
+        when(preferences.displayReferences()).thenReturn(false);
+
+        // User returns a different value from SMTs
+        when(resource2.getTriples()).thenReturn(rdfStreamOf(hasSizeTriple2, hasSize3Triple2));
+        when(managedPropertiesService.get(resource2)).thenReturn(rdfStreamOf(hasSizeTriple, hasSize3Triple));
+
+        // Call the service
+        final Stream<Triple> resultStream = service.getResourceTriples(transaction, resource2, preferences, -1);
+
+        // Get all triples from the stream
+        final List<Triple> results = resultStream.collect(Collectors.toList());
+
+        // Verify both premis:hasSize and both premis3:size triples are returned
+        assertEquals(4, results.size());
+
+        // Verify all services were called
+        verify(resource2).getTriples();
+        verify(managedPropertiesService).get(resource2);
+    }
+
+    /**
+     * Deduplicate when size/hasSize triples are exact copies
+     */
+    @Test
+    public void testDeduplicateHasSizeMatch() {
+        // Make a NonRdfDescription
+        resourceId2 = resourceId.asDescription();
+        when(resource2.getFedoraId()).thenReturn(resourceId2);
+        resource = mock(Binary.class);
+        when(resource.getId()).thenReturn(resourceId.getFullId());
+        when(((Binary)resource).getContentSize()).thenReturn(123L);
+        when(resource2.getDescribedResource()).thenReturn(resource);
+
+        // Setup preferences - turn off the other services
+        when(preferences.displayUserRdf()).thenReturn(true);
+        when(preferences.displayServerManaged()).thenReturn(true);
+        when(preferences.displayContainment()).thenReturn(false);
+        when(preferences.displayMembership()).thenReturn(false);
+        when(preferences.displayReferences()).thenReturn(false);
+
+        // User returns the same hasSize as SMTs
+        when(resource2.getTriples()).thenReturn(rdfStreamOf(hasSizeTriple, hasSize3Triple));
+        when(managedPropertiesService.get(resource2)).thenReturn(rdfStreamOf(hasSizeTriple, hasSize3Triple));
+
+        // Call the service
+        final Stream<Triple> resultStream = service.getResourceTriples(transaction, resource2, preferences, -1);
+
+        // Get all triples from the stream
+        final List<Triple> results = resultStream.collect(Collectors.toList());
+
+        // Verify only one premis:hasSize and one premis3:size triple is returned
+        assertEquals(2, results.size());
+
+        // Verify all services were called
+        verify(resource2).getTriples();
+        verify(managedPropertiesService).get(resource2);
+    }
+
+    /**
+     * Don't deduplicate if we are not displaying Server Managed Triples
+     */
+    @Test
+    public void testNoDeduplicateHasSizeWhenNoSMT() {
+        // Make a NonRdfDescription
+        resourceId2 = resourceId.asDescription();
+        when(resource2.getFedoraId()).thenReturn(resourceId2);
+        resource = mock(Binary.class);
+        when(resource.getId()).thenReturn(resourceId.getFullId());
+        when(((Binary)resource).getContentSize()).thenReturn(123L);
+        when(resource2.getDescribedResource()).thenReturn(resource);
+
+        // Setup preferences - shouldn't matter as all services return empty
+        when(preferences.displayUserRdf()).thenReturn(true);
+        when(preferences.displayServerManaged()).thenReturn(false);
+        when(preferences.displayContainment()).thenReturn(false);
+        when(preferences.displayMembership()).thenReturn(false);
+        when(preferences.displayReferences()).thenReturn(false);
+
+        // User returns the same hasSize as SMTs
+        when(resource2.getTriples()).thenReturn(rdfStreamOf(hasSizeTriple, hasSize3Triple));
+        when(managedPropertiesService.get(resource2)).thenReturn(rdfStreamOf(hasSizeTriple, hasSize3Triple));
+
+        // Call the service
+        final Stream<Triple> resultStream = service.getResourceTriples(transaction, resource2, preferences, -1);
+
+        // Get all triples from the stream
+        final List<Triple> results = resultStream.collect(Collectors.toList());
+
+        // Verify only one premis:hasSize and one premis3:size triple is returned
+        assertEquals(2, results.size());
+
+        // Verify all services were called
+        verify(resource2).getTriples();
+        verifyNoInteractions(managedPropertiesService);
     }
 }

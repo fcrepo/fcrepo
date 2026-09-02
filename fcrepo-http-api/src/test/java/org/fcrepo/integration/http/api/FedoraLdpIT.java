@@ -63,6 +63,7 @@ import static org.apache.jena.vocabulary.DC_11.title;
 import static org.apache.jena.vocabulary.RDF.type;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_RESPONSE_VARIANTS_STRING;
 import static org.fcrepo.http.commons.domain.RDFMediaType.POSSIBLE_RDF_VARIANTS;
+import static org.fcrepo.http.commons.domain.RDFMediaType.TURTLE;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_ACL;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_FIXITY;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
@@ -100,6 +101,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_NAMESPACE;
 import static org.fcrepo.kernel.api.RdfLexicon.REPOSITORY_ROOT;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONED_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.VERSIONING_TIMEGATE_TYPE;
 import static org.fcrepo.kernel.api.models.ExternalContent.COPY;
@@ -175,8 +177,12 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.cache.CachingHttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.jena.atlas.lib.Sink;
+import org.apache.jena.atlas.lib.SinkToCollection;
+import org.apache.jena.datatypes.xsd.XSDDatatype;
 import org.apache.jena.graph.Node;
 import org.apache.jena.graph.NodeFactory;
+import org.apache.jena.graph.Triple;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Property;
@@ -184,7 +190,10 @@ import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.apache.jena.riot.Lang;
 import org.apache.jena.riot.RDFFormat;
+import org.apache.jena.riot.RDFParser;
+import org.apache.jena.riot.system.StreamRDFLib;
 import org.apache.jena.sparql.core.DatasetGraph;
 import org.apache.jena.sparql.core.Quad;
 import org.apache.jena.vocabulary.DC_11;
@@ -5548,6 +5557,157 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    @Test
+    public void testPutOnBinaryHasSize() throws IOException {
+        final String xsdLong = "http://www.w3.org/2001/XMLSchema#long";
+        final String xsdNonNegative = "http://www.w3.org/2001/XMLSchema#nonNegativeInteger";
+        final String putBodyTemplate = "PREFIX premis: <http://www.loc.gov/premis/rdf/v1#>\n" +
+                "PREFIX premis3: <http://www.loc.gov/premis/rdf/v3/>\n" +
+                "PREFIX ebucore: <http://www.ebu.ch/metadata/ontologies/ebucore/ebucore#>\n" +
+                "\n" +
+                "<%1$s>\n" +
+                "        premis:hasSize           \"%2$s\"^^<%3$s>;\n" +
+                "        premis3:size             \"%2$s\"^^<%4$s>;\n" +
+                "        ebucore:filename         \"empty-test-file.txt\";\n" +
+                "        ebucore:hasMimeType      \"application/x-www-form-urlencoded\".";
+
+        final String location;
+        final var postBinary = postObjMethod();
+        postBinary.setEntity(new StringEntity(generateRandomString(25)));
+        postBinary.addHeader("Content-Disposition", "attachment; filename=\"empty-test-file.txt\"");
+        // Create the binary
+        try (final var response = execute(postBinary)) {
+            assertEquals(SC_CREATED, response.getStatusLine().getStatusCode());
+            location = getLocation(response);
+        }
+        // Get the binary description
+        final Long hasSizeValue;
+        try (final var dataset = execute(new HttpGet(location + "/" + FCR_METADATA))) {
+            assertEquals(SC_OK, getStatus(dataset));
+            final List<Triple> hasSizeTriples = parseResponseToHasSizeTriples(dataset);
+            assertEquals(2, hasSizeTriples.size());
+            hasSizeValue = Long.valueOf(hasSizeTriples.getFirst().getObject().getLiteral().getValue().toString());
+        }
+        // Triple with actual size (25L) as object
+        final Triple actualSizeTriple = Triple.create(createURI(location), HAS_SIZE.asNode(),
+                createLiteralByValue(hasSizeValue));
+        final Triple actualSize3Triple = Triple.create(createURI(location), SIZE.asNode(),
+                createLiteralByValue(hasSizeValue, XSDDatatype.XSDnonNegativeInteger));
+        // Add a different value for premis:hasSize
+        final String body = String.format(putBodyTemplate, location, "12345", xsdLong, xsdNonNegative);
+        // Triple with fake size (12345L) as object
+        final Triple fakeSize_12345_triple = Triple.create(createURI(location), HAS_SIZE.asNode(),
+                createLiteralByValue(12345L));
+        final Triple fakeSize3_12345_triple = Triple.create(createURI(location), SIZE.asNode(),
+                createLiteralByValue(12345, XSDDatatype.XSDnonNegativeInteger));
+        // Update binary description with user size triples
+        final var putBinary = new HttpPut(location + "/" + FCR_METADATA);
+        putBinary.setEntity(new StringEntity(body, UTF_8));
+        putBinary.addHeader(CONTENT_TYPE, TURTLE);
+        assertEquals(SC_NO_CONTENT, getStatus(putBinary));
+        // Get the binary description to check all triples exist
+        try (final var response = execute(new HttpGet(location + "/" + FCR_METADATA))) {
+            assertEquals(SC_OK, getStatus(response));
+            final List<Triple> hasSizeTriples = parseResponseToHasSizeTriples(response);
+            assertEquals(4, hasSizeTriples.size());
+            assertTrue(hasSizeTriples.contains(actualSizeTriple));
+            assertTrue(hasSizeTriples.contains(fakeSize_12345_triple));
+            assertTrue(hasSizeTriples.contains(actualSize3Triple));
+            assertTrue(hasSizeTriples.contains(fakeSize3_12345_triple));
+        }
+        // Try to add the same value as originally calculated (i.e. 25L)
+        final String body2 = String.format(putBodyTemplate, location, hasSizeValue, xsdLong, xsdNonNegative);
+        final var putBinary2 = new HttpPut(location + "/" + FCR_METADATA);
+        putBinary2.setEntity(new StringEntity(body2, UTF_8));
+        putBinary2.addHeader(CONTENT_TYPE, TURTLE);
+        assertEquals(SC_NO_CONTENT, getStatus(putBinary2));
+        try (final var response = execute(new HttpGet(location + "/" + FCR_METADATA))) {
+            assertEquals(SC_OK, getStatus(response));
+            final List<Triple> hasSizeTriples = parseResponseToHasSizeTriples(response);
+            assertEquals(2, hasSizeTriples.size());
+            assertTrue(hasSizeTriples.contains(actualSizeTriple));
+            // Just to make sure it was changed.
+            assertFalse(hasSizeTriples.contains(fakeSize_12345_triple));
+            assertTrue(hasSizeTriples.contains(actualSize3Triple));
+            assertFalse(hasSizeTriples.contains(fakeSize3_12345_triple));
+        }
+        // Now try excluding SMTs and still see the user's value which is the same.
+        final var get4 = new HttpGet(location + "/" + FCR_METADATA);
+        get4.addHeader("Prefer", "return=representation; omit=\"http://fedora.info/definitions/fcrepo#ServerManaged\"");
+        try (final var response = execute(get4)) {
+            assertEquals(SC_OK, getStatus(response));
+            final List<Triple> hasSizeTriples = parseResponseToHasSizeTriples(response);
+            assertEquals(2, hasSizeTriples.size());
+            assertTrue(hasSizeTriples.contains(actualSizeTriple));
+            assertTrue(hasSizeTriples.contains(actualSize3Triple));
+        }
+        // Try to put the same value with a different datatype (int instead of long)
+        // Triple with changed datatype as object
+        final Triple wrong_datatype_triple = Triple.create(createURI(location), HAS_SIZE.asNode(),
+                createLiteralByValue(String.valueOf(hasSizeValue), XSDDatatype.XSDint));
+        final Triple wrong_datatype_triple2 = Triple.create(createURI(location), SIZE.asNode(),
+                createLiteralByValue(String.valueOf(hasSizeValue), XSDDatatype.XSDint));
+        final String body3 = String.format(putBodyTemplate, location, hasSizeValue, "http://www.w3.org/2001/XMLSchema#int", "http://www.w3.org/2001/XMLSchema#int");
+        final var putBinary3 = new HttpPut(location + "/" + FCR_METADATA);
+        putBinary3.setEntity(new StringEntity(body3, UTF_8));
+        putBinary3.addHeader(CONTENT_TYPE, TURTLE);
+        assertEquals(SC_NO_CONTENT, getStatus(putBinary3));
+        try (final var response = execute(new HttpGet(location + "/" + FCR_METADATA))) {
+            assertEquals(SC_OK, getStatus(response));
+            final List<Triple> hasSizeTriples = parseResponseToHasSizeTriples(response);
+            assertEquals(4, hasSizeTriples.size());
+            assertTrue(hasSizeTriples.contains(actualSizeTriple));
+            assertTrue(hasSizeTriples.contains(wrong_datatype_triple));
+            assertTrue(hasSizeTriples.contains(actualSize3Triple));
+            assertTrue(hasSizeTriples.contains(wrong_datatype_triple2));
+        }
+        // Try to add the same value as first added (i.e. 12345L)
+        final var putBinary4 = new HttpPut(location + "/" + FCR_METADATA);
+        putBinary4.setEntity(new StringEntity(body, UTF_8)); // Reuse the body
+        putBinary4.addHeader(CONTENT_TYPE, TURTLE);
+        assertEquals(SC_NO_CONTENT, getStatus(putBinary4));
+        try (final var response = execute(new HttpGet(location + "/" + FCR_METADATA))) {
+            assertEquals(SC_OK, getStatus(response));
+            final List<Triple> hasSizeTriples = parseResponseToHasSizeTriples(response);
+            assertEquals(4, hasSizeTriples.size());
+            assertTrue(hasSizeTriples.contains(actualSizeTriple));
+            assertTrue(hasSizeTriples.contains(fakeSize_12345_triple));
+            assertTrue(hasSizeTriples.contains(actualSize3Triple));
+            assertTrue(hasSizeTriples.contains(fakeSize3_12345_triple));
+        }
+        // Now add a whole new value
+        final var putBinary5 = new HttpPut(location + "/" + FCR_METADATA);
+        final var body4 = String.format(putBodyTemplate, location, "9999", xsdLong, xsdNonNegative);
+        putBinary5.setEntity(new StringEntity(body4, UTF_8)); // Reuse the body
+        putBinary5.addHeader(CONTENT_TYPE, TURTLE);
+        assertEquals(SC_NO_CONTENT, getStatus(putBinary5));
+        try (final var response = execute(new HttpGet(location + "/" + FCR_METADATA))) {
+            assertEquals(SC_OK, getStatus(response));
+            final List<Triple> hasSizeTriples = parseResponseToHasSizeTriples(response);
+            assertEquals(4, hasSizeTriples.size());
+            assertTrue(hasSizeTriples.contains(actualSizeTriple));
+            assertTrue(hasSizeTriples.contains(Triple.create(createURI(location), HAS_SIZE.asNode(),
+                    createLiteralByValue(9999L))));
+            assertTrue(hasSizeTriples.contains(actualSize3Triple));
+            assertTrue(hasSizeTriples.contains(Triple.create(createURI(location), SIZE.asNode(),
+                    createLiteralByValue(9999, XSDDatatype.XSDnonNegativeInteger))));
+        }
+        // Now try excluding SMTs and still see the user's value.
+        final var get5 = new HttpGet(location + "/" + FCR_METADATA);
+        get5.addHeader("Prefer", "return=representation; omit=\"http://fedora.info/definitions/fcrepo#ServerManaged\"");
+        try (final var response = execute(get5)) {
+            assertEquals(SC_OK, getStatus(response));
+            final List<Triple> hasSizeTriples = parseResponseToHasSizeTriples(response);
+            assertEquals(2, hasSizeTriples.size());
+            assertFalse(hasSizeTriples.contains(actualSizeTriple));
+            assertTrue(hasSizeTriples.contains(Triple.create(createURI(location), HAS_SIZE.asNode(),
+                    createLiteralByValue(9999L))));
+            assertFalse(hasSizeTriples.contains(actualSize3Triple));
+            assertTrue(hasSizeTriples.contains(Triple.create(createURI(location), SIZE.asNode(),
+                    createLiteralByValue(9999, XSDDatatype.XSDnonNegativeInteger))));
+        }
+    }
+
     private void assertIdStringConstraint(final String id) throws IOException {
         assertInvalidId(id);
         assertValidId(id + "-suffix");
@@ -5576,4 +5736,34 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
+    /**
+     * Generate a random alphanumeric string
+     * @param length the length of the string
+     * @return the string
+     */
+    private String generateRandomString(final int length) {
+        final String characters = "0123456abcdefghijklmnopqrstuvwxyz";
+        final var rng = new Random();
+        final char[] text = new char[length];
+        for (int i = 0; i < length; i++) {
+            text[i] = characters.charAt(rng.nextInt(characters.length()));
+        }
+        return new String(text);
+    }
+
+    /**
+     * A graph/model is a set of triples, to be able to see duplicates we use a RDFParser directly.
+     * @param resp The Response object from the GET
+     * @return a list of triples for premis:hasSize and premis3:size
+     * @throws IOException On exception reading HTTP response.
+     */
+    private List<Triple> parseResponseToHasSizeTriples(final CloseableHttpResponse resp)
+            throws IOException {
+        final List<Triple> triples = new ArrayList<>();
+        final Sink<Triple> triplesSink = new SinkToCollection<>(triples);
+        RDFParser.source(resp.getEntity().getContent()).lang(Lang.TURTLE).parse(StreamRDFLib.sinkTriples(triplesSink));
+        return triples.stream().filter(t ->
+            t.getPredicate().equals(HAS_SIZE.asNode()) || t.getPredicate().equals(SIZE.asNode())
+        ).toList();
+    }
 }
