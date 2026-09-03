@@ -86,6 +86,27 @@
       </exclusions>
     </dependency>
     <dependency>
+      <groupId>org.apache.artemis</groupId>
+      <artifactId>artemis-server</artifactId>
+      <version>${artemis.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.artemis</groupId>
+      <artifactId>artemis-jakarta-client</artifactId>
+      <version>${artemis.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.artemis</groupId>
+      <artifactId>artemis-stomp-protocol</artifactId>
+      <version>${artemis.version}</version>
+    </dependency>
+    <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
