@@ -1715,6 +1715,57 @@ public class FedoraLdpIT extends AbstractResourceIT {
     }
 
     @Test
+    public void testPatchResponseReturnsUpdatedEtag() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final String uri = serverAddress + id;
+
+        final String etagBefore = getEtag(uri);
+        assertTrue(etagBefore.startsWith("W/"), "Expected weak ETag");
+
+        final HttpPatch patch = patchObjMethod(id);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.addHeader("If-Match", etagBefore.substring(2));
+        patch.setEntity(new StringEntity(
+                "INSERT { <> <http://purl.org/dc/elements/1.1/title> 'patched title' } WHERE {}"));
+
+        final String etagFromPatch;
+        try (final CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            etagFromPatch = getEtag(response);
+        }
+
+        final String etagAfter = getEtag(uri);
+        assertNotEquals(etagBefore, etagFromPatch, "PATCH returned the ETag from before the update");
+        assertEquals(etagAfter, etagFromPatch, "PATCH ETag does not match the ETag of the updated resource");
+    }
+
+    @Test
+    public void testPutResponseReturnsUpdatedEtag() throws IOException {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+        final String uri = serverAddress + id;
+
+        final String etagBefore = getEtag(uri);
+        assertTrue(etagBefore.startsWith("W/"), "Expected weak ETag");
+
+        final HttpPut put = putObjMethod(id);
+        put.addHeader(CONTENT_TYPE, "text/turtle");
+        put.addHeader("If-Match", etagBefore.substring(2));
+        put.setEntity(new StringEntity("<> <http://purl.org/dc/elements/1.1/title> 'replaced title' ."));
+
+        final String etagFromPut;
+        try (final CloseableHttpResponse response = execute(put)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            etagFromPut = getEtag(response);
+        }
+
+        final String etagAfter = getEtag(uri);
+        assertNotEquals(etagBefore, etagFromPut, "PUT returned the ETag from before the update");
+        assertEquals(etagAfter, etagFromPut, "PUT ETag does not match the ETag of the updated resource");
+    }
+
+    @Test
     public void testContainmentHashChanges() throws Exception {
         final String parentUri;
         final String createdEtag;

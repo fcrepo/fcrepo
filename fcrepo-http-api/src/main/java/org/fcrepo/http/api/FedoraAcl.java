@@ -172,7 +172,7 @@ public class FedoraAcl extends ContentExposingResource {
     @PATCH
     @Consumes({ contentTypeSPARQLUpdate })
     public Response updateSparql(final InputStream requestBodyStream)
-        throws IOException, ItemNotFoundException {
+        throws IOException, ItemNotFoundException, PathNotFoundException {
         hasRestrictedPath(externalPath);
 
         if (null == requestBodyStream) {
@@ -214,7 +214,8 @@ public class FedoraAcl extends ContentExposingResource {
                 patchResourcewithSparql(aclResource, newRequest);
                 transaction().commitIfShortLived();
             });
-            addCacheControlHeaders(servletResponse, aclResource, transaction());
+            invalidateCachedRdfEtag();
+            addCacheControlHeaders(servletResponse, getFedoraResource(transaction(), aclId), transaction());
 
             return noContent().build();
         } catch (final IllegalArgumentException iae) {

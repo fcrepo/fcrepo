@@ -421,7 +421,16 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
 
     protected FedoraResource reloadResource() {
         this.fedoraResource = null;
+        invalidateCachedRdfEtag();
         return resource();
+    }
+
+    /**
+     * Discard the etag computed earlier in this request. The cached value is only valid for the state of the
+     * resource at the time it was computed, so it must be dropped after the resource has been modified.
+     */
+    protected void invalidateCachedRdfEtag() {
+        this.cachedRdfEtag = null;
     }
 
     /**
@@ -872,6 +881,7 @@ public abstract class ContentExposingResource extends FedoraBaseResource {
      *         content depending on Prefer headers.
      */
     protected Response createUpdateResponse(final FedoraResource resource, final boolean created) {
+        invalidateCachedRdfEtag();
         addCacheControlHeaders(servletResponse, resource, transaction());
         addResourceLinkHeaders(resource, created);
         addExternalContentHeaders(resource);

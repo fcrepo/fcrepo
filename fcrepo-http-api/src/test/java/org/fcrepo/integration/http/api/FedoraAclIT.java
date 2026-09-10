@@ -25,6 +25,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.WEBAC_NAMESPACE_VALUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -140,6 +141,31 @@ public class FedoraAclIT extends AbstractResourceIT {
                                       createURI("http://www.w3.org/ns/auth/acl#Write")));
         }
 
+    }
+
+    @Test
+    public void testPatchAclResponseReturnsUpdatedEtag() throws Exception {
+        createObjectAndClose(id);
+        final String aclURI = createACL();
+
+        final String etagBefore = getEtag(aclURI);
+        assertTrue(etagBefore.startsWith("W/"), "Expected weak ETag");
+
+        final HttpPatch patch = new HttpPatch(aclURI);
+        patch.addHeader(CONTENT_TYPE, "application/sparql-update");
+        patch.addHeader("If-Match", etagBefore.substring(2));
+        patch.setEntity(new StringEntity("PREFIX acl: <http://www.w3.org/ns/auth/acl#> " +
+                                         "INSERT { <#writeAccess> acl:mode acl:Write . } WHERE { }"));
+
+        final String etagFromPatch;
+        try (final CloseableHttpResponse response = execute(patch)) {
+            assertEquals(NO_CONTENT.getStatusCode(), getStatus(response));
+            etagFromPatch = getEtag(response);
+        }
+
+        final String etagAfter = getEtag(aclURI);
+        assertNotEquals(etagBefore, etagFromPatch, "PATCH returned the ETag from before the update");
+        assertEquals(etagAfter, etagFromPatch, "PATCH ETag does not match the ETag of the updated ACL");
     }
 
     @Test
