@@ -227,6 +227,21 @@ public class ContainmentIndexImplTest {
     }
 
     @Test
+    public void testRemoveAndPurgeChildInSameTransaction() {
+        stubObject("parent1");
+        stubObject("child1");
+        stubObject("transaction1");
+        containmentIndex.addContainedBy(transaction1, parent1.getFedoraId(), child1.getFedoraId());
+        containmentIndex.commitTransaction(transaction1);
+
+        containmentIndex.removeContainedBy(transaction1, parent1.getFedoraId(), child1.getFedoraId());
+        containmentIndex.purgeResource(transaction1, child1.getFedoraId());
+        containmentIndex.commitTransaction(transaction1);
+
+        assertEquals(0, containmentIndex.getContainsDeleted(shortLivedTx, parent1.getFedoraId()).count());
+    }
+
+    @Test
     public void testRollbackTransaction() {
         stubObject("parent1");
         stubObject("child1");
@@ -815,5 +830,4 @@ public class ContainmentIndexImplTest {
         assertNull(containmentIndex.getContainedBy(shortLivedTx, descriptionId1));
     }
 }
-
 
