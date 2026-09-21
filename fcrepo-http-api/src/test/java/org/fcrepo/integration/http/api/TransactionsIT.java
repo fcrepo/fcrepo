@@ -114,6 +114,7 @@ public class TransactionsIT extends AbstractResourceIT {
         final var dataSource = getBean(DataSource.class);
         jdbcTemplate = new JdbcTemplate(dataSource);
         flyway = getBean(Flyway.class);
+        propsConfig.setSessionTimeout(Duration.ofMillis(180000));
     }
 
     @After
