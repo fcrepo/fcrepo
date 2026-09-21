@@ -1038,6 +1038,27 @@ public class TransactionsIT extends AbstractResourceIT {
         assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
     }
 
+    @Test
+    public void deleteAndPurgeChildInTransactionShouldAllowParentPurge() throws Exception {
+        final var parentId = getRandomUniqueId();
+        final var childId = parentId + "/child";
+        final var parentUri = serverAddress + parentId;
+        final var childUri = serverAddress + childId;
+
+        putContainer(parentId, null);
+        putContainer(childId, null);
+
+        final String txLocation = createTransaction();
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(addTxTo(new HttpDelete(childUri), txLocation)));
+        assertEquals(NO_CONTENT.getStatusCode(),
+                getStatus(addTxTo(new HttpDelete(childUri + "/" + FCR_TOMBSTONE), txLocation)));
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpPut(txLocation)));
+
+        assertEquals(NO_CONTENT.getStatusCode(), getStatus(new HttpDelete(parentUri)));
+        assertEquals(NO_CONTENT.getStatusCode(),
+                getStatus(new HttpDelete(parentUri + "/" + FCR_TOMBSTONE)));
+    }
+
     /**
      * Test for accounting for ghost nodes during resource locking.
      * @see <a href="https://fedora-repository.atlassian.net/browse/FCREPO-3584">FCREPO-3584</a>
