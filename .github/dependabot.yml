@@ -1,0 +1,46 @@
+version: 2
+updates:
+  # Maven: the root pom aggregates every module, including fcrepo-parent
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "00:00"
+      timezone: "Etc/UTC"
+    cooldown:
+      default-days: 1
+    open-pull-requests-limit: 10
+    rebase-strategy: "auto"
+    assignees:
+      - "Surfrdan"
+    labels:
+      - "dependencies"
+    ignore:
+      # Spring and Jakarta major upgrades are planned migrations, not routine bumps
+      - dependency-name: "org.springframework:*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "jakarta.*:*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # Batch routine minor/patch bumps into one PR; majors still get their own PR
+      maven-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # GitHub Actions used in .github/workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 1
+    rebase-strategy: "auto"
+    assignees:
+      - "Surfrdan"
+    labels:
+      - "dependencies"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
