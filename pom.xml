@@ -40,7 +40,7 @@
     <h2database.version>2.4.240</h2database.version>
     <hamcrest.version>3.0</hamcrest.version>
     <hikari.version>6.3.2</hikari.version>
-    <hk2.version>3.1.1</hk2.version>
+    <hk2.version>4.0.2</hk2.version>
     <!-- Last version that supports our version of jquery -->
     <htmlunit.version>4.14.0</htmlunit.version>
     <httpclient.version>4.5.14</httpclient.version>
