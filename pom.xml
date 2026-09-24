@@ -85,7 +85,7 @@
     <mysql.version>8.4.0</mysql.version>
     <!-- test gear -->
     <awaitility.version>4.3.0</awaitility.version>
-    <grizzly.version>4.1.0-M1</grizzly.version>
+    <grizzly.version>5.0.2</grizzly.version>
     <junit.version>4.13.2</junit.version>
     <junit5.version>5.11.4</junit5.version>
     <mockito.junit5.version>5.17.0</mockito.junit5.version>
