@@ -17,3 +17,6 @@ fcrepo-home/
 .vscode/
 .java-version
 .checkstyle
+
+# Personal, per-user Claude Code settings
+.claude/settings.local.json
