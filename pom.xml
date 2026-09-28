@@ -411,8 +411,10 @@
       </dependency>
       <dependency>
         <groupId>io.prometheus</groupId>
-        <artifactId>prometheus-metrics-core</artifactId>
+        <artifactId>prometheus-metrics-bom</artifactId>
         <version>${prometheus.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.ext</groupId>
