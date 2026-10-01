@@ -69,7 +69,7 @@ import org.fcrepo.kernel.api.services.ReplaceBinariesService;
 import org.fcrepo.kernel.api.services.ReplacePropertiesService;
 import org.fcrepo.kernel.api.services.UpdatePropertiesService;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
+import jakarta.jms.ConnectionFactory;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.vocabulary.RDF;
@@ -159,7 +159,7 @@ abstract class AbstractJmsIT implements MessageListener {
     private DeleteResourceService deleteResourceService;
 
     @Inject
-    private ActiveMQConnectionFactory connectionFactory;
+    private ConnectionFactory connectionFactory;
 
     @Autowired
     @Qualifier("referenceService")
@@ -313,6 +313,7 @@ abstract class AbstractJmsIT implements MessageListener {
 
     @Override
     public void onMessage(final Message message) {
+        LOGGER.info("Received JMS message in {}: {}", this.getClass().getSimpleName(), message);
         messages.add(message);
     }
 
@@ -339,13 +340,32 @@ abstract class AbstractJmsIT implements MessageListener {
     }
 
     private void awaitMessageOrFail(final String id, final String eventType, final String resourceType) {
-        await().pollInterval(TWO_HUNDRED_MILLISECONDS).until(() -> messages.stream().anyMatch(msg -> {
-            try {
-                return checkForMatchingMessage(msg, id, eventType, resourceType);
-            } catch (final JMSException | JsonProcessingException e) {
-                throw new RuntimeException(e);
+        try {
+            await().atMost(TIMEOUT, TimeUnit.MILLISECONDS)
+                    .pollInterval(TWO_HUNDRED_MILLISECONDS)
+                    .until(() -> messages.stream().anyMatch(msg -> {
+                        try {
+                            return checkForMatchingMessage(msg, id, eventType, resourceType);
+                        } catch (final JMSException | JsonProcessingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }));
+        } catch (final ConditionTimeoutException exc) {
+            LOGGER.error("Timed out waiting for JMS message. destinationId={}, eventType={}, resourceType={}, " +
+                    "messagesReceived={}", id, eventType, resourceType, messages.size());
+            for (final Message msg : messages) {
+                try {
+                    if (msg instanceof TextMessage textMessage) {
+                        LOGGER.error("Received message body: {}", textMessage.getText());
+                    } else {
+                        LOGGER.error("Received non-text JMS message: {}", msg);
+                    }
+                } catch (final JMSException e) {
+                    LOGGER.error("Failed to inspect received JMS message", e);
+                }
             }
-        }));
+            throw exc;
+        }
     }
 
     private void awaitNoMessageOrFail(final String id, final String eventType, final String resourceType) {

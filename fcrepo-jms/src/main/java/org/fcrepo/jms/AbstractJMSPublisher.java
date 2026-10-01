@@ -18,7 +18,7 @@ import jakarta.jms.MessageProducer;
 import jakarta.jms.Session;
 
 import com.google.common.eventbus.AllowConcurrentEvents;
-import org.apache.activemq.ActiveMQConnectionFactory;
+import jakarta.jms.ConnectionFactory;
 import org.fcrepo.kernel.api.observer.Event;
 import org.slf4j.Logger;
 
@@ -39,7 +39,7 @@ public abstract class AbstractJMSPublisher {
     private EventBus eventBus;
 
     @Inject
-    private ActiveMQConnectionFactory connectionFactory;
+    private ConnectionFactory connectionFactory;
 
     @Inject
     private JMSEventMessageFactory eventFactory;
