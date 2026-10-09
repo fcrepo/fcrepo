@@ -123,6 +123,9 @@ public class OcflPropsConfig extends BasePropsConfig {
     @Value("${fcrepo.ocfl.s3.timeout.connection.seconds:60}")
     private int s3ConnectionTimeout;
 
+    @Value("${fcrepo.ocfl.s3.timeout.acquisition.seconds:60}")
+    private int s3ConnectionAcquisitionTimeout;
+
     @Value("${fcrepo.ocfl.s3.timeout.write.seconds:60}")
     private int s3WriteTimeout;
 
@@ -524,10 +527,18 @@ public class OcflPropsConfig extends BasePropsConfig {
     }
 
     /**
-     * @return the AWS S3 connection acquisition timeout in seconds.
+     * @return the AWS S3 connection timeout in seconds.
      */
     public int getS3ConnectionTimeout() {
         return s3ConnectionTimeout;
+    }
+
+    /**
+     * @return the AWS S3 connection acquisition timeout in seconds. This is the maximum time a request will wait to
+     *         acquire a connection from the client's connection pool before failing.
+     */
+    public int getS3ConnectionAcquisitionTimeout() {
+        return s3ConnectionAcquisitionTimeout;
     }
 
     /**
