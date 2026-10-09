@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/fcrepo/fcrepo/security/advisories/new
+    about: Report a vulnerability privately. Do not open a public issue.
+  - name: Questions and support
+    url: https://fedora-project.slack.com/
+    about: Ask in the Fedora Slack or on the fedora-community mailing list.
+  - name: Archived Jira issues
+    url: https://fedora.info/jira/
+    about: Read-only archive of the Jira tracker used before October 2026.

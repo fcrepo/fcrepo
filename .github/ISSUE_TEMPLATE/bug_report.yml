@@ -1,0 +1,54 @@
+name: Bug report
+description: Something does not work as documented in Fedora or one of its tools.
+type: Bug
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Issues for all Fedora repositories are tracked here. Pick the one the bug is in.
+      options:
+        - fcrepo (the repository itself)
+        - fcrepo-storage-ocfl
+        - fcrepo-import-export
+        - fcrepo-camel-toolbox
+        - fcrepo-camel
+        - migration-utils
+        - fcrepo-upgrade-utils
+        - fcrepo-migration-validator
+        - fcrepo-java-client
+        - fcrepo-docker
+        - fcrepo-aws-deployer
+        - fcrepo-build-tools
+        - fcrepo-specification
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Fedora version, and the version of the tool if the bug is not in fcrepo itself.
+      placeholder: "7.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead. Include error messages and log excerpts.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start Fedora with ...
+        2. PUT ... to ...
+        3. Observe ...
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Database, storage backend, Java version, container or deployment method.

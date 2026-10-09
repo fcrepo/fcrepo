@@ -1202,7 +1202,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
             }
         }
 
-        // Ensure binary can be downloaded (test against regression of: https://jira.duraspace.org/browse/FCREPO-1720)
+        // Ensure binary can be downloaded (test against regression of: https://fedora.info/jira/FCREPO-1720)
         assertEquals(OK.getStatusCode(), getStatus(getDSMethod(pid, "x")));
 
         // Ensure headers for binary have updated, FCREPO-3739
