@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -662,39 +663,47 @@ public class DbSearchIndexImpl implements SearchIndex {
             }
 
             final Long searchId = doUpsertIntoSimpleSearch(fedoraId, resourceHeaders);
-            insertRdfTypes(rdfTypes);
+            final var newRdfTypes = insertRdfTypes(rdfTypes);
 
             // Only need to delete existing type associations for live indexing
             if (initializationStatus.isInitializationComplete()) {
                 deleteRdfTypeAssociations(fedoraId);
             }
-            insertRdfTypeAssociations(rdfTypes, searchId);
+            insertRdfTypeAssociations(rdfTypes, newRdfTypes, searchId);
         } catch (final Exception e) {
             throw new RepositoryRuntimeException("Failed add/updated the search index for : " + fullId, e);
         }
     }
 
     /**
-     * Adds the list of RDF types to the db, if they aren't already there.
+     * Adds the list of RDF types to the db, if they aren't already there, and returns the types that were added.
      *
      * @param rdfTypes the types to attempt to add
+     * @return the types that were added
      */
-    private void insertRdfTypes(final List<URI> rdfTypes) {
+    private Set<URI> insertRdfTypes(final List<URI> rdfTypes) {
+        final var newRdfTypes = new HashSet<URI>();
+        final List<URI> typesToAdd = new ArrayList<>();
         final MapSqlParameterSource[] params = rdfTypes.stream()
                 .filter(rdfType -> !rdfTypeIdCache.containsKey(rdfType))
-                .map(r -> new MapSqlParameterSource().addValue(RDF_TYPE_URI_PARAM, r.toString()))
+                .map(rdfType -> {
+                    typesToAdd.add(rdfType);
+                    return new MapSqlParameterSource().addValue(RDF_TYPE_URI_PARAM, rdfType.toString());
+                })
                 .toArray(MapSqlParameterSource[]::new);
         try {
             if (params.length == 0) {
-                return;
+                return newRdfTypes;
             }
             jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_MAPPING.get(dbPlatForm), params);
+            newRdfTypes.addAll(typesToAdd);
         } catch (final DuplicateKeyException e) {
             // ignore duplicate keys
         } catch (final CannotAcquireLockException e) {
             // if we can't get a lock
             throw new RepositoryRuntimeException("Failed to add RDF type(s) to search index", e);
         }
+        return newRdfTypes;
     }
 
     private void doUpsertWithTransaction(final Transaction transaction, final ResourceHeaders resourceHeaders,
@@ -815,12 +824,14 @@ public class DbSearchIndexImpl implements SearchIndex {
                 deleteParams);
     }
 
-    private void insertRdfTypeAssociations(final List<URI> rdfTypes,
-                                           final Long resourceSearchId) {
+    private void insertRdfTypeAssociations(final List<URI> rdfTypes, final Set<URI> newRdfTypes,
+                                            final Long resourceSearchId) {
         //add rdf type associations
         final List<MapSqlParameterSource> parameterSourcesList = new ArrayList<>();
         for (final var rdfType : rdfTypes) {
-            final Long rdfTypeId = getRdfTypeId(rdfType);
+            // New RDF type rows are not committed yet, so their IDs must not be made visible through the shared cache.
+            final Long rdfTypeId = newRdfTypes.contains(rdfType) ? getRdfTypeIdDirect(rdfType) :
+                    getRdfTypeIdCached(rdfType);
 
             final var assocParams = new MapSqlParameterSource();
             assocParams.addValue(RESOURCE_SEARCH_ID_PARAM, resourceSearchId);
@@ -832,13 +843,17 @@ public class DbSearchIndexImpl implements SearchIndex {
         jdbcTemplate.batchUpdate(INSERT_RDF_TYPE_ASSOC, psArray);
     }
 
-    private Long getRdfTypeId(final URI rdfType) {
-        return rdfTypeIdCache.computeIfAbsent(rdfType, uri ->
-                jdbcTemplate.queryForObject(
-                        SELECT_RDF_TYPE_ID,
-                        Map.of(RDF_TYPE_URI_PARAM, uri.toString()),
-                        Long.class)
-        );
+    // For getting RDF types that have previously been committed, either from the cache or db
+    private Long getRdfTypeIdCached(final URI rdfType) {
+        return rdfTypeIdCache.computeIfAbsent(rdfType, this::getRdfTypeIdDirect);
+    }
+
+    // For getting RDF types inserted as part of the current transaction, since they are not cached yet
+    private Long getRdfTypeIdDirect(final URI rdfType) {
+        return jdbcTemplate.queryForObject(
+                SELECT_RDF_TYPE_ID,
+                Map.of(RDF_TYPE_URI_PARAM, rdfType.toString()),
+                Long.class);
     }
 
     @Override
