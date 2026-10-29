@@ -5,28 +5,26 @@
  */
 package org.fcrepo.integration.jms.observer;
 
+import jakarta.jms.Destination;
+import jakarta.jms.JMSException;
+
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import jakarta.jms.Destination;
-import jakarta.jms.JMSException;
-
 /**
- * <p>
- * JmsQueueIT class.
- * </p>
+ * Queue-based JMS integration test running against an embedded ActiveMQ Classic broker.
  *
- * @author acoburn
+ * @author Dan Field
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration({ "/spring-test/jms-queue.xml", "/spring-test/fcrepo-config.xml",
+@ContextConfiguration({"/spring-test/jms-queue-activemq.xml", "/spring-test/fcrepo-config.xml",
     "/spring-test/eventing.xml" })
 @DirtiesContext
-public class JmsQueueIT extends AbstractJmsIT {
+public class JmsQueueActiveMQIT extends AbstractJmsIT {
 
     protected Destination createDestination() throws JMSException {
-        return jmsSession.createQueue("fcrepo-queue");
+        return jmsSession.createQueue("/fedora");
     }
 }

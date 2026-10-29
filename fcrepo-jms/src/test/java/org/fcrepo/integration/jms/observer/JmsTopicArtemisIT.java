@@ -14,18 +14,17 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 /**
- * <p>
- * JmsTopicIT class.
- * </p>
+ * Topic-based JMS integration test running against an embedded Artemis broker.
  *
- * @author acoburn
+ * @author Dan Field
  */
 @ExtendWith(SpringExtension.class)
-@ContextConfiguration({ "/spring-test/jms-topic.xml", "/spring-test/fcrepo-config.xml",
+@ContextConfiguration({"/spring-test/jms-topic-artemis.xml", "/spring-test/fcrepo-config.xml",
     "/spring-test/eventing.xml" })
 @DirtiesContext
-public class JmsTopicIT extends AbstractJmsIT {
+public class JmsTopicArtemisIT extends AbstractJmsIT {
+
     protected Destination createDestination() throws JMSException {
-        return jmsSession.createTopic("fedora");
+        return jmsSession.createTopic("/fedora");
     }
 }

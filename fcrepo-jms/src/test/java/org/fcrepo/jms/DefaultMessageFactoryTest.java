@@ -8,19 +8,13 @@ package org.fcrepo.jms;
 import static com.google.common.base.Strings.isNullOrEmpty;
 import static java.time.Instant.ofEpochMilli;
 import static java.util.Collections.singleton;
-import static org.fcrepo.jms.DefaultMessageFactory.BASE_URL_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.EVENT_TYPE_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.IDENTIFIER_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.RESOURCE_TYPE_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.TIMESTAMP_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.USER_AGENT_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.USER_HEADER_NAME;
-import static org.fcrepo.jms.DefaultMessageFactory.EVENT_ID_HEADER_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
+import java.util.List;
 import java.util.Set;
 
 import jakarta.jms.JMSException;
@@ -55,8 +49,7 @@ public class DefaultMessageFactoryTest {
     private DefaultMessageFactory testDefaultMessageFactory;
 
     @BeforeEach
-    public void setUp() throws JMSException {
-        when(mockSession.createTextMessage(anyString())).thenReturn(new ActiveMQTextMessage());
+    public void setUp() {
         testDefaultMessageFactory = new DefaultMessageFactory();
     }
 
@@ -64,18 +57,70 @@ public class DefaultMessageFactoryTest {
     public void testBuildMessage() throws JMSException {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage("base-url", "Test UserAgent", testPath);
-        assertEquals(testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME), "Got wrong identifier in message!");
+        assertEquals(testPath, msg.getStringProperty(testDefaultMessageFactory.getIdentifierHeaderName()),
+                "Got wrong identifier in message!");
     }
 
     @Test
     public void testBuildMessageNullUrl() throws JMSException {
         final String testPath = "/path/to/resource";
         final Message msg = doTestBuildMessage(null, null, testPath);
-        assertEquals(testPath, msg.getStringProperty(IDENTIFIER_HEADER_NAME), "Got wrong identifier in message!");
+        assertEquals(testPath, msg.getStringProperty(testDefaultMessageFactory.getIdentifierHeaderName()),
+                "Got wrong identifier in message!");
+    }
+
+    /**
+     * Artemis enforces the JMS spec rule that property names must be valid Java identifiers; ActiveMQ Classic does
+     * not. A regression that re-introduced dotted names would slip past the other unit tests (which use an
+     * ActiveMQ-Classic message) and only fail in the Artemis ITs. Asserting the constants here catches it at
+     * unit-test time.
+     */
+    @Test
+    public void testHeaderNamesAreValidJavaIdentifiersForArtemis() {
+        final DefaultMessageFactory artemisFactory = new DefaultMessageFactory();
+        artemisFactory.setJmsProvider("artemis");
+        final List<String> headers = List.of(
+                artemisFactory.getTimestampHeaderName(),
+                artemisFactory.getIdentifierHeaderName(),
+                artemisFactory.getEventTypeHeaderName(),
+                artemisFactory.getBaseUrlHeaderName(),
+                artemisFactory.getResourceTypeHeaderName(),
+                artemisFactory.getUserHeaderName(),
+                artemisFactory.getUserAgentHeaderName(),
+                artemisFactory.getEventIdHeaderName());
+        for (final String header : headers) {
+            assertTrue(header.matches("[A-Za-z_$][A-Za-z0-9_$]*"),
+                    "JMS header name must be a valid Java identifier (Artemis requirement): " + header);
+        }
+    }
+
+    /**
+     * ActiveMQ Classic does not enforce the JMS spec rule on property names, and existing downstream consumers
+     * rely on the historical dotted form (e.g. {@code org.fcrepo.jms.timestamp}). This test pins that namespace
+     * so a regression that flipped ActiveMQ headers to underscores would be caught at unit-test time.
+     */
+    @Test
+    public void testHeaderNamesUseDottedNamespaceForActiveMq() {
+        final DefaultMessageFactory activeMqFactory = new DefaultMessageFactory();
+        activeMqFactory.setJmsProvider("activemq");
+        final List<String> headers = List.of(
+                activeMqFactory.getTimestampHeaderName(),
+                activeMqFactory.getIdentifierHeaderName(),
+                activeMqFactory.getEventTypeHeaderName(),
+                activeMqFactory.getBaseUrlHeaderName(),
+                activeMqFactory.getResourceTypeHeaderName(),
+                activeMqFactory.getUserHeaderName(),
+                activeMqFactory.getUserAgentHeaderName(),
+                activeMqFactory.getEventIdHeaderName());
+        for (final String header : headers) {
+            assertTrue(header.startsWith("org.fcrepo.jms."),
+                    "ActiveMQ JMS header name must use the dotted namespace 'org.fcrepo.jms.': " + header);
+        }
     }
 
     private Message doTestBuildMessage(final String baseUrl, final String userAgent, final String id)
             throws JMSException {
+        when(mockSession.createTextMessage(anyString())).thenReturn(new ActiveMQTextMessage());
         final Long testDate = 46647758568747L;
 
         when(mockEvent.getBaseUrl()).thenReturn(baseUrl);
@@ -100,13 +145,20 @@ public class DefaultMessageFactoryTest {
             trimmedBaseUrl = trimmedBaseUrl.substring(0, trimmedBaseUrl.length() - 1);
         }
 
-        assertEquals(testDate, (Long) msg.getLongProperty(TIMESTAMP_HEADER_NAME), "Got wrong date in message!");
-        assertEquals(testReturnType, msg.getStringProperty(EVENT_TYPE_HEADER_NAME), "Got wrong type in message!");
-        assertEquals(trimmedBaseUrl, msg.getStringProperty(BASE_URL_HEADER_NAME), "Got wrong base-url in message");
-        assertEquals(prop, msg.getStringProperty(RESOURCE_TYPE_HEADER_NAME), "Got wrong resource type in message");
-        assertEquals(testUser, msg.getStringProperty(USER_HEADER_NAME), "Got wrong userID in message");
-        assertEquals(userAgent, msg.getStringProperty(USER_AGENT_HEADER_NAME), "Got wrong userAgent in message");
-        assertEquals(eventID, msg.getStringProperty(EVENT_ID_HEADER_NAME), "Got wrong eventID in message");
+        assertEquals(testDate, (Long) msg.getLongProperty(testDefaultMessageFactory.getTimestampHeaderName()),
+                "Got wrong date in message!");
+        assertEquals(testReturnType, msg.getStringProperty(testDefaultMessageFactory.getEventTypeHeaderName()),
+                "Got wrong type in message!");
+        assertEquals(trimmedBaseUrl, msg.getStringProperty(testDefaultMessageFactory.getBaseUrlHeaderName()),
+                "Got wrong base-url in message");
+        assertEquals(prop, msg.getStringProperty(testDefaultMessageFactory.getResourceTypeHeaderName()),
+                "Got wrong resource type in message");
+        assertEquals(testUser, msg.getStringProperty(testDefaultMessageFactory.getUserHeaderName()),
+                "Got wrong userID in message");
+        assertEquals(userAgent, msg.getStringProperty(testDefaultMessageFactory.getUserAgentHeaderName()),
+                "Got wrong userAgent in message");
+        assertEquals(eventID, msg.getStringProperty(testDefaultMessageFactory.getEventIdHeaderName()),
+                "Got wrong eventID in message");
         return msg;
     }
 
