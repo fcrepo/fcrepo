@@ -116,7 +116,7 @@
                 // Note: HEADing an external resource returns a temporary redirect to the external resource:
                 // therefore there is no Link header. However what we want to see is the metadata
                 // for the external reference rather than  the external object itself.
-                // (c.f. https://jira.duraspace.org/browse/FCREPO-2387)
+                // (c.f. https://fedora.info/jira/FCREPO-2387)
                 // WARNING: Fragile code relying on magic suffix '/fcr:metadata' and absence of 'Link' header
                 // on external resource.
                 if(!url.match(/.*fcr:(metadata|tx|fixity|versions)/)){

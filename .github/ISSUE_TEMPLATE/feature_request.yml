@@ -1,0 +1,38 @@
+name: Feature request
+description: A new capability or an improvement to an existing one.
+type: Feature
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Issues for all Fedora repositories are tracked here. Pick the one the change belongs in.
+      options:
+        - fcrepo (the repository itself)
+        - fcrepo-storage-ocfl
+        - fcrepo-import-export
+        - fcrepo-camel-toolbox
+        - fcrepo-camel
+        - migration-utils
+        - fcrepo-upgrade-utils
+        - fcrepo-migration-validator
+        - fcrepo-java-client
+        - fcrepo-docker
+        - fcrepo-aws-deployer
+        - fcrepo-build-tools
+        - fcrepo-specification
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What you cannot do today, or what is harder than it should be.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: How it could work. Alternatives you considered are useful too.

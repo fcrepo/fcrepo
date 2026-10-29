@@ -211,7 +211,7 @@ public class ExternalContentPathValidatorIT extends AbstractResourceIT {
         }
     }
 
-    @Disabled("Issues with path modifiers in Windows environments, see https://fedora-repository.atlassian.net/browse/FCREPO-4022")
+    @Disabled("Issues with path modifiers in Windows environments, see https://fedora.info/jira/FCREPO-4022")
     @Test
     public void testPathModifiers() throws Exception {
         // Creating file in disallowed path
