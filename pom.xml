@@ -252,6 +252,12 @@
         <artifactId>logback-classic</artifactId>
         <version>${logback.version}</version>
       </dependency>
+      <!-- shiro-bom manages logback-core; keep it at the same version as logback-classic. -->
+      <dependency>
+        <groupId>ch.qos.logback</groupId>
+        <artifactId>logback-core</artifactId>
+        <version>${logback.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
@@ -409,10 +415,20 @@
         <artifactId>micrometer-registry-prometheus</artifactId>
         <version>${micrometer.version}</version>
       </dependency>
+      <!-- Import the Prometheus BOM so every prometheus-metrics-* artifact, including the ones
+           micrometer-registry-prometheus pulls in transitively, resolves to prometheus.version. -->
       <dependency>
         <groupId>io.prometheus</groupId>
-        <artifactId>prometheus-metrics-core</artifactId>
+        <artifactId>prometheus-metrics-bom</artifactId>
         <version>${prometheus.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- fcrepo-storage-ocfl brings its own ocfl-java-core; keep it in step with ocfl-java-aws. -->
+      <dependency>
+        <groupId>io.ocfl</groupId>
+        <artifactId>ocfl-java-core</artifactId>
+        <version>${ocfl-java.version}</version>
       </dependency>
       <dependency>
         <groupId>org.glassfish.jersey.ext</groupId>
