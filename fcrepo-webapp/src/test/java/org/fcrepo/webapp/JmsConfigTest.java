@@ -90,6 +90,31 @@ public class JmsConfigTest {
     }
 
     @Test
+    public void testActiveMqConfiguredMatchesUnknownProvider() {
+        when(conditionContext.getEnvironment()).thenReturn(env);
+        when(env.getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "activemq")).thenReturn("rabbitmq");
+
+        assertTrue(new JmsConfig.ActiveMqConfigured().matches(conditionContext, metadata),
+                "Unknown provider must fall back to the default provider");
+    }
+
+    @Test
+    public void testArtemisConfiguredDoesNotMatchUnknownProvider() {
+        when(conditionContext.getEnvironment()).thenReturn(env);
+        when(env.getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "activemq")).thenReturn("rabbitmq");
+
+        assertFalse(new JmsConfig.ArtemisConfigured().matches(conditionContext, metadata));
+    }
+
+    @Test
+    public void testArtemisConfiguredMatchesMixedCaseProvider() {
+        when(conditionContext.getEnvironment()).thenReturn(env);
+        when(env.getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "activemq")).thenReturn("Artemis");
+
+        assertTrue(new JmsConfig.ArtemisConfigured().matches(conditionContext, metadata));
+    }
+
+    @Test
     public void testArtemisConfiguredDoesNotMatchActiveMqProvider() {
         when(conditionContext.getEnvironment()).thenReturn(env);
         when(env.getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "activemq")).thenReturn("activemq");

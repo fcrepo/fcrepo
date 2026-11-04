@@ -49,6 +49,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_REBUILD_CONTINUE = "fcrepo.rebuild.continue";
     private static final String FCREPO_REBUILD = "fcrepo.rebuild";
     public static final String FCREPO_JMS_PROVIDER = "fcrepo.jms.provider";
+    public static final String JMS_PROVIDER_ACTIVEMQ = "activemq";
+    public static final String JMS_PROVIDER_ARTEMIS = "artemis";
+    public static final String DEFAULT_JMS_PROVIDER = JMS_PROVIDER_ACTIVEMQ;
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
     private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
     private static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
@@ -71,7 +74,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + LOG_DIR_DEFAULT_VALUE + "')}")
     private Path fedoraLogs;
 
-    @Value("${" + FCREPO_JMS_PROVIDER + ":activemq}")
+    @Value("${" + FCREPO_JMS_PROVIDER + ":" + DEFAULT_JMS_PROVIDER + "}")
     private String jmsProvider;
 
     @Value("${" + FCREPO_JMS_HOST + ":localhost}")
@@ -203,12 +206,27 @@ public class FedoraPropsConfig extends BasePropsConfig {
     }
 
     private String normalizeJmsProvider(final String provider) {
-        if ("activemq".equalsIgnoreCase(provider) || "artemis".equalsIgnoreCase(provider)) {
+        final var resolved = resolveJmsProvider(provider);
+        if (!resolved.equalsIgnoreCase(provider)) {
+            LOGGER.warn("Unrecognised value '{}' for property '{}'. Falling back to the default '{}'. " +
+                    "Valid values are '{}' and '{}'.", provider, FCREPO_JMS_PROVIDER, DEFAULT_JMS_PROVIDER,
+                    JMS_PROVIDER_ACTIVEMQ, JMS_PROVIDER_ARTEMIS);
+        }
+        return resolved;
+    }
+
+    /**
+     * Map a raw fcrepo.jms.provider value to a supported provider. Unrecognised or missing values resolve to
+     * {@link #DEFAULT_JMS_PROVIDER}. Static so the JMS bean conditions resolve the value the same way.
+     *
+     * @param provider the raw property value, may be null
+     * @return 'activemq' or 'artemis'
+     */
+    public static String resolveJmsProvider(final String provider) {
+        if (JMS_PROVIDER_ACTIVEMQ.equalsIgnoreCase(provider) || JMS_PROVIDER_ARTEMIS.equalsIgnoreCase(provider)) {
             return provider.toLowerCase();
         }
-        LOGGER.warn("Unrecognised value '{}' for property '{}'. Falling back to 'activemq'. " +
-                "Valid values are 'activemq' and 'artemis'.", provider, FCREPO_JMS_PROVIDER);
-        return "activemq";
+        return DEFAULT_JMS_PROVIDER;
     }
 
     /**

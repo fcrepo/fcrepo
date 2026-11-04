@@ -247,6 +247,15 @@ public class FedoraPropsConfigTest {
     }
 
     @Test
+    public void testResolveJmsProvider() {
+        assertEquals("artemis", FedoraPropsConfig.resolveJmsProvider("ARTEMIS"));
+        assertEquals("activemq", FedoraPropsConfig.resolveJmsProvider("ActiveMQ"));
+        assertEquals(FedoraPropsConfig.DEFAULT_JMS_PROVIDER, FedoraPropsConfig.resolveJmsProvider("rabbitmq"));
+        assertEquals(FedoraPropsConfig.DEFAULT_JMS_PROVIDER, FedoraPropsConfig.resolveJmsProvider(""));
+        assertEquals(FedoraPropsConfig.DEFAULT_JMS_PROVIDER, FedoraPropsConfig.resolveJmsProvider(null));
+    }
+
+    @Test
     public void testJmsProviderUnknownValueFallsBackToActiveMq() {
         final var logger = (Logger) LoggerFactory.getLogger(FedoraPropsConfig.class);
         final var appender = new ListAppender<ILoggingEvent>();
@@ -261,7 +270,7 @@ public class FedoraPropsConfigTest {
             assertTrue(appender.list.stream().anyMatch(event ->
                     event.getLevel().equals(ch.qos.logback.classic.Level.WARN) &&
                             event.getFormattedMessage().contains("rabbitmq") &&
-                            event.getFormattedMessage().contains("Falling back to 'activemq'")));
+                            event.getFormattedMessage().contains("Falling back to the default 'activemq'")));
         } finally {
             logger.detachAppender(appender);
         }

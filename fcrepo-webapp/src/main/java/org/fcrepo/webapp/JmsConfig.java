@@ -55,23 +55,26 @@ public class JmsConfig {
         }
     }
 
+    private static String configuredProvider(final ConditionContext context) {
+        return FedoraPropsConfig.resolveJmsProvider(context.getEnvironment()
+                .getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, FedoraPropsConfig.DEFAULT_JMS_PROVIDER));
+    }
+
     static class ActiveMqConfigured implements Condition {
         @Override
         public boolean matches(final ConditionContext context, final AnnotatedTypeMetadata metadata) {
-            final var provider = context.getEnvironment().getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER,
-                    "activemq");
-            LOGGER.warn("ActiveMQ support is deprecated and will be removed in a later version");
-            return "activemq".equalsIgnoreCase(provider);
+            final boolean matches = FedoraPropsConfig.JMS_PROVIDER_ACTIVEMQ.equals(configuredProvider(context));
+            if (matches) {
+                LOGGER.warn("ActiveMQ support is deprecated and will be removed in a later version");
+            }
+            return matches;
         }
-
     }
 
     static class ArtemisConfigured implements Condition {
         @Override
         public boolean matches(final ConditionContext context, final AnnotatedTypeMetadata metadata) {
-            final var provider = context.getEnvironment().getProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER,
-                    "activemq");
-            return "artemis".equalsIgnoreCase(provider);
+            return FedoraPropsConfig.JMS_PROVIDER_ARTEMIS.equals(configuredProvider(context));
         }
     }
 
