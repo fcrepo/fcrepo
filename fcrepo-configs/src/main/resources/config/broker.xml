@@ -14,7 +14,12 @@
         <journal-pool-files>20</journal-pool-files>
 
         <acceptors>
-            <acceptor name="artemis">tcp://0.0.0.0:${fedora.jms.port:61616}?protocols=CORE,STOMP</acceptor>
+            <!-- JMS (CORE) on fcrepo.dynamic.jms.port. Artemis can serve several protocols on one port,
+                 so STOMP clients can also connect here, using plain destination names (e.g. "fedora"). -->
+            <acceptor name="artemis">tcp://0.0.0.0:${fcrepo.dynamic.jms.port:61616}?protocols=CORE,STOMP</acceptor>
+            <!-- STOMP on fcrepo.dynamic.stomp.port, matching the ActiveMQ setup. The prefixes map
+                 ActiveMQ style destinations (/topic/fedora, /queue/fedora) to the "fedora" address. -->
+            <acceptor name="stomp">tcp://0.0.0.0:${fcrepo.dynamic.stomp.port:61613}?protocols=STOMP;anycastPrefix=/queue/;multicastPrefix=/topic/</acceptor>
         </acceptors>
 
         <address-settings>

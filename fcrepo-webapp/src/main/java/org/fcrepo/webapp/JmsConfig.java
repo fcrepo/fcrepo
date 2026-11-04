@@ -137,10 +137,20 @@ public class JmsConfig {
     @Conditional(ArtemisConfigured.class)
     public EmbeddedActiveMQ artemisBroker(final FedoraPropsConfig propsConfig) throws Exception {
         final var broker = new EmbeddedActiveMQ();
+        // Artemis resolves ${...} in broker.xml from Java system properties only, so values set in
+        // fcrepo.properties would not reach it. Publish the resolved ports before the broker reads its config.
+        publishSystemProperty(FedoraPropsConfig.FCREPO_DYNAMIC_JMS_PORT, propsConfig.getJmsPort());
+        publishSystemProperty(FedoraPropsConfig.FCREPO_DYNAMIC_STOMP_PORT, propsConfig.getStompPort());
         final var configuration = materializeArtemisConfiguration(propsConfig.getArtemisConfiguration());
         LOGGER.info("Using Artemis broker configuration at {}", configuration);
         broker.setConfigResourcePath(configuration.toUri().toString());
         return broker;
+    }
+
+    private static void publishSystemProperty(final String key, final String value) {
+        if (value != null) {
+            System.setProperty(key, value);
+        }
     }
 
     private Path materializeArtemisConfiguration(final Resource configuration) throws IOException {

@@ -6,6 +6,7 @@
 package org.fcrepo.webapp;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -197,6 +198,24 @@ public class JmsConfigTest {
         final EmbeddedActiveMQ broker = config.artemisBroker(propsConfig);
 
         assertNotNull(broker);
+    }
+
+    @Test
+    public void testArtemisBrokerPublishesPortsAsSystemProperties(@TempDir final Path tempDir) throws Exception {
+        final Path brokerXml = tempDir.resolve("broker.xml");
+        Files.writeString(brokerXml, "<configuration/>", UTF_8);
+        when(propsConfig.getArtemisConfiguration()).thenReturn(new FileSystemResource(brokerXml));
+        when(propsConfig.getJmsPort()).thenReturn("61626");
+        when(propsConfig.getStompPort()).thenReturn("61623");
+        try {
+            config.artemisBroker(propsConfig);
+
+            assertEquals("61626", System.getProperty(FedoraPropsConfig.FCREPO_DYNAMIC_JMS_PORT));
+            assertEquals("61623", System.getProperty(FedoraPropsConfig.FCREPO_DYNAMIC_STOMP_PORT));
+        } finally {
+            System.clearProperty(FedoraPropsConfig.FCREPO_DYNAMIC_JMS_PORT);
+            System.clearProperty(FedoraPropsConfig.FCREPO_DYNAMIC_STOMP_PORT);
+        }
     }
 
     @Test
