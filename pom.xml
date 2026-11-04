@@ -60,7 +60,7 @@
     <jaxb.version>4.0.5</jaxb.version>
     <jackson2.version>2.22.1</jackson2.version>
     <jackson2.annotations.version>2.21</jackson2.annotations.version>
-    <jena.version>5.5.0</jena.version>
+    <jena.version>6.2.0</jena.version>
     <jersey.version>3.1.11</jersey.version>
     <jetty.version>12.0.32</jetty.version>
     <jsonld.version>0.13.6</jsonld.version>
