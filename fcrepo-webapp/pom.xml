@@ -234,6 +234,7 @@
             <nonFilteredFileExtension>ico</nonFilteredFileExtension>
             <nonFilteredFileExtension>ttf</nonFilteredFileExtension>
             <nonFilteredFileExtension>woff</nonFilteredFileExtension>
+            <nonFilteredFileExtension>woff2</nonFilteredFileExtension>
           </nonFilteredFileExtensions>
           <webResources>
             <resource>
