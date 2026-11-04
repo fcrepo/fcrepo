@@ -7,10 +7,10 @@
         <name>localhost</name>
         <persistence-enabled>true</persistence-enabled>
         <security-enabled>false</security-enabled>
-        <bindings-directory>${activemq.data.dir:./data}/bindings</bindings-directory>
-        <journal-directory>${activemq.data.dir:./data}/journal</journal-directory>
-        <paging-directory>${activemq.data.dir:./data}/paging</paging-directory>
-        <large-messages-directory>${activemq.data.dir:./data}/large-messages</large-messages-directory>
+        <bindings-directory>${fcrepo.artemis.directory:./data}/bindings</bindings-directory>
+        <journal-directory>${fcrepo.artemis.directory:./data}/journal</journal-directory>
+        <paging-directory>${fcrepo.artemis.directory:./data}/paging</paging-directory>
+        <large-messages-directory>${fcrepo.artemis.directory:./data}/large-messages</large-messages-directory>
         <journal-pool-files>20</journal-pool-files>
 
         <acceptors>
@@ -48,22 +48,11 @@
                 </anycast>
             </address>
 
-            <!-- Queue mode: use this when Fedora should publish to /fedora as a JMS queue -->
-            <address name="/fedora">
-                <anycast>
-                    <queue name="/fedora" />
-                </anycast>
-            </address>
-
-            <!--
-            Topic mode alternative:
-            replace the anycast block above with this multicast block if Fedora should
-            publish to /fedora as a JMS topic instead.
-
-            <address name="/fedora">
-                <multicast/>
-            </address>
-            -->
+            <!-- Fedora's event destination (fcrepo.jms.destination.name) is added by Fedora at
+                 startup with the routing type that matches fcrepo.jms.destination.type: MULTICAST
+                 for topic, ANYCAST with a durable queue for queue. An address with both routing
+                 types would make STOMP treat /topic/ subscriptions as anycast. Fedora leaves the
+                 address alone if this file already declares it. -->
         </addresses>
 
     </core>

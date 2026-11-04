@@ -40,7 +40,7 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public static final String FCREPO_NAMESPACE_REGISTRY = "fcrepo.namespace.registry";
     public static final String FCREPO_EXTERNAL_CONTENT_ALLOWED = "fcrepo.external.content.allowed";
     private static final String FCREPO_ACTIVEMQ_DIRECTORY = "fcrepo.activemq.directory";
-    private static final String FCREPO_ARTEMIS_DIRECTORY = "fcrepo.artemis.directory";
+    public static final String FCREPO_ARTEMIS_DIRECTORY = "fcrepo.artemis.directory";
     private static final String FCREPO_SESSION_TIMEOUT = "fcrepo.session.timeout";
     private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
     private static final String FCREPO_REBUILD_VALIDATION = "fcrepo.rebuild.validation";
@@ -54,8 +54,8 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public static final String DEFAULT_JMS_PROVIDER = JMS_PROVIDER_ACTIVEMQ;
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
     private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
-    private static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
-    private static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
+    public static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
+    public static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
     public static final String FCREPO_JMS_ENABLED = "fcrepo.jms.enabled";
     private static final String FCREPO_EVENT_THREADS = "fcrepo.event.threads";
     public static final String FCREPO_TRANSACTION_ON_CONFLICT = "fcrepo.response.include.transaction";
