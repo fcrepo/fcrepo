@@ -82,7 +82,7 @@
     <!-- JDBC dependencies -->
     <postgresql.version>42.7.14</postgresql.version>
     <mariadb.version>3.5.9</mariadb.version>
-    <mysql.version>8.4.0</mysql.version>
+    <mysql.version>26.10.0</mysql.version>
     <!-- test gear -->
     <awaitility.version>4.3.0</awaitility.version>
     <grizzly.version>5.0.3</grizzly.version>
