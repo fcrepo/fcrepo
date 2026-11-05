@@ -250,30 +250,18 @@ public class FedoraPropsConfigTest {
     public void testResolveJmsProvider() {
         assertEquals("artemis", FedoraPropsConfig.resolveJmsProvider("ARTEMIS"));
         assertEquals("activemq", FedoraPropsConfig.resolveJmsProvider("ActiveMQ"));
-        assertEquals(FedoraPropsConfig.DEFAULT_JMS_PROVIDER, FedoraPropsConfig.resolveJmsProvider("rabbitmq"));
-        assertEquals(FedoraPropsConfig.DEFAULT_JMS_PROVIDER, FedoraPropsConfig.resolveJmsProvider(""));
         assertEquals(FedoraPropsConfig.DEFAULT_JMS_PROVIDER, FedoraPropsConfig.resolveJmsProvider(null));
+        assertThrows(IllegalArgumentException.class, () -> FedoraPropsConfig.resolveJmsProvider("artemiss"));
+        assertThrows(IllegalArgumentException.class, () -> FedoraPropsConfig.resolveJmsProvider(""));
     }
 
     @Test
-    public void testJmsProviderUnknownValueFallsBackToActiveMq() {
-        final var logger = (Logger) LoggerFactory.getLogger(FedoraPropsConfig.class);
-        final var appender = new ListAppender<ILoggingEvent>();
-        appender.start();
-        logger.addAppender(appender);
-        try {
-            env.setProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "rabbitmq");
-            initializeContext();
-            initializeConfig();
-
-            assertEquals("activemq", config.getJmsProvider());
-            assertTrue(appender.list.stream().anyMatch(event ->
-                    event.getLevel().equals(ch.qos.logback.classic.Level.WARN) &&
-                            event.getFormattedMessage().contains("rabbitmq") &&
-                            event.getFormattedMessage().contains("Falling back to the default 'activemq'")));
-        } finally {
-            logger.detachAppender(appender);
-        }
+    public void testJmsProviderUnknownValueFailsStartup() {
+        env.setProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "artemiss");
+        initializeContext();
+        final var exception = assertThrows(BeanCreationException.class, this::initializeConfig);
+        assertInstanceOf(IllegalArgumentException.class, exception.getCause());
+        assertTrue(exception.getCause().getMessage().contains("artemiss"));
     }
 
     @Test

@@ -199,34 +199,30 @@ public class FedoraPropsConfig extends BasePropsConfig {
         serverManagedPropsMode = ServerManagedPropsMode.fromString(serverManagedPropsModeStr);
         sessionTimeout = Duration.ofMillis(sessionTimeoutLong);
         jmsDestinationType = JmsDestination.fromString(jmsDestinationTypeStr);
-        jmsProvider = normalizeJmsProvider(jmsProvider);
+        jmsProvider = resolveJmsProvider(jmsProvider);
 
         checkRebuildProps();
         checkDeprecatedProperties();
     }
 
-    private String normalizeJmsProvider(final String provider) {
-        final var resolved = resolveJmsProvider(provider);
-        if (!resolved.equalsIgnoreCase(provider)) {
-            LOGGER.warn("Unrecognised value '{}' for property '{}'. Falling back to the default '{}'. " +
-                    "Valid values are '{}' and '{}'.", provider, FCREPO_JMS_PROVIDER, DEFAULT_JMS_PROVIDER,
-                    JMS_PROVIDER_ACTIVEMQ, JMS_PROVIDER_ARTEMIS);
-        }
-        return resolved;
-    }
-
     /**
-     * Map a raw fcrepo.jms.provider value to a supported provider. Unrecognised or missing values resolve to
+     * Map a raw fcrepo.jms.provider value to a supported provider, ignoring case. A missing value resolves to
      * {@link #DEFAULT_JMS_PROVIDER}. Static so the JMS bean conditions resolve the value the same way.
      *
      * @param provider the raw property value, may be null
      * @return 'activemq' or 'artemis'
+     * @throws IllegalArgumentException if the value is not a supported provider
      */
     public static String resolveJmsProvider(final String provider) {
+        if (provider == null) {
+            return DEFAULT_JMS_PROVIDER;
+        }
         if (JMS_PROVIDER_ACTIVEMQ.equalsIgnoreCase(provider) || JMS_PROVIDER_ARTEMIS.equalsIgnoreCase(provider)) {
             return provider.toLowerCase();
         }
-        return DEFAULT_JMS_PROVIDER;
+        throw new IllegalArgumentException(String.format("Unknown value '%s' for property '%s'. " +
+                "Valid values are '%s' and '%s'.", provider, FCREPO_JMS_PROVIDER, JMS_PROVIDER_ACTIVEMQ,
+                JMS_PROVIDER_ARTEMIS));
     }
 
     /**

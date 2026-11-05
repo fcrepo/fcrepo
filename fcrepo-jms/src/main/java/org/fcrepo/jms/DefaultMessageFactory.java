@@ -31,14 +31,14 @@ import org.slf4j.Logger;
  */
 public class DefaultMessageFactory implements JMSEventMessageFactory {
 
-    public static String TIMESTAMP_HEADER_NAME = "timestamp";
-    public static String IDENTIFIER_HEADER_NAME = "identifier";
-    public static String EVENT_TYPE_HEADER_NAME = "eventType";
-    public static String BASE_URL_HEADER_NAME = "baseURL";
-    public static String RESOURCE_TYPE_HEADER_NAME = "resourceType";
-    public static String USER_HEADER_NAME = "user";
-    public static String USER_AGENT_HEADER_NAME = "userAgent";
-    public static String EVENT_ID_HEADER_NAME = "eventID";
+    private static final String TIMESTAMP_HEADER_NAME = "timestamp";
+    private static final String IDENTIFIER_HEADER_NAME = "identifier";
+    private static final String EVENT_TYPE_HEADER_NAME = "eventType";
+    private static final String BASE_URL_HEADER_NAME = "baseURL";
+    private static final String RESOURCE_TYPE_HEADER_NAME = "resourceType";
+    private static final String USER_HEADER_NAME = "user";
+    private static final String USER_AGENT_HEADER_NAME = "userAgent";
+    private static final String EVENT_ID_HEADER_NAME = "eventID";
 
     private String jmsProvider = "activemq";
     private String jmsNamespace;
