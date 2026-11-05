@@ -35,10 +35,12 @@ public class FedoraPropsConfig extends BasePropsConfig {
     public static final String FCREPO_JMS_HOST = "fcrepo.jms.host";
     public static final String FCREPO_DYNAMIC_JMS_PORT = "fcrepo.dynamic.jms.port";
     public static final String FCREPO_DYNAMIC_STOMP_PORT = "fcrepo.dynamic.stomp.port";
+    public static final String FCREPO_ARTEMIS_CONFIGURATION = "fcrepo.artemis.configuration";
     public static final String FCREPO_ACTIVEMQ_CONFIGURATION = "fcrepo.activemq.configuration";
     public static final String FCREPO_NAMESPACE_REGISTRY = "fcrepo.namespace.registry";
     public static final String FCREPO_EXTERNAL_CONTENT_ALLOWED = "fcrepo.external.content.allowed";
     private static final String FCREPO_ACTIVEMQ_DIRECTORY = "fcrepo.activemq.directory";
+    public static final String FCREPO_ARTEMIS_DIRECTORY = "fcrepo.artemis.directory";
     private static final String FCREPO_SESSION_TIMEOUT = "fcrepo.session.timeout";
     private static final String FCREPO_VELOCITY_RUNTIME_LOG = "fcrepo.velocity.runtime.log";
     private static final String FCREPO_REBUILD_VALIDATION = "fcrepo.rebuild.validation";
@@ -46,16 +48,21 @@ public class FedoraPropsConfig extends BasePropsConfig {
     private static final String FCREPO_REBUILD_ON_START = "fcrepo.rebuild.on.start";
     private static final String FCREPO_REBUILD_CONTINUE = "fcrepo.rebuild.continue";
     private static final String FCREPO_REBUILD = "fcrepo.rebuild";
+    public static final String FCREPO_JMS_PROVIDER = "fcrepo.jms.provider";
+    public static final String JMS_PROVIDER_ACTIVEMQ = "activemq";
+    public static final String JMS_PROVIDER_ARTEMIS = "artemis";
+    public static final String DEFAULT_JMS_PROVIDER = JMS_PROVIDER_ACTIVEMQ;
     private static final String FCREPO_JMS_BASEURL = "fcrepo.jms.baseUrl";
     private static final String FCREPO_SERVER_MANAGED_PROPS_MODE = "fcrepo.properties.management";
-    private static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
-    private static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
+    public static final String FCREPO_JMS_DESTINATION_TYPE = "fcrepo.jms.destination.type";
+    public static final String FCREPO_JMS_DESTINATION_NAME = "fcrepo.jms.destination.name";
     public static final String FCREPO_JMS_ENABLED = "fcrepo.jms.enabled";
     private static final String FCREPO_EVENT_THREADS = "fcrepo.event.threads";
     public static final String FCREPO_TRANSACTION_ON_CONFLICT = "fcrepo.response.include.transaction";
 
     private static final String DATA_DIR_DEFAULT_VALUE = "data";
     private static final String LOG_DIR_DEFAULT_VALUE = "logs";
+    private static final String ARTEMIS_DIR_DEFAULT_VALUE = "Artemis/db";
     private static final String ACTIVE_MQ_DIR_DEFAULT_VALUE = "ActiveMQ/kahadb";
 
     @Value("${" + FCREPO_HOME_PROPERTY + ":" + DEFAULT_FCREPO_HOME_VALUE + "}")
@@ -66,6 +73,9 @@ public class FedoraPropsConfig extends BasePropsConfig {
 
     @Value("#{fedoraPropsConfig.fedoraHome.resolve('" + LOG_DIR_DEFAULT_VALUE + "')}")
     private Path fedoraLogs;
+
+    @Value("${" + FCREPO_JMS_PROVIDER + ":" + DEFAULT_JMS_PROVIDER + "}")
+    private String jmsProvider;
 
     @Value("${" + FCREPO_JMS_HOST + ":localhost}")
     private String jmsHost;
@@ -82,6 +92,13 @@ public class FedoraPropsConfig extends BasePropsConfig {
     @Value("${" + FCREPO_ACTIVEMQ_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" +
             ACTIVE_MQ_DIR_DEFAULT_VALUE + "').toAbsolutePath().toString()}}")
     private String activeMqDirectory;
+
+    @Value("${" + FCREPO_ARTEMIS_CONFIGURATION + ":classpath:/config/broker.xml}")
+    private Resource artemisConfiguration;
+
+    @Value("${" + FCREPO_ARTEMIS_DIRECTORY + ":#{fedoraPropsConfig.fedoraData.resolve('" +
+            ARTEMIS_DIR_DEFAULT_VALUE + "').toAbsolutePath().toString()}}")
+    private String artemisDirectory;
 
     @Value("${" + FCREPO_NAMESPACE_REGISTRY + ":classpath:/namespaces.yml}")
     private String namespaceRegistry;
@@ -182,9 +199,30 @@ public class FedoraPropsConfig extends BasePropsConfig {
         serverManagedPropsMode = ServerManagedPropsMode.fromString(serverManagedPropsModeStr);
         sessionTimeout = Duration.ofMillis(sessionTimeoutLong);
         jmsDestinationType = JmsDestination.fromString(jmsDestinationTypeStr);
+        jmsProvider = resolveJmsProvider(jmsProvider);
 
         checkRebuildProps();
         checkDeprecatedProperties();
+    }
+
+    /**
+     * Map a raw fcrepo.jms.provider value to a supported provider, ignoring case. A missing value resolves to
+     * {@link #DEFAULT_JMS_PROVIDER}. Static so the JMS bean conditions resolve the value the same way.
+     *
+     * @param provider the raw property value, may be null
+     * @return 'activemq' or 'artemis'
+     * @throws IllegalArgumentException if the value is not a supported provider
+     */
+    public static String resolveJmsProvider(final String provider) {
+        if (provider == null) {
+            return DEFAULT_JMS_PROVIDER;
+        }
+        if (JMS_PROVIDER_ACTIVEMQ.equalsIgnoreCase(provider) || JMS_PROVIDER_ARTEMIS.equalsIgnoreCase(provider)) {
+            return provider.toLowerCase();
+        }
+        throw new IllegalArgumentException(String.format("Unknown value '%s' for property '%s'. " +
+                "Valid values are '%s' and '%s'.", provider, FCREPO_JMS_PROVIDER, JMS_PROVIDER_ACTIVEMQ,
+                JMS_PROVIDER_ARTEMIS));
     }
 
     /**
@@ -286,6 +324,20 @@ public class FedoraPropsConfig extends BasePropsConfig {
     }
 
     /**
+     * @return The Artemis data directory
+     */
+    public String getArtemisDirectory() {
+        return artemisDirectory;
+    }
+
+    /**
+     * @return The path to the Artemis broker xml configuration.
+     */
+    public Resource getArtemisConfiguration() {
+        return artemisConfiguration;
+    }
+
+    /**
      * @return The path to the allowed external content pattern definitions.
      */
     public String getExternalContentAllowed() {
@@ -374,6 +426,13 @@ public class FedoraPropsConfig extends BasePropsConfig {
      */
     public void setRebuildEnabled(final boolean rebuildEnabled) {
         this.rebuildEnabled = rebuildEnabled;
+    }
+
+    /**
+     * @return the JMS provider e.g. 'activemq' or 'artemis'
+     */
+    public String getJmsProvider() {
+        return jmsProvider;
     }
 
     /**

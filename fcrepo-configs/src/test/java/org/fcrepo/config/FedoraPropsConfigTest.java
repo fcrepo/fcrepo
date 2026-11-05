@@ -74,6 +74,7 @@ public class FedoraPropsConfigTest {
         assertEquals("61616", config.getJmsPort());
         assertEquals("61613", config.getStompPort());
         assertNotNull(config.getActiveMQConfiguration());
+        assertNotNull(config.getArtemisConfiguration());
         assertEquals(Paths.get("fcrepo-home/data/ActiveMQ/kahadb").toAbsolutePath().toString(),
                 config.getActiveMqDirectory());
         assertEquals("classpath:/namespaces.yml", config.getNamespaceRegistry());
@@ -226,6 +227,41 @@ public class FedoraPropsConfigTest {
         initializeConfig();
 
         assertEquals(5, config.getEventBusThreads());
+    }
+
+    @Test
+    public void testJmsProviderDefaultsToActiveMq() {
+        initializeContext();
+        initializeConfig();
+
+        assertEquals("activemq", config.getJmsProvider());
+    }
+
+    @Test
+    public void testJmsProviderArtemisAccepted() {
+        env.setProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "artemis");
+        initializeContext();
+        initializeConfig();
+
+        assertEquals("artemis", config.getJmsProvider());
+    }
+
+    @Test
+    public void testResolveJmsProvider() {
+        assertEquals("artemis", FedoraPropsConfig.resolveJmsProvider("ARTEMIS"));
+        assertEquals("activemq", FedoraPropsConfig.resolveJmsProvider("ActiveMQ"));
+        assertEquals(FedoraPropsConfig.DEFAULT_JMS_PROVIDER, FedoraPropsConfig.resolveJmsProvider(null));
+        assertThrows(IllegalArgumentException.class, () -> FedoraPropsConfig.resolveJmsProvider("artemiss"));
+        assertThrows(IllegalArgumentException.class, () -> FedoraPropsConfig.resolveJmsProvider(""));
+    }
+
+    @Test
+    public void testJmsProviderUnknownValueFailsStartup() {
+        env.setProperty(FedoraPropsConfig.FCREPO_JMS_PROVIDER, "artemiss");
+        initializeContext();
+        final var exception = assertThrows(BeanCreationException.class, this::initializeConfig);
+        assertInstanceOf(IllegalArgumentException.class, exception.getCause());
+        assertTrue(exception.getCause().getMessage().contains("artemiss"));
     }
 
     @Test

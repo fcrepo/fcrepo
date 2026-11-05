@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration xmlns="urn:activemq"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="urn:activemq /schema/artemis-configuration.xsd">
+
+    <core xmlns="urn:activemq:core">
+        <name>localhost</name>
+        <persistence-enabled>true</persistence-enabled>
+        <security-enabled>false</security-enabled>
+        <bindings-directory>${fcrepo.artemis.directory:./data}/bindings</bindings-directory>
+        <journal-directory>${fcrepo.artemis.directory:./data}/journal</journal-directory>
+        <paging-directory>${fcrepo.artemis.directory:./data}/paging</paging-directory>
+        <large-messages-directory>${fcrepo.artemis.directory:./data}/large-messages</large-messages-directory>
+        <journal-pool-files>20</journal-pool-files>
+
+        <acceptors>
+            <!-- JMS (CORE) on fcrepo.dynamic.jms.port. Artemis can serve several protocols on one port,
+                 so STOMP clients can also connect here, using plain destination names (e.g. "fedora"). -->
+            <acceptor name="artemis">tcp://0.0.0.0:${fcrepo.dynamic.jms.port:61616}?protocols=CORE,STOMP</acceptor>
+            <!-- STOMP on fcrepo.dynamic.stomp.port, matching the ActiveMQ setup. The prefixes map
+                 ActiveMQ style destinations (/topic/fedora, /queue/fedora) to the "fedora" address. -->
+            <acceptor name="stomp">tcp://0.0.0.0:${fcrepo.dynamic.stomp.port:61613}?protocols=STOMP;anycastPrefix=/queue/;multicastPrefix=/topic/</acceptor>
+        </acceptors>
+
+        <address-settings>
+            <address-setting match="#">
+                <dead-letter-address>DLQ</dead-letter-address>
+                <expiry-address>ExpiryQueue</expiry-address>
+                <redelivery-delay>0</redelivery-delay>
+                <max-size-bytes>1gb</max-size-bytes>
+                <address-full-policy>PAGE</address-full-policy>
+                <auto-create-queues>true</auto-create-queues>
+                <auto-delete-queues>false</auto-delete-queues>
+                <auto-create-addresses>true</auto-create-addresses>
+                <auto-delete-addresses>false</auto-delete-addresses>
+            </address-setting>
+        </address-settings>
+
+        <addresses>
+            <address name="DLQ">
+                <anycast>
+                    <queue name="DLQ" />
+                </anycast>
+            </address>
+            <address name="ExpiryQueue">
+                <anycast>
+                    <queue name="ExpiryQueue" />
+                </anycast>
+            </address>
+
+            <!-- Fedora's event destination (fcrepo.jms.destination.name) is added by Fedora at
+                 startup with the routing type that matches fcrepo.jms.destination.type: MULTICAST
+                 for topic, ANYCAST with a durable queue for queue. An address with both routing
+                 types would make STOMP treat /topic/ subscriptions as anycast. Fedora leaves the
+                 address alone if this file already declares it. -->
+        </addresses>
+
+    </core>
+</configuration>
