@@ -76,6 +76,17 @@ public class SystemInfoConfigTest {
         assertNotNull(config.getImplementationVersion());
     }
 
+    @Test
+    public void testImplementationVersionProperty() {
+        final String testVersion = "7.1.0";
+        env.setProperty(SystemInfoConfig.FCREPO_VERSION, testVersion);
+
+        initializeContext();
+        initializeConfig();
+
+        assertEquals(testVersion, config.getImplementationVersion());
+    }
+
     /**
      * Mock implementation to test the behavior when package has an implementation version
      */

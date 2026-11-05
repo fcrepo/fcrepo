@@ -792,6 +792,11 @@ public abstract class AbstractResourceIT {
     }
 
     protected String getExternalContentLinkHeader(final String url, final String handling, final String mimeType) {
+        return getExternalContentLinkHeader(url, handling, mimeType, null);
+    }
+
+    protected String getExternalContentLinkHeader(final String url, final String handling, final String mimeType,
+            final String size) {
         // leave lots of room to leave things out of the link to test variations.
         String link = "";
         if (url != null && !url.isEmpty()) {
@@ -806,6 +811,10 @@ public abstract class AbstractResourceIT {
 
         if (mimeType != null && !mimeType.isEmpty()) {
             link += "; type=\"" + mimeType + "\"";
+        }
+
+        if (size != null && !size.isEmpty()) {
+            link += "; size=\"" + size + "\"";
         }
         return link;
     }

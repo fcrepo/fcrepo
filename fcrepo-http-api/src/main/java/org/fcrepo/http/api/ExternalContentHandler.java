@@ -47,17 +47,19 @@ public class ExternalContentHandler implements ExternalContent {
 
     private final static String HANDLING = "handling";
     private final static String EXT_CONTENT_TYPE = "type";
+    private final static String EXT_CONTENT_SIZE = "size";
 
     private final Link link;
     private final String handling;
     private String contentType;
     private Long contentSize;
 
-    /* link header for external content should look like this:
+    /* link header for external content should look like this (type and size are optional):
           Link: <http://example.org/some/content>;
           rel="http://fedora.info/definitions/fcrepo#ExternalContent";
           handling="proxy";
-          type="image/tiff"
+          type="image/tiff";
+          size="50"
     */
 
     /**
@@ -72,9 +74,15 @@ public class ExternalContentHandler implements ExternalContent {
         final Map<String, String> map = link.getParams();
         // handling will be in the map, where as content type may not be
         handling = map.get(HANDLING).toLowerCase();
-        // Retrieve details directly from the content
-        retrieveContentDetails();
-        final var type = map.get(EXT_CONTENT_TYPE) != null ? map.get(EXT_CONTENT_TYPE).toLowerCase() : null;
+
+        final String sizeParam = map.get(EXT_CONTENT_SIZE);
+        contentSize = parseContentSize(sizeParam);
+
+        // Retrieve only the missing details directly from the external content.
+        final String providedType = map.get(EXT_CONTENT_TYPE);
+        retrieveContentDetails(providedType == null, contentSize == null);
+
+        final var type = providedType != null ? providedType.toLowerCase() : null;
         if (type != null) {
             contentType = type;
         } else if (contentType == null) {
@@ -164,17 +172,39 @@ public class ExternalContentHandler implements ExternalContent {
                 throw new ExternalMessageBodyException(
                         "Link header formatted incorrectly: 'handling' parameter incorrect or missing");
             }
+            final String size = realLink.getParams().get(EXT_CONTENT_SIZE);
+            parseContentSize(size);
         } catch (final Exception e) {
-            throw new ExternalMessageBodyException("External content link header url is malformed");
+            throw new ExternalMessageBodyException("External content link header url is malformed: " + e.getMessage());
         }
         return realLink;
     }
 
-    private void retrieveContentDetails() {
+    private Long parseContentSize(final String size) {
+        if (size == null) {
+            return null;
+        }
+        try {
+            final long parsedSize = Long.parseLong(size);
+            if (parsedSize < 0) {
+                throw new ExternalMessageBodyException(
+                        "Link header formatted incorrectly: 'size' parameter must be a non-negative long");
+            }
+            return parsedSize;
+        } catch (final NumberFormatException e) {
+            throw new ExternalMessageBodyException(
+                    "Link header formatted incorrectly: 'size' parameter must be a non-negative long");
+        }
+    }
+
+    private void retrieveContentDetails(final boolean retrieveType, final boolean retrieveSize) {
+        if (!retrieveType && !retrieveSize) {
+            return;
+        }
         final URI uri = getURI();
         final String scheme = uri.getScheme().toLowerCase();
 
-        if ("file".equals(scheme)) {
+        if ("file".equals(scheme) && retrieveSize) {
             final Path path = Paths.get(uri);
             try {
                 contentSize = Files.size(path);
@@ -192,11 +222,11 @@ public class ExternalContentHandler implements ExternalContent {
                     }
 
                     final Header typeHeader = response.getFirstHeader(CONTENT_TYPE);
-                    if (typeHeader != null) {
+                    if (retrieveType && typeHeader != null) {
                         contentType = typeHeader.getValue();
                     }
                     final Header sizeHeader = response.getFirstHeader(CONTENT_LENGTH);
-                    if (sizeHeader != null) {
+                    if (retrieveSize && sizeHeader != null) {
                         contentSize = Long.parseLong(sizeHeader.getValue());
                     }
                 }

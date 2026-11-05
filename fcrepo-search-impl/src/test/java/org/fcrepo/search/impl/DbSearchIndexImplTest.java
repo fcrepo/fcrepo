@@ -13,14 +13,18 @@ import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RDF_SOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.RESOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.util.ReflectionTestUtils.getField;
 import static org.springframework.test.util.ReflectionTestUtils.setField;
 
 import java.net.URI;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import jakarta.inject.Inject;
@@ -53,6 +57,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Test class for {@link DbSearchIndexImpl}
@@ -71,6 +77,9 @@ public class DbSearchIndexImplTest {
 
     @Inject
     private RepositoryInitializationStatus initializationStatus;
+
+    @Inject
+    private DataSourceTransactionManager transactionManager;
 
     private ResourceHeaders resourceHeaders1;
 
@@ -331,6 +340,21 @@ public class DbSearchIndexImplTest {
         // Search for the resource after adding it to the index
         final var results2 = searchIndex.doSearch(parameters);
         assertEquals(1, results2.getPagination().getTotalResults());
+    }
+
+    @Test
+    public void testNewRdfTypeIsNotCachedBeforeTransactionCommit() {
+        final var rdfType = URI.create("http://example.fcrepo/uncommitted-type");
+        final Map<?, ?> cache = (Map<?, ?>) getField(searchIndex, "rdfTypeIdCache");
+        final var transactionTemplate = new TransactionTemplate(transactionManager);
+
+        transactionTemplate.executeWithoutResult(status -> {
+            searchIndex.addUpdateIndex(transaction, resourceHeaders1, List.of(rdfType));
+            assertFalse(cache.containsKey(rdfType));
+        });
+
+        searchIndex.addUpdateIndex(transaction, resourceHeaders1, List.of(rdfType));
+        assertTrue(cache.containsKey(rdfType));
     }
 
     /**

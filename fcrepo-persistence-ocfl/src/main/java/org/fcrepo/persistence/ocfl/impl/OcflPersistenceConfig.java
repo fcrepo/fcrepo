@@ -19,6 +19,7 @@ import javax.sql.DataSource;
 import org.fcrepo.config.MetricsConfig;
 import org.fcrepo.config.OcflPropsConfig;
 import org.fcrepo.config.Storage;
+import org.fcrepo.config.SystemInfoConfig;
 import org.fcrepo.storage.ocfl.CommitType;
 import org.fcrepo.storage.ocfl.DefaultOcflObjectSessionFactory;
 import org.fcrepo.storage.ocfl.validation.ObjectValidator;
@@ -67,6 +68,9 @@ public class OcflPersistenceConfig {
     @Inject
     private DataSource dataSource;
 
+    @Inject
+    private SystemInfoConfig systemInfoConfig;
+
     /**
      * Create an OCFL Repository
      * @return the repository
@@ -104,7 +108,7 @@ public class OcflPersistenceConfig {
                 createCache("resourceHeadersCache"),
                 createCache("rootIdCache"),
                 commitType(),
-                "Authored by Fedora 6",
+                versionMessage(),
                 "fedoraAdmin",
                 "info:fedora/fedoraAdmin");
         factory.useUnsafeWrite(ocflPropsConfig.isUnsafeWriteEnabled());
@@ -116,6 +120,11 @@ public class OcflPersistenceConfig {
     public ObjectValidator objectValidator() throws IOException {
         final var objectMapper = OcflPersistentStorageUtils.objectMapper();
         return new ObjectValidator(repository(), objectMapper.readerFor(ResourceHeaders.class));
+    }
+
+    private String versionMessage() {
+        final var version = systemInfoConfig.getImplementationVersion();
+        return StringUtils.isBlank(version) ? "Authored by Fedora" : "Authored by Fedora " + version;
     }
 
     private CommitType commitType() {
@@ -150,7 +159,10 @@ public class OcflPersistenceConfig {
     }
 
     private S3AsyncClient s3Client() {
-        final var builder = S3AsyncClient.builder();
+        // multipartEnabled lets the client transparently use UploadPartCopy for objects larger than the 5GB
+        // single-operation CopyObject limit. ocfl-java's OcflS3Client.copyObject() goes through this client, so
+        // without this, committing objects with files over 5GB fails with an S3 exception.
+        final var builder = S3AsyncClient.builder().multipartEnabled(true);
 
         if (StringUtils.isNotBlank(ocflPropsConfig.getAwsRegion())) {
             builder.region(Region.of(ocflPropsConfig.getAwsRegion()));
@@ -171,7 +183,9 @@ public class OcflPersistenceConfig {
 
         // May want to do additional HTTP client configuration, connection pool, etc
         final var httpClientBuilder = NettyNioAsyncHttpClient.builder()
-                .connectionAcquisitionTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ConnectionTimeout()))
+                .connectionTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ConnectionTimeout()))
+                .connectionAcquisitionTimeout(
+                        Duration.ofSeconds(ocflPropsConfig.getS3ConnectionAcquisitionTimeout()))
                 .writeTimeout(Duration.ofSeconds(ocflPropsConfig.getS3WriteTimeout()))
                 .readTimeout(Duration.ofSeconds(ocflPropsConfig.getS3ReadTimeout()))
                 .maxConcurrency(ocflPropsConfig.getS3MaxConcurrency());

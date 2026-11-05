@@ -5,6 +5,10 @@
  */
 package org.fcrepo.kernel.impl.services;
 
+import static org.apache.jena.graph.NodeFactory.createLiteralByValue;
+import static org.apache.jena.graph.NodeFactory.createURI;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
+import static org.fcrepo.kernel.api.RdfLexicon.SIZE;
 import static java.util.stream.Stream.empty;
 
 import java.util.ArrayList;
@@ -13,8 +17,12 @@ import java.util.stream.Stream;
 
 import jakarta.inject.Inject;
 
+import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
+import org.fcrepo.kernel.api.models.Binary;
 import org.fcrepo.kernel.api.models.FedoraResource;
+import org.fcrepo.kernel.api.models.NonRdfSourceDescription;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.api.rdf.LdpTriplePreferences;
 import org.fcrepo.kernel.api.services.ContainmentTriplesService;
 import org.fcrepo.kernel.api.services.ManagedPropertiesService;
@@ -22,6 +30,8 @@ import org.fcrepo.kernel.api.services.MembershipService;
 import org.fcrepo.kernel.api.services.ReferenceService;
 import org.fcrepo.kernel.api.services.ResourceTripleService;
 
+import org.apache.jena.datatypes.xsd.XSDDatatype;
+import org.apache.jena.graph.Node;
 import org.apache.jena.graph.Triple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -55,7 +65,11 @@ public class ResourceTripleServiceImpl implements ResourceTripleService {
 
         // Provide user RDF if we didn't ask for omit=ldp:PreferMinimalContainer.
         if (preferences.displayUserRdf()) {
-            streams.add(resource.getTriples());
+            RdfStream userTriples = resource.getTriples();
+            if (preferences.displayServerManaged() && resource instanceof NonRdfSourceDescription) {
+                userTriples = deduplicateHasSize(resource, userTriples);
+            }
+            streams.add(userTriples);
         }
         // Provide server-managed triples if we didn't ask for omit=fedora:ServerManaged or
         // omit=ldp:PreferMinimalContainer
@@ -86,6 +100,29 @@ public class ResourceTripleServiceImpl implements ResourceTripleService {
         }
 
         return streams.stream().reduce(empty(), Stream::concat);
+    }
+
+    /**
+     * Filter out premis:hasSize and premis3:size triples from the user if it's identical to the server manage instance.
+     * @param resource The resource
+     * @param userTriples The user provided triples
+     * @return The new stream of triples
+     */
+    private RdfStream deduplicateHasSize(final FedoraResource resource, final RdfStream userTriples) {
+        final Node subject = createURI(resource.getDescribedResource().getId());
+        final Long contentSize = ((Binary)resource.getDescribedResource()).getContentSize();
+        final Triple hasSizeSMT = Triple.create(
+                subject,
+                HAS_SIZE.asNode(),
+                createLiteralByValue(String.valueOf(contentSize), XSDDatatype.XSDlong)
+        );
+        final Triple hasSize3SMT = Triple.create(
+                subject,
+                SIZE.asNode(),
+                createLiteralByValue(String.valueOf(contentSize), XSDDatatype.XSDnonNegativeInteger)
+        );
+        return new DefaultRdfStream(subject, userTriples
+                .filter(t -> !(t.equals(hasSizeSMT) || t.equals(hasSize3SMT))));
     }
 
 }

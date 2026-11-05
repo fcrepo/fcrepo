@@ -582,6 +582,16 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         return parentID;
     }
 
+    private String getDeletedContainedBy(@Nonnull final Transaction tx, final FedoraId resource) {
+        final String resourceID = resource.getFullId();
+        if (tx.isOpenLongRunning()) {
+            return jdbcTemplate.queryForList(PARENT_EXISTS_DELETED_IN_TRANSACTION, Map.of("child", resourceID,
+                    "transactionId", tx.getId()), String.class).stream().findFirst().orElse(null);
+        }
+        return jdbcTemplate.queryForList(PARENT_EXISTS_DELETED, Map.of("child", resourceID), String.class).stream()
+                .findFirst().orElse(null);
+    }
+
     @Override
     public void addContainedBy(@Nonnull final Transaction tx, final FedoraId parent, final FedoraId child) {
         addContainedBy(tx, parent, child, Instant.now(), null);
@@ -677,7 +687,7 @@ public class ContainmentIndexImpl implements ContainmentIndex {
         tx.doInTx(() -> {
             final String resourceID = resource.getFullId();
 
-            final String parent = getContainedBy(tx, resource);
+            final String parent = getDeletedContainedBy(tx, resource);
 
             if (parent != null) {
                 LOGGER.debug("Removing containment relationship between parent ({}) and child ({})",

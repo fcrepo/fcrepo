@@ -16,6 +16,7 @@ import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static jakarta.ws.rs.core.Response.Status.PARTIAL_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.TEMPORARY_REDIRECT;
+import static org.fcrepo.kernel.api.RdfLexicon.HAS_SIZE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -115,6 +116,27 @@ public class ExternalContentHandlerIT extends AbstractResourceIT {
             assertContentLocation(response, externalLocation);
             assertContentLength(response, 4);
         }
+    }
+
+    @Test
+    public void testProxySizeParameterOverridesResponseSize() throws Exception {
+        final var externalLocation = createHttpResource("text/plain", "xyz");
+        final String finalLocation = getRandomUniqueId();
+
+        final HttpPut put = putObjMethod(finalLocation);
+        put.addHeader(LINK, getExternalContentLinkHeader(externalLocation, "proxy", "text/plain", "123"));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+
+        try (final CloseableHttpResponse response = execute(headObjMethod(finalLocation))) {
+            assertEquals(SC_OK, getStatus(response));
+            assertContentType(response, "text/plain");
+            assertContentLocation(response, externalLocation);
+            assertContentLength(response, 123);
+        }
+
+        final var model = getModel(finalLocation + "/fcr:metadata");
+        final var binary = model.getResource(serverAddress + finalLocation);
+        assertEquals(123L, binary.getProperty(HAS_SIZE).getLong());
     }
 
     @Test

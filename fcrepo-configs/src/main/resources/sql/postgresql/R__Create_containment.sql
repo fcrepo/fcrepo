@@ -24,7 +24,7 @@ CREATE INDEX IF NOT EXISTS containment_idx3
 DO
   $$
   BEGIN
-  IF (SELECT setting FROM pg_settings WHERE name = 'lc_collate') <> 'C' THEN
+  IF (SELECT datcollate FROM pg_database WHERE datname = current_database()) <> 'C' THEN
     RAISE NOTICE 'lc_collate is not C, adding secondary index to resources.';
     CREATE INDEX IF NOT EXISTS containment_idx5 ON containment (fedora_id varchar_pattern_ops);
   END IF;
