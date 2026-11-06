@@ -18,6 +18,7 @@ import static org.hamcrest.Matchers.hasItems;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -271,6 +272,41 @@ public class OcflPersistentStorageSessionTest {
         final var headers2 = newSession.getHeaders(RESOURCE_ID, null);
         assertEquals(originalCreatedDate, headers2.getCreatedDate());
         assertEquals(originalModifiedDate, headers2.getLastModifiedDate());
+    }
+
+    @Test
+    public void roundtripCreateEmptyContainer() throws Exception {
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockResourceOperation(rdfSourceOperation, RESOURCE_ID);
+
+        session.persist(rdfSourceOperation);
+
+        assertEmptyRdf(RESOURCE_ID, RESOURCE_ID, session);
+        assertNull(session.getHeaders(RESOURCE_ID, null).getContentPath());
+
+        session.prepare();
+        session.commit();
+
+        assertEmptyRdf(RESOURCE_ID, RESOURCE_ID, createSession(index, objectSessionFactory));
+    }
+
+    @Test
+    public void roundtripCreateEmptyBinaryDescription() throws Exception {
+        final var descriptionResource = RESOURCE_ID.resolve(FedoraTypes.FCR_METADATA);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, descriptionResource, ROOT_OBJECT_ID, mapping);
+        mockMappingAndIndex(OCFL_RESOURCE_ID, RESOURCE_ID, ROOT_OBJECT_ID, mapping);
+        mockResourceOperation(rdfSourceOperation, descriptionResource);
+
+        session.persist(mockNonRdfSourceOperation(BINARY_CONTENT, USER_PRINCIPAL, RESOURCE_ID));
+        session.persist(rdfSourceOperation);
+
+        assertEmptyRdf(descriptionResource, RESOURCE_ID, session);
+        assertNull(session.getHeaders(descriptionResource, null).getContentPath());
+
+        session.prepare();
+        session.commit();
+
+        assertEmptyRdf(descriptionResource, RESOURCE_ID, createSession(index, objectSessionFactory));
     }
 
     @Test
@@ -762,5 +798,13 @@ public class OcflPersistentStorageSessionTest {
         when(binOperation.getMimeType()).thenReturn("text/plain");
         when(((CreateResourceOperation) binOperation).getInteractionModel()).thenReturn(NON_RDF_SOURCE.toString());
         return binOperation;
+    }
+
+    private void assertEmptyRdf(final FedoraId resourceId, final FedoraId topic,
+                                final PersistentStorageSession storageSession)
+            throws PersistentStorageException {
+        final var rdf = storageSession.getTriples(resourceId, null);
+        assertEquals(createURI(topic.getFullId()), rdf.topic());
+        assertTrue(rdf.findAny().isEmpty());
     }
 }

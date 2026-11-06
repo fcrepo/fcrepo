@@ -13,8 +13,10 @@ import static org.fcrepo.kernel.api.operations.ResourceOperationType.CREATE;
 import static org.fcrepo.kernel.api.operations.ResourceOperationType.UPDATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -136,6 +138,21 @@ public class CreateRdfSourcePersisterTest {
         final var headers = headersCaptor.getValue();
 
         assertEquals(RDF_SOURCE.toString(), headers.getInteractionModel());
+    }
+
+    @Test
+    public void testPersistNewEmptyResourceWithoutContent() throws Exception {
+        when(operation.getResourceId()).thenReturn(RESOURCE_ID);
+        when(((CreateResourceOperation) operation).getParentId()).thenReturn(FedoraId.getRepositoryRootId());
+        when(((CreateResourceOperation) operation).getInteractionModel()).thenReturn(RDF_SOURCE.toString());
+        when(operation.getTriples()).thenReturn(
+                new DefaultRdfStream(createURI(RESOURCE_ID.getResourceId()), Stream.empty()));
+
+        persister.persist(psSession, operation);
+
+        verify(session).writeResource(headersCaptor.capture(), isNull());
+        assertEquals(RDF_SOURCE.toString(), headersCaptor.getValue().getInteractionModel());
+        assertNull(headersCaptor.getValue().getContentPath());
     }
 
     @Test

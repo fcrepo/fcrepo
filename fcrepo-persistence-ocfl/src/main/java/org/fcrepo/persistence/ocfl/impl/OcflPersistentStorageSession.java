@@ -24,6 +24,7 @@ import java.util.concurrent.Phaser;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.fcrepo.kernel.api.RdfStream;
 import org.fcrepo.kernel.api.Transaction;
@@ -225,10 +226,22 @@ public class OcflPersistentStorageSession implements PersistentStorageSession {
 
         LOGGER.debug("Getting triples for {} at {}", identifier, version);
 
-        try (final InputStream is = getBinaryContent(identifier, version)) {
+        // Retrieve content directly from OCFL layer, since it is permissible for the RDF file to not exist
+        final var mapping = getFedoraOcflMapping(identifier);
+        final var objSession = findOrCreateSession(mapping.getOcflObjectId());
+        final var versionNumber = resolveVersionNumber(objSession, identifier, version);
+        final var contentStream = objSession.readContent(identifier.getResourceId(), versionNumber)
+                .getContentStream();
+        final FedoraId topic = resolveTopic(identifier);
+
+        // No RDF file, so return an empty stream
+        if (contentStream.isEmpty()) {
+            return new DefaultRdfStream(createURI(topic.getFullId()), Stream.empty());
+        }
+
+        try (final InputStream is = contentStream.get()) {
             final Model model = createDefaultModel();
             RDFDataMgr.read(model, is, OcflPersistentStorageUtils.getRdfFormat().getLang());
-            final FedoraId topic = resolveTopic(identifier);
             return DefaultRdfStream.fromModel(createURI(topic.getFullId()), model);
         } catch (final IOException ex) {
             throw new PersistentStorageException(format("unable to read %s ;  version = %s", identifier, version), ex);
