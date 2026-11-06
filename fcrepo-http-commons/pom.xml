@@ -203,10 +203,6 @@
           <artifactId>commons-collections4</artifactId>
         </exclusion>
         <exclusion>
-          <groupId>commons-digester</groupId>
-          <artifactId>commons-digester</artifactId>
-        </exclusion>
-        <exclusion>
           <groupId>commons-beanutils</groupId>
           <artifactId>commons-beanutils</artifactId>
         </exclusion>
@@ -256,30 +252,6 @@
       <artifactId>jersey-micrometer</artifactId>
     </dependency>
 
-    <!-- commons-digester-1.8 is explicitly added here because of a dependency 
-    convergence issue in velocity-tools. If/when velocity-tools gets its 
-    version of commons-digester in sync across its dependencies, the exclusion 
-    on commons-digester may be removed along with the explicit dependency 
-    declaration below -->
-    <dependency>
-      <groupId>commons-digester</groupId>
-      <artifactId>commons-digester</artifactId>
-      <version>1.8</version>
-      <exclusions>
-        <exclusion>
-          <groupId>commons-logging</groupId>
-          <artifactId>commons-logging</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>commons-beanutils</groupId>
-          <artifactId>commons-beanutils</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-collections4</artifactId>
