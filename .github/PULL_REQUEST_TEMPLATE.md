@@ -1,7 +1,7 @@
 **The title of this pull-request should be a brief description of what the pull-request fixes/improves/changes. Ideally 50 characters or less.**
 * * *
 
-**JIRA Ticket**: (link)
+**Resolves**: #
 
 * Other Relevant Links (Mailing list discussion, related pull requests, etc.)
 

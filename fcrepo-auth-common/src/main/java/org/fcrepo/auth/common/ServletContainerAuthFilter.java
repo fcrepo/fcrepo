@@ -41,7 +41,7 @@ public class ServletContainerAuthFilter implements Filter {
      */
     public static final String FEDORA_USER_ROLE = "fedoraUser";
 
-    // TODO: configurable set of role names: https://jira.duraspace.org/browse/FCREPO-2770
+    // TODO: configurable set of role names: https://fedora.info/jira/FCREPO-2770
     private static final String[] ROLE_NAMES = { FEDORA_ADMIN_ROLE, FEDORA_USER_ROLE };
 
     @Override
