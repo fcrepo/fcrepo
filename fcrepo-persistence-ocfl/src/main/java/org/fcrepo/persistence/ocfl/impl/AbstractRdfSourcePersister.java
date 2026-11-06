@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.String.format;
 import static org.apache.jena.riot.system.StreamRDFWriter.getWriterStream;
@@ -124,14 +125,21 @@ abstract class AbstractRdfSourcePersister extends AbstractPersister {
                           final RdfStream triples) throws PersistentStorageException {
         try (final var os = new ByteArrayOutputStream()) {
             final StreamRDF streamRDF = getWriterStream(os, OcflPersistentStorageUtils.getRdfFormat().getLang());
+            final var hasTriples = new AtomicBoolean();
             streamRDF.start();
             if (triples != null) {
-                triples.forEach(streamRDF::triple);
+                triples.forEach(triple -> {
+                    hasTriples.set(true);
+                    streamRDF.triple(triple);
+                });
             }
             streamRDF.finish();
 
-            final var is = new ByteArrayInputStream(os.toByteArray());
-            session.writeResource(new ResourceHeadersAdapter(headers).asStorageHeaders(), is);
+            // Preserve an existing empty RDF file, but do not create one for a new empty graph.
+            final var contentStream = !hasTriples.get() && headers.getContentPath() == null
+                    ? null
+                    : new ByteArrayInputStream(os.toByteArray());
+            session.writeResource(new ResourceHeadersAdapter(headers).asStorageHeaders(), contentStream);
             log.debug("wrote {} to {}", headers.getId().getFullId(), session.sessionId());
         } catch (final IOException ex) {
             throw new PersistentStorageException(
