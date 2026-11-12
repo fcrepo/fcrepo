@@ -28,7 +28,7 @@
     <!-- https://github.com/github/maven-plugins/blob/master/README.md -->
     <github.global.server>github</github.global.server>
     <!-- plugin versions -->
-    <build-helper.plugin.version>3.6.2</build-helper.plugin.version>
+    <build-helper.plugin.version>3.8.0</build-helper.plugin.version>
     <bundle.plugin.version>6.0.0</bundle.plugin.version>
     <checkstyle.plugin.version>3.6.0</checkstyle.plugin.version>
     <changelog.plugin.version>3.0.0-M1</changelog.plugin.version>
@@ -56,7 +56,7 @@
     <site.plugin.version>3.22.0</site.plugin.version>
     <source.plugin.version>3.4.0</source.plugin.version>
     <surefire.plugin.version>3.6.1</surefire.plugin.version>
-    <versions.plugin.version>2.23.0</versions.plugin.version>
+    <versions.plugin.version>2.25.1</versions.plugin.version>
     <!-- jacoco and sonar configuration -->
     <jacoco.outputDir>${project.build.directory}</jacoco.outputDir>
     <jacoco.out.unit.file>jacoco-ut.exec</jacoco.out.unit.file>
