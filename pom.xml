@@ -26,7 +26,7 @@
     <!-- Dependency version properties -->
     <activemq.version>6.4.0</activemq.version>
     <artemis.version>2.57.0</artemis.version>
-    <aws.sdk.version>2.57.13</aws.sdk.version>
+    <aws.sdk.version>2.58.0</aws.sdk.version>
     <aws.crt.version>0.50.0</aws.crt.version>
     <caffeine.version>3.3.1</caffeine.version>
     <commons-codec.version>1.23.0</commons-codec.version>
