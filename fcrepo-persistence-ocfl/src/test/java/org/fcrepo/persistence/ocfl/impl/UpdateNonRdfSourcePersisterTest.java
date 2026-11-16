@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +42,7 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -150,6 +152,23 @@ public class UpdateNonRdfSourcePersisterTest {
         // client-asserted last modified data is unclear.
         assertTrue(originalModified.equals(resultHeaders.getLastModifiedDate())
                 || originalModified.isBefore(resultHeaders.getLastModifiedDate()));
+    }
+
+    @Test
+    public void testUpdateInternalBinaryToExternalBinaryDeletesContent() throws Exception {
+        when(nonRdfSourceOperation.getContentUri()).thenReturn(URI.create("https://example.org/content"));
+        when(nonRdfSourceOperation.getExternalHandling()).thenReturn("proxy");
+
+        final var headers = newResourceHeaders(ROOT_RESOURCE_ID, RESOURCE_ID, NON_RDF_SOURCE.toString());
+        headers.setContentPath("child");
+        when(session.readHeaders(anyString())).thenReturn(new ResourceHeadersAdapter(headers).asStorageHeaders());
+
+        persister.persist(psSession, nonRdfSourceOperation);
+
+        verify(session).deleteContentFile(any(ResourceHeaders.class));
+        verify(session).writeResource(headersCaptor.capture(), isNull());
+        assertEquals("https://example.org/content", headersCaptor.getValue().getExternalUrl());
+        assertEquals("proxy", headersCaptor.getValue().getExternalHandling());
     }
 
 }

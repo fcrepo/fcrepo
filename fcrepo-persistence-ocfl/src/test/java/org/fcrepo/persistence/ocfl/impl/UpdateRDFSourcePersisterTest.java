@@ -154,6 +154,25 @@ public class UpdateRDFSourcePersisterTest {
                 || originalModified.isBefore(resultHeaders.getLastModifiedDate()));
     }
 
+    @Test
+    public void testPersistEmptyExistingResourceWithContentPath() throws Exception {
+        when(mapping.getOcflObjectId()).thenReturn("object-id");
+        when(mapping.getRootObjectIdentifier()).thenReturn(RESOURCE_ID);
+        when(operation.getResourceId()).thenReturn(RESOURCE_ID);
+        when(operation.getTriples()).thenReturn(
+                new DefaultRdfStream(createURI(RESOURCE_ID.getResourceId()), Stream.empty()));
+
+        final var headers = newResourceHeaders(ROOT_RESOURCE_ID, RESOURCE_ID, BASIC_CONTAINER.toString());
+        headers.setContentPath("fcr-container.nt");
+        when(session.readHeaders(anyString())).thenReturn(new ResourceHeadersAdapter(headers).asStorageHeaders());
+
+        persister.persist(psSession, operation);
+
+        verify(session).writeResource(headersCaptor.capture(), userTriplesIsCaptor.capture());
+        assertEquals(BASIC_CONTAINER.toString(), headersCaptor.getValue().getInteractionModel());
+        assertEquals(0, userTriplesIsCaptor.getValue().available());
+    }
+
     private RdfStream constructTitleStream(final FedoraId resourceId, final String title) {
         final Node resourceUri = createURI(resourceId.getResourceId());
         // create some test user triples

@@ -22,7 +22,7 @@
       (for scm, site-distribution, etc -->
     <project_name>fcrepo</project_name>
     <project_organization>fcrepo</project_organization>
-    <fcrepo-storage-ocfl.version>7.0.0</fcrepo-storage-ocfl.version>
+    <fcrepo-storage-ocfl.version>7.1.0-SNAPSHOT</fcrepo-storage-ocfl.version>
     <!-- Dependency version properties -->
     <activemq.version>6.4.0</activemq.version>
     <artemis.version>2.57.0</artemis.version>
