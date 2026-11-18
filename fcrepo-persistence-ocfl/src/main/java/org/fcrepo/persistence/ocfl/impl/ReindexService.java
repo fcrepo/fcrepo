@@ -8,6 +8,7 @@ package org.fcrepo.persistence.ocfl.impl;
 import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.vocabulary.RDF.type;
+import static org.fcrepo.kernel.api.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
 import static org.fcrepo.persistence.ocfl.impl.OcflPersistentStorageUtils.getRdfFormat;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -17,6 +18,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -113,7 +115,16 @@ public class ReindexService {
     @Inject
     private RepositoryInitializationStatus initializationStatus;
 
+    /**
+     * Reindex all Fedora resources stored within a single OCFL object. After the object's regular indexes have been
+     * populated, membership history is populated for any Direct or Indirect Containers stored in the object. This
+     * method does not discover or reindex resources stored in descendant OCFL objects.
+     *
+     * @param tx transaction in which to index the object
+     * @param ocflId OCFL object identifier
+     */
     public void indexOcflObject(final Transaction tx, final String ocflId) {
+        final var membershipContainers = new LinkedHashSet<FedoraId>();
         LOGGER.debug("Indexing ocflId {} in transaction {}", ocflId, tx.getId());
 
         ocflRepository.invalidateCache(ocflId);
@@ -210,17 +221,36 @@ public class ReindexService {
                 LOGGER.debug("Rebuilt fedora-to-ocfl object index entry for {}", fedoraIdentifier);
             });
 
+            if (initializationStatus.isInitializationComplete()) {
+                headersList.stream()
+                        .filter(headers -> RdfLexicon.DIRECT_CONTAINER.getURI().equals(headers.getInteractionModel())
+                                || RdfLexicon.INDIRECT_CONTAINER.getURI().equals(headers.getInteractionModel()))
+                        .map(ResourceHeaders::getId)
+                        .forEach(membershipContainers::add);
+            }
+
             headersList.forEach(headers -> {
                 try {
+                    final var resource = resourceFactory.getResource(tx, headers);
                     // Get user RDF types from map and combine with system types
                     final var rdfTypes = rdfTypeMap.getOrDefault(headers.getId(), new ArrayList<>());
-                    rdfTypes.addAll(resourceFactory.getResource(tx, headers).getSystemTypes(false));
+                    rdfTypes.addAll(resource.getSystemTypes(false));
                     searchIndex.addUpdateIndex(tx, headers, rdfTypes);
+
+                    // Full rebuild performs a final repository-wide membership pass. For targeted reindexing, revisit
+                    // containers already indexed as referring to a membership resource in this object.
+                    if (initializationStatus.isInitializationComplete()) {
+                        referenceService.getInboundReferences(tx, resource)
+                                .filter(triple -> triple.predicateMatches(MEMBERSHIP_RESOURCE.asNode()))
+                                .map(triple -> FedoraId.create(triple.getSubject().getURI()))
+                                .forEach(membershipContainers::add);
+                    }
                 } catch (PathNotFoundException e) {
                     throw new PathNotFoundRuntimeException(e.getMessage(), e);
                 }
             });
         }
+        membershipContainers.forEach(containerId -> membershipService.populateMembershipHistory(tx, containerId));
     }
 
     /**

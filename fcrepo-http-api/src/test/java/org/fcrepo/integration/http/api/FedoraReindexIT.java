@@ -7,6 +7,7 @@ package org.fcrepo.integration.http.api;
 
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
+import static org.fcrepo.kernel.api.RdfLexicon.ARCHIVAL_GROUP;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
     private static final String PCDM_HAS_MEMBER = "http://pcdm.org/models#hasMember";
     private static final String PROXY_FOR = "http://example.com/proxyFor";
+    private static final String ARCHIVAL_GROUP_LINK_HEADER = "<" + ARCHIVAL_GROUP.getURI() + ">; rel=\"type\"";
     private static final Property PCDM_HAS_MEMBER_PROP = createProperty(PCDM_HAS_MEMBER);
 
     private OcflRepository ocflRepository;
@@ -140,6 +142,29 @@ public class FedoraReindexIT extends AbstractResourceIT {
         // Simulate sideloading by removing all indexes while retaining the OCFL object.
         reindexService.reset();
         doReindex(membershipId, SC_NO_CONTENT);
+        doReindex(member1Id, SC_NO_CONTENT);
+        doReindex(member2Id, SC_NO_CONTENT);
+        // Index the membership container after its members have populated the containment index.
+        doReindex(directId, SC_NO_CONTENT);
+
+        assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+    }
+
+    @Test
+    public void reindexSideloadedArchivalGroupDirectContainerMembership() throws Exception {
+        final var membershipId = "archival-direct-membership";
+        final var directId = membershipId + "/direct";
+        final var member1Id = directId + "/member1";
+        final var member2Id = directId + "/member2";
+
+        createObjectAndClose(membershipId, BASIC_CONTAINER_LINK_HEADER, ARCHIVAL_GROUP_LINK_HEADER);
+        putDirectContainer(directId, serverAddress + membershipId, PCDM_HAS_MEMBER_PROP, false);
+        putBasicContainer(member1Id);
+        putBasicContainer(member2Id);
+
+        // All resources are stored in the archival group's OCFL object.
+        reindexService.reset();
+        doReindex(membershipId, SC_NO_CONTENT);
 
         assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
     }
@@ -162,6 +187,40 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
         // Simulate sideloading by removing all indexes while retaining the OCFL object.
         reindexService.reset();
+        doReindex(membershipId, SC_NO_CONTENT);
+        doReindex(member1Id, SC_NO_CONTENT);
+        doReindex(member2Id, SC_NO_CONTENT);
+        doReindex(proxy1Id, SC_NO_CONTENT);
+        doReindex(proxy2Id, SC_NO_CONTENT);
+        // Index the membership container after its proxies have populated the containment index.
+        doReindex(indirectId, SC_NO_CONTENT);
+
+        assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
+    }
+
+    @Test
+    public void reindexSideloadedExternalIndirectContainerMembership() throws Exception {
+        final var membershipId = "external-indirect-membership";
+        final var indirectId = "external-indirect-container";
+        final var proxy1Id = indirectId + "/proxy1";
+        final var proxy2Id = indirectId + "/proxy2";
+        final var member1Id = "external-indirect-member1";
+        final var member2Id = "external-indirect-member2";
+
+        putBasicContainer(membershipId);
+        putIndirectContainer(indirectId, serverAddress + membershipId, PCDM_HAS_MEMBER_PROP, PROXY_FOR, false);
+        putProxy(proxy1Id, serverAddress + member1Id, PROXY_FOR, null);
+        putProxy(proxy2Id, serverAddress + member2Id, PROXY_FOR, null);
+        putBasicContainer(member1Id);
+        putBasicContainer(member2Id);
+
+        reindexService.reset();
+        doReindex(indirectId, SC_NO_CONTENT);
+        doReindex(proxy1Id, SC_NO_CONTENT);
+        doReindex(proxy2Id, SC_NO_CONTENT);
+        doReindex(member1Id, SC_NO_CONTENT);
+        doReindex(member2Id, SC_NO_CONTENT);
+        // Reindexing the target uses its inbound membershipResource reference to repopulate the container.
         doReindex(membershipId, SC_NO_CONTENT);
 
         assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
