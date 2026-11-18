@@ -6,13 +6,8 @@
 package org.fcrepo.integration.http.api;
 
 import static org.apache.http.HttpStatus.SC_NO_CONTENT;
-import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
-import static org.apache.jena.rdf.model.ResourceFactory.createResource;
-import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,8 +16,7 @@ import java.nio.file.Paths;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 
 import org.apache.http.HttpStatus;
-import org.apache.http.entity.StringEntity;
-import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.fcrepo.persistence.ocfl.impl.ReindexService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +42,7 @@ public class FedoraReindexIT extends AbstractResourceIT {
 
     private static final String PCDM_HAS_MEMBER = "http://pcdm.org/models#hasMember";
     private static final String PROXY_FOR = "http://example.com/proxyFor";
+    private static final Property PCDM_HAS_MEMBER_PROP = createProperty(PCDM_HAS_MEMBER);
 
     private OcflRepository ocflRepository;
     private ReindexService reindexService;
@@ -137,16 +132,16 @@ public class FedoraReindexIT extends AbstractResourceIT {
         final var member1Id = directId + "/member1";
         final var member2Id = directId + "/member2";
 
-        createBasicContainer(membershipId);
-        createDirectContainer(directId, membershipId);
-        createBasicContainer(member1Id);
-        createBasicContainer(member2Id);
+        putBasicContainer(membershipId);
+        putDirectContainer(directId, serverAddress + membershipId, PCDM_HAS_MEMBER_PROP, false);
+        putBasicContainer(member1Id);
+        putBasicContainer(member2Id);
 
         // Simulate sideloading by removing all indexes while retaining the OCFL object.
         reindexService.reset();
         doReindex(membershipId, SC_NO_CONTENT);
 
-        assertHasMembers(membershipId, member1Id, member2Id);
+        assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
     }
 
     @Test
@@ -158,61 +153,18 @@ public class FedoraReindexIT extends AbstractResourceIT {
         final var member1Id = indirectId + "/member1";
         final var member2Id = indirectId + "/member2";
 
-        createBasicContainer(membershipId);
-        createIndirectContainer(indirectId, membershipId);
-        createBasicContainer(member1Id);
-        createBasicContainer(member2Id);
-        createProxy(proxy1Id, member1Id);
-        createProxy(proxy2Id, member2Id);
+        putBasicContainer(membershipId);
+        putIndirectContainer(indirectId, serverAddress + membershipId, PCDM_HAS_MEMBER_PROP, PROXY_FOR, false);
+        putBasicContainer(member1Id);
+        putBasicContainer(member2Id);
+        putProxy(proxy1Id, serverAddress + member1Id, PROXY_FOR, null);
+        putProxy(proxy2Id, serverAddress + member2Id, PROXY_FOR, null);
 
         // Simulate sideloading by removing all indexes while retaining the OCFL object.
         reindexService.reset();
         doReindex(membershipId, SC_NO_CONTENT);
 
-        assertHasMembers(membershipId, member1Id, member2Id);
-    }
-
-    private void createBasicContainer(final String id) throws IOException {
-        assertEquals(SC_CREATED, getStatus(putObjMethod(id)));
-    }
-
-    private void createDirectContainer(final String id, final String membershipId) throws IOException {
-        final var put = putObjMethod(id);
-        put.setHeader("Link", "<" + DIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
-        put.setHeader("Content-Type", "text/turtle");
-        put.setEntity(new StringEntity("PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
-                "<> ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> ; " +
-                "ldp:membershipResource <" + serverAddress + membershipId + "> ."));
-        assertEquals(SC_CREATED, getStatus(put));
-    }
-
-    private void createIndirectContainer(final String id, final String membershipId) throws IOException {
-        final var put = putObjMethod(id);
-        put.setHeader("Link", "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
-        put.setHeader("Content-Type", "text/turtle");
-        put.setEntity(new StringEntity("PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
-                "<> ldp:hasMemberRelation <" + PCDM_HAS_MEMBER + "> ; " +
-                "ldp:insertedContentRelation <" + PROXY_FOR + "> ; " +
-                "ldp:membershipResource <" + serverAddress + membershipId + "> ."));
-        assertEquals(SC_CREATED, getStatus(put));
-    }
-
-    private void createProxy(final String id, final String memberId) throws IOException {
-        final var put = putObjMethod(id);
-        put.setHeader("Content-Type", "text/turtle");
-        put.setEntity(new StringEntity("<> <" + PROXY_FOR + "> <" + serverAddress + memberId + "> ."));
-        assertEquals(SC_CREATED, getStatus(put));
-    }
-
-    private void assertHasMembers(final String membershipId, final String... memberIds) throws Exception {
-        final Model model = getModel(membershipId);
-        final var membershipResource = createResource(serverAddress + membershipId);
-        final var hasMember = createProperty(PCDM_HAS_MEMBER);
-
-        for (final var memberId : memberIds) {
-            assertTrue(model.contains(membershipResource, hasMember, createResource(serverAddress + memberId)),
-                    "Expected membership resource to contain " + memberId);
-        }
+        assertHasMembers(membershipId, PCDM_HAS_MEMBER_PROP, member1Id, member2Id);
     }
 
     private void doReindex(final String fedoraId, final int expectedStatus) throws IOException {

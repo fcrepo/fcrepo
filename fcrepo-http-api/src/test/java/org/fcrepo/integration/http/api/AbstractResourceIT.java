@@ -37,6 +37,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.apache.jena.graph.Node;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.Property;
 import org.apache.jena.riot.RDFDataMgr;
 import org.apache.jena.riot.RDFFormat;
 
@@ -95,6 +96,7 @@ import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
+import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.vocabulary.DC_11.title;
 import static org.fcrepo.http.commons.session.TransactionConstants.ATOMIC_ID_HEADER;
 import static org.fcrepo.http.commons.test.util.TestHelpers.parseTriples;
@@ -105,6 +107,7 @@ import static org.fcrepo.kernel.api.RdfLexicon.CREATED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.CREATED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.EXTERNAL_CONTENT;
+import static org.fcrepo.kernel.api.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_BY;
 import static org.fcrepo.kernel.api.RdfLexicon.LAST_MODIFIED_DATE;
 import static org.fcrepo.kernel.api.RdfLexicon.NON_RDF_SOURCE;
@@ -216,6 +219,99 @@ public abstract class AbstractResourceIT {
 
     protected static HttpPut putObjMethod(final String id) {
         return new HttpPut(serverAddress + id);
+    }
+
+    protected void putBasicContainer(final String id) throws IOException {
+        putBasicContainer(id, null);
+    }
+
+    protected void putBasicContainer(final String id, final String txUri) throws IOException {
+        final var put = putObjMethod(id);
+        if (txUri != null) {
+            put.addHeader(ATOMIC_ID_HEADER, txUri);
+        }
+        executeAndClose(put);
+    }
+
+    protected void putDirectContainer(final String id, final String membershipUri, final Property memberRelation,
+            final boolean isMemberOf) throws IOException {
+        final var put = putObjMethod(id);
+        put.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        put.setHeader(CONTENT_TYPE, "text/turtle");
+        put.setEntity(new StringEntity(membershipContainerRdf(membershipUri, memberRelation, null, isMemberOf)));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+    }
+
+    protected void postDirectContainer(final String id, final String membershipUri, final Property memberRelation,
+            final boolean isMemberOf) throws IOException {
+        final var post = postObjMethod();
+        post.setHeader("Slug", id);
+        post.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
+        post.setHeader(CONTENT_TYPE, "text/turtle");
+        post.setEntity(new StringEntity(membershipContainerRdf(membershipUri, memberRelation, null, isMemberOf)));
+        assertEquals(CREATED.getStatusCode(), getStatus(post));
+    }
+
+    protected void putIndirectContainer(final String id, final String membershipUri, final Property memberRelation,
+            final String insertedContentRelation, final boolean isMemberOf) throws IOException {
+        final var put = putObjMethod(id);
+        put.setHeader(LINK, "<" + INDIRECT_CONTAINER.getURI() + ">;rel=\"type\"");
+        put.setHeader(CONTENT_TYPE, "text/turtle");
+        put.setEntity(new StringEntity(membershipContainerRdf(membershipUri, memberRelation, insertedContentRelation,
+                isMemberOf)));
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+    }
+
+    protected void putProxy(final String id, final String memberUri, final String insertedContentRelation,
+            final String txUri) throws IOException {
+        final var put = putObjMethod(id);
+        put.setHeader(CONTENT_TYPE, "text/turtle");
+        put.setEntity(new StringEntity("<> <" + insertedContentRelation + "> <" + memberUri + "> ."));
+        if (txUri != null) {
+            put.addHeader(ATOMIC_ID_HEADER, txUri);
+        }
+        assertEquals(CREATED.getStatusCode(), getStatus(put));
+    }
+
+    protected String postProxy(final String containerId, final String memberUri, final String insertedContentRelation)
+            throws IOException {
+        return postProxy(containerId, memberUri, insertedContentRelation, null, null);
+    }
+
+    protected String postProxy(final String containerId, final String memberUri, final String insertedContentRelation,
+            final Property additionalRelation, final String additionalValue) throws IOException {
+        final var post = postObjMethod(containerId);
+        post.setHeader(CONTENT_TYPE, "text/turtle");
+        final var additionalTriple = additionalRelation == null ? "" :
+                " ; <" + additionalRelation.getURI() + "> <" + additionalValue + ">";
+        post.setEntity(new StringEntity("<> <" + insertedContentRelation + "> <" + memberUri + ">" +
+                additionalTriple + " ."));
+        try (final CloseableHttpResponse response = execute(post)) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+            return getLocation(response);
+        }
+    }
+
+    protected void assertHasMembers(final String membershipId, final Property memberRelation,
+            final String... memberIds) throws Exception {
+        final var model = getModel(membershipId);
+        final var membershipResource = model.getResource(serverAddress + membershipId);
+
+        assertEquals(memberIds.length, membershipResource.listProperties(memberRelation).toList().size());
+        for (final var memberId : memberIds) {
+            assertTrue(membershipResource.hasProperty(memberRelation, createResource(serverAddress + memberId)),
+                    "Did not contain expected member " + memberId);
+        }
+    }
+
+    private static String membershipContainerRdf(final String membershipUri, final Property memberRelation,
+            final String insertedContentRelation, final boolean isMemberOf) {
+        final var relation = isMemberOf ? "ldp:isMemberOfRelation" : "ldp:hasMemberRelation";
+        final var insertedRelation = insertedContentRelation == null ? "" :
+                "ldp:insertedContentRelation <" + insertedContentRelation + "> ; ";
+        return "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
+                "<> " + relation + " <" + memberRelation.getURI() + "> ; " + insertedRelation +
+                "ldp:membershipResource <" + membershipUri + "> .";
     }
 
     protected static HttpGet getObjMethod(final String id) {
