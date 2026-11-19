@@ -51,6 +51,7 @@ import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.apache.jena.rdf.model.ModelFactory.createDefaultModel;
 import static org.apache.jena.rdf.model.ModelFactory.createModelForGraph;
 import static org.apache.jena.rdf.model.ResourceFactory.createPlainLiteral;
+import static org.apache.jena.rdf.model.ResourceFactory.createProperty;
 import static org.apache.jena.rdf.model.ResourceFactory.createResource;
 import static org.apache.jena.riot.RDFLanguages.contentTypeToLang;
 import static org.apache.jena.riot.WebContent.contentTypeN3;
@@ -232,6 +233,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     private static final String BASIC_CONTAINER_LINK_HEADER = "<" + BASIC_CONTAINER.getURI() + ">; rel=\"type\"";
     private static final String INDIRECT_CONTAINER_LINK_HEADER = "<" + INDIRECT_CONTAINER.getURI() + ">; rel=\"type\"";
     private static final String PROXY_FOR_URI = "http://www.openarchives.org/ore/terms/proxyFor";
+    private static final Property PROXY_IN = createProperty("http://www.openarchives.org/ore/terms/proxyIn");
     private static final String ARCHIVAL_GROUP_LINK_HEADER = "<" + ARCHIVAL_GROUP.getURI() + ">; rel=\"type\"";
 
     private static final String RESOURCE_LINK_HEADER = "<" + RESOURCE.getURI() + ">; rel=\"type\"";
@@ -3067,18 +3069,19 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // create an indirect container
         final String indirectPid1 = pid1 + "/members";
-        createIndirectContainer(indirectPid1, memberRelation, pid1);
+        putIndirectContainer(indirectPid1, serverAddress + pid1, createProperty(memberRelation), PROXY_FOR_URI, false);
 
         // create proxies for the children in the indirect container
-        createProxy(pid1, indirectPid1, pid2);
-        createProxy(pid1, indirectPid1, pid3);
+        postProxy(indirectPid1, serverAddress + pid2, PROXY_FOR_URI, PROXY_IN, serverAddress + pid1);
+        postProxy(indirectPid1, serverAddress + pid3, PROXY_FOR_URI, PROXY_IN, serverAddress + pid1);
 
         // create another indirect container
         final String indirectPid2 = pid1 + "/members2";
-        createIndirectContainer(indirectPid2, memberRelation2, pid1);
+        putIndirectContainer(indirectPid2, serverAddress + pid1, createProperty(memberRelation2), PROXY_FOR_URI,
+                false);
 
         // create proxies for the children in the indirect container
-        createProxy(pid1, indirectPid2, pid2);
+        postProxy(indirectPid2, serverAddress + pid2, PROXY_FOR_URI, PROXY_IN, serverAddress + pid1);
 
         // retrieve the parent and verify the outbound triples exist
         final HttpGet getParent =  new HttpGet(serverAddress + pid1);
@@ -3150,20 +3153,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
     }
 
-    private static String createIndirectContainer(final String indirectPid1, final String memberRelation,
-                                                  final String memberRescPid) throws UnsupportedEncodingException {
-        final HttpPut createContainer = new HttpPut(serverAddress + indirectPid1);
-        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        createContainer.addHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
-        final String membersRDF = "<> <" + HAS_MEMBER_RELATION + "> <" + memberRelation + ">; "
-            + "<" + INSERTED_CONTENT_RELATION + "> <" + PROXY_FOR_URI + ">; "
-            + "<" + MEMBERSHIP_RESOURCE + "> <" + serverAddress + memberRescPid + "> . ";
-        createContainer.setEntity(new StringEntity(membersRDF));
-
-        assertEquals(CREATED.getStatusCode(), getStatus(createContainer));
-        return serverAddress + indirectPid1;
-    }
-
     @Test
     public void testGetObjectReferencesDirect() throws Exception {
         final String uuid = getRandomUniqueId();
@@ -3175,13 +3164,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         // create a direct container
         final String directPid = pid1 + "/members";
-        final HttpPut createContainer = new HttpPut(serverAddress + directPid);
-        createContainer.addHeader(CONTENT_TYPE, "text/turtle");
-        createContainer.addHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        final String membersRDF = "<> <http://www.w3.org/ns/ldp#hasMemberRelation> <" + memberRelation + ">; "
-                + "<http://www.w3.org/ns/ldp#membershipResource> <" + serverAddress + pid1 + "> . ";
-        createContainer.setEntity(new StringEntity(membersRDF));
-        assertEquals(CREATED.getStatusCode(), getStatus(createContainer));
+        putDirectContainer(directPid, serverAddress + pid1, createProperty(memberRelation), false);
 
         // create direct children
         final String pid2 = directPid + "/child1";
@@ -3237,19 +3220,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
                     createURI(memberRelation),
                     createURI(serverAddress + pid3)),
                     "Should not contain inbound references to the other child");
-        }
-    }
-
-    private static String createProxy(final String parent, final String indirectContainer, final String child)
-            throws IOException {
-        final HttpPost createProxy = new HttpPost(serverAddress + indirectContainer);
-        createProxy.addHeader(CONTENT_TYPE, "text/turtle");
-        final String proxyRDF = "<> <" + PROXY_FOR_URI + "> <" + serverAddress + child + ">;"
-            + " <http://www.openarchives.org/ore/terms/proxyIn> <" + serverAddress + parent + "> .";
-        createProxy.setEntity(new StringEntity(proxyRDF, UTF_8));
-        try (final CloseableHttpResponse postResponse = execute(createProxy)) {
-            assertEquals(CREATED.getStatusCode(), getStatus(postResponse));
-            return getLocation(postResponse);
         }
     }
 
@@ -3996,12 +3966,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         }
         // Create indirect container (c0/members)
         final String indirectContainerId = containerId + "/t";
-        final String indirectContainer = createIndirectContainer(indirectContainerId,
-                "info:some/relation", containerId);
+        putIndirectContainer(indirectContainerId, serverAddress + containerId, createProperty("info:some/relation"),
+                PROXY_FOR_URI, false);
+        final String indirectContainer = serverAddress + indirectContainerId;
         assertTrue(getLinkHeaders(getObjMethod(containerId + "/t")).contains(INDIRECT_CONTAINER_LINK_HEADER));
 
         // Add indirect resource to indirect container
-        final String indirectResource = createProxy(containerId, indirectContainerId, resourceId);
+        final String indirectResource = postProxy(indirectContainerId, resource, PROXY_FOR_URI, PROXY_IN, container);
 
         // Ensure container has been updated with relationship... indirectly
         try (final CloseableHttpResponse getResponse = execute(new HttpGet(container));
