@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Role;
-import org.springframework.dao.DeadlockLoserDataAccessException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -33,10 +33,7 @@ public class DbTransactionExecutor {
     private static final Logger LOGGER = getLogger(DbTransactionExecutor.class);
 
     private static final RetryPolicy<Object> DB_RETRY = RetryPolicy.builder()
-            .handleIf(e -> {
-                return e instanceof DeadlockLoserDataAccessException
-                        || (e.getCause() != null && e.getCause() instanceof DeadlockLoserDataAccessException);
-            })
+            .handleIf(DbTransactionExecutor::isLockFailure)
             .onRetry(event -> {
                 LOGGER.debug("Retrying operation that failed with the following exception", event.getLastException());
             })
@@ -48,6 +45,22 @@ public class DbTransactionExecutor {
     @Autowired
     private TransactionTemplate transactionTemplate;
 
+    /**
+     * Spring 6 translates deadlocks to PessimisticLockingFailureException or its subclass
+     * CannotAcquireLockException, depending on the database, and callers often wrap it.
+     *
+     * @param e the exception to check
+     * @return true if e or any of its causes is a pessimistic locking failure
+     */
+    static boolean isLockFailure(final Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof PessimisticLockingFailureException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public DbTransactionExecutor() {
 
     }
@@ -57,7 +70,7 @@ public class DbTransactionExecutor {
     }
 
     /**
-     * Executes the runnable within a DB transaction that will retry entire block on MySQL deadlock exceptions.
+     * Executes the runnable within a DB transaction that will retry entire block on deadlocks and lock failures.
      *
      * @param action the code to execute
      */
@@ -68,7 +81,7 @@ public class DbTransactionExecutor {
     }
 
     /**
-     * Executes the runnable within a DB transaction. MySQL deadlock exceptions are NOT retried.
+     * Executes the runnable within a DB transaction. Deadlocks and lock failures are NOT retried.
      *
      * @param action the code to execute
      */
