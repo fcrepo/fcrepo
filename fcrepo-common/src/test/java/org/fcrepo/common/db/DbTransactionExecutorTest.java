@@ -13,11 +13,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.PessimisticLockingFailureException;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * @author Dan Field
@@ -75,6 +79,22 @@ public class DbTransactionExecutorTest {
                     throw new CannotAcquireLockException("deadlock");
                 }));
         assertEquals(11, attempts.get());
+    }
+
+    @Test
+    public void testRunsActionInSpringTransaction() {
+        final var transactionTemplate = Mockito.mock(TransactionTemplate.class);
+        Mockito.doAnswer(invocation -> {
+            final Consumer<TransactionStatus> consumer = invocation.getArgument(0);
+            consumer.accept(Mockito.mock(TransactionStatus.class));
+            return null;
+        }).when(transactionTemplate).executeWithoutResult(Mockito.any());
+
+        final var attempts = new AtomicInteger();
+        new DbTransactionExecutor(transactionTemplate).doInTx(attempts::incrementAndGet);
+
+        assertEquals(1, attempts.get());
+        Mockito.verify(transactionTemplate).executeWithoutResult(Mockito.any());
     }
 
     @Test
