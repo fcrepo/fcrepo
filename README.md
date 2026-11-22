@@ -88,7 +88,7 @@ Java version: 21.0.8, vendor: Homebrew, runtime: /opt/homebrew/Cellar/openjdk@21
 Default locale: en_US, platform encoding: UTF-8
 ```
 
-To set your $JAVA_HOME environment variable:
+To set your ```$JAVA_HOME``` environment variable:
 
 ```bash
 export JAVA_HOME=/path/to/java
