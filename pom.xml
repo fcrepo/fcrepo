@@ -26,7 +26,7 @@
     <!-- Dependency version properties -->
     <activemq.version>6.4.0</activemq.version>
     <artemis.version>2.57.0</artemis.version>
-    <aws.sdk.version>2.59.1</aws.sdk.version>
+    <aws.sdk.version>2.59.7</aws.sdk.version>
     <aws.crt.version>0.50.0</aws.crt.version>
     <caffeine.version>3.3.1</caffeine.version>
     <commons-codec.version>1.23.0</commons-codec.version>
@@ -36,7 +36,7 @@
     <commons-pool2.version>2.13.1</commons-pool2.version>
     <commons-text.version>1.15.0</commons-text.version>
     <failsafe.version>3.3.2</failsafe.version>
-    <flyway.version>13.12.2</flyway.version>
+    <flyway.version>13.13.0</flyway.version>
     <flyway.test.version>10.0.0</flyway.test.version>
     <guava.version>33.8.0-jre</guava.version>
     <h2database.version>2.5.252</h2database.version>
@@ -44,7 +44,7 @@
     <hikari.version>6.3.2</hikari.version>
     <hk2.version>3.1.1</hk2.version>
     <!-- Last version that supports our version of jquery -->
-    <htmlunit.version>5.7.0</htmlunit.version>
+    <htmlunit.version>5.8.0</htmlunit.version>
     <httpclient.version>4.5.14</httpclient.version>
     <httpmime.version>4.5.14</httpmime.version>
     <httpcore.version>4.4.16</httpcore.version>
@@ -66,11 +66,11 @@
     <jersey.version>3.1.11</jersey.version>
     <jetty.version>12.1.15</jetty.version>
     <jsonld.version>0.13.6</jsonld.version>
-    <logback.version>1.6.7</logback.version>
+    <logback.version>1.6.8</logback.version>
     <maven.changelog.version>3.0.0-M2</maven.changelog.version>
-    <micrometer.version>1.17.2</micrometer.version>
+    <micrometer.version>1.18.0</micrometer.version>
     <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
-    <netty.version>4.1.140.Final</netty.version>
+    <netty.version>4.1.141.Final</netty.version>
     <ocfl-java.version>2.2.3</ocfl-java.version>
     <prometheus.version>1.10.0</prometheus.version>
     <prometheus.jmx.version>1.0.1</prometheus.jmx.version>
