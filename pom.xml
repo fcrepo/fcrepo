@@ -26,7 +26,7 @@
     <!-- Dependency version properties -->
     <activemq.version>6.4.0</activemq.version>
     <artemis.version>2.57.0</artemis.version>
-    <aws.sdk.version>2.59.7</aws.sdk.version>
+    <aws.sdk.version>2.59.8</aws.sdk.version>
     <aws.crt.version>0.50.0</aws.crt.version>
     <caffeine.version>3.3.1</caffeine.version>
     <commons-codec.version>1.23.0</commons-codec.version>
@@ -82,7 +82,7 @@
     <xerces.version>2.12.2</xerces.version>
     <velocity.version>2.4.1</velocity.version>
     <!-- JDBC dependencies -->
-    <postgresql.version>42.7.14</postgresql.version>
+    <postgresql.version>42.7.15</postgresql.version>
     <mariadb.version>3.5.9</mariadb.version>
     <mysql.version>8.4.0</mysql.version>
     <!-- test gear -->
