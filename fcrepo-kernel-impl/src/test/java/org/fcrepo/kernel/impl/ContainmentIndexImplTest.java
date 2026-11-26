@@ -14,6 +14,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.startsWith;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
@@ -35,14 +42,18 @@ import org.flywaydb.test.annotation.FlywayTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * @author peichman
@@ -841,5 +852,41 @@ public class ContainmentIndexImplTest {
 
         containmentIndex.addContainedBy(shortLivedTx, parent1.getFedoraId(), binaryId1);
         assertNull(containmentIndex.getContainedBy(shortLivedTx, descriptionId1));
+    }
+
+    /**
+     * Concurrent commits sharing parents must lock the parent rows in the same order, or they can deadlock.
+     */
+    @Test
+    public void testCommitUpdatesParentsInSortedOrder() {
+        stubObject("transaction1");
+        final List<String> parents = new ArrayList<>();
+        for (char c = 'e'; c >= 'a'; c--) {
+            final FedoraId parentId = FedoraId.create("parent-" + c);
+            parents.add(parentId.getFullId());
+            containmentIndex.addContainedBy(transaction1, parentId, FedoraId.create("parent-" + c + "/child"));
+        }
+
+        final var original = (NamedParameterJdbcTemplate) ReflectionTestUtils.getField(containmentIndex,
+                "jdbcTemplate");
+        final var jdbcSpy = spy(original);
+        // The database may happen to return the parents sorted, so force an unsorted result.
+        doReturn(new ArrayList<>(parents)).when(jdbcSpy).queryForList(startsWith("SELECT DISTINCT parent "),
+                any(SqlParameterSource.class), eq(String.class));
+        ReflectionTestUtils.setField(containmentIndex, "jdbcTemplate", jdbcSpy);
+        try {
+            containmentIndex.commitTransaction(transaction1);
+        } finally {
+            ReflectionTestUtils.setField(containmentIndex, "jdbcTemplate", original);
+        }
+
+        @SuppressWarnings("unchecked")
+        final ArgumentCaptor<Map<String, ?>> params = ArgumentCaptor.forClass(Map.class);
+        verify(jdbcSpy, times(parents.size())).update(
+                eq("UPDATE containment SET updated = :updated WHERE fedora_id = :resourceId"), params.capture());
+        final List<String> updatedParents = params.getAllValues().stream()
+                .map(p -> (String) p.get("resourceId"))
+                .collect(toList());
+        assertEquals(parents.stream().sorted().collect(toList()), updatedParents);
     }
 }

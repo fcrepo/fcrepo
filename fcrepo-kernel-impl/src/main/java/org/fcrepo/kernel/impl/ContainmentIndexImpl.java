@@ -775,8 +775,10 @@ public class ContainmentIndexImpl implements ContainmentIndex {
             try {
                 final MapSqlParameterSource parameterSource = new MapSqlParameterSource();
                 parameterSource.addValue("transactionId", tx.getId());
+                // Sort so concurrent commits sharing parents lock the parent rows in the same order and cannot
+                // deadlock each other.
                 final List<String> changedParents = jdbcTemplate.queryForList(GET_UPDATED_RESOURCES, parameterSource,
-                        String.class);
+                        String.class).stream().sorted().toList();
                 final List<String> removedResources = jdbcTemplate.queryForList(GET_DELETED_RESOURCES, parameterSource,
                         String.class);
                 final List<String> addedResources = jdbcTemplate.queryForList(GET_ADDED_RESOURCES, parameterSource,

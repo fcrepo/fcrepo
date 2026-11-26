@@ -7,6 +7,7 @@ package org.fcrepo.persistence.ocfl.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.apache.jena.graph.NodeFactory.createURI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -31,6 +32,7 @@ import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.models.ResourceFactory;
 import org.fcrepo.kernel.api.models.ResourceHeaders;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.kernel.impl.models.ResourceFactoryImpl;
 import org.fcrepo.persistence.ocfl.api.FedoraOcflMappingNotFoundException;
 import org.fcrepo.search.api.Condition;
@@ -53,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * ReindexService tests.
@@ -120,6 +123,8 @@ public class ReindexServiceTest extends AbstractReindexerTest {
             return null;
         }).when(referenceService).updateReferences(any(Transaction.class), any(FedoraId.class),
                 isNull(), any(RdfStream.class));
+        when(referenceService.getInboundReferences(any(Transaction.class), any()))
+                .thenAnswer(invocation -> new DefaultRdfStream(createURI(resource1.getFullId()), Stream.empty()));
     }
 
     /**
@@ -450,7 +455,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(searchIndex, times(numberContainers)).addUpdateIndex(any(Transaction.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class), anyList());
         verify(membershipService, times(numberContainers * 2)).populateMembershipHistory(any(Transaction.class),
-                any(FedoraId.class));
+                any(FedoraId.class), eq(false));
     }
 
     @Test
