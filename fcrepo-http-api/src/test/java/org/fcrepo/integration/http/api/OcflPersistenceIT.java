@@ -7,6 +7,7 @@ package org.fcrepo.integration.http.api;
 
 import static jakarta.ws.rs.core.Response.Status.METHOD_NOT_ALLOWED;
 import static org.fcrepo.http.api.ContentExposingResource.HTTP_HEADER_OVERWRITE_TOMBSTONE;
+import static org.fcrepo.kernel.api.FedoraTypes.FCR_METADATA;
 import static org.fcrepo.kernel.api.FedoraTypes.FCR_TOMBSTONE;
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -18,15 +19,22 @@ import static jakarta.ws.rs.core.Response.Status.NO_CONTENT;
 import static jakarta.ws.rs.core.Response.Status.OK;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.util.EntityUtils;
+import org.fcrepo.config.OcflPropsConfig;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.springframework.test.context.TestExecutionListeners;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Test of OCFL specific issues from the HTTP layer.
@@ -39,6 +47,43 @@ import org.springframework.test.context.TestExecutionListeners;
 public class OcflPersistenceIT extends AbstractResourceIT {
 
     private static final Logger LOGGER = getLogger(OcflPersistenceIT.class);
+
+    @Test
+    public void testEmptyContainerHasNoContentFile() throws Exception {
+        final String id = getRandomUniqueId();
+        createObjectAndClose(id);
+
+        assertEquals(OK.getStatusCode(), getStatus(getObjMethod(id)));
+        assertFalse(containsOcflFile(Path.of(id, "fcr-container.nt")));
+    }
+
+    @Test
+    public void testEmptyBinaryPersistsWithoutDescriptionContentFile() throws Exception {
+        final String id = getRandomUniqueId();
+        try (final var response = execute(putDSMethod(id, ""))) {
+            assertEquals(CREATED.getStatusCode(), getStatus(response));
+        }
+
+        try (final var response = execute(getObjMethod(id))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            assertEquals("", EntityUtils.toString(response.getEntity()));
+        }
+
+        try (final var response = execute(getObjMethod(id + "/" + FCR_METADATA))) {
+            assertEquals(OK.getStatusCode(), getStatus(response));
+            assertFalse(EntityUtils.toString(response.getEntity()).isEmpty());
+        }
+
+        assertTrue(containsOcflFile(Path.of(id)));
+        assertFalse(containsOcflFile(Path.of(id + "~fcr-desc.nt")));
+    }
+
+    private boolean containsOcflFile(final Path contentPath) throws Exception {
+        try (final var files = Files.find(getBean(OcflPropsConfig.class).getOcflRepoRoot(), Integer.MAX_VALUE,
+                (path, attrs) -> path.endsWith(contentPath))) {
+            return files.findAny().isPresent();
+        }
+    }
 
     @Test
     public void testDeleteAgChild() throws Exception {

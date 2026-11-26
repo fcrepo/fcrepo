@@ -12,15 +12,20 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.apache.jena.graph.NodeFactory.createLiteralString;
+import static org.apache.jena.graph.NodeFactory.createURI;
 
 import io.ocfl.api.MutableOcflRepository;
 import io.ocfl.api.model.ObjectVersionId;
+import org.apache.jena.graph.Triple;
+import org.apache.jena.vocabulary.DC;
 import org.fcrepo.config.ServerManagedPropsMode;
 import org.fcrepo.kernel.api.Transaction;
 import org.fcrepo.kernel.api.TransactionManager;
 import org.fcrepo.kernel.api.identifiers.FedoraId;
 import org.fcrepo.kernel.api.operations.DeleteResourceOperationFactory;
 import org.fcrepo.kernel.api.operations.RdfSourceOperationFactory;
+import org.fcrepo.kernel.api.rdf.DefaultRdfStream;
 import org.fcrepo.persistence.api.PersistentStorageSession;
 import org.fcrepo.persistence.ocfl.impl.OcflPersistentSessionManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +36,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
  * Test delete resource persister for stamping versions of deleted resources in manually versioned repository.
@@ -135,6 +141,8 @@ public class DeleteResourcePersisterIT {
         final var agChild = rdfSourceOpFactory
                 .createBuilder(tx2, childId, BASIC_CONTAINER.getURI(), ServerManagedPropsMode.STRICT)
                 .parentId(rescId)
+                .triples(new DefaultRdfStream(createURI(childId.getFullId()), Stream.of(Triple.create(
+                        createURI(childId.getFullId()), DC.title.asNode(), createLiteralString("child title")))))
                 .build();
         storageSession2.persist(agChild);
         storageSession2.prepare();
