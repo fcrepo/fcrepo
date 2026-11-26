@@ -455,7 +455,7 @@ public class ReindexServiceTest extends AbstractReindexerTest {
         verify(searchIndex, times(numberContainers)).addUpdateIndex(any(Transaction.class), isA(
                 org.fcrepo.kernel.api.models.ResourceHeaders.class), anyList());
         verify(membershipService, times(numberContainers * 2)).populateMembershipHistory(any(Transaction.class),
-                any(FedoraId.class));
+                any(FedoraId.class), eq(false));
     }
 
     @Test

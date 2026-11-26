@@ -250,7 +250,7 @@ public class ReindexService {
                 }
             });
         }
-        membershipContainers.forEach(containerId -> membershipService.populateMembershipHistory(tx, containerId));
+        membershipContainers.forEach(containerId -> membershipService.populateMembershipHistory(tx, containerId, true));
     }
 
     /**
@@ -309,7 +309,8 @@ public class ReindexService {
 
                 resultList.stream()
                         .map(entry -> FedoraId.create((String) entry.get(Condition.Field.FEDORA_ID.toString())))
-                        .forEach(containerId -> membershipService.populateMembershipHistory(transaction, containerId));
+                        .forEach(containerId -> membershipService.populateMembershipHistory(transaction, containerId,
+                                false));
 
                 // Results are paged, so step through pages until we reach the last one
                 offset += membershipPageSize;
