@@ -1232,6 +1232,28 @@ public class MembershipServiceImplTest {
     }
 
     @Test
+    public void populateMembershipHistory_Repeated() throws Exception {
+        mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
+        membershipService.resourceCreated(transaction, membershipRescId);
+
+        final var dcId = createDirectContainer(membershipRescId, RdfLexicon.LDP_MEMBER, false);
+        membershipService.resourceCreated(transaction, dcId);
+        final var memberId = createDCMember(dcId, BASIC_CONTAINER);
+        membershipService.commitTransaction(transaction);
+        containmentIndex.commitTransaction(transaction);
+
+        mockListVersion(dcId, CREATED_DATE);
+
+        membershipService.populateMembershipHistory(shortLivedTx, dcId, true);
+        assertCommittedMembershipCount(membershipRescId, 1);
+        assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, memberId);
+
+        membershipService.populateMembershipHistory(shortLivedTx, dcId, true);
+        assertCommittedMembershipCount(membershipRescId, 1);
+        assertHasMembersNoTx(membershipRescId, RdfLexicon.LDP_MEMBER, memberId);
+    }
+
+    @Test
     public void populateMembershipHistory_DC_ChangeRelation_AddedMemberAfter() throws Exception {
         mockGetHeaders(populateHeaders(membershipRescId, BASIC_CONTAINER));
         membershipService.resourceCreated(transaction, membershipRescId);

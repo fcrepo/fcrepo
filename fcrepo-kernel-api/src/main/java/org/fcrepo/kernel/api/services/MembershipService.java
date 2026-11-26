@@ -62,11 +62,22 @@ public interface MembershipService {
 
     /**
      * Regenerate the membership history for specified Direct or Indirect container.
+     * Existing membership history is retained.
      *
      * @param transaction transaction
      * @param containerId ID of the container
      */
     void populateMembershipHistory(final Transaction transaction, final FedoraId containerId);
+
+    /**
+     * Regenerate the membership history for a specified Direct or Indirect container.
+     *
+     * @param transaction transaction
+     * @param containerId ID of the container
+     * @param replaceExisting whether to replace existing membership history for the container
+     */
+    void populateMembershipHistory(final Transaction transaction, final FedoraId containerId,
+            final boolean replaceExisting);
 
     /**
      * Get the timestamp of the most recent member added or removed, or null if none.

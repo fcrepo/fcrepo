@@ -318,10 +318,19 @@ public class MembershipServiceImpl implements MembershipService {
 
     @Override
     public void populateMembershipHistory(@Nonnull final Transaction transaction, final FedoraId containerId) {
+        populateMembershipHistory(transaction, containerId, false);
+    }
+
+    @Override
+    public void populateMembershipHistory(@Nonnull final Transaction transaction, final FedoraId containerId,
+            final boolean replaceExisting) {
         final FedoraResource fedoraResc = getFedoraResource(transaction, containerId);
         final var containerType = getContainerType(fedoraResc);
 
         if (containerType != null) {
+            if (replaceExisting) {
+                indexManager.deleteMembershipForSourceAfter(transaction, containerId, null);
+            }
             populateMembershipHistory(transaction, fedoraResc, null);
         }
     }

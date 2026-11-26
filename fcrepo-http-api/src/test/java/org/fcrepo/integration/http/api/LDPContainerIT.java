@@ -1130,16 +1130,7 @@ public class LDPContainerIT extends AbstractResourceIT {
     private String createIndirectContainer(final String indirectId, final String membershipURI,
             final Property hasMemberRelation, final String insertedContentRelation, final boolean isMemberOf)
                     throws Exception {
-        final HttpPut putIndirect = putObjMethod(indirectId);
-        putIndirect.setHeader(LINK, INDIRECT_CONTAINER_LINK_HEADER);
-        putIndirect.addHeader(CONTENT_TYPE, "text/turtle");
-        final String memberRelation = isMemberOf ? "ldp:isMemberOfRelation" : "ldp:hasMemberRelation";
-        final String membersRDF = "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
-                "<> " + memberRelation + " <" + hasMemberRelation + "> ; " +
-                "ldp:insertedContentRelation <" + insertedContentRelation + ">; " +
-                "ldp:membershipResource <" + membershipURI + "> . ";
-        putIndirect.setEntity(new StringEntity(membersRDF));
-        assertEquals(Status.CREATED.getStatusCode(), getStatus(putIndirect));
+        putIndirectContainer(indirectId, membershipURI, hasMemberRelation, insertedContentRelation, isMemberOf);
 
         return indirectId;
     }
@@ -1150,14 +1141,7 @@ public class LDPContainerIT extends AbstractResourceIT {
 
     private void createProxy(final String proxyId, final String memberURI, final String insertedContentRelation,
             final String txUri) throws Exception {
-        final HttpPut putProxy = putObjMethod(proxyId);
-        putProxy.addHeader(CONTENT_TYPE, "text/turtle");
-        final String proxyRDF = "<> <" + insertedContentRelation + "> <" + memberURI + "> .";
-        putProxy.setEntity(new StringEntity(proxyRDF));
-        if (txUri != null) {
-            putProxy.addHeader(ATOMIC_ID_HEADER, txUri);
-        }
-        assertEquals(Status.CREATED.getStatusCode(), getStatus(putProxy));
+        putProxy(proxyId, memberURI, insertedContentRelation, txUri);
     }
 
     @Test
@@ -1968,11 +1952,6 @@ public class LDPContainerIT extends AbstractResourceIT {
         });
     }
 
-    private void assertHasMembers(final String membershipRescId,
-            final Property hasMemberRelation, final String... memberIds) throws Exception {
-        assertHasMembers(null, membershipRescId, membershipRescId, hasMemberRelation, memberIds);
-    }
-
     private void assertHasMembers(final String txUri, final String membershipRescId, final String subjectId,
             final Property hasMemberRelation, final String... memberIds) throws Exception {
         final var model = getModel(txUri, membershipRescId);
@@ -2058,11 +2037,11 @@ public class LDPContainerIT extends AbstractResourceIT {
         } else {
             containerId = id;
         }
-        final HttpPut putContainer = putObjMethod(containerId);
-        if (txUri != null) {
-            putContainer.addHeader(ATOMIC_ID_HEADER, txUri);
+        try {
+            putBasicContainer(containerId, txUri);
+        } catch (final IOException e) {
+            throw new RuntimeException(e);
         }
-        executeAndClose(putContainer);
 
         return containerId;
     }
@@ -2076,17 +2055,7 @@ public class LDPContainerIT extends AbstractResourceIT {
             final boolean isMemberOf) throws Exception {
         final String containerId = getRandomUniqueId();
 
-        final HttpPost postIndirect = postObjMethod();
-        postIndirect.setHeader("Slug", containerId);
-        postIndirect.setHeader(LINK, DIRECT_CONTAINER_LINK_HEADER);
-        postIndirect.addHeader(CONTENT_TYPE, "text/turtle");
-
-        final var relationProperty = isMemberOf ? "ldp:isMemberOfRelation" : "ldp:hasMemberRelation";
-        final String membersRDF = "PREFIX ldp: <http://www.w3.org/ns/ldp#>\n" +
-                "<> " + relationProperty + " <" + memberRelation.getURI() + "> ; " +
-                "ldp:membershipResource <" + membershipURI + "> . ";
-        postIndirect.setEntity(new StringEntity(membersRDF));
-        executeAndClose(postIndirect);
+        postDirectContainer(containerId, membershipURI, memberRelation, isMemberOf);
 
         return containerId;
     }
