@@ -26,8 +26,8 @@
     <!-- Dependency version properties -->
     <activemq.version>6.4.0</activemq.version>
     <artemis.version>2.57.0</artemis.version>
-    <aws.sdk.version>2.59.9</aws.sdk.version>
-    <aws.crt.version>0.50.1</aws.crt.version>
+    <aws.sdk.version>2.59.10</aws.sdk.version>
+    <aws.crt.version>0.50.2</aws.crt.version>
     <caffeine.version>3.3.1</caffeine.version>
     <commons-codec.version>1.23.0</commons-codec.version>
     <commons-collections.version>4.6.0</commons-collections.version>
@@ -71,7 +71,7 @@
     <micrometer.version>1.18.0</micrometer.version>
     <micrometer.jersey.version>1.8.13</micrometer.jersey.version>
     <netty.version>4.1.141.Final</netty.version>
-    <ocfl-java.version>2.2.3</ocfl-java.version>
+    <ocfl-java.version>2.2.4</ocfl-java.version>
     <prometheus.version>1.10.0</prometheus.version>
     <prometheus.jmx.version>1.0.1</prometheus.jmx.version>
     <reactivestreams.version>1.0.3</reactivestreams.version>
