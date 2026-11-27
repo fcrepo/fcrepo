@@ -289,7 +289,9 @@
           <configuration>
             <!-- see http://jira.codehaus.org/browse/MRELEASE-424 -->
             <mavenExecutorId>forked-path</mavenExecutorId>
-	    <goals>deploy</goals> <!-- to get past site-deploy which is broken--> 
+	    <goals>deploy</goals> <!-- to get past site-deploy which is broken-->
+            <!-- maven-release-plugin 3.x no longer sets performRelease=true, so activate signing explicitly -->
+            <releaseProfiles>release-sign-artifacts</releaseProfiles>
           </configuration>
           <dependencies>
             <dependency>
