@@ -1,0 +1,33 @@
+name: Task
+description: Documentation, release, infrastructure or other work that is not a bug or a feature.
+type: Task
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - fcrepo (the repository itself)
+        - fcrepo-storage-ocfl
+        - fcrepo-import-export
+        - fcrepo-camel-toolbox
+        - fcrepo-camel
+        - migration-utils
+        - fcrepo-upgrade-utils
+        - fcrepo-migration-validator
+        - fcrepo-java-client
+        - fcrepo-docker
+        - fcrepo-aws-deployer
+        - fcrepo-build-tools
+        - fcrepo-specification
+        - Documentation (wiki)
+        - Release
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What needs to be done?
+    validations:
+      required: true

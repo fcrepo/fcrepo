@@ -642,7 +642,7 @@ public class TransactionsIT extends AbstractResourceIT {
     }
 
     /**
-     * Test for issue https://jira.duraspace.org/browse/FCREPO-2975
+     * Test for issue https://fedora.info/jira/FCREPO-2975
      * @throws java.lang.Exception exception thrown during this function
      */
     @Test
@@ -1061,7 +1061,7 @@ public class TransactionsIT extends AbstractResourceIT {
 
     /**
      * Test for accounting for ghost nodes during resource locking.
-     * @see <a href="https://fedora-repository.atlassian.net/browse/FCREPO-3584">FCREPO-3584</a>
+     * @see <a href="https://fedora.info/jira/FCREPO-3584">FCREPO-3584</a>
      * @throws IOException http error
      */
     @Test
